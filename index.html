@@ -226,10 +226,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 @media(min-width:768px){
   .desktop-layout{display:flex;gap:0}
   .desktop-left{flex:1;min-width:0}
-  .desktop-right-wrap{flex:1;border-left:1px solid #f5e0e6;position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
-  .desktop-right-wrap::-webkit-scrollbar{display:none}
-  .desktop-right-wrap #view-cal{display:block !important}
-  .desktop-right-wrap #view-inbox{display:none}
+  .desktop-right{flex:1;border-left:1px solid #f5e0e6;position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .desktop-right::-webkit-scrollbar{display:none}
+  #view-cal.desktop-right{display:block !important}
+  #view-inbox{display:none !important}
   .view-tabs{display:none !important}
 }
 #login-overlay{position:fixed;inset:0;background:#FFF5F8;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
@@ -425,15 +425,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
-<!-- 오른쪽 패널 래퍼 (데스크톱) -->
-<div class="desktop-right-wrap">
-
 <!-- Inbox (Brain Dump) -->
 <div id="view-inbox" style="display:none">
   <div class="inbox-wrap" id="inbox-content"></div>
 </div>
 
-<!-- 캘린더 -->
+<!-- 오른쪽 패널: 뽀모도로 + 캘린더 -->
 <div id="view-cal" class="desktop-right" style="display:none">
   <!-- 데스크톱 뽀모도로 위젯 (캘린더 위, 패널 안) -->
   <div class="pomo-desktop" id="pomo-desktop">
@@ -498,7 +495,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div id="view-habit" class="desktop-right-habit" style="display:none">
   <div class="habit-wrap" id="habit-content"></div>
 </div>
-</div><!-- /desktop-right-wrap -->
 </div><!-- /desktop-layout -->
 
 <!-- Pomodoro Timer -->
