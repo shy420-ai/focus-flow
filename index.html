@@ -224,9 +224,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Desktop 2-column layout */
 .desktop-layout{display:block}
 @media(min-width:768px){
-  .desktop-layout{display:flex;gap:0}
-  .desktop-left{flex:1;min-width:0}
-  .desktop-right{flex:1;border-left:1px solid #f5e0e6;position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+  html,body{overflow-x:hidden}
+  .desktop-layout{display:flex;gap:0;width:100%}
+  .desktop-left{width:40%;flex-shrink:0;flex-grow:0}
+  .desktop-right{width:60%;flex-shrink:0;flex-grow:0;border-left:1px solid #f5e0e6;position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
   .desktop-right::-webkit-scrollbar{display:none}
   #view-cal.desktop-right{display:block !important}
   #view-inbox{display:none !important}
