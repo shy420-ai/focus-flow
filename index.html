@@ -1780,14 +1780,21 @@ function applyMode(){
     hideable.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
     if(viewTabs)viewTabs.style.display='none';
     document.getElementById('view-inbox').style.display='block';
-    // Show pomodoro
     document.getElementById('pomo-fab').style.display='flex';
+    // Hide desktop right panel in emergency
+    const dr=document.querySelector('.desktop-right');
+    if(dr&&isDesktop())dr.style.display='none';
     renderInbox();
   } else {
+    // Restore everything
+    hideable.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
     if(viewTabs)viewTabs.style.display='';
     document.getElementById('date-tabs').style.display='';
     document.getElementById('summary').style.display='';
     document.getElementById('pomo-fab').style.display='flex';
+    // Restore desktop right panel
+    const dr=document.querySelector('.desktop-right');
+    if(dr&&isDesktop())dr.style.display='';
     switchView(curView);
   }
 }
