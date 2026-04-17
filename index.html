@@ -891,7 +891,7 @@ function renderTimeline(){
         const rh=el.querySelector('.rh');
         if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
       }
-      el.addEventListener('click',ev=>{if(didDrag||holdReady)return;ev.stopPropagation();activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
+      el.addEventListener('click',ev=>{ev.stopPropagation();if(didDrag)return;activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
     } else {
       el.innerHTML='<div class="b-inner"><div class="b-name">&#9749; 여유</div></div>';
     }
@@ -900,7 +900,7 @@ function renderTimeline(){
 }
 
 // 꾹 누르기 (3초) -> 드래그
-const HOLD=3000;
+const HOLD=800; // 0.8초 꾹 누르면 드래그
 function onTS(e){
   if(e.target.classList.contains('rh'))return;
   if(e.target.closest('.block-menu'))return;
@@ -939,6 +939,7 @@ function onTE(){
   clearTimeout(holdTimer);
   if(dragState){const el=document.querySelector('.block[data-id="'+dragState.id+'"]');if(el)el.classList.remove('dragging');save();}
   dragState=null;holdReady=false;
+  setTimeout(()=>{didDrag=false;},50); // reset after click event fires
 }
 
 // Mouse drag (desktop) — mirrors touch handlers
