@@ -224,13 +224,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 /* Desktop 2-column layout */
 .desktop-layout{display:block}
 @media(min-width:768px){
-  .desktop-layout{display:grid;grid-template-columns:40% 60%;width:100%;min-height:calc(100vh - 140px)}
-  .desktop-left{overflow-y:auto}
-  .desktop-right-wrap{border-left:1px solid #f5e0e6;position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .desktop-layout{display:flex;gap:0}
+  .desktop-left{flex:1;min-width:0}
+  .desktop-right-wrap{flex:1;border-left:1px solid #f5e0e6;position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:none;-ms-overflow-style:none}
   .desktop-right-wrap::-webkit-scrollbar{display:none}
   .desktop-right-wrap #view-cal{display:block !important}
-  .desktop-right-wrap #view-inbox{display:block !important;border-top:1px solid var(--pl);padding:12px}
-  .pomo-desktop{flex-shrink:0}
+  .desktop-right-wrap #view-inbox{display:none}
   .view-tabs{display:none !important}
 }
 #login-overlay{position:fixed;inset:0;background:#FFF5F8;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
