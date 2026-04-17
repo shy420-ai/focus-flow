@@ -397,10 +397,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <div class="header">
   <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div></div>
-  <div class="mode-toggle" id="mode-toggle">
-    <button class="mode-btn active-normal" id="mode-btn-normal" onclick="setMode('normal')">&#127994; 평소</button>
-    <button class="mode-btn" id="mode-btn-emergency" onclick="setMode('emergency')">&#128308; 응급</button>
-  </div>
+  <div id="mode-toggle" style="display:none"></div>
   <div><div class="clock" id="clock"></div></div>
 </div>
 
@@ -1758,45 +1755,12 @@ function renderHabits(){
 }
 
 // ====== MODE SELECTION (모드 선택) ======
-let currentMode=localStorage.getItem('ff_mode')||'normal';
+let currentMode='normal'; // emergency mode removed
+localStorage.removeItem('ff_mode');
 
-function setMode(mode){
-  currentMode=mode;
-  localStorage.setItem('ff_mode',mode);
-  applyMode();
-}
+function setMode(mode){} // disabled
 
-function applyMode(){
-  const btnN=document.getElementById('mode-btn-normal');
-  const btnE=document.getElementById('mode-btn-emergency');
-  btnN.className='mode-btn'+(currentMode==='normal'?' active-normal':'');
-  btnE.className='mode-btn'+(currentMode==='emergency'?' active-emergency':'');
-
-  const hideable=['date-tabs','summary','view-tl','view-cal','view-habit'];
-  const viewTabs=document.querySelector('.view-tabs');
-
-  if(currentMode==='emergency'){
-    hideable.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-    if(viewTabs)viewTabs.style.display='none';
-    document.getElementById('view-inbox').style.display='block';
-    document.getElementById('pomo-fab').style.display='flex';
-    // Hide desktop right panel in emergency
-    const dr=document.querySelector('.desktop-right');
-    if(dr&&isDesktop())dr.style.display='none';
-    renderInbox();
-  } else {
-    // Restore everything
-    hideable.forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='';});
-    if(viewTabs)viewTabs.style.display='';
-    document.getElementById('date-tabs').style.display='';
-    document.getElementById('summary').style.display='';
-    document.getElementById('pomo-fab').style.display='flex';
-    // Restore desktop right panel
-    const dr=document.querySelector('.desktop-right');
-    if(dr&&isDesktop())dr.style.display='';
-    switchView(curView);
-  }
-}
+function applyMode(){switchView(curView);} // emergency mode removed
 
 // ====== POMODORO TIMER (뽀모도로) ======
 let POMO_WORK=25*60;
