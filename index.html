@@ -57,7 +57,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 .block{position:absolute;left:3px;right:3px;border-radius:10px;cursor:pointer;user-select:none;overflow:hidden}
 .block.past{opacity:.45}
-.block.done-block{opacity:.3}
+.block.done-block{opacity:.5;background:#E8E8E8 !important;border-color:#ccc !important}.block.done-block .b-name{color:#888 !important;text-decoration:line-through}.block.done-block .b-time{color:#aaa !important}
 .block.dragging{transform:scale(1.03);z-index:50;box-shadow:0 4px 16px color-mix(in srgb,var(--pink) 30%,transparent)}
 .b-inner{padding:5px 9px;height:100%}
 .b-name{font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -1045,14 +1045,14 @@ setTimeout(renderDeskDump,500);
 
 function editBlock(id,e){
   if(e)e.stopPropagation();
-  const b=blocks.find(x=>x.id===id);if(!b)return;
+  const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
   const newName=prompt('이름 수정:',b.name);
   if(newName!==null&&newName.trim()){b.name=newName.trim();activeMenu=null;save();render();}
   else{activeMenu=null;renderTimeline();}
 }
 function toggleDone(id,e){
   if(e)e.stopPropagation();
-  const b=blocks.find(x=>x.id===id);if(!b)return;
+  const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
   const was=b.done;b.done=!b.done;activeMenu=null;save();render();
   if(!was)showDone();
 }
