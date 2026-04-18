@@ -903,7 +903,17 @@ function renderTimeline(){
         const rh=el.querySelector('.rh');
         if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
       }
-      el.addEventListener('click',ev=>{ev.stopPropagation();if(didDrag)return;activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
+      // Tap handler — works on both mobile and desktop
+      let tapStart=0;
+      el.addEventListener('touchstart',()=>{tapStart=Date.now();},{passive:true});
+      el.addEventListener('touchend',ev=>{
+        if(didDrag||holdReady)return;
+        if(Date.now()-tapStart>400)return; // not a tap, was a hold
+        ev.preventDefault(); // prevent ghost click
+        if(ev.target.closest('.block-menu'))return; // let menu buttons handle themselves
+        activeMenu=activeMenu===b.id?null:b.id;renderTimeline();
+      });
+      el.addEventListener('click',ev=>{ev.stopPropagation();if(didDrag)return;if(ev.target.closest('.block-menu'))return;activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
     } else {
       el.innerHTML='<div class="b-inner"><div class="b-name">&#9749; 여유</div></div>';
     }
