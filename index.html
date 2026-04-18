@@ -1099,7 +1099,8 @@ function renderCal(){
   const cfEl=document.getElementById('cal-cat-filter');
   if(cfEl){
     const cats=['전체','일','개인','건강','크리에이터','공부'];
-    cfEl.innerHTML=cats.map(c=>'<button style="padding:3px 10px;border-radius:99px;border:1px solid '+(calCatFilter===c?'var(--pd)':'var(--pl)')+';background:'+(calCatFilter===c?'var(--pd)':'#fff')+';color:'+(calCatFilter===c?'#fff':'var(--pd)')+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>').join('');
+    const catColors={'전체':'var(--pd)','일':'#E24B4A','개인':'#4A9EDB','건강':'#3BB88A','크리에이터':'#A87CC5','공부':'#E8A735'};
+    cfEl.innerHTML=cats.map(c=>{const cc=catColors[c]||'var(--pd)';return'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid '+cc+';background:'+(calCatFilter===c?cc:'#fff')+';color:'+(calCatFilter===c?'#fff':cc)+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>';}).join('');
   }
   const grid=document.getElementById('cal-grid');grid.innerHTML='';
   const today=todayStr();
