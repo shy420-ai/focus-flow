@@ -107,7 +107,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
 .cal-dot{width:5px;height:5px;border-radius:50%}
 .cal-preview{margin-top:2px;overflow:hidden}
-.cal-pv-line{font-size:7px;line-height:8px;color:var(--pd);word-break:break-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:1px}
+.cal-pv-line{font-size:6px;line-height:8px;color:var(--pd);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:1px}
 .cal-pv-more{color:#aaa}
 @media(max-width:380px){.cal-preview{display:none}}
 .cal-detail{margin-top:14px;background:var(--pl);border-radius:14px;padding:12px 14px}
@@ -556,7 +556,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="qs-pill" onclick="closeQuickMenu();openSheet()">직접 입력 ✏️</button>
 </div>
 <div class="qs-input-row" id="qs-input-row">
-  <input class="qs-input" id="qs-input" placeholder="할 일 이름 입력" autocomplete="off">
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <input class="qs-input" id="qs-input" placeholder="할 일 이름 입력" autocomplete="off">
+    <div id="qs-cats" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+  </div>
   <button class="qs-submit" id="qs-submit" onclick="qsConfirm()">✓</button>
 </div>
 <button class="fab" id="fab-btn" onclick="toggleQuickMenu()">+</button>
@@ -762,7 +765,10 @@ function generateRecurringBlocks(ds){
 function allDates(){const s=new Set(blocks.filter(b=>b.type==='timeline'||b.type==='buffer'||(!b.type)).map(b=>b.date));s.add(todayStr());
   // add nearby dates that have recurring tasks
   for(let i=-7;i<=14;i++){const ds=addDays(todayStr(),i);if(getRecurringForDate(ds).length)s.add(ds);}
-  return[...s].sort();}
+  const today=todayStr();const arr=[...s].sort();
+  // Put today first, past dates after future dates (scroll left for past)
+  const past=arr.filter(d=>d<today);const todayAndFuture=arr.filter(d=>d>=today);
+  return[...todayAndFuture,...past];}
 function daysFromNow(ds){if(!ds)return Infinity;return Math.round((new Date(ds+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000);}
 
 // 파싱
@@ -903,7 +909,7 @@ function renderTimeline(){
     const isPast=viewDate===todayStr()&&(b.startHour+b.durHour)<nh;
     const el=document.createElement('div');
     el.className='block '+(isBuf?'c-buf':('c-'+b.color))+(b.done?' done-block':isPast?' past':'')+(String(activeMenu)===String(b.id)?' menu-open':'');
-    el.dataset.id=b.id;el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,24)+'px';
+    el.dataset.id=b.id;el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,36)+'px';
     if(!isBuf){
       let menuHTML='<div class="block-menu">';
       if(b.isRecurring){
@@ -973,7 +979,7 @@ function onTM(e){
   if(dragState.type==='move'){let ns=Math.round((dragState.origStart+dy)*2)/2;ns=Math.max(START,Math.min(START+HOURS-b.durHour,ns));b.startHour=ns;}
   else{let nd=Math.round((dragState.origDur+dy)*2)/2;nd=Math.max(.5,Math.min(START+HOURS-b.startHour,nd));b.durHour=nd;}
   const el=document.querySelector('.block[data-id="'+dragState.id+'"]');
-  if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,24)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
+  if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,36)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
   e.preventDefault();
 }
 function onTE(){
@@ -1023,7 +1029,7 @@ document.addEventListener('mousemove',e=>{
   if(dragState.type==='move'){let ns=Math.round((dragState.origStart+dy)*2)/2;ns=Math.max(START,Math.min(START+HOURS-b.durHour,ns));b.startHour=ns;}
   else{let nd=Math.round((dragState.origDur+dy)*2)/2;nd=Math.max(.5,Math.min(START+HOURS-b.startHour,nd));b.durHour=nd;}
   const el=document.querySelector('.block[data-id="'+dragState.id+'"]');
-  if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,24)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
+  if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,36)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
   e.preventDefault();
 });
 document.addEventListener('mouseup',()=>{
@@ -1436,7 +1442,11 @@ function openSheet(){document.getElementById('overlay').classList.add('show');do
 function closeSheet(){document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');document.getElementById('ri').value='';document.getElementById('parea').innerHTML='';preview=null;sheetCategory='';resetRecurUI();}
 
 // 퀵 스케줄링
-let qsMinutes=null;
+let qsMinutes=null,qsCat='';
+function renderQsCats(){
+  const el=document.getElementById('qs-cats');if(!el)return;
+  el.innerHTML=allCategories().map(c=>'<button style="padding:2px 8px;border-radius:99px;border:1px solid '+(qsCat===c.name?c.color:'#ddd')+';background:'+(qsCat===c.name?c.color:'#fff')+';color:'+(qsCat===c.name?'#fff':c.color)+';font-size:9px;font-weight:600;cursor:pointer;font-family:inherit" onclick="event.stopPropagation();qsCat=qsCat===\''+c.name+'\'?\'\':\''+c.name+'\';renderQsCats()">'+c.name+'</button>').join('');
+}
 function toggleQuickMenu(){
   const menu=document.getElementById('qs-menu');
   const ov=document.getElementById('qs-overlay');
@@ -1457,6 +1467,7 @@ function qsPick(min){
   document.getElementById('qs-menu').classList.remove('show');
   const inp=document.getElementById('qs-input-row');
   inp.classList.add('show');
+  qsCat='';renderQsCats();
   const field=document.getElementById('qs-input');
   field.value='';
   setTimeout(()=>field.focus(),150);
@@ -1479,7 +1490,7 @@ function qsConfirm(){
   blocks.push({
     id:String(nid++),type:'timeline',name:name,date:dateStr,
     startHour:startH,durHour:0.5,color:'pink',done:false,
-    memo:'',category:'',deadline:null,priority:null
+    memo:'',category:qsCat||'',deadline:null,priority:null
   });
   blocks.sort((a,b)=>{
     if(a.type==='inbox'&&b.type!=='inbox')return 1;
@@ -1869,8 +1880,8 @@ function renderHabits(){
     h+='</div>';
   }
 
-  // ===== METRICS SECTION =====
-  h+='<div class="metrics-section">';
+  // ===== METRICS SECTION (hidden) =====
+  h+='<div class="metrics-section" style="display:none">';
   h+='<div class="habit-section-title">기록 (Metrics)</div>';
   h+='<div class="metric-add-row">';
   h+='<input id="metric-name-input" placeholder="이름 (몸무게, 수면...)">';
