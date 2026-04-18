@@ -107,7 +107,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .cal-dots{display:flex;gap:2px;flex-wrap:wrap;justify-content:center}
 .cal-dot{width:5px;height:5px;border-radius:50%}
 .cal-preview{margin-top:2px;overflow:hidden}
-.cal-pv-line{font-size:7px;line-height:10px;color:var(--pd);word-break:break-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cal-pv-line{font-size:7px;line-height:8px;color:var(--pd);word-break:break-all;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;margin-bottom:1px}
 .cal-pv-more{color:#aaa}
 @media(max-width:380px){.cal-preview{display:none}}
 .cal-detail{margin-top:14px;background:var(--pl);border-radius:14px;padding:12px 14px}
@@ -907,7 +907,6 @@ function renderTimeline(){
         menuHTML+='<button class="bmb bmb-del" onclick="skipRecurring(\''+b.recurId+'\',\''+b.date+'\',event)">이번만 삭제</button>';
         menuHTML+='<button class="bmb bmb-del" onclick="delRecurring(\''+b.recurId+'\',event)">완전 삭제</button>';
       } else {
-        menuHTML+='<button class="bmb bmb-done'+(b.done?' undone':'')+'" onclick="toggleDone(\''+b.id+'\',event)">'+(b.done?'&#8617; 되돌리기':'&#10003; 완료')+'</button>';
         menuHTML+='<button class="bmb" onclick="editBlock(\''+b.id+'\',event)">수정</button>';
         menuHTML+='<button class="bmb bmb-memo" onclick="openMemo(\''+b.id+'\',event)">메모</button>';
         menuHTML+='<button class="bmb bmb-del" onclick="delBlock(\''+b.id+'\',event)">삭제</button>';
@@ -924,20 +923,8 @@ function renderTimeline(){
         const rh=el.querySelector('.rh');
         if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
       }
-      // Mobile: long-press 0.5s → menu. Desktop: click → menu.
-      let lpTimer=null,lpMoved=false;
-      el.addEventListener('touchstart',ev=>{
-        if(ev.target.closest('.b-quick,.block-menu,.b-qbtn'))return;
-        lpMoved=false;
-        lpTimer=setTimeout(()=>{
-          lpTimer=null;
-          if(navigator.vibrate)navigator.vibrate(30);
-          activeMenu=activeMenu===b.id?null:b.id;renderTimeline();
-        },500);
-      },{passive:true});
-      el.addEventListener('touchmove',()=>{lpMoved=true;if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
-      el.addEventListener('touchend',()=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
-      el.addEventListener('click',ev=>{ev.stopPropagation();if(ev.target.closest('.b-quick,.block-menu'))return;activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
+      // Menu only opens via ⋯ button, no long-press menu
+      el.addEventListener('click',ev=>{ev.stopPropagation();});
     } else {
       el.innerHTML='<div class="b-inner"><div class="b-name">&#9749; 여유</div></div>';
     }
