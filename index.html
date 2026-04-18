@@ -680,7 +680,7 @@ let customCategories=JSON.parse(localStorage.getItem('ff_custom_cats')||'[]');
 function allCategories(){return CATEGORIES.concat(customCategories);}
 function catColor(name){const c=allCategories().find(x=>x.name===name);return c?c.color:'#aaa';}
 
-const PX=56,START=7,HOURS=18;
+const PX=56,START=0,HOURS=24;
 const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
