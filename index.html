@@ -1112,7 +1112,7 @@ function renderCal(){
       const preview=document.createElement('div');preview.className='cal-preview';
       db_.slice(0,2).forEach(b=>{
         const line=document.createElement('div');line.className='cal-pv-line';
-        line.textContent=fmtH(b.startHour)+' '+b.name;
+        line.textContent=b.name;
         preview.appendChild(line);
       });
       if(db_.length>2){const more=document.createElement('div');more.className='cal-pv-line cal-pv-more';more.textContent='+'+(db_.length-2)+'개';preview.appendChild(more);}
