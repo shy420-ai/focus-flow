@@ -889,7 +889,7 @@ function catTagHTML(cat){
 function renderTimeline(){
   const bc=document.getElementById('blocks-col');
   bc.querySelectorAll('.block,.now-line,.empty-tl').forEach(e=>e.remove());
-  const realBlocks=blocks.filter(b=>(b.type==='timeline'||b.type==='buffer'||(!b.type))&&b.date===viewDate);
+  const realBlocks=blocks.filter(b=>(b.type==='timeline'||(!b.type&&!b.isBuf))&&b.date===viewDate&&!b.isBuf);
   const recurBlocks=generateRecurringBlocks(viewDate).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===viewDate));
   const db_=realBlocks.concat(recurBlocks).sort((a,b)=>a.startHour-b.startHour);
   if(!db_.filter(b=>!b.isBuf&&b.type!=='buffer').length){
@@ -1548,7 +1548,7 @@ function confirmAdd(){
     return;
   }
   blocks.push({...preview,startHour:start});
-  if(bufOn)blocks.push({id:String(nid++),type:'buffer',name:'여유',date:preview.date,startHour:start+preview.durHour,durHour:10/60,color:'gray',done:false,memo:'',isBuf:true,category:'',deadline:null,priority:null});
+  // buffer disabled
   blocks.sort((a,b)=>{
     if(a.type==='inbox'&&b.type!=='inbox')return 1;
     if(a.type!=='inbox'&&b.type==='inbox')return -1;
