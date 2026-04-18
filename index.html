@@ -905,7 +905,7 @@ function renderTimeline(){
       }
       menuHTML+='</div>';
       const recurIcon=b.isRecurring?'<span class="recur-icon">\uD83D\uDD01</span>':'';
-      const quickBtns=b.isRecurring?'':'<div class="b-quick"><button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();toggleDone(\''+b.id+'\')" onclick="event.stopPropagation();toggleDone(\''+b.id+'\')" style="'+(b.done?'background:var(--pd);color:#fff':'')+'">✓</button><button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();editBlock(\''+b.id+'\')" onclick="event.stopPropagation();editBlock(\''+b.id+'\')">✎</button><button class="b-qbtn b-qbtn-del" ontouchend="event.stopPropagation();event.preventDefault();delBlock(\''+b.id+'\')" onclick="event.stopPropagation();delBlock(\''+b.id+'\')">✕</button></div>';
+      const quickBtns=b.isRecurring?'':'<div class="b-quick"><button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();toggleDone(\''+b.id+'\')" onclick="event.stopPropagation();toggleDone(\''+b.id+'\')" style="'+(b.done?'background:var(--pd);color:#fff;border-color:var(--pd)':'')+'">✓</button></div>';
       el.innerHTML=menuHTML+'<div class="b-inner"><div class="b-name">'+catTagHTML(b.category)+(b.done?'&#10003; ':'')+b.name+recurIcon+'</div><div class="b-time">'+fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour)+'</div>'+(b.memo?'<div class="b-memo">'+b.memo+'</div>':'')+'</div>'+quickBtns+(b.isRecurring?'':'<div class="rh" data-id="'+b.id+'"></div>');
       if(!b.isRecurring){
         el.addEventListener('touchstart',onTS,{passive:true});
@@ -915,17 +915,19 @@ function renderTimeline(){
         const rh=el.querySelector('.rh');
         if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
       }
-      // Tap handler — works on both mobile and desktop
-      let tapStart=0;
-      el.addEventListener('touchstart',()=>{tapStart=Date.now();},{passive:true});
-      el.addEventListener('touchend',ev=>{
-        if(didDrag||holdReady)return;
-        if(Date.now()-tapStart>400)return; // not a tap, was a hold
-        ev.preventDefault(); // prevent ghost click
-        if(ev.target.closest('.block-menu'))return; // let menu buttons handle themselves
-        activeMenu=activeMenu===b.id?null:b.id;renderTimeline();
-      });
-      el.addEventListener('click',ev=>{ev.stopPropagation();if(didDrag)return;if(ev.target.closest('.block-menu'))return;activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
+      // Long-press → show menu (수정/삭제). Short tap → handled by ✓ button only.
+      let lpTimer=null;
+      el.addEventListener('touchstart',ev=>{
+        if(ev.target.closest('.b-quick,.block-menu'))return;
+        lpTimer=setTimeout(()=>{
+          lpTimer=null;
+          if(navigator.vibrate)navigator.vibrate(30);
+          activeMenu=activeMenu===b.id?null:b.id;renderTimeline();
+        },600);
+      },{passive:true});
+      el.addEventListener('touchmove',()=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
+      el.addEventListener('touchend',ev=>{if(lpTimer){clearTimeout(lpTimer);lpTimer=null;}},{passive:true});
+      el.addEventListener('click',ev=>{ev.stopPropagation();if(didDrag)return;if(ev.target.closest('.b-quick,.block-menu'))return;activeMenu=activeMenu===b.id?null:b.id;renderTimeline();});
     } else {
       el.innerHTML='<div class="b-inner"><div class="b-name">&#9749; 여유</div></div>';
     }
