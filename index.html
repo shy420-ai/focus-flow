@@ -413,6 +413,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="theme-opt" onclick="applyTheme('yellow')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #FFE880;background:#FFF9E6;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#E0C94E">🌻 노랑</button>
     <button class="theme-opt" onclick="applyTheme('sky')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #8DC8E8;background:#EAF5FB;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#5A9ABF">🌊 하늘</button>
     <button class="theme-opt" onclick="applyTheme('purple')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #C4A6D7;background:#FAF5FF;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#9B7BB5">🔮 보라</button>
+    <button class="theme-opt" onclick="applyTheme('mint')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #7ECDB0;background:#F0FBF6;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#4EA88A">🍃 민트</button>
   </div>
 </div>
 
@@ -1536,7 +1537,8 @@ const THEMES={
   pink:{pink:'#E8849D',pl:'#FDE8EF',pd:'#C45A78'},
   yellow:{pink:'#FFE880',pl:'#FFF9E6',pd:'#E0C94E'},
   sky:{pink:'#8DC8E8',pl:'#EAF5FB',pd:'#5A9ABF'},
-  purple:{pink:'#C4A6D7',pl:'#FAF5FF',pd:'#9B7BB5'}
+  purple:{pink:'#C4A6D7',pl:'#FAF5FF',pd:'#9B7BB5'},
+  mint:{pink:'#7ECDB0',pl:'#F0FBF6',pd:'#4EA88A'}
 };
 function applyTheme(name){
   const t=THEMES[name];if(!t)return;
