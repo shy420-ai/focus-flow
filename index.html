@@ -762,7 +762,7 @@ function generateRecurringBlocks(ds){
 function allDates(){const s=new Set(blocks.filter(b=>b.type==='timeline'||b.type==='buffer'||(!b.type)).map(b=>b.date));s.add(todayStr());
   // add nearby dates that have recurring tasks
   for(let i=-7;i<=14;i++){const ds=addDays(todayStr(),i);if(getRecurringForDate(ds).length)s.add(ds);}
-  const today=todayStr();const arr=[...s].sort();const ti=arr.indexOf(today);if(ti>0){arr.splice(ti,1);arr.unshift(today);}return arr;}
+  return[...s].sort();}
 function daysFromNow(ds){if(!ds)return Infinity;return Math.round((new Date(ds+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000);}
 
 // 파싱
@@ -847,6 +847,9 @@ function renderDateTabs(){
     wrap.appendChild(btn);
   });
   document.getElementById('today-label').textContent=dateLabel(viewDate);
+  // Auto-scroll to today/active tab
+  const activeBtn=wrap.querySelector('.dtab.active');
+  if(activeBtn)activeBtn.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
 }
 
 function renderSummary(){
