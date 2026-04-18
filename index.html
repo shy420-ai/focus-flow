@@ -1530,6 +1530,10 @@ function applyTheme(name){
   document.documentElement.style.setProperty('--pm',t.pink);
   localStorage.setItem('ff_theme',name);
   document.getElementById('theme-popup').style.display='none';
+  // Update status bar color
+  const meta=document.querySelector('meta[name="theme-color"]');
+  if(meta)meta.setAttribute('content',t.pink);
+  document.body.style.background=t.pl;
 }
 function toggleThemePopup(){
   const p=document.getElementById('theme-popup');
