@@ -72,11 +72,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .bmb-memo{background:#fff;color:var(--pd);border:1px solid var(--pink)}
 .bmb-del{background:#FFF0F0;color:#E24B4A}
 
-.c-pink{background:var(--pink);border:1.5px solid var(--pd)}.c-pink .b-name{color:#fff}.c-pink .b-time{color:rgba(255,255,255,.8)}
-.c-red{background:#E24B4A;border:1.5px solid #C43030}.c-red .b-name{color:#fff}.c-red .b-time{color:rgba(255,255,255,.8)}
-.c-amb{background:#EF9F27;border:1.5px solid #D08510}.c-amb .b-name{color:#fff}.c-amb .b-time{color:rgba(255,255,255,.8)}
-.c-blue{background:#4A9EDB;border:1.5px solid #2E7AB8}.c-blue .b-name{color:#fff}.c-blue .b-time{color:rgba(255,255,255,.8)}
-.c-teal{background:#3BB88A;border:1.5px solid #2A956D}.c-teal .b-name{color:#fff}.c-teal .b-time{color:rgba(255,255,255,.8)}
+.c-pink{background:var(--pink);border:1.5px solid var(--pd)}.c-pink .b-name{color:var(--pt,#333)}.c-pink .b-time{color:var(--pd)}
+.c-red{background:#F8BCBC;border:1.5px solid #E24B4A}.c-red .b-name{color:#8B1A1A}.c-red .b-time{color:#C43030}
+.c-amb{background:#FFE0A3;border:1.5px solid #EF9F27}.c-amb .b-name{color:#6B4400}.c-amb .b-time{color:#D08510}
+.c-blue{background:#B8D9F2;border:1.5px solid #4A9EDB}.c-blue .b-name{color:#0C447C}.c-blue .b-time{color:#2E7AB8}
+.c-teal{background:#B0E8D4;border:1.5px solid #3BB88A}.c-teal .b-name{color:#085041}.c-teal .b-time{color:#2A956D}
 .c-buf{background:#f5f5f5;border:1.5px dashed #ddd}.c-buf .b-name{color:#bbb;font-weight:400}
 
 /* -- Category tag on timeline blocks -- */
@@ -1533,15 +1533,16 @@ setInterval(()=>{renderTimeline();renderSummary();},60000);
 
 // ====== THEME SELECTOR ======
 const THEMES={
-  pink:{pink:'#E8849D',pl:'#FDE8EF',pd:'#C45A78'},
-  yellow:{pink:'#FFE880',pl:'#FFF9E6',pd:'#E0C94E'},
-  sky:{pink:'#8DC8E8',pl:'#EAF5FB',pd:'#5A9ABF'},
-  purple:{pink:'#C4A6D7',pl:'#FAF5FF',pd:'#9B7BB5'},
-  mint:{pink:'#7ECDB0',pl:'#F0FBF6',pd:'#4EA88A'}
+  pink:{pink:'#E8849D',pl:'#FDE8EF',pd:'#C45A78',pt:'#7A2A42'},
+  yellow:{pink:'#FFE880',pl:'#FFF9E6',pd:'#D4A800',pt:'#6B4400'},
+  sky:{pink:'#8DC8E8',pl:'#EAF5FB',pd:'#5A9ABF',pt:'#1A4A6B'},
+  purple:{pink:'#C4A6D7',pl:'#FAF5FF',pd:'#9B7BB5',pt:'#5A3370'},
+  mint:{pink:'#7ECDB0',pl:'#F0FBF6',pd:'#4EA88A',pt:'#1A5040'}
 };
 function applyTheme(name){
   const t=THEMES[name];if(!t)return;
   document.documentElement.style.setProperty('--pink',t.pink);
+  if(t.pt)document.documentElement.style.setProperty('--pt',t.pt);
   document.documentElement.style.setProperty('--pl',t.pl);
   document.documentElement.style.setProperty('--pd',t.pd);
   document.documentElement.style.setProperty('--pm',t.pink);
