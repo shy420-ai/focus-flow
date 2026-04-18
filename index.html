@@ -765,10 +765,7 @@ function generateRecurringBlocks(ds){
 function allDates(){const s=new Set(blocks.filter(b=>b.type==='timeline'||b.type==='buffer'||(!b.type)).map(b=>b.date));s.add(todayStr());
   // add nearby dates that have recurring tasks
   for(let i=-7;i<=14;i++){const ds=addDays(todayStr(),i);if(getRecurringForDate(ds).length)s.add(ds);}
-  const today=todayStr();const arr=[...s].sort();
-  // Put today first, past dates after future dates (scroll left for past)
-  const past=arr.filter(d=>d<today);const todayAndFuture=arr.filter(d=>d>=today);
-  return[...todayAndFuture,...past];}
+  return[...s].sort();}
 function daysFromNow(ds){if(!ds)return Infinity;return Math.round((new Date(ds+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000);}
 
 // 파싱
