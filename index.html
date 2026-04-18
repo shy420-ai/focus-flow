@@ -1572,6 +1572,7 @@ const canvas=document.getElementById('confetti'),ctx=canvas.getContext('2d');
 let particles=[];
 function resizeC(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
 resizeC();window.addEventListener('resize',resizeC);
+function getCC(){const s=getComputedStyle(document.documentElement);const p=s.getPropertyValue('--pink').trim();const l=s.getPropertyValue('--pl').trim();const d=s.getPropertyValue('--pd').trim();return[p,l,d,'#fff','#FFD6E0'];}
 const CC=['#F2A8BC','#E8849D','#FDE8EF','#C45A78','#FFD6E0','#fff','#FFC0CB'];
 const MSGS=[{e:'&#127800;',m:'완료!',s:'잘했어, 진짜로'},{e:'&#10024;',m:'해냈다!',s:'오늘도 한 걸음 앞으로'},{e:'&#127872;',m:'굿잡!',s:'너 생각보다 대단해'},{e:'&#128150;',m:'완벽해!',s:'이 기세 그대로'},{e:'&#129419;',m:'클리어!',s:'뇌가 도파민 분비 중'},{e:'&#127775;',m:'브라보!',s:'ADHD 어디감'}];
 function showDone(){
@@ -1721,7 +1722,7 @@ function renderHabits(){
 
   // ===== 66일 챌린지 =====
   if(habits.length){
-    h+='<div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,#FDE8EF,#fff);border-radius:14px;border:1.5px solid var(--pl)">';
+    h+='<div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--pl),#fff);border-radius:14px;border:1.5px solid var(--pink)">';
     h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px">🏆 66일 챌린지 (주 5회 = 성공)</div>';
     habits.forEach(hab=>{
       const created=hab.createdAt||todayStr();
@@ -1798,7 +1799,7 @@ function renderHabits(){
         }else if(isToday){
           h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pink);font-size:7px;line-height:14px;text-align:center;color:#fff" title="오늘">♡</div>';
         }else{
-          h+='<div style="width:14px;height:14px;border-radius:7px;background:'+(isPast?'#f0d0da':'var(--pl)')+'" title="Day '+(i+1)+'"></div>';
+          h+='<div style="width:14px;height:14px;border-radius:7px;background:'+(isPast?'var(--pink)':'var(--pl)')+';opacity:'+(isPast?'0.3':'1')+'" title="Day '+(i+1)+'"></div>';
         }
       }
       h+='</div>';
