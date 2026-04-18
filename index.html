@@ -78,8 +78,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .c-blue{background:#B8D9F2;border:1.5px solid #4A9EDB}.c-blue .b-name{color:#0C447C}.c-blue .b-time{color:#2E7AB8}
 .c-teal{background:#B0E8D4;border:1.5px solid #3BB88A}.c-teal .b-name{color:#085041}.c-teal .b-time{color:#2A956D}
 .c-buf{background:#f5f5f5;border:1.5px dashed #ddd}.c-buf .b-name{color:#bbb;font-weight:400}
-.b-quick{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;gap:4px;z-index:10}
-.b-qbtn{width:28px;height:28px;border-radius:14px;border:none;background:rgba(255,255,255,.7);color:var(--pd);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.b-quick{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:6px;z-index:10}
+.b-qbtn{width:30px;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.85);color:var(--pd);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);box-shadow:0 1px 4px rgba(0,0,0,.08);transition:transform .1s}
+.b-qbtn:active{transform:scale(.9)}
 
 /* -- Category tag on timeline blocks -- */
 .b-cat-tag{display:inline-block;font-size:8px;font-weight:700;padding:1px 5px;border-radius:4px;margin-right:4px;vertical-align:middle;color:#fff}
@@ -903,7 +904,7 @@ function renderTimeline(){
       }
       menuHTML+='</div>';
       const recurIcon=b.isRecurring?'<span class="recur-icon">\uD83D\uDD01</span>':'';
-      const quickBtns=b.isRecurring?'':'<div class="b-quick"><button class="b-qbtn" onclick="event.stopPropagation();toggleDone(\''+b.id+'\',event)">'+(b.done?'↩':'✓')+'</button><button class="b-qbtn" onclick="event.stopPropagation();editBlock(\''+b.id+'\',event)">✎</button></div>';
+      const quickBtns=b.isRecurring?'':'<div class="b-quick"><button class="b-qbtn" onclick="event.stopPropagation();toggleDone(\''+b.id+'\',event)" title="완료">'+(b.done?'↺':'✔')+'</button><button class="b-qbtn" onclick="event.stopPropagation();editBlock(\''+b.id+'\',event)" title="수정">✏</button></div>';
       el.innerHTML=menuHTML+'<div class="b-inner"><div class="b-name">'+catTagHTML(b.category)+(b.done?'&#10003; ':'')+b.name+recurIcon+'</div><div class="b-time">'+fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour)+'</div>'+(b.memo?'<div class="b-memo">'+b.memo+'</div>':'')+'</div>'+quickBtns+(b.isRecurring?'':'<div class="rh" data-id="'+b.id+'"></div>');
       if(!b.isRecurring){
         el.addEventListener('touchstart',onTS,{passive:true});
