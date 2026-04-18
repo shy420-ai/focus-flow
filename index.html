@@ -488,6 +488,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="cal-title" id="cal-title"></div>
       <button class="cal-nav" onclick="calNext()">&#8250;</button>
     </div>
+    <div id="cal-cat-filter" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div>
     <div class="dow-row">
       <div class="dow-cell" style="color:#E24B4A">일</div>
       <div class="dow-cell">월</div><div class="dow-cell">화</div>
@@ -1087,8 +1088,16 @@ function saveMemo(){
 // 캘린더
 function calPrev(){calM--;if(calM<0){calM=11;calY--;}renderCal();}
 function calNext(){calM++;if(calM>11){calM=0;calY++;}renderCal();}
+let calCatFilter='전체';
+function setCalCat(cat){calCatFilter=cat;renderCal();}
 function renderCal(){
   document.getElementById('cal-title').textContent=calY+'년 '+MONTH[calM];
+  // Category filter pills
+  const cfEl=document.getElementById('cal-cat-filter');
+  if(cfEl){
+    const cats=['전체','일','개인','건강','크리에이터','공부'];
+    cfEl.innerHTML=cats.map(c=>'<button style="padding:3px 10px;border-radius:99px;border:1px solid '+(calCatFilter===c?'var(--pd)':'var(--pl)')+';background:'+(calCatFilter===c?'var(--pd)':'#fff')+';color:'+(calCatFilter===c?'#fff':'var(--pd)')+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>').join('');
+  }
   const grid=document.getElementById('cal-grid');grid.innerHTML='';
   const today=todayStr();
   const firstDay=new Date(calY,calM,1).getDay();
@@ -1100,8 +1109,9 @@ function renderCal(){
   }
   for(let d=1;d<=dim;d++){
     const ds=calY+'-'+pad(calM+1)+'-'+pad(d);
-    const realB=blocks.filter(b=>(b.type==='timeline'||(!b.type&&!b.isBuf))&&b.date===ds&&!b.isBuf);
-    const recurB=generateRecurringBlocks(ds).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===ds));
+    let realB=blocks.filter(b=>(b.type==='timeline'||(!b.type&&!b.isBuf))&&b.date===ds&&!b.isBuf);
+    let recurB=generateRecurringBlocks(ds).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===ds));
+    if(calCatFilter!=='전체'){realB=realB.filter(b=>b.category===calCatFilter);recurB=recurB.filter(b=>b.category===calCatFilter);}
     const db_=realB.concat(recurB);
     const dow=(firstDay+d-1)%7;
     const isToday=ds===today,isSel=ds===calSel;
