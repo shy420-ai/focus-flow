@@ -591,8 +591,14 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 let _uid=null,_unsub=null,_skipRemote=false;
 
+// Keep auth persistent across sessions
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+
 function doLogin(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>alert('로그인 실패: '+e.message));
+  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>{
+    // Popup blocked? Try redirect
+    auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+  });
 }
 auth.onAuthStateChanged(user=>{
   if(user){
