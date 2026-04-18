@@ -235,6 +235,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   #view-inbox{display:none !important}
   .view-tabs{display:none !important}
 }
+@keyframes petalFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(40px) rotate(180deg)}}
+.petal-fall{animation:petalFall 1.5s ease-out forwards;position:absolute;font-size:14px;pointer-events:none}
 #login-overlay{position:fixed;inset:0;background:#FFF5F8;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
 #login-overlay h1{font-size:28px;color:var(--pink);font-weight:700}
 #login-overlay p{color:#aaa;font-size:14px}
@@ -1718,9 +1720,43 @@ function renderHabits(){
       const pct=Math.round(progress/totalDays*100);
       const done=progress>=totalDays;
 
-      // Mini 90-day grid (dots)
+      // Flower growth system
+      const FLOWERS=['🌱','🌿','☘️','🌷','🌸','🌺','💐'];
+      // Net growth: +1 per success week, -1 per fail week
+      let flowerLevel=0;
+      for(let w=0;w<totalWeeks;w++){
+        let wc=0;
+        for(let d=0;d<7;d++){
+          const off=w*7+d;if(off>=progress)break;
+          const ds=addDays(created,off);
+          if(habitLogs[ds]&&habitLogs[ds][hab.id])wc++;
+        }
+        if(wc>=5)flowerLevel=Math.min(flowerLevel+1,FLOWERS.length-1);
+        else if(wc<3)flowerLevel=Math.max(flowerLevel-1,0);
+      }
+      if(done)flowerLevel=FLOWERS.length-1;
+      const flower=FLOWERS[flowerLevel];
+      const flowerName=['씨앗','새싹','줄기','봉오리','개화','만개','완성!'][flowerLevel];
+
+      // Flower display
       h+='<div style="margin-bottom:12px">';
-      h+='<div style="font-size:12px;font-weight:600;color:#555;margin-bottom:6px">'+hab.name+(done?' ✅ 완성!':'')+'</div>';
+      h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
+      h+='<div style="font-size:12px;font-weight:600;color:#555">'+hab.name+'</div>';
+      h+='<div style="font-size:36px;line-height:1;transition:all .3s" id="flower-'+hab.id+'">'+flower+'</div>';
+      h+='<div style="font-size:11px;color:var(--pd);font-weight:600">'+flowerName+'</div>';
+      if(done)h+='<div style="font-size:11px;color:#1D9E75;font-weight:700">✅ 66일 달성!</div>';
+      h+='</div>';
+
+      // Flower stage indicator
+      h+='<div style="display:flex;gap:4px;margin-bottom:8px;align-items:center">';
+      FLOWERS.forEach((f,i)=>{
+        const active=i<=flowerLevel;
+        h+='<div style="font-size:'+(i===flowerLevel?'20px':'14px')+';opacity:'+(active?'1':'0.25')+';transition:all .3s'+(i===flowerLevel?';transform:scale(1.2)':'')+'">'+f+'</div>';
+        if(i<FLOWERS.length-1)h+='<div style="width:8px;height:2px;background:'+(i<flowerLevel?'var(--pd)':'var(--pl)')+';border-radius:1px"></div>';
+      });
+      h+='</div>';
+
+      // 66-day grid (dots)
       h+='<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:6px">';
       for(let i=0;i<totalDays;i++){
         const dateStr=addDays(created,i);
