@@ -404,7 +404,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="header">
   <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div></div>
   <div id="mode-toggle" style="display:none"></div>
-  <div><div class="clock" id="clock"></div></div>
+  <div style="display:flex;align-items:center;gap:8px"><button id="theme-btn" onclick="toggleThemePopup()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px">🎨</button><div class="clock" id="clock"></div></div>
+</div>
+<div id="theme-popup" style="display:none;position:absolute;top:56px;right:12px;background:#fff;border:2px solid var(--pink);border-radius:14px;padding:12px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:160px">
+  <div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">테마 선택</div>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <button class="theme-opt" onclick="applyTheme('pink')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #E8849D;background:#FDE8EF;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#C45A78">🌸 핑크</button>
+    <button class="theme-opt" onclick="applyTheme('yellow')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #E8C84A;background:#FFF8E1;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#B89A1D">🌻 노랑</button>
+    <button class="theme-opt" onclick="applyTheme('sky')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #6DB3D8;background:#E1F0FA;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#3A7FA8">🌊 하늘</button>
+    <button class="theme-opt" onclick="applyTheme('purple')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #A87CC5;background:#F0E4F7;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#7B4F99">🔮 보라</button>
+  </div>
 </div>
 
 <div class="date-tabs" id="date-tabs"></div>
@@ -903,7 +912,7 @@ function renderTimeline(){
 }
 
 // 꾹 누르기 (3초) -> 드래그
-const HOLD=800; // 0.8초 꾹 누르면 드래그
+const HOLD=500; // 0.5초 꾹 누르면 드래그
 function onTS(e){
   if(e.target.classList.contains('rh'))return;
   if(e.target.closest('.block-menu'))return;
@@ -940,9 +949,16 @@ function onTM(e){
 }
 function onTE(){
   clearTimeout(holdTimer);
+  const wasDrag=!!dragState;
   if(dragState){const el=document.querySelector('.block[data-id="'+dragState.id+'"]');if(el)el.classList.remove('dragging');save();}
   dragState=null;holdReady=false;
-  setTimeout(()=>{didDrag=false;},50); // reset after click event fires
+  if(wasDrag){
+    // Actual drag happened — keep didDrag=true briefly so click handler ignores it
+    setTimeout(()=>{didDrag=false;},100);
+  } else {
+    // No drag — reset immediately so click handler fires properly
+    didDrag=false;
+  }
 }
 
 // Mouse drag (desktop) — mirrors touch handlers
@@ -1499,6 +1515,36 @@ function updateClock(){const n=new Date();document.getElementById('clock').textC
 setInterval(updateClock,10000);updateClock();
 setInterval(()=>{renderTimeline();renderSummary();},60000);
 
+// ====== THEME SELECTOR ======
+const THEMES={
+  pink:{pink:'#E8849D',pl:'#FDE8EF',pd:'#C45A78'},
+  yellow:{pink:'#E8C84A',pl:'#FFF8E1',pd:'#B89A1D'},
+  sky:{pink:'#6DB3D8',pl:'#E1F0FA',pd:'#3A7FA8'},
+  purple:{pink:'#A87CC5',pl:'#F0E4F7',pd:'#7B4F99'}
+};
+function applyTheme(name){
+  const t=THEMES[name];if(!t)return;
+  document.documentElement.style.setProperty('--pink',t.pink);
+  document.documentElement.style.setProperty('--pl',t.pl);
+  document.documentElement.style.setProperty('--pd',t.pd);
+  document.documentElement.style.setProperty('--pm',t.pink);
+  localStorage.setItem('ff_theme',name);
+  document.getElementById('theme-popup').style.display='none';
+}
+function toggleThemePopup(){
+  const p=document.getElementById('theme-popup');
+  p.style.display=p.style.display==='none'?'block':'none';
+}
+document.addEventListener('click',function(e){
+  const popup=document.getElementById('theme-popup');
+  const btn=document.getElementById('theme-btn');
+  if(popup&&popup.style.display==='block'&&!popup.contains(e.target)&&e.target!==btn){
+    popup.style.display='none';
+  }
+});
+// Load saved theme on startup
+(function(){const saved=localStorage.getItem('ff_theme');if(saved&&THEMES[saved])applyTheme(saved);})();
+
 // 컨페티
 const canvas=document.getElementById('confetti'),ctx=canvas.getContext('2d');
 let particles=[];
@@ -1649,44 +1695,6 @@ function renderHabits(){
     });
   }else{
     h+='<div style="text-align:center;color:#ccc;font-size:13px;padding:20px 0">아직 등록된 습관이 없어</div>';
-  }
-
-  // Monthly heatmap
-  if(habits.length){
-    h+='<div class="habit-heatmap-section">';
-    h+='<div class="heatmap-title">이번 달 히트맵</div>';
-    h+='<div class="heatmap-grid">';
-    weekDayLabels.forEach(d=>{h+='<div class="heatmap-dow">'+d+'</div>';});
-    const monthDates=getMonthDates();
-    const totalHabits=habits.length;
-    monthDates.forEach(md=>{
-      let count=0;
-      habits.forEach(hab=>{if(habitLogs[md]&&habitLogs[md][hab.id])count++;});
-      const ratio=totalHabits>0?count/totalHabits:0;
-      let lvl='';
-      if(ratio>0&&ratio<=0.25)lvl=' l1';
-      else if(ratio>0.25&&ratio<=0.5)lvl=' l2';
-      else if(ratio>0.5&&ratio<=0.75)lvl=' l3';
-      else if(ratio>0.75)lvl=' l4';
-      const isToday=md===today?' today-cell':'';
-      h+='<div class="heatmap-cell'+lvl+isToday+'" title="'+md+': '+count+'/'+totalHabits+'"></div>';
-    });
-    h+='</div>';
-    // Week summary
-    let weekDone=0,weekTotal=0;
-    weekDates.forEach(wd=>{
-      habits.forEach(hab=>{
-        weekTotal++;
-        if(habitLogs[wd]&&habitLogs[wd][hab.id])weekDone++;
-      });
-    });
-    if(weekTotal>0){
-      const weekDays=Math.round(weekDone/habits.length*10)/10;
-      h+='<div class="heatmap-summary">이번 주 '+weekDone+'/'+weekTotal+' 완료';
-      if(weekDone/weekTotal>=0.7) h+=' &#128293;';
-      h+='</div>';
-    }
-    h+='</div>';
   }
 
   // ===== 66일 챌린지 =====
@@ -1852,7 +1860,32 @@ function renderHabits(){
   }
   h+='</div>';
 
+  // ===== Quick Memo (빠른 메모) =====
+  h+='<div style="margin-top:16px;padding:14px;background:var(--pl);border-radius:14px;border:1.5px solid var(--pink)">';
+  h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px">📝 메모</div>';
+  h+='<textarea id="quick-memo-textarea" placeholder="자유롭게 메모하세요..." style="width:100%;min-height:80px;border:1.5px solid var(--pink);border-radius:10px;padding:10px;font-size:13px;font-family:inherit;resize:vertical;outline:none;box-sizing:border-box;background:#fff;color:#333" onblur="saveQuickMemo()" oninput="saveQuickMemoDebounced()">'+(_quickMemo||'')+'</textarea>';
+  h+='</div>';
+
   wrap.innerHTML=h;
+}
+
+// ====== QUICK MEMO ======
+let _quickMemo=localStorage.getItem('ff_quickMemo')||'';
+let _quickMemoTimer=null;
+function saveQuickMemo(){
+  const el=document.getElementById('quick-memo-textarea');
+  if(!el)return;
+  _quickMemo=el.value;
+  localStorage.setItem('ff_quickMemo',_quickMemo);
+  if(!_uid)return;
+  _skipRemote=true;
+  db.collection('users').doc(_uid).set({quickMemo:_quickMemo},{merge:true}).then(()=>{
+    setTimeout(()=>{_skipRemote=false},1000);
+  });
+}
+function saveQuickMemoDebounced(){
+  clearTimeout(_quickMemoTimer);
+  _quickMemoTimer=setTimeout(saveQuickMemo,1500);
 }
 
 // ====== MODE SELECTION (모드 선택) ======
@@ -2263,6 +2296,7 @@ loadFromFirestore=function(){
         pomoCountDate=todayStr();
         savePomoLocal();
       }
+      if(d.quickMemo!==undefined){_quickMemo=d.quickMemo||'';localStorage.setItem('ff_quickMemo',_quickMemo);const qm=document.getElementById('quick-memo-textarea');if(qm)qm.value=_quickMemo;}
       saveHabitLocal();
       render();
       applyMode();
@@ -2293,6 +2327,7 @@ listenFirestore=function(){
         pomoCountDate=todayStr();
         savePomoLocal();
       }
+      if(d.quickMemo!==undefined){_quickMemo=d.quickMemo||'';localStorage.setItem('ff_quickMemo',_quickMemo);const qm=document.getElementById('quick-memo-textarea');if(qm)qm.value=_quickMemo;}
       saveHabitLocal();
       render();
       applyMode();
