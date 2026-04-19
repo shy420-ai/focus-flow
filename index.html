@@ -764,8 +764,13 @@ function generateRecurringBlocks(ds){
 }
 function allDates(){const s=new Set(blocks.filter(b=>b.type==='timeline'||b.type==='buffer'||(!b.type)).map(b=>b.date));s.add(todayStr());
   // add nearby dates that have recurring tasks
-  for(let i=-7;i<=14;i++){const ds=addDays(todayStr(),i);if(getRecurringForDate(ds).length)s.add(ds);}
-  return[...s].sort();}
+  for(let i=-3;i<=14;i++){const ds=addDays(todayStr(),i);if(getRecurringForDate(ds).length)s.add(ds);}
+  // limit past dates to 3 days max
+  const today=todayStr();
+  const arr=[...s].sort();
+  const todayIdx=arr.indexOf(today);
+  if(todayIdx>3)return arr.slice(todayIdx-3);
+  return arr;}
 function daysFromNow(ds){if(!ds)return Infinity;return Math.round((new Date(ds+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000);}
 
 // 파싱
@@ -851,8 +856,10 @@ function renderDateTabs(){
   });
   document.getElementById('today-label').textContent=dateLabel(viewDate);
   // Auto-scroll to today/active tab
-  const activeBtn=wrap.querySelector('.dtab.active');
-  if(activeBtn)activeBtn.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+  requestAnimationFrame(()=>{
+    const activeBtn=wrap.querySelector('.dtab.active');
+    if(activeBtn)activeBtn.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+  });
 }
 
 function renderSummary(){
