@@ -1648,7 +1648,7 @@ function toggleDropDone(id){
   try{
     const items=getDropItems();
     const it=items.find(i=>String(i.id)===String(id));
-    if(it){it.done=!it.done;saveDropItems(items);renderDrop();if(it.done)showToast();}
+    if(it){it.done=!it.done;saveDropItems(items);renderDrop();if(it.done)showDone();}
   }catch(e){console.error('toggleDropDone',e);}
 }
 function deleteDropItem(id){
