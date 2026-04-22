@@ -231,7 +231,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   html,body{overflow-x:hidden}
   .desktop-layout{display:flex;gap:0;width:100%}
   .desktop-left{width:40%;flex-shrink:0;flex-grow:0}
-  .desktop-right{width:60%;flex-shrink:0;flex-grow:0;border-left:1px solid var(--pl);position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:scroll;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--pink) 30%,transparent) transparent}
+  .desktop-right{width:60%;flex-shrink:0;flex-grow:0;border-left:1px solid var(--pl);position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--pink) 30%,transparent) transparent}
   .desktop-right::-webkit-scrollbar{width:6px}
   .desktop-right::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--pink) 30%,transparent);border-radius:3px}
   .desktop-right::-webkit-scrollbar-track{background:transparent}
@@ -358,7 +358,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .pomo-gauge-time{font-size:38px;font-weight:700;color:var(--pd);font-variant-numeric:tabular-nums;letter-spacing:-2px}
 .pomo-gauge-phase{font-size:11px;color:var(--pm);font-weight:600;margin-top:2px}
 @media(min-width:768px){
-  .pomo-desktop{display:block;padding:16px;border-bottom:1px solid var(--pl)}
+  .pomo-desktop{display:block;padding:10px 16px;border-bottom:1px solid var(--pl)}
+  .pomo-desktop .pomo-gauge-wrap{margin-bottom:6px}
+  .pomo-desktop .pomo-gauge{width:120px;height:120px}
+  .pomo-desktop .pomo-gauge svg{width:120px;height:120px}
+  .pomo-desktop .pomo-gauge-bg,.pomo-desktop .pomo-gauge-fill{r:50;cx:60;cy:60;stroke-width:10}
+  .pomo-desktop .pomo-gauge-fill{stroke-dasharray:314}
+  .pomo-desktop .pomo-gauge-time{font-size:26px}
+  .pomo-desktop .pomo-gauge-phase{font-size:10px}
   .pomo-fab,.pomo-panel{display:none !important}
 }
 @media(max-width:767px){
