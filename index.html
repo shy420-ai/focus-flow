@@ -1679,18 +1679,18 @@ function renderDrop(){
   }
   todo.forEach((it,i)=>{
     h+='<div class="drop-item"'+(i===0?' style="border-left-color:var(--pd);background:var(--pl)"':'')+'>';
-    h+='<button class="drop-check" onclick="toggleDropDone(\''+it.id+'\')"></button>';
+    h+='<button class="drop-check" data-drop-done="'+it.id+'"></button>';
     h+='<div class="drop-name">'+it.name+'</div>';
-    h+='<button class="drop-del" onclick="event.stopPropagation();deleteDropItem(\''+it.id+'\')">✕</button>';
+    h+='<button class="drop-del" data-drop-del="'+it.id+'">✕</button>';
     h+='</div>';
   });
   if(done.length){
     h+='<div style="font-size:11px;color:#aaa;margin:12px 0 6px;font-weight:600">완료 '+done.length+'개</div>';
     done.forEach(it=>{
       h+='<div class="drop-item done">';
-      h+='<button class="drop-check" onclick="toggleDropDone(\''+it.id+'\')">✓</button>';
+      h+='<button class="drop-check" data-drop-done="'+it.id+'">✓</button>';
       h+='<div class="drop-name">'+it.name+'</div>';
-      h+='<button class="drop-del" onclick="event.stopPropagation();deleteDropItem(\''+it.id+'\')">✕</button>';
+      h+='<button class="drop-del" data-drop-del="'+it.id+'">✕</button>';
       h+='</div>';
     });
   }
@@ -1698,6 +1698,13 @@ function renderDrop(){
   // Focus input
   const inp=document.getElementById('drop-input');
   if(inp&&document.activeElement!==inp)setTimeout(()=>inp.focus(),100);
+  // Event delegation for drop buttons
+  wrap.onclick=function(e){
+    const del=e.target.closest('[data-drop-del]');
+    if(del){e.preventDefault();e.stopPropagation();deleteDropItem(del.dataset.dropDel);return;}
+    const done=e.target.closest('[data-drop-done]');
+    if(done){e.preventDefault();e.stopPropagation();toggleDropDone(done.dataset.dropDone);return;}
+  };
 }
 
 // ====== THEME SELECTOR ======
