@@ -1202,6 +1202,15 @@ document.addEventListener('mouseup',()=>{
 });
 
 document.addEventListener('click',()=>{if(activeMenu){activeMenu=null;renderTimeline();}});
+// Click empty timeline space to create block at that time
+document.getElementById('blocks-col').addEventListener('click',function(e){
+  if(e.target.closest('.block'))return; // Clicked on a block, not empty space
+  if(didDrag)return;
+  const rect=this.getBoundingClientRect();
+  const y=e.clientY-rect.top;
+  const hour=Math.round((START+y/PX)*2)/2; // Snap to 30min
+  if(hour>=0&&hour<24)openSheet(hour);
+});
 
 // ====== DESK DUMP (언젠가 할 것들 — 캘린더 아래) ======
 function addDeskDump(){
@@ -1634,7 +1643,9 @@ function renderSheetCatPills(){
 }
 
 // 시트
-function openSheet(){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');renderSheetCatPills();setTimeout(()=>document.getElementById('ri').focus(),300);}
+function openSheet(prefillTime){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');renderSheetCatPills();
+  if(prefillTime!==undefined){const h=Math.floor(prefillTime);const m=prefillTime%1>=0.5?'30':'00';document.getElementById('ri').value=h+':'+m+' 1시간';}
+  setTimeout(()=>document.getElementById('ri').focus(),300);}
 function closeSheet(){document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');document.getElementById('ri').value='';document.getElementById('parea').innerHTML='';preview=null;sheetCategory='';resetRecurUI();}
 
 // 퀵 스케줄링
