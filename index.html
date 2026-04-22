@@ -237,7 +237,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .desktop-right::-webkit-scrollbar-track{background:transparent}
   #view-cal.desktop-right{display:block !important}
   #view-inbox{display:none !important}
-  .view-tabs{display:none !important}
+  .view-tabs{justify-content:center}
+  .view-tabs .vtab{display:none}
+  .view-tabs #vhabit,.view-tabs #vdrop{display:inline-block}
 }
 @keyframes petalFall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(40px) rotate(180deg)}}
 .petal-fall{animation:petalFall 1.5s ease-out forwards;position:absolute;font-size:14px;pointer-events:none}
@@ -335,9 +337,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .recur-day-btn.active.sun,.recur-day-btn.active.sat{color:#fff}
 .recur-icon{font-size:10px;margin-left:3px;opacity:.7}
 
-/* Desktop: habits in right panel */
+/* Desktop: habits/drop in right panel */
 @media(min-width:768px){
-  #view-habit.desktop-right-habit{display:block !important;width:360px;flex-shrink:0;border-left:1px solid var(--pl);position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto}
+  #view-habit.show-panel,#view-drop.show-panel{display:block !important;width:360px;flex-shrink:0;border-left:1px solid var(--pl);position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto}
 }
 
 /* ===== Pomodoro Timer ===== */
@@ -534,7 +536,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 <!-- 습관 -->
-<div id="view-habit" class="desktop-right-habit" style="display:none">
+<div id="view-habit" style="display:none">
   <div class="habit-wrap" id="habit-content"></div>
 </div>
 </div><!-- /desktop-layout -->
@@ -845,8 +847,11 @@ function switchView(v){
     document.getElementById('view-tl').style.display='block';
     document.getElementById('view-cal').style.display='block';
     document.getElementById('view-inbox').style.display='block';
-    document.getElementById('view-habit').style.display=v==='habit'?'block':'none';
-    document.getElementById('view-drop').style.display=v==='drop'?'block':'none';
+    const habitEl=document.getElementById('view-habit');
+    const dropEl=document.getElementById('view-drop');
+    if(v==='habit'){habitEl.classList.add('show-panel');dropEl.classList.remove('show-panel');habitEl.style.display='block';dropEl.style.display='none';}
+    else if(v==='drop'){dropEl.classList.add('show-panel');habitEl.classList.remove('show-panel');dropEl.style.display='block';habitEl.style.display='none';}
+    else{habitEl.classList.remove('show-panel');dropEl.classList.remove('show-panel');habitEl.style.display='none';dropEl.style.display='none';}
   }else{
     document.getElementById('view-tl').style.display=v==='tl'?'block':'none';
     document.getElementById('view-cal').style.display=v==='cal'?'block':'none';
