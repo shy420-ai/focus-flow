@@ -800,12 +800,12 @@ function generateRecurringBlocks(ds){
 function allDates(){const s=new Set(blocks.filter(b=>b.type==='timeline'||b.type==='buffer'||(!b.type)).map(b=>b.date));s.add(todayStr());
   // add nearby dates that have recurring tasks
   for(let i=-3;i<=14;i++){const ds=addDays(todayStr(),i);if(getRecurringForDate(ds).length)s.add(ds);}
-  // limit past dates to 3 days max
+  // Sort: today first, then future dates, then past dates
   const today=todayStr();
   const arr=[...s].sort();
-  const todayIdx=arr.indexOf(today);
-  if(todayIdx>3)return arr.slice(todayIdx-3);
-  return arr;}
+  const past=arr.filter(d=>d<today).slice(-3);
+  const future=arr.filter(d=>d>=today);
+  return[...future,...past];}
 function daysFromNow(ds){if(!ds)return Infinity;return Math.round((new Date(ds+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000);}
 
 // 파싱
