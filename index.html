@@ -523,7 +523,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="desk-dump" style="margin-top:16px;border-top:1px solid var(--pl);padding-top:12px">
       <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px">📝 언젠가 할 것들</div>
       <div style="display:flex;gap:4px;margin-bottom:8px">
-        <input id="desk-dump-input" placeholder="메모..." style="flex:1;padding:6px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit" onkeydown="if(event.key==='Enter')addDeskDump()">
+        <input id="desk-dump-input" placeholder="메모..." style="flex:1;padding:6px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit" onkeydown="if(event.key==='Enter'&&!event.isComposing)addDeskDump()">
         <button class="pomo-btn" onclick="addDeskDump()" style="padding:4px 10px;font-size:11px">+</button>
       </div>
       <div id="desk-dump-list"></div>
@@ -1297,7 +1297,7 @@ function renderInbox(){
   let h='';
   // Quick input
   h+='<div class="inbox-input-row">';
-  h+='<input class="inbox-input" id="inbox-quick-input" placeholder="빠르게 할일 추가... (Enter)" onkeydown="if(event.key===\'Enter\'){addInboxItem(this.value);this.value=\'\';}">';
+  h+='<input class="inbox-input" id="inbox-quick-input" placeholder="빠르게 할일 추가... (Enter)" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addInboxItem(this.value);this.value=\'\';}">';
   h+='<button class="inbox-add-btn" onclick="const i=document.getElementById(\'inbox-quick-input\');addInboxItem(i.value);i.value=\'\';">+</button>';
   h+='</div>';
 
@@ -1664,7 +1664,7 @@ function renderDrop(){
   let h='';
   h+='<div style="font-size:13px;color:var(--pd);font-weight:700;margin-bottom:12px">🧠 뇌 비우기 — 일단 다 적어!</div>';
   h+='<div class="drop-input-row">';
-  h+='<input class="drop-input" id="drop-input" placeholder="머릿속에 있는 거 아무거나..." onkeydown="if(event.key===\'Enter\'){addDropItem(this.value);this.value=\'\';}">';
+  h+='<input class="drop-input" id="drop-input" placeholder="머릿속에 있는 거 아무거나..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addDropItem(this.value);this.value=\'\';}">';
   h+='<button class="drop-add-btn" onclick="const i=document.getElementById(\'drop-input\');addDropItem(i.value);i.value=\'\';">+</button>';
   h+='</div>';
   if(items.length>0){
@@ -1892,7 +1892,7 @@ function renderHabits(){
   // Habit add
   h+='<div class="habit-section-title">습관 관리</div>';
   h+='<div class="habit-input-row">';
-  h+='<input class="habit-input" id="habit-quick-input" placeholder="새 습관 추가... (Enter)" onkeydown="if(event.key===\'Enter\'){addHabit(this.value);this.value=\'\';}">';
+  h+='<input class="habit-input" id="habit-quick-input" placeholder="새 습관 추가... (Enter)" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addHabit(this.value);this.value=\'\';}">';
   h+='<button class="habit-add-btn" onclick="const i=document.getElementById(\'habit-quick-input\');addHabit(i.value);i.value=\'\';">+</button>';
   h+='</div>';
 
@@ -2374,7 +2374,7 @@ renderInbox=function(){
   });
   if(emergencyTodo.length<3){
     h+='<div class="emergency-input-row">';
-    h+='<input class="emergency-input" id="emergency-input" placeholder="중요한 할일 추가..." onkeydown="if(event.key===\'Enter\'){addEmergencyTodo(this.value);this.value=\'\';}">';
+    h+='<input class="emergency-input" id="emergency-input" placeholder="중요한 할일 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addEmergencyTodo(this.value);this.value=\'\';}">';
     h+='<button class="emergency-add-btn" onclick="const i=document.getElementById(\'emergency-input\');addEmergencyTodo(i.value);i.value=\'\';">+</button>';
     h+='</div>';
   }
@@ -2391,7 +2391,7 @@ renderInbox=function(){
 
   // Quick input
   h+='<div class="inbox-input-row">';
-  h+='<input class="inbox-input" id="inbox-quick-input" placeholder="빠르게 할일 추가... (Enter)" onkeydown="if(event.key===\'Enter\'){addInboxItem(this.value);this.value=\'\';}">';
+  h+='<input class="inbox-input" id="inbox-quick-input" placeholder="빠르게 할일 추가... (Enter)" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addInboxItem(this.value);this.value=\'\';}">';
   h+='<button class="inbox-add-btn" onclick="const i=document.getElementById(\'inbox-quick-input\');addInboxItem(i.value);i.value=\'\';">+</button>';
   h+='</div>';
 
