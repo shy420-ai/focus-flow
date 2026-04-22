@@ -637,6 +637,7 @@ function doLogin(){
 }
 // Skip login — work offline with localStorage. Sync when logged in.
 function startWithoutLogin(){
+  localStorage.setItem('ff_skip_login','1');
   document.getElementById('login-overlay').style.display='none';
   viewDate=todayStr();curView='tl';
   switchView('tl');
@@ -644,10 +645,16 @@ function startWithoutLogin(){
 auth.onAuthStateChanged(user=>{
   if(user){
     _uid=user.uid;
+    localStorage.removeItem('ff_skip_login');
     document.getElementById('login-overlay').style.display='none';
     viewDate=todayStr();curView='tl';
     loadFromFirestore();
     listenFirestore();
+    switchView('tl');
+  }else if(localStorage.getItem('ff_skip_login')){
+    // Previously chose to skip login — stay offline
+    document.getElementById('login-overlay').style.display='none';
+    viewDate=todayStr();curView='tl';
     switchView('tl');
   }else{
     document.getElementById('login-overlay').style.display='flex';
