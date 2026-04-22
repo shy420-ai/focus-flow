@@ -1635,7 +1635,8 @@ function toggleDropDone(id){
   const items=getDropItems();
   const it=items.find(i=>String(i.id)===String(id));
   if(it){it.done=!it.done;saveDropItems(items);
-    setTimeout(renderDrop,0);
+    document.getElementById('drop-content').innerHTML='';
+    renderDrop();
     if(it.done)showToast();
   }
 }
@@ -1643,7 +1644,8 @@ function deleteDropItem(id){
   let items=getDropItems();
   items=items.filter(i=>String(i.id)!==String(id));
   saveDropItems(items);
-  setTimeout(renderDrop,0);
+  document.getElementById('drop-content').innerHTML='';
+  renderDrop();
 }
 function shuffleDrop(){
   const items=getDropItems();
@@ -1700,14 +1702,14 @@ function renderDrop(){
   // Focus input
   const inp=document.getElementById('drop-input');
   if(inp&&document.activeElement!==inp)setTimeout(()=>inp.focus(),100);
-  // Event delegation for drop buttons
-  wrap.onclick=function(e){
-    const del=e.target.closest('[data-drop-del]');
-    if(del){e.preventDefault();e.stopPropagation();deleteDropItem(del.dataset.dropDel);return;}
-    const done=e.target.closest('[data-drop-done]');
-    if(done){e.preventDefault();e.stopPropagation();toggleDropDone(done.dataset.dropDone);return;}
-  };
 }
+// Event delegation for drop - register once
+document.addEventListener('click',function(e){
+  const del=e.target.closest('[data-drop-del]');
+  if(del){e.preventDefault();e.stopPropagation();deleteDropItem(del.dataset.dropDel);return;}
+  const done=e.target.closest('[data-drop-done]');
+  if(done){e.preventDefault();e.stopPropagation();toggleDropDone(done.dataset.dropDone);return;}
+});
 
 // ====== THEME SELECTOR ======
 const THEMES={
