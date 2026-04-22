@@ -626,11 +626,13 @@ const auth=firebase.auth();
 const db=firebase.firestore();
 let _uid=null,_unsub=null,_skipRemote=false;
 
-// Keep auth persistent across sessions
-auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+// Keep auth persistent across sessions — must complete before listening
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
 function doLogin(){
-  auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e=>{
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
+    return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+  }).catch(e=>{
     // Popup blocked? Try redirect
     auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
   });
@@ -642,17 +644,22 @@ function startWithoutLogin(){
   viewDate=todayStr();curView='tl';
   switchView('tl');
 }
+// If previously logged in, hide overlay immediately to prevent flash
+if(localStorage.getItem('ff_uid')||localStorage.getItem('ff_skip_login')){
+  document.getElementById('login-overlay').style.display='none';
+}
 auth.onAuthStateChanged(user=>{
   if(user){
     _uid=user.uid;
+    localStorage.setItem('ff_uid',user.uid);
     localStorage.removeItem('ff_skip_login');
     document.getElementById('login-overlay').style.display='none';
     viewDate=todayStr();curView='tl';
     loadFromFirestore();
     listenFirestore();
     switchView('tl');
-  }else if(localStorage.getItem('ff_skip_login')){
-    // Previously chose to skip login — stay offline
+  }else if(localStorage.getItem('ff_skip_login')||localStorage.getItem('ff_uid')){
+    // Previously logged in or skipped — don't show login, load from local
     document.getElementById('login-overlay').style.display='none';
     viewDate=todayStr();curView='tl';
     switchView('tl');
