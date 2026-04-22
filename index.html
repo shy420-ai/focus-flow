@@ -1042,6 +1042,7 @@ function renderTimeline(){
       let menuHTML='<div class="block-menu">';
       if(b.isRecurring){
         menuHTML+='<button class="bmb bmb-done" onclick="completeRecurring(\''+b.recurId+'\',\''+b.date+'\',event)">&#10003; 완료</button>';
+        menuHTML+='<button class="bmb" onclick="editRecurring(\''+b.recurId+'\',event)">수정</button>';
         menuHTML+='<button class="bmb bmb-del" onclick="skipRecurring(\''+b.recurId+'\',\''+b.date+'\',event)">이번만 삭제</button>';
         menuHTML+='<button class="bmb bmb-del" onclick="delRecurring(\''+b.recurId+'\',event)">완전 삭제</button>';
       } else {
@@ -1051,7 +1052,14 @@ function renderTimeline(){
       }
       menuHTML+='</div>';
       const recurIcon=b.isRecurring?'<span class="recur-icon">\uD83D\uDD01</span>':'';
-      const quickBtns=b.isRecurring?'':'<div class="b-quick"><button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();toggleDone(\''+b.id+'\')" onclick="event.stopPropagation();toggleDone(\''+b.id+'\')" style="'+(b.done?'background:var(--pd);color:#fff;border-color:var(--pd)':'')+'">✓</button><button class="b-qbtn b-qbtn-more" ontouchend="event.stopPropagation();event.preventDefault();activeMenu=String(activeMenu)===\''+b.id+'\'?null:\''+b.id+'\';renderTimeline()" onclick="event.stopPropagation();activeMenu=String(activeMenu)===\''+b.id+'\'?null:\''+b.id+'\';renderTimeline()">⋯</button></div>';
+      let quickBtns='<div class="b-quick">';
+      if(b.isRecurring){
+        const rDone=blocks.some(x=>x.recurDoneId===b.recurId&&x.date===b.date&&x.done);
+        quickBtns+='<button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();completeRecurring(\''+b.recurId+'\',\''+b.date+'\',event)" onclick="event.stopPropagation();completeRecurring(\''+b.recurId+'\',\''+b.date+'\',event)" style="'+(rDone?'background:var(--pd);color:#fff;border-color:var(--pd)':'')+'">✓</button>';
+      }else{
+        quickBtns+='<button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();toggleDone(\''+b.id+'\')" onclick="event.stopPropagation();toggleDone(\''+b.id+'\')" style="'+(b.done?'background:var(--pd);color:#fff;border-color:var(--pd)':'')+'">✓</button>';
+      }
+      quickBtns+='<button class="b-qbtn b-qbtn-more" ontouchend="event.stopPropagation();event.preventDefault();activeMenu=String(activeMenu)===\''+b.id+'\'?null:\''+b.id+'\';renderTimeline()" onclick="event.stopPropagation();activeMenu=String(activeMenu)===\''+b.id+'\'?null:\''+b.id+'\';renderTimeline()">⋯</button></div>';
       el.innerHTML=menuHTML+'<div class="b-inner"><div class="b-name">'+catTagHTML(b.category)+(b.done?'&#10003; ':'')+b.name+recurIcon+'</div><div class="b-time">'+fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour)+'</div>'+(b.memo?'<div class="b-memo">'+b.memo+'</div>':'')+'</div>'+quickBtns+(b.isRecurring?'':'<div class="rh" data-id="'+b.id+'"></div>');
       if(!b.isRecurring){
         el.addEventListener('touchstart',onTS,{passive:true});
@@ -1511,6 +1519,14 @@ function addRecurringTask(p){
   recurring.push(r);
   saveRecurring();
   render();
+}
+function editRecurring(recurId,e){
+  if(e)e.stopPropagation();
+  const r=recurring.find(x=>x.id==recurId);
+  if(!r)return;
+  const newName=prompt('이름 수정:',r.name);
+  if(newName!==null&&newName.trim()){r.name=newName.trim();activeMenu=null;saveRecurring();render();}
+  else{activeMenu=null;renderTimeline();}
 }
 function skipRecurring(recurId,dateStr,e){
   if(e)e.stopPropagation();
