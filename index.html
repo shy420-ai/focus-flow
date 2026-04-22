@@ -892,23 +892,38 @@ window.addEventListener('resize',()=>{if(isDesktop()){document.getElementById('v
 // 렌더
 function render(){renderDateTabs();renderTimeline();renderSummary();if(curView==='inbox'||isDesktop())renderInbox();if(curView==='habit')renderHabits();if(curView==='drop')renderDrop();if(isDesktop()){document.getElementById('view-tl').style.display='block';document.getElementById('view-cal').style.display='block';document.getElementById('view-inbox').style.display='block';}else if(curView==='cal'){renderCal();}}
 
+let _showPastDates=false;
 function renderDateTabs(){
   const wrap=document.getElementById('date-tabs');wrap.innerHTML='';
-  allDates().forEach(ds=>{
-    const realCnt=blocks.filter(b=>(b.type==='timeline'||(!b.type&&!b.isBuf))&&b.date===ds&&!b.isBuf).length;
-    const recurCnt=generateRecurringBlocks(ds).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===ds)).length;
-    const cnt=realCnt+recurCnt;
-    const btn=document.createElement('button');btn.className='dtab'+(ds===viewDate?' active':'');
-    btn.textContent=dateLabel(ds)+(cnt?' '+('·'.repeat(Math.min(cnt,3))):'');
-    btn.onclick=()=>{viewDate=ds;activeMenu=null;render();if(curView==='cal'){calY=parseInt(ds.split('-')[0]);calM=parseInt(ds.split('-')[1])-1;calSel=ds;renderCal();}};
-    wrap.appendChild(btn);
-  });
+  const all=allDates();
+  const today=todayStr();
+  const past=all.filter(d=>d<today);
+  const todayAndFuture=all.filter(d=>d>=today);
+  // Past toggle button
+  if(past.length>0){
+    const toggle=document.createElement('button');
+    toggle.className='dtab';
+    toggle.textContent=_showPastDates?'▸':'◂ '+past.length;
+    toggle.style.cssText='font-size:11px;padding:4px 8px;min-width:auto';
+    toggle.onclick=()=>{_showPastDates=!_showPastDates;renderDateTabs();};
+    wrap.appendChild(toggle);
+  }
+  // Show past dates only if toggled
+  if(_showPastDates){
+    past.forEach(ds=>{ wrap.appendChild(_makeDateTab(ds)); });
+  }
+  // Today and future always visible
+  todayAndFuture.forEach(ds=>{ wrap.appendChild(_makeDateTab(ds)); });
   document.getElementById('today-label').textContent=dateLabel(viewDate);
-  // Auto-scroll to today/active tab (start position)
-  requestAnimationFrame(()=>{
-    const activeBtn=wrap.querySelector('.dtab.active');
-    if(activeBtn)activeBtn.scrollIntoView({inline:'start',block:'nearest',behavior:'auto'});
-  });
+}
+function _makeDateTab(ds){
+  const realCnt=blocks.filter(b=>(b.type==='timeline'||(!b.type&&!b.isBuf))&&b.date===ds&&!b.isBuf).length;
+  const recurCnt=generateRecurringBlocks(ds).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===ds)).length;
+  const cnt=realCnt+recurCnt;
+  const btn=document.createElement('button');btn.className='dtab'+(ds===viewDate?' active':'');
+  btn.textContent=dateLabel(ds)+(cnt?' '+('·'.repeat(Math.min(cnt,3))):'');
+  btn.onclick=()=>{viewDate=ds;activeMenu=null;render();if(curView==='cal'){calY=parseInt(ds.split('-')[0]);calM=parseInt(ds.split('-')[1])-1;calSel=ds;renderCal();}};
+  return btn;
 }
 
 function renderSummary(){
