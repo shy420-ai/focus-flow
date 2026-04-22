@@ -263,7 +263,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .drop-item.done .drop-check{border-color:#ccc;color:#ccc}
 .drop-item .drop-name{flex:1;font-size:14px;color:#333}
 .drop-item.done .drop-name{text-decoration:line-through;color:#aaa}
-.drop-item .drop-del{width:24px;height:24px;border-radius:6px;border:none;background:none;color:#ccc;font-size:14px;cursor:pointer}
+.drop-item .drop-del{width:32px;height:32px;border-radius:8px;border:none;background:rgba(0,0,0,.04);color:#aaa;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .drop-empty{text-align:center;color:#bbb;font-size:13px;padding:60px 20px;line-height:1.8}
 .habit-input-row{display:flex;gap:8px;margin-bottom:16px}
 .habit-input{flex:1;border:1.5px solid var(--pink);border-radius:12px;padding:12px 14px;font-size:14px;color:#333;font-family:inherit;outline:none;background:#fff}
@@ -1681,7 +1681,7 @@ function renderDrop(){
     h+='<div class="drop-item"'+(i===0?' style="border-left-color:var(--pd);background:var(--pl)"':'')+'>';
     h+='<button class="drop-check" onclick="toggleDropDone(\''+it.id+'\')"></button>';
     h+='<div class="drop-name">'+it.name+'</div>';
-    h+='<button class="drop-del" onclick="deleteDropItem(\''+it.id+'\')">✕</button>';
+    h+='<button class="drop-del" onclick="event.stopPropagation();deleteDropItem(\''+it.id+'\')">✕</button>';
     h+='</div>';
   });
   if(done.length){
@@ -1690,7 +1690,7 @@ function renderDrop(){
       h+='<div class="drop-item done">';
       h+='<button class="drop-check" onclick="toggleDropDone(\''+it.id+'\')">✓</button>';
       h+='<div class="drop-name">'+it.name+'</div>';
-      h+='<button class="drop-del" onclick="deleteDropItem(\''+it.id+'\')">✕</button>';
+      h+='<button class="drop-del" onclick="event.stopPropagation();deleteDropItem(\''+it.id+'\')">✕</button>';
       h+='</div>';
     });
   }
