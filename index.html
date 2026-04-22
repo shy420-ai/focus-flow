@@ -628,14 +628,23 @@ let _uid=null,_unsub=null,_skipRemote=false;
 // Keep auth persistent across sessions — must complete before listening
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
+let _loginBusy=false;
 function doLogin(){
+  if(_loginBusy)return;
+  _loginBusy=true;
   const provider=new firebase.auth.GoogleAuthProvider();
+  const isMobile=/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
+    if(isMobile){
+      return auth.signInWithRedirect(provider);
+    }
     return auth.signInWithPopup(provider);
   }).catch(e=>{
-    if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
-      // Popup blocked → try redirect
+    _loginBusy=false;
+    if(e.code==='auth/popup-blocked'||e.code==='auth/cancelled-popup-request'){
       auth.signInWithRedirect(provider);
+    }else if(e.code==='auth/popup-closed-by-user'){
+      // user closed, do nothing
     }else if(e.code){
       alert('로그인 에러: '+e.message);
     }
