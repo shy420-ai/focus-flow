@@ -335,10 +335,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .recur-day-btn.active.sun,.recur-day-btn.active.sat{color:#fff}
 .recur-icon{font-size:10px;margin-left:3px;opacity:.7}
 
-/* Desktop: habits/drop in right panel */
-@media(min-width:768px){
-  #view-habit.show-panel,#view-drop.show-panel{display:block !important;width:360px;flex-shrink:0;border-left:1px solid var(--pl);position:sticky;top:140px;height:calc(100vh - 140px);overflow-y:auto}
-}
+/* Desktop: habits/drop use desktop-right class dynamically */
 
 /* ===== Pomodoro Timer ===== */
 .pomo-fab{position:fixed;bottom:28px;left:22px;width:54px;height:54px;border-radius:27px;background:var(--pink);border:none;color:#fff;font-size:22px;cursor:pointer;box-shadow:0 4px 16px color-mix(in srgb,var(--pink) 50%,transparent);display:flex;align-items:center;justify-content:center;z-index:200}
@@ -857,13 +854,21 @@ function switchView(v){
   curView=v;
   if(isDesktop()){
     document.getElementById('view-tl').style.display='block';
-    document.getElementById('view-cal').style.display='block';
     document.getElementById('view-inbox').style.display='block';
+    const calEl=document.getElementById('view-cal');
     const habitEl=document.getElementById('view-habit');
     const dropEl=document.getElementById('view-drop');
-    if(v==='habit'){habitEl.classList.add('show-panel');dropEl.classList.remove('show-panel');habitEl.style.display='block';dropEl.style.display='none';}
-    else if(v==='drop'){dropEl.classList.add('show-panel');habitEl.classList.remove('show-panel');dropEl.style.display='block';habitEl.style.display='none';}
-    else{habitEl.classList.remove('show-panel');dropEl.classList.remove('show-panel');habitEl.style.display='none';dropEl.style.display='none';}
+    // On desktop: habit/drop replace the calendar panel
+    if(v==='habit'){
+      calEl.style.display='none';habitEl.style.display='block';dropEl.style.display='none';
+      habitEl.className='desktop-right';
+    }else if(v==='drop'){
+      calEl.style.display='none';habitEl.style.display='none';dropEl.style.display='block';
+      dropEl.className='desktop-right';
+    }else{
+      calEl.style.display='block';habitEl.style.display='none';dropEl.style.display='none';
+      habitEl.className='';dropEl.className='';
+    }
   }else{
     document.getElementById('view-tl').style.display=v==='tl'?'block':'none';
     document.getElementById('view-cal').style.display=v==='cal'?'block':'none';
