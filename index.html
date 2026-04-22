@@ -38,6 +38,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .view-tabs{background:#fff;padding:8px 16px;display:flex;gap:8px;border-bottom:1px solid var(--pl);position:sticky;top:140px;z-index:98;justify-content:center}
 .vtab{padding:7px 18px;border-radius:99px;border:1.5px solid var(--pl);font-size:13px;color:#aaa;cursor:pointer;background:none;font-family:inherit;font-weight:500}
 .vtab.active{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
+.vtab[draggable=true]{cursor:grab}.vtab[draggable=true]:active{cursor:grabbing}
+.vtab.drag-over-tab{border-left:3px solid var(--pd)}
 
 .summary{display:none}
 .chip{background:var(--pl);border:1px solid var(--pink);border-radius:99px;padding:4px 12px;font-size:12px;color:var(--pd);font-weight:500}
@@ -442,13 +444,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="date-tabs" id="date-tabs"></div>
-<div class="view-tabs">
-  <button class="vtab active" id="vtl" onclick="switchView('tl')">타임라인</button>
-  <button class="vtab" id="vinbox" onclick="switchView('inbox')" style="display:none">할일</button>
-  <button class="vtab" id="vcal" onclick="switchView('cal')">월별 캘린더</button>
-  <button class="vtab" id="vhabit" onclick="switchView('habit')">습관</button>
-  <button class="vtab" id="vdrop" onclick="switchView('drop')">드롭</button>
-</div>
+<div class="view-tabs" id="view-tabs"></div>
 <div class="summary" id="summary"></div>
 
 <!-- 데스크톱 2컬럼 래퍼 -->
@@ -916,11 +912,7 @@ function switchView(v){
     document.getElementById('view-habit').style.display=v==='habit'?'block':'none';
     document.getElementById('view-drop').style.display=v==='drop'?'block':'none';
   }
-  document.getElementById('vtl').className='vtab'+(v==='tl'?' active':'');
-  document.getElementById('vcal').className='vtab'+(v==='cal'?' active':'');
-  document.getElementById('vinbox').className='vtab'+(v==='inbox'?' active':'');
-  document.getElementById('vhabit').className='vtab'+(v==='habit'?' active':'');
-  document.getElementById('vdrop').className='vtab'+(v==='drop'?' active':'');
+  renderViewTabs();
   if(v==='cal'||isDesktop())renderCal();
   if(v==='inbox')renderInbox();
   if(v==='habit')renderHabits();
@@ -1828,6 +1820,70 @@ document.addEventListener('click',function(e){
   const edit=e.target.closest('[data-drop-edit]');
   if(edit){e.preventDefault();e.stopPropagation();editDropItem(edit.dataset.dropEdit);return;}
 });
+
+// ====== VIEW TABS (draggable order) ======
+const DEFAULT_TAB_ORDER=['tl','cal','habit','drop'];
+const TAB_LABELS={tl:'타임라인',cal:'월별 캘린더',habit:'습관',drop:'드롭'};
+function getTabOrder(){
+  try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=4)return arr;}}catch{}
+  return DEFAULT_TAB_ORDER.slice();
+}
+function saveTabOrder(order){localStorage.setItem('ff_tab_order',JSON.stringify(order));}
+function renderViewTabs(){
+  const wrap=document.getElementById('view-tabs');
+  wrap.innerHTML='';
+  const order=getTabOrder();
+  order.forEach(key=>{
+    const btn=document.createElement('button');
+    btn.className='vtab'+(key===curView?' active':'');
+    btn.id='v'+key;
+    btn.textContent=TAB_LABELS[key];
+    btn.draggable=true;
+    btn.dataset.tabKey=key;
+    btn.onclick=()=>switchView(key);
+    wrap.appendChild(btn);
+  });
+}
+// Tab drag reorder
+let _tabDragKey=null;
+document.addEventListener('dragstart',function(e){
+  const tab=e.target.closest('[data-tab-key]');
+  if(!tab)return;
+  _tabDragKey=tab.dataset.tabKey;
+  e.dataTransfer.effectAllowed='move';
+  tab.style.opacity='0.4';
+});
+document.addEventListener('dragend',function(e){
+  const tab=e.target.closest('[data-tab-key]');
+  if(tab)tab.style.opacity='1';
+  document.querySelectorAll('.vtab.drag-over-tab').forEach(el=>el.classList.remove('drag-over-tab'));
+  _tabDragKey=null;
+});
+document.addEventListener('dragover',function(e){
+  const tab=e.target.closest('[data-tab-key]');
+  if(!tab||!_tabDragKey)return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+  document.querySelectorAll('.vtab.drag-over-tab').forEach(el=>el.classList.remove('drag-over-tab'));
+  tab.classList.add('drag-over-tab');
+});
+document.addEventListener('drop',function(e){
+  const tab=e.target.closest('[data-tab-key]');
+  if(!tab||!_tabDragKey)return;
+  e.preventDefault();
+  const toKey=tab.dataset.tabKey;
+  if(_tabDragKey===toKey)return;
+  const order=getTabOrder();
+  const fromIdx=order.indexOf(_tabDragKey);
+  const toIdx=order.indexOf(toKey);
+  if(fromIdx<0||toIdx<0)return;
+  order.splice(fromIdx,1);
+  order.splice(toIdx,0,_tabDragKey);
+  saveTabOrder(order);
+  renderViewTabs();
+  _tabDragKey=null;
+});
+renderViewTabs();
 
 // ====== THEME SELECTOR ======
 const THEMES={
