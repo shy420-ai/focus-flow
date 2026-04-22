@@ -1633,14 +1633,14 @@ function addDropItem(text){
 }
 function toggleDropDone(id){
   const items=getDropItems();
-  const it=items.find(i=>i.id===id);
+  const it=items.find(i=>String(i.id)===String(id));
   if(it){it.done=!it.done;saveDropItems(items);renderDrop();
     if(it.done)showToast();
   }
 }
 function deleteDropItem(id){
   let items=getDropItems();
-  items=items.filter(i=>i.id!==id);
+  items=items.filter(i=>String(i.id)!==String(id));
   saveDropItems(items);renderDrop();
 }
 function shuffleDrop(){
