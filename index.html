@@ -1623,7 +1623,7 @@ function getDropItems(){
 }
 function saveDropItems(items){
   localStorage.setItem('ff_drops',JSON.stringify(items));
-  if(uid)db.collection('users').doc(uid).update({drops:items}).catch(()=>{});
+  if(_uid)db.collection('users').doc(_uid).update({drops:items}).catch(()=>{});
 }
 function addDropItem(text){
   if(!text||!text.trim())return;
