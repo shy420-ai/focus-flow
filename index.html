@@ -1249,6 +1249,7 @@ function openMemo(id,e){
   document.getElementById('mtitle').textContent=b.name+' 메모';
   document.getElementById('minput').value=b.memo||'';
   document.getElementById('moverlay').classList.add('show');
+  history.pushState({modal:'memo'},'');
   activeMenu=null;renderTimeline();
 }
 function closeMemo(){document.getElementById('moverlay').classList.remove('show');memoId=null;}
@@ -1640,8 +1641,16 @@ function renderSheetCatPills(){
 // 시트
 function openSheet(prefillTime){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');renderSheetCatPills();
   if(prefillTime!==undefined){const h=Math.floor(prefillTime);const m=prefillTime%1>=0.5?'30':'00';document.getElementById('ri').value=h+':'+m+' 1시간';}
+  history.pushState({modal:'sheet'},'');
   setTimeout(()=>document.getElementById('ri').focus(),300);}
 function closeSheet(){document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');document.getElementById('ri').value='';document.getElementById('parea').innerHTML='';preview=null;sheetCategory='';resetRecurUI();}
+// Back button closes modals
+window.addEventListener('popstate',function(e){
+  const sheet=document.getElementById('sheet');
+  const memo=document.getElementById('moverlay');
+  if(sheet&&sheet.classList.contains('show')){closeSheet();return;}
+  if(memo&&memo.classList.contains('show')){closeMemo();return;}
+});
 
 // 퀵 스케줄링
 let qsMinutes=null,qsCat='';
