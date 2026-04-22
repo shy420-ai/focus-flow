@@ -1060,15 +1060,13 @@ function renderTimeline(){
         quickBtns+='<button class="b-qbtn" ontouchend="event.stopPropagation();event.preventDefault();toggleDone(\''+b.id+'\')" onclick="event.stopPropagation();toggleDone(\''+b.id+'\')" style="'+(b.done?'background:var(--pd);color:#fff;border-color:var(--pd)':'')+'">✓</button>';
       }
       quickBtns+='<button class="b-qbtn b-qbtn-more" ontouchend="event.stopPropagation();event.preventDefault();activeMenu=String(activeMenu)===\''+b.id+'\'?null:\''+b.id+'\';renderTimeline()" onclick="event.stopPropagation();activeMenu=String(activeMenu)===\''+b.id+'\'?null:\''+b.id+'\';renderTimeline()">⋯</button></div>';
-      el.innerHTML=menuHTML+'<div class="b-inner"><div class="b-name">'+catTagHTML(b.category)+(b.done?'&#10003; ':'')+b.name+recurIcon+'</div><div class="b-time">'+fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour)+'</div>'+(b.memo?'<div class="b-memo">'+b.memo+'</div>':'')+'</div>'+quickBtns+(b.isRecurring?'':'<div class="rh" data-id="'+b.id+'"></div>');
-      if(!b.isRecurring){
-        el.addEventListener('touchstart',onTS,{passive:true});
-        el.addEventListener('touchmove',onTM,{passive:false});
-        el.addEventListener('touchend',onTE);
-        el.addEventListener('mousedown',onMS);
-        const rh=el.querySelector('.rh');
-        if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
-      }
+      el.innerHTML=menuHTML+'<div class="b-inner"><div class="b-name">'+catTagHTML(b.category)+(b.done?'&#10003; ':'')+b.name+recurIcon+'</div><div class="b-time">'+fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour)+'</div>'+(b.memo?'<div class="b-memo">'+b.memo+'</div>':'')+'</div>'+quickBtns+'<div class="rh" data-id="'+b.id+'"'+(b.isRecurring?' data-recur="'+b.recurId+'"':'')+'></div>';
+      el.addEventListener('touchstart',onTS,{passive:true});
+      el.addEventListener('touchmove',onTM,{passive:false});
+      el.addEventListener('touchend',onTE);
+      el.addEventListener('mousedown',onMS);
+      const rh=el.querySelector('.rh');
+      if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
       // Menu only opens via ⋯ button, no long-press menu
       el.addEventListener('click',ev=>{ev.stopPropagation();});
     } else {
@@ -1125,10 +1123,27 @@ function onTM(e){
   if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,36)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
   e.preventDefault();
 }
+function saveRecurDrag(id){
+  // If dragged block was recurring, sync changes back to recurring array
+  const el=document.querySelector('.block[data-id="'+id+'"]');
+  if(!el)return;
+  const rh=el.querySelector('.rh[data-recur]');
+  if(!rh)return;
+  const recurId=rh.dataset.recur;
+  const allB=generateRecurringBlocks(viewDate);
+  const draggedB=allB.find(x=>String(x.id)===String(id));
+  if(!draggedB)return;
+  const r=recurring.find(x=>String(x.id)===String(recurId));
+  if(r){r.startHour=draggedB.startHour;r.durHour=draggedB.durHour;saveRecurring();}
+}
 function onTE(){
   clearTimeout(holdTimer);
   const wasDrag=!!dragState;
-  if(dragState){const el=document.querySelector('.block[data-id="'+dragState.id+'"]');if(el)el.classList.remove('dragging');save();}
+  if(dragState){
+    const el=document.querySelector('.block[data-id="'+dragState.id+'"]');if(el)el.classList.remove('dragging');
+    saveRecurDrag(dragState.id);
+    save();
+  }
   dragState=null;holdReady=false;
   if(wasDrag){
     // Actual drag happened — keep didDrag=true briefly so click handler ignores it
@@ -1178,7 +1193,7 @@ document.addEventListener('mousemove',e=>{
 });
 document.addEventListener('mouseup',()=>{
   clearTimeout(holdTimer);
-  if(dragState){const el=document.querySelector('.block[data-id="'+dragState.id+'"]');if(el)el.classList.remove('dragging');save();}
+  if(dragState){const el=document.querySelector('.block[data-id="'+dragState.id+'"]');if(el)el.classList.remove('dragging');saveRecurDrag(dragState.id);save();}
   dragState=null;holdReady=false;
 });
 
