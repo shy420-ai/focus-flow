@@ -411,9 +411,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div style="font-size:64px;margin-bottom:8px">💗</div>
   <h1>Focus Flow</h1>
   <p>ADHD 집중 플래너</p>
-  <button id="login-btn" onclick="doLogin()">Google로 시작하기</button>
-  <button onclick="startWithoutLogin()" style="background:transparent;color:var(--pd);border:1.5px solid var(--pd);margin-top:4px">바로 시작하기</button>
-  <p style="font-size:10px;color:#bbb;max-width:240px;text-align:center">Google 로그인 = 기기 간 싱크<br>바로 시작 = 이 기기에서만 저장</p>
+  <div id="login-form" style="display:flex;flex-direction:column;gap:8px;width:260px;margin-top:8px">
+    <input id="login-email" type="email" placeholder="이메일" style="padding:12px 14px;border-radius:10px;border:1.5px solid #ddd;font-size:14px;font-family:inherit;outline:none;text-align:center">
+    <input id="login-pw" type="password" placeholder="비밀번호 (6자 이상)" style="padding:12px 14px;border-radius:10px;border:1.5px solid #ddd;font-size:14px;font-family:inherit;outline:none;text-align:center">
+    <button id="login-btn" onclick="doEmailLogin()" style="padding:14px 32px;border-radius:12px;border:none;background:var(--pink);color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit">로그인 / 회원가입</button>
+    <button id="google-btn" onclick="doLogin()" style="padding:12px 32px;border-radius:12px;border:1.5px solid #ddd;background:#fff;color:#333;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18"> Google 로그인</button>
+  </div>
+  <button onclick="startWithoutLogin()" style="background:transparent;color:var(--pd);border:1.5px solid var(--pd);margin-top:8px;padding:14px 32px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">로그인 없이 바로 시작</button>
+  <p style="font-size:10px;color:#bbb;max-width:240px;text-align:center;margin-top:8px">로그인 = 기기 간 싱크<br>바로 시작 = 이 기기에서만 저장</p>
   <p id="login-error" style="font-size:11px;color:#E24B4A;max-width:280px;text-align:center;display:none"></p>
 </div>
 <canvas id="confetti"></canvas>
@@ -627,6 +632,31 @@ let _uid=null,_unsub=null,_skipRemote=false;
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
 let _loginBusy=false;
+function doEmailLogin(){
+  if(_loginBusy)return;
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-pw').value;
+  if(!email||!pw){showLoginError('이메일과 비밀번호를 입력해주세요');return;}
+  if(pw.length<6){showLoginError('비밀번호는 6자 이상이어야 해요');return;}
+  _loginBusy=true;
+  const btn=document.getElementById('login-btn');
+  if(btn){btn.textContent='로그인 중...';btn.disabled=true;}
+  // Try login first, if user doesn't exist → sign up
+  auth.signInWithEmailAndPassword(email,pw).catch(e=>{
+    if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'){
+      // New user → create account
+      return auth.createUserWithEmailAndPassword(email,pw);
+    }
+    throw e;
+  }).then(()=>{
+    // Success — onAuthStateChanged handles the rest
+  }).catch(e=>{
+    _loginBusy=false;
+    if(btn){btn.textContent='로그인 / 회원가입';btn.disabled=false;}
+    const msgs={'auth/invalid-email':'이메일 형식이 올바르지 않아요','auth/wrong-password':'비밀번호가 틀렸어요','auth/email-already-in-use':'이미 가입된 이메일이에요. 비밀번호를 확인해주세요','auth/weak-password':'비밀번호가 너무 짧아요 (6자 이상)','auth/too-many-requests':'너무 많이 시도했어요. 잠시 후 다시 해주세요','auth/invalid-credential':'비밀번호가 틀렸어요'};
+    showLoginError(msgs[e.code]||'로그인 실패: '+e.message);
+  });
+}
 function showLoginError(msg){
   const el=document.getElementById('login-error');
   if(el){el.textContent=msg;el.style.display='block';}
