@@ -2689,6 +2689,21 @@ migrateBlocks();
 
 buildGrid();render();applyMode();
 </script>
-<script>if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});</script>
+<script>if('serviceWorker' in navigator){
+  const SW_VER='v6';
+  if(localStorage.getItem('ff_sw_ver')!==SW_VER){
+    // One-time: clear old caches + re-register SW
+    navigator.serviceWorker.getRegistrations().then(regs=>{
+      regs.forEach(r=>r.unregister());
+    }).then(()=>caches.keys()).then(keys=>{
+      return Promise.all(keys.map(k=>caches.delete(k)));
+    }).then(()=>{
+      localStorage.setItem('ff_sw_ver',SW_VER);
+      navigator.serviceWorker.register('sw.js');
+    }).catch(()=>{navigator.serviceWorker.register('sw.js').catch(()=>{});});
+  }else{
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  }
+}</script>
 </body>
 </html>
