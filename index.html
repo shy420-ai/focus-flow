@@ -1067,7 +1067,7 @@ function renderTimeline(){
         el.addEventListener('touchend',onTE);
         el.addEventListener('mousedown',onMS);
         const rh=el.querySelector('.rh');
-        if(rh){rh.addEventListener('touchstart',onRS,{passive:false});rh.addEventListener('mousedown',onMRS);}
+        if(rh){rh.addEventListener('touchstart',onRS,{passive:true});rh.addEventListener('mousedown',onMRS);}
       }
       // Menu only opens via ⋯ button, no long-press menu
       el.addEventListener('click',ev=>{ev.stopPropagation();});
@@ -1096,15 +1096,22 @@ function onTS(e){
   },HOLD);
 }
 function onRS(e){
-  e.stopPropagation();e.preventDefault();clearTimeout(holdTimer);
+  e.stopPropagation();clearTimeout(holdTimer);
   const id=e.currentTarget.dataset.id;
   const b=blocks.find(x=>x.id===id);if(!b)return;
   const sy=e.touches[0].clientY;
+  let moved=false;
+  const onMove=()=>{moved=true;};
+  const cleanup=()=>{document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',cleanup);};
+  document.addEventListener('touchmove',onMove,{passive:true});
+  document.addEventListener('touchend',cleanup);
   holdTimer=setTimeout(()=>{
+    cleanup();
+    if(moved)return; // User scrolled — don't resize
     holdReady=true;
     dragState={id,type:'resize',sy,origDur:b.durHour};
     if(navigator.vibrate)navigator.vibrate(30);
-  },300);
+  },400);
 }
 function onTM(e){
   if(!holdReady){clearTimeout(holdTimer);return;}
