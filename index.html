@@ -1622,8 +1622,8 @@ function getDropItems(){
   try{return raw?JSON.parse(raw):[]}catch{return[]}
 }
 function saveDropItems(items){
-  localStorage.setItem('ff_drops',JSON.stringify(items));
-  if(_uid)db.collection('users').doc(_uid).update({drops:items}).catch(()=>{});
+  try{localStorage.setItem('ff_drops',JSON.stringify(items));}catch(e){}
+  try{if(_uid)db.collection('users').doc(_uid).update({drops:items}).catch(()=>{});}catch(e){}
 }
 function addDropItem(text){
   if(!text||!text.trim())return;
@@ -1632,20 +1632,18 @@ function addDropItem(text){
   saveDropItems(items);renderDrop();
 }
 function toggleDropDone(id){
-  const items=getDropItems();
-  const it=items.find(i=>String(i.id)===String(id));
-  if(it){it.done=!it.done;saveDropItems(items);
-    document.getElementById('drop-content').innerHTML='';
-    renderDrop();
-    if(it.done)showToast();
-  }
+  try{
+    const items=getDropItems();
+    const it=items.find(i=>String(i.id)===String(id));
+    if(it){it.done=!it.done;saveDropItems(items);renderDrop();if(it.done)showToast();}
+  }catch(e){console.error('toggleDropDone',e);}
 }
 function deleteDropItem(id){
-  let items=getDropItems();
-  items=items.filter(i=>String(i.id)!==String(id));
-  saveDropItems(items);
-  document.getElementById('drop-content').innerHTML='';
-  renderDrop();
+  try{
+    let items=getDropItems();
+    items=items.filter(i=>String(i.id)!==String(id));
+    saveDropItems(items);renderDrop();
+  }catch(e){console.error('deleteDropItem',e);}
 }
 function shuffleDrop(){
   const items=getDropItems();
