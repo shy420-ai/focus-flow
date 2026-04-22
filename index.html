@@ -627,13 +627,21 @@ let _uid=null,_unsub=null,_skipRemote=false;
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
 function doLogin(){
+  const provider=new firebase.auth.GoogleAuthProvider();
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
-    return auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    // Mobile: use redirect (popup often blocked), Desktop: use popup
+    if(/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent)){
+      return auth.signInWithRedirect(provider);
+    }else{
+      return auth.signInWithPopup(provider);
+    }
   }).catch(e=>{
-    // Popup blocked? Try redirect
-    auth.signInWithRedirect(new firebase.auth.GoogleAuthProvider());
+    // Fallback to redirect
+    auth.signInWithRedirect(provider);
   });
 }
+// Handle redirect result
+auth.getRedirectResult().catch(()=>{});
 // Skip login — work offline with localStorage. Sync when logged in.
 function startWithoutLogin(){
   localStorage.setItem('ff_skip_login','1');
