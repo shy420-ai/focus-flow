@@ -1066,17 +1066,16 @@ function onMS(e){
   if(e.button!==0)return;
   if(e.target.classList.contains('rh'))return;
   if(e.target.closest('.block-menu'))return;
+  if(e.target.closest('.b-quick'))return;
   didDrag=false;holdReady=false;
   const id=e.currentTarget.dataset.id;
   const b=blocks.find(x=>x.id===id);if(!b)return;
   const sy=e.clientY;
-  holdTimer=setTimeout(()=>{
-    holdReady=true;
-    dragState={id,type:'move',sy,origStart:b.startHour};
-    const el=document.querySelector('.block[data-id="'+id+'"]');
-    if(el)el.classList.add('dragging');
-  },400);
-  // Don't preventDefault here — it kills click events
+  // Desktop: start drag immediately on mousedown
+  holdReady=true;
+  dragState={id,type:'move',sy,origStart:b.startHour};
+  const el=document.querySelector('.block[data-id="'+id+'"]');
+  if(el)el.classList.add('dragging');
 }
 function onMRS(e){
   e.stopPropagation();e.preventDefault();clearTimeout(holdTimer);
