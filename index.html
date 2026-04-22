@@ -1647,6 +1647,15 @@ function deleteDropItem(id){
     saveDropItems(items);renderDrop();
   }catch(e){console.error('deleteDropItem',e);}
 }
+function editDropItem(id){
+  try{
+    const items=getDropItems();
+    const it=items.find(i=>String(i.id)===String(id));
+    if(!it)return;
+    const newName=prompt('수정:',it.name);
+    if(newName!==null&&newName.trim()){it.name=newName.trim();saveDropItems(items);renderDrop();}
+  }catch(e){console.error('editDropItem',e);}
+}
 function moveDropItem(id,dir){
   try{
     const items=getDropItems();
@@ -1697,7 +1706,7 @@ function renderDrop(){
   todo.forEach((it,i)=>{
     h+='<div class="drop-item"'+(i===0?' style="border-left-color:var(--pd);background:var(--pl)"':'')+'>';
     h+='<button class="drop-check" data-drop-done="'+it.id+'"></button>';
-    h+='<div class="drop-name">'+it.name+'</div>';
+    h+='<div class="drop-name" data-drop-edit="'+it.id+'">'+it.name+'</div>';
     h+='<div class="drop-order">';
     if(i>0)h+='<button class="drop-move" data-drop-up="'+it.id+'">▲</button>';
     if(i<todo.length-1)h+='<button class="drop-move" data-drop-down="'+it.id+'">▼</button>';
@@ -1726,6 +1735,8 @@ document.addEventListener('click',function(e){
   if(del){e.preventDefault();e.stopPropagation();deleteDropItem(del.dataset.dropDel);return;}
   const done=e.target.closest('[data-drop-done]');
   if(done){e.preventDefault();e.stopPropagation();toggleDropDone(done.dataset.dropDone);return;}
+  const edit=e.target.closest('[data-drop-edit]');
+  if(edit){e.preventDefault();e.stopPropagation();editDropItem(edit.dataset.dropEdit);return;}
   const up=e.target.closest('[data-drop-up]');
   if(up){e.preventDefault();e.stopPropagation();moveDropItem(up.dataset.dropUp,-1);return;}
   const dn=e.target.closest('[data-drop-down]');
