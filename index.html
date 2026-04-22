@@ -629,19 +629,22 @@ auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 function doLogin(){
   const provider=new firebase.auth.GoogleAuthProvider();
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
-    // Mobile: use redirect (popup often blocked), Desktop: use popup
-    if(/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent)){
-      return auth.signInWithRedirect(provider);
-    }else{
-      return auth.signInWithPopup(provider);
-    }
+    return auth.signInWithPopup(provider);
   }).catch(e=>{
-    // Fallback to redirect
-    auth.signInWithRedirect(provider);
+    if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
+      // Popup blocked → try redirect
+      auth.signInWithRedirect(provider);
+    }else if(e.code){
+      alert('로그인 에러: '+e.message);
+    }
   });
 }
 // Handle redirect result
-auth.getRedirectResult().catch(()=>{});
+auth.getRedirectResult().then(result=>{
+  if(result&&result.user)console.log('Redirect login OK:',result.user.uid);
+}).catch(e=>{
+  if(e.code)alert('로그인 에러: '+e.message);
+});
 // Skip login — work offline with localStorage. Sync when logged in.
 function startWithoutLogin(){
   localStorage.setItem('ff_skip_login','1');
