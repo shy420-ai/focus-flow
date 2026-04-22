@@ -263,6 +263,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .drop-item.done .drop-check{border-color:#ccc;color:#ccc}
 .drop-item .drop-name{flex:1;font-size:14px;color:#333}
 .drop-item.done .drop-name{text-decoration:line-through;color:#aaa}
+.drop-order{display:flex;flex-direction:column;gap:2px;flex-shrink:0}
+.drop-move{width:22px;height:16px;border-radius:4px;border:none;background:rgba(0,0,0,.04);color:#aaa;font-size:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .drop-item .drop-del{width:32px;height:32px;border-radius:8px;border:none;background:rgba(0,0,0,.04);color:#aaa;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .drop-empty{text-align:center;color:#bbb;font-size:13px;padding:60px 20px;line-height:1.8}
 .habit-input-row{display:flex;gap:8px;margin-bottom:16px}
@@ -1645,6 +1647,19 @@ function deleteDropItem(id){
     saveDropItems(items);renderDrop();
   }catch(e){console.error('deleteDropItem',e);}
 }
+function moveDropItem(id,dir){
+  try{
+    const items=getDropItems();
+    const todo=items.filter(i=>!i.done);
+    const done=items.filter(i=>i.done);
+    const idx=todo.findIndex(i=>String(i.id)===String(id));
+    if(idx<0)return;
+    const newIdx=idx+dir;
+    if(newIdx<0||newIdx>=todo.length)return;
+    [todo[idx],todo[newIdx]]=[todo[newIdx],todo[idx]];
+    saveDropItems([...todo,...done]);renderDrop();
+  }catch(e){console.error('moveDropItem',e);}
+}
 function shuffleDrop(){
   const items=getDropItems();
   const todo=items.filter(i=>!i.done);
@@ -1683,6 +1698,10 @@ function renderDrop(){
     h+='<div class="drop-item"'+(i===0?' style="border-left-color:var(--pd);background:var(--pl)"':'')+'>';
     h+='<button class="drop-check" data-drop-done="'+it.id+'"></button>';
     h+='<div class="drop-name">'+it.name+'</div>';
+    h+='<div class="drop-order">';
+    if(i>0)h+='<button class="drop-move" data-drop-up="'+it.id+'">▲</button>';
+    if(i<todo.length-1)h+='<button class="drop-move" data-drop-down="'+it.id+'">▼</button>';
+    h+='</div>';
     h+='<button class="drop-del" data-drop-del="'+it.id+'">✕</button>';
     h+='</div>';
   });
@@ -1707,6 +1726,10 @@ document.addEventListener('click',function(e){
   if(del){e.preventDefault();e.stopPropagation();deleteDropItem(del.dataset.dropDel);return;}
   const done=e.target.closest('[data-drop-done]');
   if(done){e.preventDefault();e.stopPropagation();toggleDropDone(done.dataset.dropDone);return;}
+  const up=e.target.closest('[data-drop-up]');
+  if(up){e.preventDefault();e.stopPropagation();moveDropItem(up.dataset.dropUp,-1);return;}
+  const dn=e.target.closest('[data-drop-down]');
+  if(dn){e.preventDefault();e.stopPropagation();moveDropItem(dn.dataset.dropDown,1);return;}
 });
 
 // ====== THEME SELECTOR ======
