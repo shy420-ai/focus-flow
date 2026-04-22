@@ -409,9 +409,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div style="font-size:64px;margin-bottom:8px">💗</div>
   <h1>Focus Flow</h1>
   <p>ADHD 집중 플래너</p>
-  <button onclick="doLogin()">Google로 시작하기</button>
-  <button onclick="startWithoutLogin()" style="background:transparent;color:var(--pd);border:1.5px solid var(--pd);margin-top:4px">로그인 없이 시작</button>
-  <p style="font-size:10px;color:#bbb;max-width:240px;text-align:center">로그인하면 기기 간 싱크 가능</p>
+  <button id="login-btn" onclick="doLogin()">Google로 시작하기</button>
+  <button onclick="startWithoutLogin()" style="background:transparent;color:var(--pd);border:1.5px solid var(--pd);margin-top:4px">바로 시작하기</button>
+  <p style="font-size:10px;color:#bbb;max-width:240px;text-align:center">Google 로그인 = 기기 간 싱크<br>바로 시작 = 이 기기에서만 저장</p>
+  <p id="login-error" style="font-size:11px;color:#E24B4A;max-width:280px;text-align:center;display:none"></p>
 </div>
 <canvas id="confetti"></canvas>
 <div class="toast" id="toast"><span class="te" id="te"></span><div class="tm" id="tm"></div><div class="ts" id="ts"></div></div>
@@ -629,32 +630,47 @@ let _uid=null,_unsub=null,_skipRemote=false;
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
 let _loginBusy=false;
+function showLoginError(msg){
+  const el=document.getElementById('login-error');
+  if(el){el.textContent=msg;el.style.display='block';}
+}
 function doLogin(){
   if(_loginBusy)return;
   _loginBusy=true;
+  const btn=document.getElementById('login-btn');
+  if(btn){btn.textContent='로그인 중...';btn.disabled=true;}
   const provider=new firebase.auth.GoogleAuthProvider();
-  const isMobile=/iPhone|iPad|Android|Mobile/i.test(navigator.userAgent);
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
-    if(isMobile){
-      return auth.signInWithRedirect(provider);
-    }
     return auth.signInWithPopup(provider);
+  }).then(result=>{
+    // Success handled by onAuthStateChanged
   }).catch(e=>{
     _loginBusy=false;
-    if(e.code==='auth/popup-blocked'||e.code==='auth/cancelled-popup-request'){
+    if(btn){btn.textContent='Google로 시작하기';btn.disabled=false;}
+    if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'){
+      // User closed popup or double clicked — just reset
+    }else if(e.code==='auth/popup-blocked'){
+      // Try redirect as fallback
+      showLoginError('팝업이 차단됐어요. 리다이렉트로 시도 중...');
       auth.signInWithRedirect(provider);
-    }else if(e.code==='auth/popup-closed-by-user'){
-      // user closed, do nothing
-    }else if(e.code){
-      alert('로그인 에러: '+e.message);
+    }else if(e.code==='auth/unauthorized-domain'){
+      showLoginError('이 도메인에서 로그인이 허용되지 않았어요. "바로 시작하기"를 이용해주세요.');
+    }else if(e.message&&e.message.includes('disallowed_useragent')){
+      showLoginError('인앱 브라우저에서는 Google 로그인이 안 돼요! Chrome이나 Safari로 열어주세요.');
+    }else{
+      showLoginError('로그인 실패: '+(e.message||'알 수 없는 에러'));
     }
   });
 }
-// Handle redirect result
+// Handle redirect result (for redirect fallback)
 auth.getRedirectResult().then(result=>{
-  if(result&&result.user)console.log('Redirect login OK:',result.user.uid);
+  if(result&&result.user)console.log('Redirect login OK');
 }).catch(e=>{
-  if(e.code)alert('로그인 에러: '+e.message);
+  if(e.message&&e.message.includes('disallowed_useragent')){
+    showLoginError('인앱 브라우저에서는 Google 로그인이 안 돼요! Chrome이나 Safari로 열어주세요.');
+  }else if(e.code&&e.code!=='auth/popup-closed-by-user'){
+    showLoginError('로그인 실패: '+(e.message||''));
+  }
 });
 // Skip login — work offline with localStorage. Sync when logged in.
 function startWithoutLogin(){
