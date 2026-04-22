@@ -50,7 +50,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .timeline{display:flex;gap:0}
 .time-col{width:44px;flex-shrink:0}
 .time-tick{display:flex;align-items:flex-start;justify-content:flex-end;padding-right:8px}
-.time-tick span{font-size:10px;color:#ccc;margin-top:-6px}
+.time-tick span{font-size:10px;color:#ccc;margin-top:-6px;cursor:pointer;padding:4px 2px;border-radius:4px}.time-tick span:active{background:var(--pl);color:var(--pd)}
 .blocks-col{flex:1;position:relative}
 .hour-line{position:absolute;left:0;right:0;border-top:1px solid var(--pink);opacity:0.55;pointer-events:none}
 .now-line{position:absolute;left:0;right:0;height:2px;background:var(--pink);pointer-events:none;z-index:20}
@@ -1004,7 +1004,10 @@ function buildGrid(){
   bc.style.height=(HOURS*PX)+'px';
   for(let i=0;i<=HOURS;i++){
     const t=document.createElement('div');t.className='time-tick';t.style.height=PX+'px';
-    t.innerHTML='<span>'+(START+i)+':00</span>';tc.appendChild(t);
+    const hour=START+i;
+    const sp=document.createElement('span');sp.textContent=hour+':00';
+    sp.onclick=()=>openSheet(hour);
+    t.appendChild(sp);tc.appendChild(t);
     const l=document.createElement('div');l.className='hour-line';l.style.top=(i*PX)+'px';l.style.height=PX+'px';bc.appendChild(l);
   }
 }
@@ -1202,15 +1205,6 @@ document.addEventListener('mouseup',()=>{
 });
 
 document.addEventListener('click',()=>{if(activeMenu){activeMenu=null;renderTimeline();}});
-// Click empty timeline space to create block at that time
-document.getElementById('blocks-col').addEventListener('click',function(e){
-  if(e.target.closest('.block'))return; // Clicked on a block, not empty space
-  if(didDrag)return;
-  const rect=this.getBoundingClientRect();
-  const y=e.clientY-rect.top;
-  const hour=Math.round((START+y/PX)*2)/2; // Snap to 30min
-  if(hour>=0&&hour<24)openSheet(hour);
-});
 
 // ====== DESK DUMP (언젠가 할 것들 — 캘린더 아래) ======
 function addDeskDump(){
