@@ -250,6 +250,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 /* ===== Habit Tracker (습관) ===== */
 .habit-wrap{padding:12px 16px;padding-bottom:120px}
+.drop-wrap{padding:16px}
+.drop-input-row{display:flex;gap:8px;margin-bottom:12px}
+.drop-input{flex:1;border:1.5px solid var(--pink);border-radius:12px;padding:12px 14px;font-size:14px;color:#333;font-family:inherit;outline:none;background:#fff}
+.drop-input::placeholder{color:#ccc}
+.drop-add-btn{width:44px;height:44px;border-radius:12px;background:var(--pink);border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.drop-actions{display:flex;gap:8px;margin-bottom:16px}
+.drop-action-btn{padding:8px 14px;border-radius:10px;border:1.5px solid var(--pink);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.drop-item{display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border-radius:12px;margin-bottom:8px;border-left:4px solid var(--pink);transition:all .2s}
+.drop-item.done{opacity:.4;border-left-color:#ccc}
+.drop-item .drop-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--pink);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--pink);font-family:inherit}
+.drop-item.done .drop-check{border-color:#ccc;color:#ccc}
+.drop-item .drop-name{flex:1;font-size:14px;color:#333}
+.drop-item.done .drop-name{text-decoration:line-through;color:#aaa}
+.drop-item .drop-del{width:24px;height:24px;border-radius:6px;border:none;background:none;color:#ccc;font-size:14px;cursor:pointer}
+.drop-empty{text-align:center;color:#bbb;font-size:13px;padding:60px 20px;line-height:1.8}
 .habit-input-row{display:flex;gap:8px;margin-bottom:16px}
 .habit-input{flex:1;border:1.5px solid var(--pink);border-radius:12px;padding:12px 14px;font-size:14px;color:#333;font-family:inherit;outline:none;background:#fff}
 .habit-input::placeholder{color:#ccc}
@@ -430,6 +445,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <button class="vtab" id="vinbox" onclick="switchView('inbox')" style="display:none">할일</button>
   <button class="vtab" id="vcal" onclick="switchView('cal')">월별 캘린더</button>
   <button class="vtab" id="vhabit" onclick="switchView('habit')">습관</button>
+  <button class="vtab" id="vdrop" onclick="switchView('drop')">드롭</button>
 </div>
 <div class="summary" id="summary"></div>
 
@@ -443,6 +459,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="blocks-col" id="blocks-col" style="position:relative"></div>
     </div>
   </div>
+</div>
+
+<!-- Drop (Brain Dump) -->
+<div id="view-drop" style="display:none">
+  <div class="drop-wrap" id="drop-content"></div>
 </div>
 
 <!-- Inbox (Brain Dump) -->
@@ -678,6 +699,7 @@ function listenFirestore(){
       if(d.habitLogs) habitLogs=d.habitLogs;
       if(d.metrics) metrics=d.metrics;
       if(d.metricLogs) metricLogs=d.metricLogs;
+      if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
       saveHabitLocal();
       render();
     }
@@ -824,19 +846,23 @@ function switchView(v){
     document.getElementById('view-cal').style.display='block';
     document.getElementById('view-inbox').style.display='block';
     document.getElementById('view-habit').style.display=v==='habit'?'block':'none';
+    document.getElementById('view-drop').style.display=v==='drop'?'block':'none';
   }else{
     document.getElementById('view-tl').style.display=v==='tl'?'block':'none';
     document.getElementById('view-cal').style.display=v==='cal'?'block':'none';
     document.getElementById('view-inbox').style.display=v==='inbox'?'block':'none';
     document.getElementById('view-habit').style.display=v==='habit'?'block':'none';
+    document.getElementById('view-drop').style.display=v==='drop'?'block':'none';
   }
   document.getElementById('vtl').className='vtab'+(v==='tl'?' active':'');
   document.getElementById('vcal').className='vtab'+(v==='cal'?' active':'');
   document.getElementById('vinbox').className='vtab'+(v==='inbox'?' active':'');
   document.getElementById('vhabit').className='vtab'+(v==='habit'?' active':'');
+  document.getElementById('vdrop').className='vtab'+(v==='drop'?' active':'');
   if(v==='cal'||isDesktop())renderCal();
   if(v==='inbox')renderInbox();
   if(v==='habit')renderHabits();
+  if(v==='drop')renderDrop();
 }
 window.addEventListener('resize',()=>{if(isDesktop()){document.getElementById('view-tl').style.display='block';document.getElementById('view-cal').style.display='block';renderCal();if(curView==='habit'){document.getElementById('view-habit').style.display='block';}}});
 
@@ -1567,6 +1593,90 @@ function confirmAdd(){
 function updateClock(){const n=new Date();document.getElementById('clock').textContent=pad(n.getHours())+':'+pad(n.getMinutes());}
 setInterval(updateClock,10000);updateClock();
 setInterval(()=>{renderTimeline();renderSummary();},60000);
+
+// ====== DROP (Brain Dump) ======
+function getDropItems(){
+  const raw=localStorage.getItem('ff_drops');
+  try{return raw?JSON.parse(raw):[]}catch{return[]}
+}
+function saveDropItems(items){
+  localStorage.setItem('ff_drops',JSON.stringify(items));
+  if(uid)db.collection('users').doc(uid).update({drops:items}).catch(()=>{});
+}
+function addDropItem(text){
+  if(!text||!text.trim())return;
+  const items=getDropItems();
+  items.unshift({id:Date.now().toString(),name:text.trim(),done:false,ts:Date.now()});
+  saveDropItems(items);renderDrop();
+}
+function toggleDropDone(id){
+  const items=getDropItems();
+  const it=items.find(i=>i.id===id);
+  if(it){it.done=!it.done;saveDropItems(items);renderDrop();
+    if(it.done)showToast();
+  }
+}
+function deleteDropItem(id){
+  let items=getDropItems();
+  items=items.filter(i=>i.id!==id);
+  saveDropItems(items);renderDrop();
+}
+function shuffleDrop(){
+  const items=getDropItems();
+  const todo=items.filter(i=>!i.done);
+  const done=items.filter(i=>i.done);
+  for(let i=todo.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[todo[i],todo[j]]=[todo[j],todo[i]];}
+  saveDropItems([...todo,...done]);renderDrop();
+}
+function clearDoneDrop(){
+  let items=getDropItems();
+  items=items.filter(i=>!i.done);
+  saveDropItems(items);renderDrop();
+}
+function renderDrop(){
+  const wrap=document.getElementById('drop-content');
+  if(!wrap)return;
+  const items=getDropItems();
+  const todo=items.filter(i=>!i.done);
+  const done=items.filter(i=>i.done);
+  let h='';
+  h+='<div style="font-size:13px;color:var(--pd);font-weight:700;margin-bottom:12px">🧠 뇌 비우기 — 일단 다 적어!</div>';
+  h+='<div class="drop-input-row">';
+  h+='<input class="drop-input" id="drop-input" placeholder="머릿속에 있는 거 아무거나..." onkeydown="if(event.key===\'Enter\'){addDropItem(this.value);this.value=\'\';}">';
+  h+='<button class="drop-add-btn" onclick="const i=document.getElementById(\'drop-input\');addDropItem(i.value);i.value=\'\';">+</button>';
+  h+='</div>';
+  if(items.length>0){
+    h+='<div class="drop-actions">';
+    h+='<button class="drop-action-btn" onclick="shuffleDrop()">🎲 랜덤 셔플</button>';
+    if(done.length)h+='<button class="drop-action-btn" onclick="clearDoneDrop()">🗑 완료 지우기</button>';
+    h+='<span style="flex:1"></span><span style="font-size:11px;color:#aaa">'+todo.length+'개 남음</span>';
+    h+='</div>';
+  }
+  if(todo.length===0&&done.length===0){
+    h+='<div class="drop-empty">머리가 복잡할 때<br>여기에 다 쏟아내면 돼<br><br>적는 것만으로도 뇌 용량 확보 됨 🫧</div>';
+  }
+  todo.forEach((it,i)=>{
+    h+='<div class="drop-item"'+(i===0?' style="border-left-color:var(--pd);background:var(--pl)"':'')+'>';
+    h+='<button class="drop-check" onclick="toggleDropDone(\''+it.id+'\')"></button>';
+    h+='<div class="drop-name">'+it.name+'</div>';
+    h+='<button class="drop-del" onclick="deleteDropItem(\''+it.id+'\')">✕</button>';
+    h+='</div>';
+  });
+  if(done.length){
+    h+='<div style="font-size:11px;color:#aaa;margin:12px 0 6px;font-weight:600">완료 '+done.length+'개</div>';
+    done.forEach(it=>{
+      h+='<div class="drop-item done">';
+      h+='<button class="drop-check" onclick="toggleDropDone(\''+it.id+'\')">✓</button>';
+      h+='<div class="drop-name">'+it.name+'</div>';
+      h+='<button class="drop-del" onclick="deleteDropItem(\''+it.id+'\')">✕</button>';
+      h+='</div>';
+    });
+  }
+  wrap.innerHTML=h;
+  // Focus input
+  const inp=document.getElementById('drop-input');
+  if(inp&&document.activeElement!==inp)setTimeout(()=>inp.focus(),100);
+}
 
 // ====== THEME SELECTOR ======
 const THEMES={
