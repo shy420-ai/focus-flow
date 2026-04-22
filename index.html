@@ -1132,13 +1132,14 @@ function onMS(e){
   didDrag=false;holdReady=false;
   const id=e.currentTarget.dataset.id;
   const b=blocks.find(x=>x.id===id);if(!b)return;
-  e.preventDefault(); // Prevent native drag from interfering
   const sy=e.clientY;
-  // Desktop: start drag immediately on mousedown
-  holdReady=true;
-  dragState={id,type:'move',sy,origStart:b.startHour};
-  const el=document.querySelector('.block[data-id="'+id+'"]');
-  if(el)el.classList.add('dragging');
+  // Short delay so click events (✓, ⋯) still work
+  holdTimer=setTimeout(()=>{
+    holdReady=true;
+    dragState={id,type:'move',sy,origStart:b.startHour};
+    const el=document.querySelector('.block[data-id="'+id+'"]');
+    if(el)el.classList.add('dragging');
+  },150);
 }
 function onMRS(e){
   e.stopPropagation();e.preventDefault();clearTimeout(holdTimer);
