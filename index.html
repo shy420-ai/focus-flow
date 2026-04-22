@@ -917,11 +917,8 @@ function renderDateTabs(){
   document.getElementById('today-label').textContent=dateLabel(viewDate);
 }
 function _makeDateTab(ds){
-  const realCnt=blocks.filter(b=>(b.type==='timeline'||(!b.type&&!b.isBuf))&&b.date===ds&&!b.isBuf).length;
-  const recurCnt=generateRecurringBlocks(ds).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===ds)).length;
-  const cnt=realCnt+recurCnt;
   const btn=document.createElement('button');btn.className='dtab'+(ds===viewDate?' active':'');
-  btn.textContent=dateLabel(ds)+(cnt?' '+('·'.repeat(Math.min(cnt,3))):'');
+  btn.textContent=dateLabel(ds);
   btn.onclick=()=>{viewDate=ds;activeMenu=null;render();if(curView==='cal'){calY=parseInt(ds.split('-')[0]);calM=parseInt(ds.split('-')[1])-1;calSel=ds;renderCal();}};
   return btn;
 }
