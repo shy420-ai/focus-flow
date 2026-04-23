@@ -275,6 +275,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .habit-input::placeholder{color:#ccc}
 .habit-add-btn{width:44px;height:44px;border-radius:12px;background:var(--pink);border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .habit-section-title{font-size:11px;font-weight:700;color:var(--pm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.week-grid{display:grid;grid-template-columns:40px repeat(7,1fr);font-size:10px;min-width:500px}
+.week-header{text-align:center;font-weight:700;color:var(--pd);padding:6px 2px;border-bottom:1.5px solid var(--pl);font-size:11px}
+.week-header.today{background:var(--pink);color:#fff;border-radius:8px 8px 0 0}
+.week-time{color:#bbb;font-size:9px;text-align:right;padding-right:4px;height:28px;line-height:28px;border-top:1px solid var(--pl)}
+.week-cell{border-top:1px solid var(--pl);border-left:1px solid var(--pl);height:28px;position:relative}
+.week-block{position:absolute;left:1px;right:1px;background:var(--pink);border-radius:4px;padding:1px 3px;font-size:8px;color:#fff;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;z-index:2;cursor:pointer;line-height:1.2}
+.week-block.done{opacity:.4;text-decoration:line-through}
 .mandala-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}
 .mandala-cell{background:#fff;border:1.5px solid var(--pl);border-radius:12px;padding:10px 8px;text-align:center;cursor:pointer;font-size:11px;color:#555;min-height:60px;display:flex;align-items:center;justify-content:center;word-break:keep-all;line-height:1.3;transition:all .15s}
 .mandala-cell.center{background:var(--pink);color:#fff;font-weight:700;font-size:13px;border-color:var(--pink)}
@@ -496,6 +503,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="blocks-col" id="blocks-col" style="position:relative"></div>
     </div>
   </div>
+</div>
+
+<!-- Weekly View -->
+<div id="view-week" style="display:none">
+  <div id="week-content" style="padding:8px;overflow-x:auto"></div>
 </div>
 
 <!-- Drop (Brain Dump) -->
@@ -963,14 +975,25 @@ function switchView(v){
     const dropEl=document.getElementById('view-drop');
     const goalEl=document.getElementById('view-goal');
     const panelStyle='width:60%;flex-shrink:0;flex-grow:0;border-left:1px solid var(--pl);overflow-y:auto;padding:16px';
-    const panels={cal:calEl,habit:habitEl,drop:dropEl,goal:goalEl};
-    Object.entries(panels).forEach(([k,el])=>{
-      if(v===k){el.style.cssText='display:block;'+panelStyle;}
-      else if(k==='cal'&&(v==='tl'||v==='cal')){el.style.display='block';}
-      else{el.style.cssText='display:none';}
-    });
+    const weekEl=document.getElementById('view-week');
+    const panels={cal:calEl,habit:habitEl,drop:dropEl,goal:goalEl,week:weekEl};
+    if(v==='week'){
+      // Week view replaces both timeline and calendar
+      document.getElementById('view-tl').style.display='none';
+      weekEl.style.cssText='display:block;width:100%';
+      calEl.style.cssText='display:none';habitEl.style.cssText='display:none';dropEl.style.cssText='display:none';goalEl.style.cssText='display:none';
+    }else{
+      weekEl.style.cssText='display:none';
+      Object.entries(panels).forEach(([k,el])=>{
+        if(k==='week')return;
+        if(v===k){el.style.cssText='display:block;'+panelStyle;}
+        else if(k==='cal'&&(v==='tl'||v==='cal')){el.style.display='block';}
+        else{el.style.cssText='display:none';}
+      });
+    }
   }else{
     document.getElementById('view-tl').style.display=v==='tl'?'block':'none';
+    document.getElementById('view-week').style.display=v==='week'?'block':'none';
     document.getElementById('view-cal').style.display=v==='cal'?'block':'none';
     document.getElementById('view-inbox').style.display=v==='inbox'?'block':'none';
     document.getElementById('view-habit').style.display=v==='habit'?'block':'none';
@@ -979,6 +1002,7 @@ function switchView(v){
   }
   renderViewTabs();
   if(v==='cal'||isDesktop())renderCal();
+  if(v==='week')renderWeek();
   if(v==='goal')renderGoals();
   if(v==='inbox')renderInbox();
   if(v==='habit')renderHabits();
@@ -2114,6 +2138,53 @@ function renderGoals(){
   wrap.innerHTML=h;
 }
 
+// ====== WEEKLY VIEW ======
+function getWeekStart(){
+  const d=new Date();const day=d.getDay()||7;
+  d.setDate(d.getDate()-(day-1));d.setHours(0,0,0,0);return d;
+}
+function renderWeek(){
+  const wrap=document.getElementById('week-content');if(!wrap)return;
+  const weekStart=getWeekStart();
+  const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);days.push(d);}
+  const today=todayStr();
+  const dayLabels=['월','화','수','목','금','토','일'];
+  let h='<div class="week-grid">';
+  // Header row
+  h+='<div class="week-header"></div>';
+  days.forEach((d,i)=>{
+    const ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+    const isToday=ds===today;
+    h+='<div class="week-header'+(isToday?' today':'')+'">'+ dayLabels[i]+'<br>'+d.getDate()+'</div>';
+  });
+  // Time rows
+  for(let t=START;t<START+HOURS;t++){
+    h+='<div class="week-time">'+t+':00</div>';
+    days.forEach((d,di)=>{
+      const ds=d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+      h+='<div class="week-cell" data-weekday="'+di+'" data-hour="'+t+'" data-date="'+ds+'">';
+      // Find blocks at this hour
+      const dayBlocks=blocks.filter(b=>b.date===ds&&!b.isBuf&&(b.type==='timeline'||!b.type));
+      const recurBlocks=generateRecurringBlocks(ds).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===ds));
+      const allB=[...dayBlocks,...recurBlocks];
+      allB.forEach(b=>{
+        if(Math.floor(b.startHour)===t){
+          const top=Math.round((b.startHour-t)*28);
+          const height=Math.max(Math.round(b.durHour*28),14);
+          h+='<div class="week-block'+(b.done?' done':'')+'" style="top:'+top+'px;height:'+height+'px;background:'+getCatColorOrTheme(b)+'" onclick="viewDate=\''+ds+'\';switchView(\'tl\')" title="'+b.name+' '+fmtH(b.startHour)+'-'+fmtH(b.startHour+b.durHour)+'">'+b.name+'</div>';
+        }
+      });
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+  wrap.innerHTML=h;
+}
+function getCatColorOrTheme(b){
+  if(b.category){const c=catColor(b.category);if(c&&c!=='#aaa')return c;}
+  return'var(--pink)';
+}
+
 // ====== HOROSCOPE ======
 const ZODIAC_SIGNS=[
   {name:'capricorn',ko:'염소자리',from:[1,1],to:[1,19]},
@@ -2256,10 +2327,10 @@ setTimeout(()=>{
 },1000);
 
 // ====== VIEW TABS (draggable order) ======
-const DEFAULT_TAB_ORDER=['tl','cal','habit','goal','drop'];
-const TAB_LABELS={tl:'타임라인',cal:'월별 캘린더',habit:'습관',goal:'목표',drop:'드롭'};
+const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop'];
+const TAB_LABELS={tl:'일간',week:'주간',cal:'월별 캘린더',habit:'습관',goal:'목표',drop:'드롭'};
 function getTabOrder(){
-  try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=5&&arr.includes('goal'))return arr;}}catch{}
+  try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=6&&arr.includes('week'))return arr;}}catch{}
   return DEFAULT_TAB_ORDER.slice();
 }
 function saveTabOrder(order){localStorage.setItem('ff_tab_order',JSON.stringify(order));}
@@ -3204,7 +3275,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v13';
+  const SW_VER='v14';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
