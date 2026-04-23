@@ -2453,7 +2453,9 @@ async function loadHoroscope(){
 function setupBirthday(){
   const byear=prompt('태어난 년도 (예: 2000)',localStorage.getItem('ff_birthyear')||'');
   if(!byear||!/^\d{4}$/.test(byear.trim()))return;
-  const bday=prompt('생일 월-일 (예: 01-15)',localStorage.getItem('ff_birthday')||'');
+  const calType=prompt('양력 / 음력? (양력이면 1, 음력이면 2 입력)',localStorage.getItem('ff_cal_type')||'1');
+  if(calType)localStorage.setItem('ff_cal_type',calType.trim());
+  const bday=prompt('생일 월-일 양력 기준 (예: 01-15)\n※ 음력이면 양력으로 변환해서 입력해주세요',localStorage.getItem('ff_birthday')||'');
   if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday.trim()))return;
   localStorage.setItem('ff_birthyear',byear.trim());
   localStorage.setItem('ff_birthday',bday.trim());
