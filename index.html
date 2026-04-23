@@ -2136,40 +2136,39 @@ function getZodiac(m,d){
     return v>=z.from[0]*100+z.from[1]&&v<=z.to[0]*100+z.to[1];
   });
 }
-function simpleTranslate(text){
-  // Basic English→Korean keyword replacement for horoscope
-  const map={
-    'love':'사랑','money':'돈','career':'커리어','health':'건강','today':'오늘',
-    'good':'좋은','great':'훌륭한','lucky':'행운의','positive':'긍정적인',
-    'energy':'에너지','focus':'집중','creative':'창의적','opportunity':'기회',
-    'success':'성공','happiness':'행복','confidence':'자신감','patience':'인내',
-    'careful':'조심','avoid':'피하기','important':'중요한','new':'새로운',
-    'relationship':'관계','friend':'친구','family':'가족','work':'일',
-    'plan':'계획','change':'변화','surprise':'놀라움','challenge':'도전',
-    'star':'별','moon':'달','sun':'태양','feeling':'감정','trust':'신뢰'
-  };
-  // Just show English with emoji prefix - full translation needs AI
-  return text;
-}
-async function loadHoroscope(){
+const HORO_MSGS=[
+  ['오늘은 새로운 아이디어가 떠오를 거야','작은 시작이 큰 변화를 만들어','직감을 믿어봐, 오늘은 맞을 확률 높아'],
+  ['오후에 집중력이 올라갈 타이밍이 와','누군가에게 좋은 소식을 들을 수 있어','계획대로 안 돼도 괜찮아, 더 좋은 방향일 수도'],
+  ['오늘 만나는 사람에게서 힌트를 얻을 거야','에너지가 높은 날! 하고 싶은 거 해봐','미뤄뒀던 일을 처리하면 마음이 가벼워져'],
+  ['창의력이 폭발하는 날이야','소소한 보상을 자신에게 줘봐','산책하면 좋은 생각이 떠올라'],
+  ['오늘은 차분하게 정리하는 게 좋아','좋아하는 음악 들으면서 일하면 효율 UP','예상치 못한 칭찬을 받을 수 있어'],
+  ['도전하기 좋은 날! 망설이지 마','오전에 중요한 일 먼저 끝내면 편해','네 속도대로 가도 충분해'],
+  ['오늘은 사람들과 이야기하면 에너지 충전','작은 성취도 축하할 가치가 있어','긴장 풀고 웃어봐, 좋은 일이 따라와'],
+  ['집중이 잘 되는 골든타임이 올 거야','새로운 루틴을 시작하기 좋은 날','배우고 싶은 게 있으면 오늘 시작해봐'],
+  ['마음이 편안한 하루가 될 거야','감사한 것 하나만 떠올려봐','오늘의 노력은 내일의 나에게 선물이야'],
+  ['행운이 가까이 있어! 주변을 잘 봐','어제보다 오늘이 더 나은 하루야','고민보다 행동이 답인 날']
+];
+const HORO_LUCKY=['🍀 행운의 색: ','☕ 럭키 아이템: ','🎵 기분 UP: '];
+const HORO_COLORS=['핑크','하늘색','라벤더','민트','코랄','레몬','피치'];
+const HORO_ITEMS=['따뜻한 음료','초콜릿','좋아하는 노래','짧은 산책','스트레칭','향초','편한 옷'];
+const HORO_MUSIC=['신나는 팝','잔잔한 피아노','로파이','90년대 가요','자연 소리','재즈','감성 인디'];
+
+function dateSeed(){const d=todayStr().replace(/-/g,'');let h=0;for(let i=0;i<d.length;i++){h=((h<<5)-h)+d.charCodeAt(i);h|=0;}return Math.abs(h);}
+function loadHoroscope(){
   const bday=localStorage.getItem('ff_birthday');
   if(!bday)return;
   const [m,d]=bday.split('-').map(Number);
   const z=getZodiac(m,d);if(!z)return;
-  const cacheKey='ff_horo_'+todayStr();
-  const cached=localStorage.getItem(cacheKey);
-  const bar=document.getElementById('horoscope-bar');
-  if(!bar)return;
-  if(cached){bar.textContent=cached;bar.style.display='block';return;}
-  try{
-    const resp=await fetch('https://ohmanda.com/api/horoscope/'+z.name);
-    const data=await resp.json();
-    if(data.horoscope){
-      const msg='⭐ '+z.ko+' | '+data.horoscope;
-      localStorage.setItem(cacheKey,msg);
-      bar.textContent=msg;bar.style.display='block';
-    }
-  }catch(e){console.log('horoscope fetch failed',e);}
+  const bar=document.getElementById('horoscope-bar');if(!bar)return;
+  const seed=dateSeed();
+  const signIdx=ZODIAC_SIGNS.findIndex(x=>x.name===z.name&&m*100+d>=x.from[0]*100+x.from[1]);
+  const msgGroup=HORO_MSGS[(seed+signIdx)%HORO_MSGS.length];
+  const msg=msgGroup[(seed+d)%msgGroup.length];
+  const luckyType=(seed+m)%3;
+  const luckyItems=[HORO_COLORS,HORO_ITEMS,HORO_MUSIC];
+  const lucky=HORO_LUCKY[luckyType]+luckyItems[luckyType][(seed+signIdx)%luckyItems[luckyType].length];
+  bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msg+'<br><span style="font-size:10px;opacity:.7">'+lucky+'</span>';
+  bar.style.display='block';
 }
 function setupBirthday(){
   const bday=localStorage.getItem('ff_birthday');
