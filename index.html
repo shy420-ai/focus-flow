@@ -275,6 +275,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .habit-input::placeholder{color:#ccc}
 .habit-add-btn{width:44px;height:44px;border-radius:12px;background:var(--pink);border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .habit-section-title{font-size:11px;font-weight:700;color:var(--pm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mandala-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px}
+.mandala-cell{background:#fff;border:1.5px solid var(--pl);border-radius:12px;padding:10px 8px;text-align:center;cursor:pointer;font-size:11px;color:#555;min-height:60px;display:flex;align-items:center;justify-content:center;word-break:keep-all;line-height:1.3;transition:all .15s}
+.mandala-cell.center{background:var(--pink);color:#fff;font-weight:700;font-size:13px;border-color:var(--pink)}
+.mandala-cell.active{border-color:var(--pd);background:var(--pl);font-weight:600;color:var(--pd)}
+.mandala-cell.has-text{color:var(--pd);font-weight:500}
+.mandala-cell.empty{color:#ccc;font-style:italic}
+.mandala-detail{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)}
+.mandala-detail-title{font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.mandala-detail-back{background:none;border:none;font-size:16px;cursor:pointer;color:var(--pd);padding:2px 6px}
 .goal-section{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)}
 .goal-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px}
 .goal-header-title{font-size:13px;font-weight:700;color:var(--pd)}
@@ -801,6 +810,7 @@ function listenFirestore(){
       if(d.metricLogs) metricLogs=d.metricLogs;
       if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
       if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
+      if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
       saveHabitLocal();
       render();
     }
@@ -1960,13 +1970,15 @@ document.addEventListener('click',function(e){
 });
 
 // ====== GOALS (연/월/주 목표) ======
+// Mandala + Goals data
+function getMandala(){try{return JSON.parse(localStorage.getItem('ff_mandala')||'null')}catch{return null}}
+function saveMandala(m){localStorage.setItem('ff_mandala',JSON.stringify(m));try{if(_uid)db.collection('users').doc(_uid).update({mandala:m}).catch(()=>{});}catch{}}
+function initMandala(){return{center:'',cells:['','','','','','','',''],subs:[[],[],[],[],[],[],[],[]]}}
 function getGoals(){try{return JSON.parse(localStorage.getItem('ff_goals')||'{}');}catch{return{};}}
 function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));try{if(_uid)db.collection('users').doc(_uid).update({goals:g}).catch(()=>{});}catch{}}
 function goalKey(type){
   const d=new Date();
-  if(type==='year')return 'y'+d.getFullYear();
   if(type==='month')return 'm'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-  // week: ISO week start (Monday)
   const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-(day-1));
   return 'w'+mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
 }
@@ -1984,8 +1996,39 @@ function toggleGoal(type,id){
 }
 function deleteGoal(type,id){
   const goals=getGoals();const key=goalKey(type);if(!goals[key])return;
-  goals[key]=goals[key].filter(x=>x.id!==id);saveGoals(goals);renderHabits();
+  goals[key]=goals[key].filter(x=>x.id!==id);saveGoals(goals);renderGoals();
 }
+
+let _mandalaView='grid'; // 'grid' or index 0-7
+function editMandalaCell(idx){
+  const m=getMandala()||initMandala();
+  if(idx==='center'){
+    const v=prompt('핵심 목표:',m.center);
+    if(v!==null){m.center=v.trim();saveMandala(m);renderGoals();}
+  }else{
+    const v=prompt('세부 목표:',m.cells[idx]);
+    if(v!==null){m.cells[idx]=v.trim();saveMandala(m);renderGoals();}
+  }
+}
+function openMandalaSub(idx){_mandalaView=idx;renderGoals();}
+function backToMandala(){_mandalaView='grid';renderGoals();}
+function addMandalaSub(idx){
+  const input=document.getElementById('msub-input');if(!input)return;
+  const text=input.value.trim();if(!text)return;
+  const m=getMandala()||initMandala();
+  if(!m.subs[idx])m.subs[idx]=[];
+  m.subs[idx].push({id:Date.now().toString(),text,done:false});
+  saveMandala(m);input.value='';renderGoals();
+}
+function toggleMandalaSub(idx,id){
+  const m=getMandala();if(!m)return;
+  const s=m.subs[idx].find(x=>x.id===id);if(s){s.done=!s.done;saveMandala(m);renderGoals();}
+}
+function deleteMandalaSub(idx,id){
+  const m=getMandala();if(!m)return;
+  m.subs[idx]=m.subs[idx].filter(x=>x.id!==id);saveMandala(m);renderGoals();
+}
+
 function renderGoalSection(type,emoji,title){
   const goals=getGoals();const key=goalKey(type);
   const items=goals[key]||[];
@@ -2010,11 +2053,55 @@ function renderGoalSection(type,emoji,title){
 
 function renderGoals(){
   const wrap=document.getElementById('goal-content');if(!wrap)return;
+  const m=getMandala()||initMandala();
   const now=new Date();
   let h='';
-  h+=renderGoalSection('year','🎯',now.getFullYear()+'년 목표');
-  h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
-  h+=renderGoalSection('week','⭐','이번 주 목표');
+  // Grid order: [0,1,2,3,center,4,5,6,7]
+  const order=[0,1,2,3,'c',4,5,6,7];
+
+  if(_mandalaView==='grid'){
+    h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">🎯 '+now.getFullYear()+'년 만다라트</div>';
+    h+='<div class="mandala-grid">';
+    order.forEach(idx=>{
+      if(idx==='c'){
+        h+='<div class="mandala-cell center" onclick="editMandalaCell(\'center\')">'+(m.center||'핵심 목표<br>터치해서 입력')+'</div>';
+      }else{
+        const text=m.cells[idx];
+        const subDone=m.subs[idx]?m.subs[idx].filter(x=>x.done).length:0;
+        const subTotal=m.subs[idx]?m.subs[idx].length:0;
+        const badge=subTotal?'<div style="font-size:9px;color:var(--pm);margin-top:3px">'+subDone+'/'+subTotal+'</div>':'';
+        h+='<div class="mandala-cell'+(text?' has-text':' empty')+'" onclick="openMandalaSub('+idx+')">'+(text||'터치해서 입력')+badge+'</div>';
+      }
+    });
+    h+='</div>';
+    h+='<div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:16px">셀 터치 → 세부 목표 보기 | 가운데 = 핵심 목표</div>';
+    // Monthly & Weekly
+    h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
+    h+=renderGoalSection('week','⭐','이번 주 목표');
+  }else{
+    // Sub detail view
+    const idx=_mandalaView;
+    const title=m.cells[idx]||'세부 목표 '+(idx+1);
+    const subs=m.subs[idx]||[];
+    h+='<div class="mandala-detail">';
+    h+='<div class="mandala-detail-title"><button class="mandala-detail-back" onclick="backToMandala()">←</button>'+title+'</div>';
+    h+='<div style="font-size:11px;color:#aaa;margin-bottom:8px">이름 수정: <span style="color:var(--pd);cursor:pointer;text-decoration:underline" onclick="editMandalaCell('+idx+')">'+title+'</span></div>';
+    if(!subs.length)h+='<div style="text-align:center;color:#ccc;font-size:12px;padding:20px 0">세부 목표를 추가해봐!</div>';
+    subs.forEach(s=>{
+      h+='<div class="goal-item">';
+      h+='<button class="goal-check'+(s.done?' done':'')+'" onclick="toggleMandalaSub('+idx+',\''+s.id+'\')">'+(s.done?'✓':'')+'</button>';
+      h+='<div class="goal-text'+(s.done?' done':'')+'">'+s.text+'</div>';
+      h+='<button class="goal-del" onclick="deleteMandalaSub('+idx+',\''+s.id+'\')">✕</button>';
+      h+='</div>';
+    });
+    h+='<div class="goal-add-row">';
+    h+='<input class="goal-add-input" id="msub-input" placeholder="세부 목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addMandalaSub('+idx+')">';
+    h+='<button class="goal-add-btn" onclick="addMandalaSub('+idx+')">+</button>';
+    h+='</div></div>';
+    // Monthly & Weekly still visible
+    h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
+    h+=renderGoalSection('week','⭐','이번 주 목표');
+  }
   wrap.innerHTML=h;
 }
 
@@ -2967,7 +3054,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v10';
+  const SW_VER='v11';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
