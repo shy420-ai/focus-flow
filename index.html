@@ -2308,26 +2308,49 @@ async function viewFriend(uid,name){
     const tasks=(d.tasks||[]).filter(b=>b.date===today&&!b.isBuf&&(b.type==='timeline'||!b.type));
     const habits=d.habits||[];
     const habitLogs=d.habitLogs||{};
-    let h='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:12px">'+name+'의 오늘</div>';
+    const doneCount=tasks.filter(b=>b.done).length;
+    const totalH=tasks.reduce((s,b)=>s+b.durHour,0);
+    const moodLogs=d.mood||[];
+    const todayMood=Array.isArray(moodLogs)?moodLogs.filter(m=>m.date===today):[];
+    let h='<div style="text-align:center;margin-bottom:14px">';
+    h+='<div style="font-size:16px;font-weight:700;color:var(--pd)">'+name+'</div>';
+    h+='<div style="font-size:11px;color:#aaa;margin-top:2px">오늘의 기록</div>';
+    h+='</div>';
+    // Summary chips
+    h+='<div style="display:flex;gap:6px;justify-content:center;margin-bottom:14px;flex-wrap:wrap">';
+    h+='<div style="background:var(--pl);border-radius:99px;padding:4px 12px;font-size:11px;color:var(--pd);font-weight:500">📋 '+tasks.length+'개</div>';
+    h+='<div style="background:var(--pl);border-radius:99px;padding:4px 12px;font-size:11px;color:var(--pd);font-weight:500">✅ '+doneCount+'/'+tasks.length+'</div>';
+    h+='<div style="background:var(--pl);border-radius:99px;padding:4px 12px;font-size:11px;color:var(--pd);font-weight:500">⏱ '+totalH.toFixed(1)+'h</div>';
+    if(todayMood.length)h+='<div style="background:var(--pl);border-radius:99px;padding:4px 12px;font-size:11px">기분 '+todayMood.map(m=>m.mood).join('')+'</div>';
+    h+='</div>';
+    // Progress bar
+    if(tasks.length){
+      const pct=Math.round(doneCount/tasks.length*100);
+      h+='<div style="height:6px;background:var(--pl);border-radius:3px;margin-bottom:14px"><div style="height:100%;background:var(--pink);border-radius:3px;width:'+pct+'%"></div></div>';
+    }
+    // Tasks
+    h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin-bottom:6px">📅 타임라인</div>';
     if(tasks.length===0){
-      h+='<div style="color:#aaa;font-size:12px;margin-bottom:12px">오늘 일정 없음</div>';
+      h+='<div style="color:#aaa;font-size:12px;margin-bottom:12px;text-align:center;padding:12px 0">오늘 일정 없음</div>';
     }else{
       tasks.sort((a,b)=>a.startHour-b.startHour);
       tasks.forEach(b=>{
-        h+='<div style="padding:8px;background:var(--pl);border-radius:8px;margin-bottom:6px;border-left:3px solid var(--pink);font-size:12px">';
-        h+='<span style="color:var(--pd);font-weight:600">'+fmtH(b.startHour)+'-'+fmtH(b.startHour+b.durHour)+'</span> ';
-        h+=(b.done?'✓ ':'')+b.name;
+        h+='<div style="padding:10px;background:'+(b.done?'#f5f5f5':'var(--pl)')+';border-radius:10px;margin-bottom:6px;border-left:3px solid '+(b.done?'#ccc':'var(--pink)')+';font-size:12px'+(b.done?';opacity:.6':'')+'">';
+        h+='<div style="color:'+(b.done?'#aaa':'var(--pd)')+';font-weight:600;font-size:11px">'+fmtH(b.startHour)+' - '+fmtH(b.startHour+b.durHour)+'</div>';
+        h+='<div style="color:'+(b.done?'#aaa':'#333')+';margin-top:2px'+(b.done?';text-decoration:line-through':'')+'\">'+(b.done?'✓ ':'')+b.name+'</div>';
         h+='</div>';
       });
     }
+    // Habits
     if(habits.length){
-      h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin:12px 0 6px">습관</div>';
+      const habitDone=habits.filter(hab=>{const dl=habitLogs[today];return Array.isArray(dl)&&dl.includes(hab.id);}).length;
+      h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin:14px 0 6px">🌱 습관 ('+habitDone+'/'+habits.length+')</div>';
       habits.forEach(hab=>{
         const dl=habitLogs[today];const done=Array.isArray(dl)&&dl.includes(hab.id);
-        h+='<div style="font-size:12px;padding:4px 0">'+(done?'🌸':'⬜')+' '+hab.name+'</div>';
+        h+='<div style="font-size:12px;padding:6px 0;display:flex;align-items:center;gap:6px;border-bottom:1px solid #f0f0f0">'+(done?'<span style="font-size:14px">🌸</span>':'<span style="font-size:14px;opacity:.3">○</span>')+' <span style="'+(done?'':'opacity:.6')+'">'+hab.name+'</span></div>';
       });
     }
-    h+='<button onclick="renderFriendPanel()" style="margin-top:12px;padding:8px 16px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:12px;cursor:pointer;font-family:inherit">← 돌아가기</button>';
+    h+='<button onclick="renderFriendPanel()" style="margin-top:16px;width:100%;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:var(--pd)">← 돌아가기</button>';
     document.getElementById('friend-content').innerHTML=h;
   }catch(e){alert('에러: '+e.message);}
 }
