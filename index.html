@@ -2010,7 +2010,15 @@ function editMandalaCell(idx){
     if(v!==null){m.cells[idx]=v.trim();saveMandala(m);renderGoals();}
   }
 }
-function openMandalaSub(idx){_mandalaView=idx;renderGoals();}
+function openMandalaSub(idx){
+  const m=getMandala()||initMandala();
+  if(!m.cells[idx]){
+    const v=prompt('세부 목표 이름:','');
+    if(v!==null&&v.trim()){m.cells[idx]=v.trim();saveMandala(m);}
+    else return;
+  }
+  _mandalaView=idx;renderGoals();
+}
 function backToMandala(){_mandalaView='grid';renderGoals();}
 function addMandalaSub(idx){
   const input=document.getElementById('msub-input');if(!input)return;
