@@ -489,6 +489,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="desktop-layout">
 <!-- 타임라인 -->
 <div id="view-tl" class="desktop-left">
+  <div id="horoscope-bar" style="display:none;padding:8px 16px;font-size:12px;color:var(--pd);background:var(--pl);border-radius:10px;margin:8px 16px 0;line-height:1.5;text-align:center"></div>
   <div class="tl-wrap">
     <div class="timeline">
       <div class="time-col" id="time-col"></div>
@@ -2113,6 +2114,83 @@ function renderGoals(){
   wrap.innerHTML=h;
 }
 
+// ====== HOROSCOPE ======
+const ZODIAC_SIGNS=[
+  {name:'capricorn',ko:'염소자리',from:[1,1],to:[1,19]},
+  {name:'aquarius',ko:'물병자리',from:[1,20],to:[2,18]},
+  {name:'pisces',ko:'물고기자리',from:[2,19],to:[3,20]},
+  {name:'aries',ko:'양자리',from:[3,21],to:[4,19]},
+  {name:'taurus',ko:'황소자리',from:[4,20],to:[5,20]},
+  {name:'gemini',ko:'쌍둥이자리',from:[5,21],to:[6,21]},
+  {name:'cancer',ko:'게자리',from:[6,22],to:[7,22]},
+  {name:'leo',ko:'사자자리',from:[7,23],to:[8,22]},
+  {name:'virgo',ko:'처녀자리',from:[8,23],to:[9,22]},
+  {name:'libra',ko:'천칭자리',from:[9,23],to:[10,23]},
+  {name:'scorpio',ko:'전갈자리',from:[10,24],to:[11,21]},
+  {name:'sagittarius',ko:'사수자리',from:[11,22],to:[12,21]},
+  {name:'capricorn',ko:'염소자리',from:[12,22],to:[12,31]}
+];
+function getZodiac(m,d){
+  return ZODIAC_SIGNS.find(z=>{
+    const v=m*100+d;
+    return v>=z.from[0]*100+z.from[1]&&v<=z.to[0]*100+z.to[1];
+  });
+}
+function simpleTranslate(text){
+  // Basic English→Korean keyword replacement for horoscope
+  const map={
+    'love':'사랑','money':'돈','career':'커리어','health':'건강','today':'오늘',
+    'good':'좋은','great':'훌륭한','lucky':'행운의','positive':'긍정적인',
+    'energy':'에너지','focus':'집중','creative':'창의적','opportunity':'기회',
+    'success':'성공','happiness':'행복','confidence':'자신감','patience':'인내',
+    'careful':'조심','avoid':'피하기','important':'중요한','new':'새로운',
+    'relationship':'관계','friend':'친구','family':'가족','work':'일',
+    'plan':'계획','change':'변화','surprise':'놀라움','challenge':'도전',
+    'star':'별','moon':'달','sun':'태양','feeling':'감정','trust':'신뢰'
+  };
+  // Just show English with emoji prefix - full translation needs AI
+  return text;
+}
+async function loadHoroscope(){
+  const bday=localStorage.getItem('ff_birthday');
+  if(!bday)return;
+  const [m,d]=bday.split('-').map(Number);
+  const z=getZodiac(m,d);if(!z)return;
+  const cacheKey='ff_horo_'+todayStr();
+  const cached=localStorage.getItem(cacheKey);
+  const bar=document.getElementById('horoscope-bar');
+  if(!bar)return;
+  if(cached){bar.textContent=cached;bar.style.display='block';return;}
+  try{
+    const resp=await fetch('https://ohmanda.com/api/horoscope/'+z.name);
+    const data=await resp.json();
+    if(data.horoscope){
+      const msg='⭐ '+z.ko+' | '+data.horoscope;
+      localStorage.setItem(cacheKey,msg);
+      bar.textContent=msg;bar.style.display='block';
+    }
+  }catch(e){console.log('horoscope fetch failed',e);}
+}
+function setupBirthday(){
+  const bday=localStorage.getItem('ff_birthday');
+  if(!bday){
+    const input=prompt('생일을 입력해주세요 (MM-DD 형식, 예: 04-20)');
+    if(input&&/^\d{1,2}-\d{1,2}$/.test(input.trim())){
+      localStorage.setItem('ff_birthday',input.trim());
+      loadHoroscope();
+    }
+  }
+}
+// Auto-load horoscope
+setTimeout(()=>{
+  if(localStorage.getItem('ff_birthday'))loadHoroscope();
+  else{
+    // Show setup prompt in horoscope bar
+    const bar=document.getElementById('horoscope-bar');
+    if(bar){bar.innerHTML='⭐ <span onclick="setupBirthday()" style="text-decoration:underline;cursor:pointer">생일 입력하면 오늘의 운세를 볼 수 있어!</span>';bar.style.display='block';}
+  }
+},1000);
+
 // ====== VIEW TABS (draggable order) ======
 const DEFAULT_TAB_ORDER=['tl','cal','habit','goal','drop'];
 const TAB_LABELS={tl:'타임라인',cal:'월별 캘린더',habit:'습관',goal:'목표',drop:'드롭'};
@@ -3062,7 +3140,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v11';
+  const SW_VER='v12';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
