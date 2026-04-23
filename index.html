@@ -1370,7 +1370,9 @@ function renderCal(){
     el.className='cal-day'+(isToday?' tod':'')+(isSel?' sel':'');
     el.onclick=()=>{calSel=ds;viewDate=ds;renderCal();renderCalDetail(ds);renderDateTabs();renderSummary();};
     const nc='cal-num'+(dow===0?' sun':dow===6?' sat':'');
-    el.innerHTML='<div class="'+nc+'">'+d+'</div>';
+    const cp=getCyclePhaseForDate(ds);
+    const cycleMarker=cp?(cp.type==='period'?'<div style="font-size:6px;line-height:1;margin-top:1px">🩸</div>':'<div style="font-size:6px;line-height:1;margin-top:1px">⚠️</div>'):'';
+    el.innerHTML='<div class="'+nc+'">'+d+'</div>'+cycleMarker;
     if(db_.length){
       const dots=document.createElement('div');dots.className='cal-dots';
       db_.slice(0,3).forEach(b=>{const dot=document.createElement('div');dot.className='cal-dot';const C={red:'#E24B4A',amb:'#EF9F27',pink:'#E8849D',blue:'#378ADD',teal:'#1D9E75'};dot.style.background=C[b.color]||'#E8849D';dots.appendChild(dot);});
@@ -2327,29 +2329,40 @@ function setCycleStart(){
 }
 function clearCycle(){localStorage.removeItem('ff_cycle');document.getElementById('cycle-bar').style.display='none';}
 
-const CYCLE_PHASES=[
-  {name:'생리기',days:[1,5],emoji:'🩸',color:'#F8D0D0',textColor:'#C45A78',msg:'무리하지 마. 가벼운 일 위주로 해도 충분해!'},
-  {name:'난포기',days:[6,13],emoji:'🌱',color:'#D8F5E3',textColor:'#2D8B57',msg:'에너지 최고조! 어려운 일 도전하기 좋은 시기'},
-  {name:'배란기',days:[14,16],emoji:'🌸',color:'#FDE8EF',textColor:'#C45A78',msg:'소통 능력 UP! 미팅이나 협업에 좋은 날'},
-  {name:'황체기',days:[17,28],emoji:'🍂',color:'#FFF3E0',textColor:'#B8720A',msg:'컨디션 관리 기간. 하나만 해도 괜찮아 💛'}
-];
-
-function getCyclePhase(){
+function getCyclePhaseForDate(ds){
   const data=getCycleData();if(!data||!data.starts.length)return null;
   const lastStart=data.starts[data.starts.length-1];
-  const daysSince=Math.round((new Date(todayStr())-new Date(lastStart))/86400000)+1;
+  const daysSince=Math.round((new Date(ds)-new Date(lastStart))/86400000)+1;
   const cycleDay=((daysSince-1)%data.avgCycle)+1;
-  for(const p of CYCLE_PHASES){if(cycleDay>=p.days[0]&&cycleDay<=p.days[1])return{...p,cycleDay,nextPeriod:data.avgCycle-cycleDay+1};}
-  return{...CYCLE_PHASES[3],cycleDay,nextPeriod:data.avgCycle-cycleDay+1};
+  if(cycleDay>=1&&cycleDay<=5)return{type:'period',emoji:'🩸',label:'생리',cycleDay};
+  if(cycleDay>=data.avgCycle-4)return{type:'pms',emoji:'⚠️',label:'PMS',cycleDay};
+  return null;
 }
 
 function loadCycleBar(){
   const bar=document.getElementById('cycle-bar');if(!bar)return;
-  const phase=getCyclePhase();if(!phase){bar.style.display='none';return;}
-  let extra='';
-  if(phase.nextPeriod<=3&&phase.name!=='생리기')extra='<br><span style="font-size:10px">⚠️ 생리 예정 '+phase.nextPeriod+'일 전</span>';
-  bar.style.background=phase.color;bar.style.color=phase.textColor;
-  bar.innerHTML=phase.emoji+' <b>'+phase.name+'</b> (D'+phase.cycleDay+') '+phase.msg+extra;
+  const phase=getCyclePhaseForDate(todayStr());
+  if(!phase){
+    // Check if PMS/period coming soon
+    const data=getCycleData();if(!data||!data.starts.length){bar.style.display='none';return;}
+    const lastStart=data.starts[data.starts.length-1];
+    const daysSince=Math.round((new Date(todayStr())-new Date(lastStart))/86400000)+1;
+    const cycleDay=((daysSince-1)%data.avgCycle)+1;
+    const daysUntilPeriod=data.avgCycle-cycleDay+1;
+    if(daysUntilPeriod<=7){
+      bar.style.background='#FFF3E0';bar.style.color='#B8720A';
+      bar.innerHTML='📅 생리 예정 <b>'+daysUntilPeriod+'일 전</b> — 컨디션 변화에 주의하세요';
+      bar.style.display='block';
+    }else{bar.style.display='none';}
+    return;
+  }
+  if(phase.type==='period'){
+    bar.style.background='#F8D0D0';bar.style.color='#C45A78';
+    bar.innerHTML='🩸 <b>생리 '+phase.cycleDay+'일차</b> — 무리하지 마. 가벼운 일 위주로 해도 충분해!';
+  }else{
+    bar.style.background='#FFF3E0';bar.style.color='#B8720A';
+    bar.innerHTML='⚠️ <b>PMS 기간</b> — 컨디션 관리 기간. 하나만 해도 괜찮아 💛';
+  }
   bar.style.display='block';
 }
 setTimeout(loadCycleBar,1200);
