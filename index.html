@@ -275,6 +275,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .habit-input::placeholder{color:#ccc}
 .habit-add-btn{width:44px;height:44px;border-radius:12px;background:var(--pink);border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .habit-section-title{font-size:11px;font-weight:700;color:var(--pm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.goal-section{background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)}
+.goal-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;margin-bottom:8px}
+.goal-header-title{font-size:13px;font-weight:700;color:var(--pd)}
+.goal-progress{font-size:11px;color:var(--pm)}
+.goal-bar{height:4px;background:var(--pl);border-radius:2px;margin-bottom:10px;overflow:hidden}
+.goal-bar-fill{height:100%;background:var(--pink);border-radius:2px;transition:width .3s}
+.goal-item{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--pl)}
+.goal-item:last-child{border-bottom:none}
+.goal-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--pink);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--pink)}
+.goal-check.done{background:var(--pink);color:#fff;border-color:var(--pink)}
+.goal-text{flex:1;font-size:13px;color:#333}
+.goal-text.done{text-decoration:line-through;color:#aaa}
+.goal-del{background:none;border:none;color:#ccc;font-size:12px;cursor:pointer;padding:4px}
+.goal-add-row{display:flex;gap:6px;margin-top:8px}
+.goal-add-input{flex:1;border:1px solid var(--pl);border-radius:8px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none}
+.goal-add-btn{width:28px;height:28px;border-radius:8px;background:var(--pink);border:none;color:#fff;font-size:14px;cursor:pointer}
 .habit-item{background:#fff;border:1.5px solid var(--pl);border-radius:12px;padding:12px 14px;margin-bottom:8px}
 .habit-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
 .habit-check{width:28px;height:28px;border-radius:8px;border:2px solid var(--pink);background:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--pink);font-family:inherit;transition:all .15s}
@@ -773,6 +789,7 @@ function listenFirestore(){
       if(d.metrics) metrics=d.metrics;
       if(d.metricLogs) metricLogs=d.metricLogs;
       if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
+      if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
       saveHabitLocal();
       render();
     }
@@ -1931,6 +1948,55 @@ document.addEventListener('click',function(e){
   if(edit){e.preventDefault();e.stopPropagation();editDropItem(edit.dataset.dropEdit);return;}
 });
 
+// ====== GOALS (연/월/주 목표) ======
+function getGoals(){try{return JSON.parse(localStorage.getItem('ff_goals')||'{}');}catch{return{};}}
+function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));try{if(_uid)db.collection('users').doc(_uid).update({goals:g}).catch(()=>{});}catch{}}
+function goalKey(type){
+  const d=new Date();
+  if(type==='year')return 'y'+d.getFullYear();
+  if(type==='month')return 'm'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  // week: ISO week start (Monday)
+  const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-(day-1));
+  return 'w'+mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
+}
+function addGoal(type){
+  const input=document.getElementById('goal-input-'+type);if(!input)return;
+  const text=input.value.trim();if(!text)return;
+  const goals=getGoals();const key=goalKey(type);
+  if(!goals[key])goals[key]=[];
+  goals[key].push({id:Date.now().toString(),text,done:false});
+  saveGoals(goals);input.value='';renderHabits();
+}
+function toggleGoal(type,id){
+  const goals=getGoals();const key=goalKey(type);if(!goals[key])return;
+  const g=goals[key].find(x=>x.id===id);if(g){g.done=!g.done;saveGoals(goals);renderHabits();}
+}
+function deleteGoal(type,id){
+  const goals=getGoals();const key=goalKey(type);if(!goals[key])return;
+  goals[key]=goals[key].filter(x=>x.id!==id);saveGoals(goals);renderHabits();
+}
+function renderGoalSection(type,emoji,title){
+  const goals=getGoals();const key=goalKey(type);
+  const items=goals[key]||[];
+  const done=items.filter(x=>x.done).length;
+  const pct=items.length?Math.round(done/items.length*100):0;
+  let h='<div class="goal-section">';
+  h+='<div class="goal-header"><span class="goal-header-title">'+emoji+' '+title+'</span><span class="goal-progress">'+done+'/'+items.length+' ('+pct+'%)</span></div>';
+  if(items.length)h+='<div class="goal-bar"><div class="goal-bar-fill" style="width:'+pct+'%"></div></div>';
+  items.forEach(g=>{
+    h+='<div class="goal-item">';
+    h+='<button class="goal-check'+(g.done?' done':'')+'" onclick="toggleGoal(\''+type+'\',\''+g.id+'\')">'+(g.done?'✓':'')+'</button>';
+    h+='<div class="goal-text'+(g.done?' done':'')+'">'+g.text+'</div>';
+    h+='<button class="goal-del" onclick="deleteGoal(\''+type+'\',\''+g.id+'\')">✕</button>';
+    h+='</div>';
+  });
+  h+='<div class="goal-add-row">';
+  h+='<input class="goal-add-input" id="goal-input-'+type+'" placeholder="목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addGoal(\''+type+'\')">';
+  h+='<button class="goal-add-btn" onclick="addGoal(\''+type+'\')">+</button>';
+  h+='</div></div>';
+  return h;
+}
+
 // ====== VIEW TABS (draggable order) ======
 const DEFAULT_TAB_ORDER=['tl','cal','habit','drop'];
 const TAB_LABELS={tl:'타임라인',cal:'월별 캘린더',habit:'습관',drop:'드롭'};
@@ -2184,8 +2250,14 @@ function renderHabits(){
   const weekDayLabels=['월','화','수','목','금','토','일'];
   let h='';
 
+  // Goals
+  const now=new Date();
+  h+=renderGoalSection('year','🎯',now.getFullYear()+'년 목표');
+  h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
+  h+=renderGoalSection('week','⭐','이번 주 목표');
+
   // Habit add
-  h+='<div class="habit-section-title">습관 관리</div>';
+  h+='<div class="habit-section-title" style="margin-top:16px">습관 관리</div>';
   h+='<div class="habit-input-row">';
   h+='<input class="habit-input" id="habit-quick-input" placeholder="새 습관 추가... (Enter)" onkeydown="if(event.key===\'Enter\'&&!event.isComposing){addHabit(this.value);this.value=\'\';}">';
   h+='<button class="habit-add-btn" onclick="const i=document.getElementById(\'habit-quick-input\');addHabit(i.value);i.value=\'\';">+</button>';
@@ -2873,7 +2945,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v8';
+  const SW_VER='v9';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
