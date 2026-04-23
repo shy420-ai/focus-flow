@@ -1,4 +1,4 @@
-const CACHE_NAME = 'focus-flow-v6';
+const CACHE_NAME = 'focus-flow-v24';
 
 self.addEventListener('install', event => {
   self.skipWaiting();
@@ -13,6 +13,15 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  // HTML pages: always network first, never serve stale cache
+  if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+  // Other resources: network first with cache fallback
   event.respondWith(
     fetch(event.request)
       .then(response => {
