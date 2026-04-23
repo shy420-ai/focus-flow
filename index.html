@@ -488,6 +488,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <select id="tl-end-sel" onchange="setTimelineRange(Number(document.getElementById('tl-start-sel').value),Number(this.value)-Number(document.getElementById('tl-start-sel').value))" style="padding:4px 8px;border-radius:8px;border:1px solid var(--pl);font-size:12px;font-family:inherit"></select>
     </div>
   </div>
+  <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px;text-align:center">🌙 생리주기</div>
+    <div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap">
+      <button onclick="setCycleStart()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:var(--pd)">시작일 기록</button>
+      <button onclick="clearCycle()" style="padding:6px 12px;border-radius:8px;border:1px solid #eee;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#aaa">초기화</button>
+    </div>
+    <div id="cycle-info" style="font-size:10px;color:#aaa;text-align:center;margin-top:6px"></div>
+  </div>
 </div>
 
 <div id="friend-panel" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:500" onclick="if(event.target===this)closeFriendPanel()">
@@ -505,6 +513,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- 타임라인 -->
 <div id="view-tl" class="desktop-left">
   <div id="horoscope-bar" style="display:none;padding:8px 16px;font-size:12px;color:var(--pd);background:var(--pl);border-radius:10px;margin:8px 16px 0;line-height:1.5;text-align:center"></div>
+  <div id="cycle-bar" style="display:none;padding:8px 16px;font-size:12px;border-radius:10px;margin:4px 16px 0;line-height:1.5;text-align:center"></div>
   <div class="tl-wrap">
     <div class="timeline">
       <div class="time-col" id="time-col"></div>
@@ -2292,6 +2301,59 @@ function renderFriendPanel(){
 // Save share code on login
 if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''}).catch(()=>{});}
 
+// ====== CYCLE TRACKER ======
+function getCycleData(){try{return JSON.parse(localStorage.getItem('ff_cycle')||'null');}catch{return null;}}
+function saveCycleData(d){localStorage.setItem('ff_cycle',JSON.stringify(d));}
+function setCycleStart(){
+  const today=todayStr();
+  const input=prompt('생리 시작일 (YYYY-MM-DD)',today);
+  if(!input||!/^\d{4}-\d{2}-\d{2}$/.test(input.trim()))return;
+  const data=getCycleData()||{starts:[],avgCycle:28};
+  data.starts.push(input.trim());
+  data.starts.sort();
+  // Calculate average cycle from history
+  if(data.starts.length>=2){
+    let total=0,count=0;
+    for(let i=1;i<data.starts.length;i++){
+      const diff=Math.round((new Date(data.starts[i])-new Date(data.starts[i-1]))/(86400000));
+      if(diff>20&&diff<45){total+=diff;count++;}
+    }
+    if(count>0)data.avgCycle=Math.round(total/count);
+  }
+  saveCycleData(data);
+  loadCycleBar();
+  const info=document.getElementById('cycle-info');
+  if(info)info.textContent='마지막 시작일: '+input.trim()+' | 평균 주기: '+data.avgCycle+'일';
+}
+function clearCycle(){localStorage.removeItem('ff_cycle');document.getElementById('cycle-bar').style.display='none';}
+
+const CYCLE_PHASES=[
+  {name:'생리기',days:[1,5],emoji:'🩸',color:'#F8D0D0',textColor:'#C45A78',msg:'무리하지 마. 가벼운 일 위주로 해도 충분해!'},
+  {name:'난포기',days:[6,13],emoji:'🌱',color:'#D8F5E3',textColor:'#2D8B57',msg:'에너지 최고조! 어려운 일 도전하기 좋은 시기'},
+  {name:'배란기',days:[14,16],emoji:'🌸',color:'#FDE8EF',textColor:'#C45A78',msg:'소통 능력 UP! 미팅이나 협업에 좋은 날'},
+  {name:'황체기',days:[17,28],emoji:'🍂',color:'#FFF3E0',textColor:'#B8720A',msg:'컨디션 관리 기간. 하나만 해도 괜찮아 💛'}
+];
+
+function getCyclePhase(){
+  const data=getCycleData();if(!data||!data.starts.length)return null;
+  const lastStart=data.starts[data.starts.length-1];
+  const daysSince=Math.round((new Date(todayStr())-new Date(lastStart))/86400000)+1;
+  const cycleDay=((daysSince-1)%data.avgCycle)+1;
+  for(const p of CYCLE_PHASES){if(cycleDay>=p.days[0]&&cycleDay<=p.days[1])return{...p,cycleDay,nextPeriod:data.avgCycle-cycleDay+1};}
+  return{...CYCLE_PHASES[3],cycleDay,nextPeriod:data.avgCycle-cycleDay+1};
+}
+
+function loadCycleBar(){
+  const bar=document.getElementById('cycle-bar');if(!bar)return;
+  const phase=getCyclePhase();if(!phase){bar.style.display='none';return;}
+  let extra='';
+  if(phase.nextPeriod<=3&&phase.name!=='생리기')extra='<br><span style="font-size:10px">⚠️ 생리 예정 '+phase.nextPeriod+'일 전</span>';
+  bar.style.background=phase.color;bar.style.color=phase.textColor;
+  bar.innerHTML=phase.emoji+' <b>'+phase.name+'</b> (D'+phase.cycleDay+') '+phase.msg+extra;
+  bar.style.display='block';
+}
+setTimeout(loadCycleBar,1200);
+
 // ====== WEEKLY VIEW ======
 function getWeekStart(){
   const d=new Date();const day=d.getDay()||7;
@@ -3431,7 +3493,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v18';
+  const SW_VER='v19';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
