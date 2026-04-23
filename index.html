@@ -513,6 +513,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <!-- 타임라인 -->
 <div id="view-tl" class="desktop-left">
   <div id="horoscope-bar" style="display:none;padding:8px 16px;font-size:12px;color:var(--pd);background:var(--pl);border-radius:10px;margin:8px 16px 0;line-height:1.5;text-align:center"></div>
+  <div id="nudge-bar" style="display:none;padding:10px 16px;font-size:12px;color:#fff;background:var(--pd);border-radius:10px;margin:4px 16px 0;text-align:center;line-height:1.5"></div>
+  <div id="mood-bar" style="display:none;padding:8px 16px;font-size:12px;color:var(--pd);background:var(--pl);border-radius:10px;margin:4px 16px 0;text-align:center"></div>
   <div id="cycle-bar" style="display:none;padding:8px 16px;font-size:12px;border-radius:10px;margin:4px 16px 0;line-height:1.5;text-align:center"></div>
   <div class="tl-wrap">
     <div class="timeline">
@@ -1343,7 +1345,7 @@ function toggleDone(id,e){
   if(e)e.stopPropagation();
   const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
   const was=b.done;b.done=!b.done;activeMenu=null;save();render();
-  if(!was)showDone();
+  if(!was)showDone(id);
 }
 function delBlock(id,e){
   if(e)e.stopPropagation();
@@ -2350,6 +2352,69 @@ function renderFriendPanel(){
 // Save share code on login
 if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''}).catch(()=>{});}
 
+// ====== NUDGE SYSTEM ======
+let _nudgeShown={};
+function checkNudges(){
+  if(viewDate!==todayStr())return;
+  const now=new Date();const nh=now.getHours()+now.getMinutes()/60;
+  const today=todayStr();
+  const allB=blocks.filter(b=>b.date===today&&!b.isBuf&&!b.done&&(b.type==='timeline'||!b.type));
+  const recurB=generateRecurringBlocks(today).filter(rb=>!blocks.some(b=>b.recurDoneId===rb.recurId&&b.date===today));
+  [...allB,...recurB].forEach(b=>{
+    const key=b.id||b.recurId;
+    // Start nudge: block starts now (within 1 min)
+    if(Math.abs(nh-b.startHour)<0.02&&!_nudgeShown['s_'+key]){
+      _nudgeShown['s_'+key]=true;
+      showNudge('⏰ <b>'+b.name+'</b> 시작할 시간이야! 일단 준비만 해볼까?');
+    }
+    // End nudge: 10min before end
+    const endH=b.startHour+b.durHour;
+    const minsBefore=(endH-nh)*60;
+    if(minsBefore>8&&minsBefore<12&&!_nudgeShown['e_'+key]){
+      _nudgeShown['e_'+key]=true;
+      showNudge('⏳ <b>'+b.name+'</b> 10분 남았어. 마무리 준비!');
+    }
+  });
+}
+function showNudge(msg){
+  const bar=document.getElementById('nudge-bar');if(!bar)return;
+  bar.innerHTML=msg+'<button onclick="this.parentElement.style.display=\'none\'" style="margin-left:8px;background:none;border:none;color:var(--pd);cursor:pointer;font-size:14px">✕</button>';
+  bar.style.display='block';
+  setTimeout(()=>{bar.style.display='none';},15000);
+}
+setInterval(checkNudges,30000);
+setTimeout(checkNudges,3000);
+
+// ====== ENERGY & MOOD TRACKER ======
+function getEnergyLogs(){try{return JSON.parse(localStorage.getItem('ff_energy')||'[]');}catch{return[];}}
+function saveEnergyLogs(l){localStorage.setItem('ff_energy',JSON.stringify(l));}
+function logEnergy(level){
+  const logs=getEnergyLogs();
+  const now=new Date();
+  logs.push({date:todayStr(),hour:now.getHours(),level,blockId:_lastDoneBlockId,ts:Date.now()});
+  saveEnergyLogs(logs);
+  document.getElementById('toast').classList.remove('show');
+}
+
+function getMoodLogs(){try{return JSON.parse(localStorage.getItem('ff_mood')||'[]');}catch{return[];}}
+function saveMoodLogs(l){localStorage.setItem('ff_mood',JSON.stringify(l));}
+function logMood(mood){
+  const logs=getMoodLogs();
+  const now=new Date();
+  logs.push({date:todayStr(),hour:now.getHours(),mood,ts:Date.now()});
+  saveMoodLogs(logs);
+  localStorage.setItem('ff_last_mood',Date.now().toString());
+  const bar=document.getElementById('mood-bar');if(bar)bar.style.display='none';
+}
+function showMoodCheck(){
+  const last=parseInt(localStorage.getItem('ff_last_mood')||'0');
+  if(Date.now()-last<7200000)return; // 2시간 내 체크했으면 스킵
+  const bar=document.getElementById('mood-bar');if(!bar)return;
+  bar.innerHTML='<span style="margin-right:6px">지금 기분 어때?</span><button onclick="logMood(\'😊\')" style="font-size:18px;background:none;border:none;cursor:pointer">😊</button><button onclick="logMood(\'😐\')" style="font-size:18px;background:none;border:none;cursor:pointer">😐</button><button onclick="logMood(\'😢\')" style="font-size:18px;background:none;border:none;cursor:pointer">😢</button><button onclick="logMood(\'😤\')" style="font-size:18px;background:none;border:none;cursor:pointer">😤</button><button onclick="logMood(\'🥱\')" style="font-size:18px;background:none;border:none;cursor:pointer">🥱</button>';
+  bar.style.display='block';
+}
+setTimeout(showMoodCheck,2000);
+
 // ====== CYCLE TRACKER ======
 function getCycleData(){try{return JSON.parse(localStorage.getItem('ff_cycle')||'null');}catch{return null;}}
 function saveCycleData(d){localStorage.setItem('ff_cycle',JSON.stringify(d));}
@@ -2753,12 +2818,19 @@ const MSGS=[
 {e:'🐥',m:'삐약!',s:'오늘도 성장 중'},
 {e:'🎯',m:'적중!',s:'정확히 해냈어'},
 ];
-function showDone(){
+let _lastDoneBlockId=null;
+function showDone(blockId){
+  _lastDoneBlockId=blockId||null;
   const msg=MSGS[Math.floor(Math.random()*MSGS.length)];
-  showToast(msg.e,msg.m,msg.s);
+  showToastWithEnergy(msg.e,msg.m,msg.s);
   const cc=getCC();
   for(let i=0;i<80;i++){const a=Math.random()*Math.PI*2,sp=2+Math.random()*6;particles.push({x:window.innerWidth/2,y:window.innerHeight*.4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-4,size:4+Math.random()*6,color:cc[Math.floor(Math.random()*cc.length)],rot:Math.random()*360,rotV:(Math.random()-.5)*8,life:1,decay:.013+Math.random()*.01,shape:Math.random()>.5?'rect':'circle'});}
   animC();
+}
+function showToastWithEnergy(e,m,s){
+  document.getElementById('te').innerHTML=e;document.getElementById('tm').textContent=m;
+  document.getElementById('ts').innerHTML=s+'<div style="display:flex;gap:8px;justify-content:center;margin-top:8px"><button onclick="logEnergy(1)" style="font-size:20px;background:none;border:none;cursor:pointer">😫</button><button onclick="logEnergy(2)" style="font-size:20px;background:none;border:none;cursor:pointer">😐</button><button onclick="logEnergy(3)" style="font-size:20px;background:none;border:none;cursor:pointer">😊</button><button onclick="logEnergy(4)" style="font-size:20px;background:none;border:none;cursor:pointer">🔥</button></div>';
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),5000);
 }
 function showToast(e,m,s){
   document.getElementById('te').innerHTML=e;document.getElementById('tm').textContent=m;document.getElementById('ts').textContent=s;
@@ -3553,7 +3625,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v20';
+  const SW_VER='v21';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
