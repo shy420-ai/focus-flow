@@ -2443,6 +2443,46 @@ function renderStats(){
   h+='<div style="font-size:12px;color:var(--pd);text-align:center">'+doneB+'/'+totalB+'개 완료 ('+rate+'%)</div>';
   h+='</div>';
 
+  // Smart Insights
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px">💡 인사이트</div>';
+  const insights=[];
+  if(eLogs.length>=3){
+    // Find worst hour
+    const hourMap2={};eLogs.forEach(l=>{if(!hourMap2[l.hour])hourMap2[l.hour]={sum:0,count:0};hourMap2[l.hour].sum+=l.level;hourMap2[l.hour].count++;});
+    let worstH=-1,worstAvg=5,bestH2=-1,bestAvg2=0;
+    Object.entries(hourMap2).forEach(([hr,d])=>{const avg=d.sum/d.count;if(avg<worstAvg){worstAvg=avg;worstH=hr;}if(avg>bestAvg2){bestAvg2=avg;bestH2=hr;}});
+    if(bestH2>=0)insights.push('🏆 <b>'+bestH2+':00</b>이 골든타임! 중요한 일은 이 시간에 배치해봐');
+    if(worstH>=0&&worstAvg<2.5)insights.push('💤 <b>'+worstH+':00</b>에 에너지가 낮아. 이 시간엔 가벼운 일이나 휴식 추천');
+    // Day of week analysis
+    const dowMap={};const dowNames=['일','월','화','수','목','금','토'];
+    eLogs.forEach(l=>{const d=new Date(l.date).getDay();if(!dowMap[d])dowMap[d]={sum:0,count:0};dowMap[d].sum+=l.level;dowMap[d].count++;});
+    let bestDow=-1,bestDowAvg=0,worstDow=-1,worstDowAvg=5;
+    Object.entries(dowMap).forEach(([d,v])=>{const avg=v.sum/v.count;if(avg>bestDowAvg){bestDowAvg=avg;bestDow=d;}if(avg<worstDowAvg){worstDowAvg=avg;worstDow=d;}});
+    if(bestDow>=0&&Object.keys(dowMap).length>=3)insights.push('📅 <b>'+dowNames[bestDow]+'요일</b>에 에너지가 가장 높아! 도전적인 일정 잡기 좋은 날');
+    if(worstDow>=0&&worstDowAvg<2.5&&Object.keys(dowMap).length>=3)insights.push('😴 <b>'+dowNames[worstDow]+'요일</b>은 에너지 낮은 날. 일정 적게 잡는 게 좋아');
+    // Average energy
+    const avgAll=eLogs.reduce((s,l)=>s+l.level,0)/eLogs.length;
+    if(avgAll>=3)insights.push('⚡ 평균 에너지 <b>'+avgAll.toFixed(1)+'</b> — 컨디션 좋은 편! 이 페이스 유지해');
+    else if(avgAll<2)insights.push('🫂 평균 에너지 <b>'+avgAll.toFixed(1)+'</b> — 좀 힘든 시기야. 무리하지 말고 하나씩만');
+  }
+  // Completion insights
+  if(totalB>=5){
+    if(rate>=80)insights.push('🎉 완료율 <b>'+rate+'%</b>! 엄청 잘하고 있어!');
+    else if(rate>=50)insights.push('👍 완료율 <b>'+rate+'%</b> — 절반 이상 해내고 있어. 충분해!');
+    else insights.push('💛 완료율 <b>'+rate+'%</b> — 괜찮아. 블록을 더 작게 쪼개보는 건 어때?');
+  }
+  // Mood + energy correlation
+  if(mLogs.length>=3){
+    const sadDays=mLogs.filter(l=>l.mood==='😢'||l.mood==='😤').map(l=>l.date);
+    const happyDays=mLogs.filter(l=>l.mood==='😊').map(l=>l.date);
+    if(sadDays.length>happyDays.length)insights.push('💭 최근 힘든 날이 좋은 날보다 많아. 자신한테 좀 더 부드럽게 대해줘');
+    if(happyDays.length>sadDays.length)insights.push('🌸 좋은 기분이 더 많아! 지금 하고 있는 거 잘하고 있다는 뜻이야');
+  }
+  if(insights.length===0)insights.push('📊 데이터가 더 쌓이면 맞춤 인사이트를 알려줄게!<br>블록 완료할 때 에너지, 앱 열 때 기분을 체크해봐');
+  insights.forEach(ins=>{h+='<div style="font-size:12px;color:#555;padding:8px 0;border-bottom:1px solid #f5f5f5;line-height:1.6">'+ins+'</div>';});
+  h+='</div>';
+
   // Energy data count
   h+='<div style="background:#fff;border-radius:14px;padding:14px;border:1.5px solid var(--pl)">';
   h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:6px">📈 누적 데이터</div>';
