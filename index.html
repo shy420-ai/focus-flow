@@ -780,7 +780,7 @@ auth.onAuthStateChanged(user=>{
     localStorage.setItem('ff_uid',user.uid);
     localStorage.removeItem('ff_skip_login');
     document.getElementById('login-overlay').style.display='none';
-    viewDate=todayStr();curView='tl';
+    viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     loadFromFirestore();
     listenFirestore();
     // Save share code for friend feature
@@ -790,7 +790,7 @@ auth.onAuthStateChanged(user=>{
   }else if(localStorage.getItem('ff_skip_login')||localStorage.getItem('ff_uid')){
     // Previously logged in or skipped — don't show login, load from local
     document.getElementById('login-overlay').style.display='none';
-    viewDate=todayStr();curView='tl';
+    viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     switchView('tl');
   }else{
     document.getElementById('login-overlay').style.display='flex';
@@ -879,7 +879,7 @@ function setTimelineRange(start,hours){START=start;HOURS=hours;localStorage.setI
 const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
-let viewDate=todayStr(),curView='tl',bufOn=false,preview=null,nid=Date.now();
+let viewDate=todayStr(),curView=localStorage.getItem('ff_cur_view')||'tl',bufOn=false,preview=null,nid=Date.now();
 let activeMenu=null,memoId=null,dragState=null,didDrag=false;
 let holdTimer=null,holdReady=false;
 let calY=new Date().getFullYear(),calM=new Date().getMonth(),calSel=null;
@@ -995,7 +995,7 @@ function freeSlot(date,dur,fixed){
 // 뷰 전환
 function isDesktop(){return window.innerWidth>=768;}
 function switchView(v){
-  curView=v;
+  curView=v;localStorage.setItem('ff_cur_view',v);
   if(isDesktop()){
     document.getElementById('view-tl').style.display='block';
     document.getElementById('view-inbox').style.display='block';
