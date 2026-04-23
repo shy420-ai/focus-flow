@@ -1303,9 +1303,32 @@ setTimeout(renderDeskDump,500);
 function editBlock(id,e){
   if(e)e.stopPropagation();
   const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
-  const newName=prompt('이름 수정:',b.name);
-  if(newName!==null&&newName.trim()){b.name=newName.trim();activeMenu=null;save();render();}
-  else{activeMenu=null;renderTimeline();}
+  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" id="edit-block-overlay" onclick="if(event.target===this){this.remove();activeMenu=null;renderTimeline();}">';
+  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
+  h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">블록 수정</div>';
+  h+='<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">이름</div>';
+  h+='<input id="edit-block-name" value="'+b.name+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
+  h+='<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">카테고리</div>';
+  h+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
+  h+='<button class="cat-pill'+((!b.category)?' active':'')+'" onclick="document.getElementById(\'edit-block-cat\').value=\'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\')" style="'+(!b.category?'background:var(--pink);color:#fff;border-color:var(--pink)':'')+'">없음</button>';
+  allCategories().forEach(c=>{
+    const isActive=b.category===c.name;
+    h+='<button class="cat-pill'+(isActive?' active':'')+'" onclick="document.getElementById(\'edit-block-cat\').value=\''+c.name+'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\')" style="'+(isActive?'background:'+c.color+';border-color:'+c.color:'color:'+c.color+';border-color:'+c.color)+'">'+c.name+'</button>';
+  });
+  h+='</div><input type="hidden" id="edit-block-cat" value="'+(b.category||'')+'"></div>';
+  h+='<button onclick="saveEditBlock(\''+id+'\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">저장</button>';
+  h+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  activeMenu=null;renderTimeline();
+}
+function saveEditBlock(id){
+  const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
+  const name=document.getElementById('edit-block-name').value.trim();
+  const cat=document.getElementById('edit-block-cat').value;
+  if(name)b.name=name;
+  b.category=cat;
+  save();render();
+  const el=document.getElementById('edit-block-overlay');if(el)el.remove();
 }
 function toggleDone(id,e){
   if(e)e.stopPropagation();
