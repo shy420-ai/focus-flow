@@ -2220,7 +2220,7 @@ async function loadHoroscope(){
   const bar=document.getElementById('horoscope-bar');if(!bar)return;
   const cacheKey='ff_horo_'+todayStr()+'_'+z.name;
   const cached=localStorage.getItem(cacheKey);
-  if(cached){bar.innerHTML=cached;bar.style.display='block';return;}
+  if(cached){bar.innerHTML=cached;bar.style.display='block';bar.onclick=setupBirthday;return;}
   try{
     const resp=await fetch('https://ohmanda.com/api/horoscope/'+z.name);
     const data=await resp.json();
@@ -2229,7 +2229,7 @@ async function loadHoroscope(){
       const saju=loadSajuFortune();
       const msg='⭐ <b>'+z.ko+'</b> '+ko+(saju?'<br>'+saju:'');
       localStorage.setItem(cacheKey,msg);
-      bar.innerHTML=msg;bar.style.display='block';
+      bar.innerHTML=msg;bar.style.display='block';bar.onclick=setupBirthday;
     }
   }catch(e){
     // Fallback: local Korean message
@@ -2237,23 +2237,32 @@ async function loadHoroscope(){
     const msgs=HORO_MSGS[seed%HORO_MSGS.length];
     const saju=loadSajuFortune();
     bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msgs[seed%msgs.length]+(saju?'<br>'+saju:'');
-    bar.style.display='block';
+    bar.style.display='block';bar.onclick=setupBirthday;
   }
 }
 function setupBirthday(){
-  const byear=prompt('태어난 년도 (예: 1998)');
+  const byear=prompt('태어난 년도 (예: 1998)',localStorage.getItem('ff_birthyear')||'');
   if(!byear||!/^\d{4}$/.test(byear.trim()))return;
-  const bday=prompt('생일 월-일 (예: 04-20)');
+  const bday=prompt('생일 월-일 (예: 04-20)',localStorage.getItem('ff_birthday')||'');
   if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday.trim()))return;
   localStorage.setItem('ff_birthyear',byear.trim());
   localStorage.setItem('ff_birthday',bday.trim());
+  // Clear cached horoscope to regenerate
+  const keys=Object.keys(localStorage).filter(k=>k.startsWith('ff_horo_'));
+  keys.forEach(k=>localStorage.removeItem(k));
   loadHoroscope();
 }
 // Auto-load horoscope
 setTimeout(()=>{
-  if(localStorage.getItem('ff_birthday'))loadHoroscope();
-  else{
-    // Show setup prompt in horoscope bar
+  if(localStorage.getItem('ff_birthday')){
+    if(!localStorage.getItem('ff_birthyear')){
+      // Have birthday but no year — ask for year
+      const bar=document.getElementById('horoscope-bar');
+      if(bar){bar.innerHTML='🔮 <span onclick="setupBirthday()" style="text-decoration:underline;cursor:pointer">태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>';bar.style.display='block';}
+    }else{
+      loadHoroscope();
+    }
+  }else{
     const bar=document.getElementById('horoscope-bar');
     if(bar){bar.innerHTML='⭐ <span onclick="setupBirthday()" style="text-decoration:underline;cursor:pointer">생일 입력하면 오늘의 운세를 볼 수 있어!</span>';bar.style.display='block';}
   }
