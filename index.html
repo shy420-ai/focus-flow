@@ -467,7 +467,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="header">
   <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div></div>
   <div id="mode-toggle" style="display:none"></div>
-  <div style="display:flex;align-items:center;gap:8px"><button id="theme-btn" onclick="toggleThemePopup()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px">🎨</button><div class="clock" id="clock"></div></div>
+  <div style="display:flex;align-items:center;gap:8px"><button onclick="toggleFriendPanel()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px">👥</button><button id="theme-btn" onclick="toggleThemePopup()" style="background:none;border:none;font-size:18px;cursor:pointer;padding:4px">🎨</button><div class="clock" id="clock"></div></div>
 </div>
 <div id="theme-popup" style="display:none;position:absolute;top:56px;right:12px;background:#fff;border:2px solid var(--pink);border-radius:14px;padding:12px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:160px">
   <div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">테마 선택</div>
@@ -488,6 +488,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+<div id="friend-panel" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.3);z-index:500" onclick="if(event.target===this)closeFriendPanel()">
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;border-radius:20px;padding:24px;width:90%;max-width:340px;max-height:80vh;overflow-y:auto">
+    <div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:16px;text-align:center">👥 친구</div>
+    <div id="friend-content"></div>
+  </div>
+</div>
 <div class="date-tabs" id="date-tabs"></div>
 <div class="view-tabs" id="view-tabs"></div>
 <div class="summary" id="summary"></div>
@@ -755,6 +761,9 @@ auth.onAuthStateChanged(user=>{
     viewDate=todayStr();curView='tl';
     loadFromFirestore();
     listenFirestore();
+    // Save share code for friend feature
+    const sc=getMyShareCode();
+    if(sc)db.collection('users').doc(_uid).set({shareCode:sc,displayName:user.displayName||''},{merge:true}).catch(()=>{});
     switchView('tl');
   }else if(localStorage.getItem('ff_skip_login')||localStorage.getItem('ff_uid')){
     // Previously logged in or skipped — don't show login, load from local
@@ -816,6 +825,7 @@ function listenFirestore(){
       if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
       if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
       if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
+      if(d.friends) localStorage.setItem('ff_friends',JSON.stringify(d.friends));
       saveHabitLocal();
       render();
     }
@@ -2168,6 +2178,118 @@ function renderGoals(){
   wrap.innerHTML=h;
 }
 
+// ====== FRIENDS ======
+function getMyShareCode(){
+  if(!_uid)return null;
+  // Generate short code from uid
+  let h=0;for(let i=0;i<_uid.length;i++){h=((h<<5)-h)+_uid.charCodeAt(i);h|=0;}
+  return Math.abs(h).toString(36).toUpperCase().slice(0,6);
+}
+function getFriends(){try{return JSON.parse(localStorage.getItem('ff_friends')||'[]');}catch{return[];}}
+function saveFriends(f){localStorage.setItem('ff_friends',JSON.stringify(f));if(_uid)db.collection('users').doc(_uid).update({friends:f}).catch(()=>{});}
+
+function toggleFriendPanel(){
+  const p=document.getElementById('friend-panel');
+  if(p.style.display==='none'){p.style.display='block';renderFriendPanel();}
+  else closeFriendPanel();
+}
+function closeFriendPanel(){document.getElementById('friend-panel').style.display='none';}
+
+async function addFriend(){
+  const code=prompt('친구의 공유 코드를 입력해:');
+  if(!code||!code.trim())return;
+  const trimmed=code.trim().toUpperCase();
+  if(!_uid){alert('로그인이 필요해요!');return;}
+  // Find user by share code — search in Firestore
+  try{
+    const snap=await db.collection('users').where('shareCode','==',trimmed).get();
+    if(snap.empty){alert('해당 코드의 사용자를 찾을 수 없어요');return;}
+    const friendDoc=snap.docs[0];
+    const friendUid=friendDoc.id;
+    if(friendUid===_uid){alert('자기 자신은 추가할 수 없어!');return;}
+    const friends=getFriends();
+    if(friends.find(f=>f.uid===friendUid)){alert('이미 추가된 친구야!');return;}
+    const fd=friendDoc.data();
+    friends.push({uid:friendUid,code:trimmed,name:fd.displayName||'친구'});
+    saveFriends(friends);
+    // Save my share code to Firestore if not already
+    await db.collection('users').doc(_uid).update({shareCode:getMyShareCode()});
+    renderFriendPanel();
+  }catch(e){alert('에러: '+e.message);}
+}
+
+async function removeFriend(uid){
+  let friends=getFriends();
+  friends=friends.filter(f=>f.uid!==uid);
+  saveFriends(friends);
+  renderFriendPanel();
+}
+
+async function viewFriend(uid,name){
+  try{
+    const doc=await db.collection('users').doc(uid).get();
+    if(!doc.exists){alert('친구 데이터를 불러올 수 없어요');return;}
+    const d=doc.data();
+    const today=todayStr();
+    const tasks=(d.tasks||[]).filter(b=>b.date===today&&!b.isBuf&&(b.type==='timeline'||!b.type));
+    const habits=d.habits||[];
+    const habitLogs=d.habitLogs||{};
+    let h='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:12px">'+name+'의 오늘</div>';
+    if(tasks.length===0){
+      h+='<div style="color:#aaa;font-size:12px;margin-bottom:12px">오늘 일정 없음</div>';
+    }else{
+      tasks.sort((a,b)=>a.startHour-b.startHour);
+      tasks.forEach(b=>{
+        h+='<div style="padding:8px;background:var(--pl);border-radius:8px;margin-bottom:6px;border-left:3px solid var(--pink);font-size:12px">';
+        h+='<span style="color:var(--pd);font-weight:600">'+fmtH(b.startHour)+'-'+fmtH(b.startHour+b.durHour)+'</span> ';
+        h+=(b.done?'✓ ':'')+b.name;
+        h+='</div>';
+      });
+    }
+    if(habits.length){
+      h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin:12px 0 6px">습관</div>';
+      habits.forEach(hab=>{
+        const done=habitLogs[today]&&habitLogs[today].includes(hab.id);
+        h+='<div style="font-size:12px;padding:4px 0">'+(done?'🌸':'⬜')+' '+hab.name+'</div>';
+      });
+    }
+    h+='<button onclick="renderFriendPanel()" style="margin-top:12px;padding:8px 16px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:12px;cursor:pointer;font-family:inherit">← 돌아가기</button>';
+    document.getElementById('friend-content').innerHTML=h;
+  }catch(e){alert('에러: '+e.message);}
+}
+
+function renderFriendPanel(){
+  const el=document.getElementById('friend-content');
+  const myCode=getMyShareCode();
+  const friends=getFriends();
+  let h='';
+  if(!_uid){
+    h='<div style="text-align:center;color:#aaa;font-size:13px;padding:20px 0">로그인하면 친구와 공유할 수 있어!</div>';
+  }else{
+    h+='<div style="background:var(--pl);border-radius:10px;padding:12px;margin-bottom:16px;text-align:center">';
+    h+='<div style="font-size:11px;color:#aaa;margin-bottom:4px">내 공유 코드</div>';
+    h+='<div style="font-size:24px;font-weight:700;color:var(--pd);letter-spacing:4px">'+myCode+'</div>';
+    h+='<div style="font-size:10px;color:#aaa;margin-top:4px">이 코드를 친구에게 알려주면 서로의 일정을 볼 수 있어!</div>';
+    h+='</div>';
+    h+='<button onclick="addFriend()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--pink);background:#fff;color:var(--pd);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:16px">+ 친구 추가</button>';
+    if(friends.length){
+      h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin-bottom:8px">친구 목록</div>';
+      friends.forEach(f=>{
+        h+='<div style="display:flex;align-items:center;gap:8px;padding:10px;background:#fff;border-radius:10px;margin-bottom:6px;border:1px solid var(--pl)">';
+        h+='<div style="flex:1;font-size:13px;color:#333;cursor:pointer" onclick="viewFriend(\''+f.uid+'\',\''+f.name+'\')">'+f.name+' <span style="color:#aaa;font-size:10px">'+f.code+'</span></div>';
+        h+='<button onclick="viewFriend(\''+f.uid+'\',\''+f.name+'\')" style="padding:4px 10px;border-radius:6px;border:1px solid var(--pink);background:#fff;color:var(--pd);font-size:11px;cursor:pointer">보기</button>';
+        h+='<button onclick="removeFriend(\''+f.uid+'\')" style="padding:4px 8px;border-radius:6px;border:none;background:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>';
+        h+='</div>';
+      });
+    }else{
+      h+='<div style="text-align:center;color:#aaa;font-size:12px;padding:16px 0">아직 친구가 없어<br>코드를 교환해봐!</div>';
+    }
+  }
+  el.innerHTML=h;
+}
+// Save share code on login
+if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''}).catch(()=>{});}
+
 // ====== WEEKLY VIEW ======
 function getWeekStart(){
   const d=new Date();const day=d.getDay()||7;
@@ -3305,7 +3427,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v16';
+  const SW_VER='v17';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
