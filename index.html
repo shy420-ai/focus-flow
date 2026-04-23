@@ -529,6 +529,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="week-content" style="padding:8px;overflow-x:auto"></div>
 </div>
 
+<!-- Stats -->
+<div id="view-stats" style="display:none">
+  <div id="stats-content" style="padding:16px"></div>
+</div>
+
 <!-- Drop (Brain Dump) -->
 <div id="view-drop" style="display:none">
   <div class="drop-wrap" id="drop-content"></div>
@@ -996,7 +1001,8 @@ function switchView(v){
     const goalEl=document.getElementById('view-goal');
     const panelStyle='width:60%;flex-shrink:0;flex-grow:0;border-left:1px solid var(--pl);overflow-y:auto;padding:16px';
     const weekEl=document.getElementById('view-week');
-    const panels={cal:calEl,habit:habitEl,drop:dropEl,goal:goalEl,week:weekEl};
+    const statsEl=document.getElementById('view-stats');
+    const panels={cal:calEl,habit:habitEl,drop:dropEl,goal:goalEl,week:weekEl,stats:statsEl};
     if(v==='week'){
       // Week view replaces both timeline and calendar
       document.getElementById('view-tl').style.display='none';
@@ -1019,11 +1025,13 @@ function switchView(v){
     document.getElementById('view-habit').style.display=v==='habit'?'block':'none';
     document.getElementById('view-goal').style.display=v==='goal'?'block':'none';
     document.getElementById('view-drop').style.display=v==='drop'?'block':'none';
+    document.getElementById('view-stats').style.display=v==='stats'?'block':'none';
   }
   renderViewTabs();
   if(v==='cal'||isDesktop())renderCal();
   if(v==='week')renderWeek();
   if(v==='goal')renderGoals();
+  if(v==='stats')renderStats();
   if(v==='inbox')renderInbox();
   if(v==='habit')renderHabits();
   if(v==='drop')renderDrop();
@@ -2352,6 +2360,95 @@ function renderFriendPanel(){
 // Save share code on login
 if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''}).catch(()=>{});}
 
+// ====== STATS DASHBOARD ======
+function renderStats(){
+  const wrap=document.getElementById('stats-content');if(!wrap)return;
+  const eLogs=getEnergyLogs();
+  const mLogs=getMoodLogs();
+  const today=todayStr();
+  let h='<div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:16px">📊 분석</div>';
+
+  // Energy heatmap by hour
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px">⚡ 시간대별 에너지</div>';
+  if(eLogs.length<3){
+    h+='<div style="color:#aaa;font-size:12px;text-align:center;padding:20px 0">데이터가 더 쌓이면 분석을 보여줄게!<br>블록 완료할 때 에너지를 체크해봐 ('+eLogs.length+'/3)</div>';
+  }else{
+    const hourMap={};
+    eLogs.forEach(l=>{if(!hourMap[l.hour])hourMap[l.hour]={sum:0,count:0};hourMap[l.hour].sum+=l.level;hourMap[l.hour].count++;});
+    let bestHour=-1,bestAvg=0;
+    h+='<div style="display:flex;gap:2px;align-items:flex-end;height:80px;margin-bottom:6px">';
+    for(let hr=START;hr<START+HOURS;hr++){
+      const d=hourMap[hr];const avg=d?d.sum/d.count:0;
+      if(avg>bestAvg){bestAvg=avg;bestHour=hr;}
+      const pct=avg/4*100;
+      const color=avg>=3?'#1D9E75':avg>=2?'var(--pink)':'#E24B4A';
+      h+='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%">';
+      if(d)h+='<div style="width:100%;background:'+color+';border-radius:3px 3px 0 0;height:'+Math.max(pct,5)+'%;min-height:2px;opacity:'+(d?'1':'0.2')+'"></div>';
+      h+='</div>';
+    }
+    h+='</div>';
+    h+='<div style="display:flex;gap:2px;font-size:8px;color:#aaa">';
+    for(let hr=START;hr<START+HOURS;hr++)h+='<div style="flex:1;text-align:center">'+(hr%3===0?hr:'')+'</div>';
+    h+='</div>';
+    if(bestHour>=0)h+='<div style="font-size:12px;color:var(--pd);margin-top:8px;text-align:center">🏆 골든타임: <b>'+bestHour+':00</b> (평균 에너지 '+bestAvg.toFixed(1)+')</div>';
+  }
+  h+='</div>';
+
+  // Mood timeline (recent 7 days)
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px">💭 최근 7일 기분</div>';
+  if(mLogs.length===0){
+    h+='<div style="color:#aaa;font-size:12px;text-align:center;padding:20px 0">앱 열 때 기분을 체크하면 여기에 나와!</div>';
+  }else{
+    const last7=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last7.push(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));}
+    h+='<div style="display:flex;gap:4px;justify-content:center">';
+    last7.forEach(ds=>{
+      const dayMoods=mLogs.filter(l=>l.date===ds);
+      const label=ds.slice(5);
+      const d=new Date(ds);const dow=['일','월','화','수','목','금','토'][d.getDay()];
+      h+='<div style="text-align:center;flex:1">';
+      h+='<div style="font-size:8px;color:#aaa">'+dow+'</div>';
+      h+='<div style="font-size:8px;color:#aaa">'+label+'</div>';
+      if(dayMoods.length){
+        dayMoods.forEach(m=>h+='<div style="font-size:16px">'+m.mood+'</div>');
+      }else{
+        h+='<div style="font-size:12px;color:#ddd">-</div>';
+      }
+      h+='</div>';
+    });
+    h+='</div>';
+    // Most common mood
+    const moodCount={};mLogs.forEach(l=>{moodCount[l.mood]=(moodCount[l.mood]||0)+1;});
+    const topMood=Object.entries(moodCount).sort((a,b)=>b[1]-a[1])[0];
+    if(topMood)h+='<div style="font-size:12px;color:var(--pd);margin-top:8px;text-align:center">가장 많은 기분: '+topMood[0]+' ('+topMood[1]+'회)</div>';
+  }
+  h+='</div>';
+
+  // Weekly completion rate
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px">✅ 이번 주 완료율</div>';
+  const last7d=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last7d.push(d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()));}
+  let totalB=0,doneB=0;
+  last7d.forEach(ds=>{
+    const dayB=blocks.filter(b=>b.date===ds&&!b.isBuf&&(b.type==='timeline'||!b.type));
+    totalB+=dayB.length;doneB+=dayB.filter(b=>b.done).length;
+  });
+  const rate=totalB?Math.round(doneB/totalB*100):0;
+  h+='<div style="height:8px;background:var(--pl);border-radius:4px;margin-bottom:6px"><div style="height:100%;background:var(--pink);border-radius:4px;width:'+rate+'%;transition:width .3s"></div></div>';
+  h+='<div style="font-size:12px;color:var(--pd);text-align:center">'+doneB+'/'+totalB+'개 완료 ('+rate+'%)</div>';
+  h+='</div>';
+
+  // Energy data count
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:6px">📈 누적 데이터</div>';
+  h+='<div style="font-size:12px;color:#666">에너지 기록: '+eLogs.length+'개 | 감정 기록: '+mLogs.length+'개</div>';
+  h+='<div style="font-size:10px;color:#aaa;margin-top:4px">데이터가 쌓일수록 분석이 정확해져!</div>';
+  h+='</div>';
+
+  wrap.innerHTML=h;
+}
+
 // ====== NUDGE SYSTEM ======
 let _nudgeShown={};
 function checkNudges(){
@@ -2680,10 +2777,10 @@ setTimeout(()=>{
 },1000);
 
 // ====== VIEW TABS (draggable order) ======
-const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop'];
-const TAB_LABELS={tl:'일간',week:'주간',cal:'월별',habit:'습관',goal:'목표',drop:'드롭'};
+const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop','stats'];
+const TAB_LABELS={tl:'일간',week:'주간',cal:'월별',habit:'습관',goal:'목표',drop:'드롭',stats:'분석'};
 function getTabOrder(){
-  try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=6&&arr.includes('week'))return arr;}}catch{}
+  try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=7&&arr.includes('stats'))return arr;}}catch{}
   return DEFAULT_TAB_ORDER.slice();
 }
 function saveTabOrder(order){localStorage.setItem('ff_tab_order',JSON.stringify(order));}
@@ -3635,7 +3732,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v22';
+  const SW_VER='v23';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
