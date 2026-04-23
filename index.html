@@ -3275,7 +3275,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v14';
+  const SW_VER='v15';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
