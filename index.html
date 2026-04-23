@@ -2153,22 +2153,38 @@ const HORO_COLORS=['핑크','하늘색','라벤더','민트','코랄','레몬','
 const HORO_ITEMS=['따뜻한 음료','초콜릿','좋아하는 노래','짧은 산책','스트레칭','향초','편한 옷'];
 const HORO_MUSIC=['신나는 팝','잔잔한 피아노','로파이','90년대 가요','자연 소리','재즈','감성 인디'];
 
-function dateSeed(){const d=todayStr().replace(/-/g,'');let h=0;for(let i=0;i<d.length;i++){h=((h<<5)-h)+d.charCodeAt(i);h|=0;}return Math.abs(h);}
-function loadHoroscope(){
+async function translateToKo(text){
+  try{
+    const resp=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q='+encodeURIComponent(text));
+    const data=await resp.json();
+    return data[0].map(x=>x[0]).join('');
+  }catch{return text;}
+}
+async function loadHoroscope(){
   const bday=localStorage.getItem('ff_birthday');
   if(!bday)return;
   const [m,d]=bday.split('-').map(Number);
   const z=getZodiac(m,d);if(!z)return;
   const bar=document.getElementById('horoscope-bar');if(!bar)return;
-  const seed=dateSeed();
-  const signIdx=ZODIAC_SIGNS.findIndex(x=>x.name===z.name&&m*100+d>=x.from[0]*100+x.from[1]);
-  const msgGroup=HORO_MSGS[(seed+signIdx)%HORO_MSGS.length];
-  const msg=msgGroup[(seed+d)%msgGroup.length];
-  const luckyType=(seed+m)%3;
-  const luckyItems=[HORO_COLORS,HORO_ITEMS,HORO_MUSIC];
-  const lucky=HORO_LUCKY[luckyType]+luckyItems[luckyType][(seed+signIdx)%luckyItems[luckyType].length];
-  bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msg+'<br><span style="font-size:10px;opacity:.7">'+lucky+'</span>';
-  bar.style.display='block';
+  const cacheKey='ff_horo_'+todayStr()+'_'+z.name;
+  const cached=localStorage.getItem(cacheKey);
+  if(cached){bar.innerHTML=cached;bar.style.display='block';return;}
+  try{
+    const resp=await fetch('https://ohmanda.com/api/horoscope/'+z.name);
+    const data=await resp.json();
+    if(data.horoscope){
+      const ko=await translateToKo(data.horoscope);
+      const msg='⭐ <b>'+z.ko+'</b> '+ko;
+      localStorage.setItem(cacheKey,msg);
+      bar.innerHTML=msg;bar.style.display='block';
+    }
+  }catch(e){
+    // Fallback: local Korean message
+    const seed=todayStr().replace(/-/g,'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
+    const msgs=HORO_MSGS[seed%HORO_MSGS.length];
+    bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msgs[seed%msgs.length];
+    bar.style.display='block';
+  }
 }
 function setupBirthday(){
   const bday=localStorage.getItem('ff_birthday');
