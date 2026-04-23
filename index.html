@@ -2323,7 +2323,7 @@ async function viewFriend(uid,name){
     if(habits.length){
       h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin:12px 0 6px">습관</div>';
       habits.forEach(hab=>{
-        const done=habitLogs[today]&&habitLogs[today].includes(hab.id);
+        const dl=habitLogs[today];const done=Array.isArray(dl)&&dl.includes(hab.id);
         h+='<div style="font-size:12px;padding:4px 0">'+(done?'🌸':'⬜')+' '+hab.name+'</div>';
       });
     }
