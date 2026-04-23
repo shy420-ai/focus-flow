@@ -471,6 +471,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 <div id="theme-popup" style="display:none;position:absolute;top:56px;right:12px;background:#fff;border:2px solid var(--pink);border-radius:14px;padding:12px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,.15);min-width:160px">
   <div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:12px;text-align:center">⚙️ 설정</div>
+  <div style="display:flex;gap:6px;margin-bottom:12px">
+    <input id="nickname-input" placeholder="닉네임" value="" style="flex:1;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none">
+    <button onclick="saveNickname()" style="padding:8px 12px;border-radius:8px;background:var(--pink);border:none;color:#fff;font-size:11px;font-weight:600;cursor:pointer">저장</button>
+  </div>
   <button onclick="toggleThemePopup();toggleFriendPanel()" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:12px">👥 친구 관리</button>
   <div style="font-size:12px;font-weight:600;color:var(--pd);margin-bottom:8px">🎨 테마</div>
   <div style="display:flex;flex-direction:column;gap:6px">
@@ -2377,7 +2381,7 @@ async function postGuestbook(friendUid){
   const text=input.value.trim();if(!text)return;
   if(!_uid){alert('로그인이 필요해요!');return;}
   try{
-    const myName=auth.currentUser?.displayName||'익명';
+    const myName=localStorage.getItem('ff_nickname')||auth.currentUser?.displayName||'익명';
     const today=todayStr();
     await db.collection('users').doc(friendUid).update({
       guestbook:firebase.firestore.FieldValue.arrayUnion({from:myName,text,date:today,time:pad(new Date().getHours())+':'+pad(new Date().getMinutes()),ts:Date.now()})
@@ -2972,6 +2976,7 @@ function toggleThemePopup(){
   if(show){
     const ss=document.getElementById('tl-start-sel'),se=document.getElementById('tl-end-sel');
     ss.innerHTML='';se.innerHTML='';
+    const ni=document.getElementById('nickname-input');if(ni)ni.value=localStorage.getItem('ff_nickname')||auth.currentUser?.displayName||'';
     for(let i=0;i<=23;i++){ss.innerHTML+='<option value="'+i+'"'+(i===START?' selected':'')+'>'+i+':00</option>';}
     for(let i=1;i<=24;i++){se.innerHTML+='<option value="'+i+'"'+(i===START+HOURS?' selected':'')+'>'+i+':00</option>';}
     // Render tab toggles
@@ -2990,6 +2995,13 @@ function toggleThemePopup(){
       tl.innerHTML=th;
     }
   }
+}
+function saveNickname(){
+  const input=document.getElementById('nickname-input');if(!input)return;
+  const name=input.value.trim();if(!name)return;
+  localStorage.setItem('ff_nickname',name);
+  if(_uid)db.collection('users').doc(_uid).update({displayName:name}).catch(()=>{});
+  showMiniToast('닉네임 저장: '+name);
 }
 function toggleTabVisibility(key){
   let hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
