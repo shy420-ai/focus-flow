@@ -1748,7 +1748,7 @@ function editCategories(){
   h+='<div id="cat-edit-list">';
   cats.forEach((c,i)=>{
     h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0">';
-    h+='<div style="width:14px;height:14px;border-radius:50%;background:'+c.color+';flex-shrink:0"></div>';
+    h+='<input type="color" value="'+c.color+'" onchange="changeCatColor('+i+',this.value)" style="width:24px;height:24px;border:none;border-radius:50%;cursor:pointer;padding:0;background:none;flex-shrink:0">';
     h+='<div style="flex:1;font-size:13px;color:#333">'+c.name+'</div>';
     h+='<button onclick="removeCat('+i+')" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer">✕</button>';
     h+='</div>';
@@ -1762,6 +1762,7 @@ function editCategories(){
   h+='</div></div>';
   document.body.insertAdjacentHTML('beforeend',h);
 }
+function changeCatColor(idx,color){const cats=getCategoryList();cats[idx].color=color;saveCategoryList(cats);}
 function closeCatEdit(){const el=document.getElementById('cat-edit-overlay');if(el)el.remove();renderSheetCatPills();}
 function removeCat(idx){const cats=getCategoryList();cats.splice(idx,1);saveCategoryList(cats);closeCatEdit();editCategories();}
 function addCatFromEdit(){
