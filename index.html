@@ -2221,23 +2221,10 @@ async function loadHoroscope(){
   const cacheKey='ff_horo_'+todayStr()+'_'+z.name;
   const cached=localStorage.getItem(cacheKey);
   if(cached){bar.innerHTML=cached;bar.style.display='block';bar.onclick=setupBirthday;return;}
-  try{
-    const resp=await fetch('https://ohmanda.com/api/horoscope/'+z.name);
-    const data=await resp.json();
-    if(data.horoscope){
-      const ko=await translateToKo(data.horoscope);
-      const saju=loadSajuFortune();
-      const msg='⭐ <b>'+z.ko+'</b> '+ko+(saju?'<br>'+saju:'');
-      localStorage.setItem(cacheKey,msg);
-      bar.innerHTML=msg;bar.style.display='block';bar.onclick=setupBirthday;
-    }
-  }catch(e){
-    // Fallback: local Korean message
-    const seed=todayStr().replace(/-/g,'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
-    const msgs=HORO_MSGS[seed%HORO_MSGS.length];
-    const saju=loadSajuFortune();
-    bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msgs[seed%msgs.length]+(saju?'<br>'+saju:'');
-    bar.style.display='block';bar.onclick=setupBirthday;
+  const saju=loadSajuFortune();
+  if(saju){
+    localStorage.setItem(cacheKey,saju);
+    bar.innerHTML=saju;bar.style.display='block';bar.onclick=setupBirthday;
   }
 }
 function setupBirthday(){
