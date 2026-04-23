@@ -2356,7 +2356,7 @@ async function viewFriend(uid,name){
     if(guestbook.length){
       guestbook.slice(-10).reverse().forEach(g=>{
         h+='<div style="background:#fff;border-radius:10px;padding:8px 10px;margin-bottom:6px;border:1px solid #f0f0f0">';
-        h+='<div style="font-size:10px;color:#aaa">'+g.from+' · '+(g.date||'')+'</div>';
+        h+='<div style="font-size:10px;color:#aaa">'+g.from+' · '+(g.date||'')+' '+(g.time||'')+'</div>';
         h+='<div style="font-size:12px;color:#333;margin-top:2px">'+g.text+'</div>';
         h+='</div>';
       });
@@ -2380,7 +2380,7 @@ async function postGuestbook(friendUid){
     const myName=auth.currentUser?.displayName||'익명';
     const today=todayStr();
     await db.collection('users').doc(friendUid).update({
-      guestbook:firebase.firestore.FieldValue.arrayUnion({from:myName,text,date:today,ts:Date.now()})
+      guestbook:firebase.firestore.FieldValue.arrayUnion({from:myName,text,date:today,time:pad(new Date().getHours())+':'+pad(new Date().getMinutes()),ts:Date.now()})
     });
     input.value='';
     showMiniToast('💌 방명록 남겼어!');
