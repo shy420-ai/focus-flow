@@ -2153,6 +2153,58 @@ const HORO_COLORS=['핑크','하늘색','라벤더','민트','코랄','레몬','
 const HORO_ITEMS=['따뜻한 음료','초콜릿','좋아하는 노래','짧은 산책','스트레칭','향초','편한 옷'];
 const HORO_MUSIC=['신나는 팝','잔잔한 피아노','로파이','90년대 가요','자연 소리','재즈','감성 인디'];
 
+// ====== SAJU DAILY FORTUNE ======
+const STEMS=['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+const STEMS_KO=['갑','을','병','정','무','기','경','신','임','계'];
+const BRANCHES=['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+const BRANCHES_KO=['자','축','인','묘','진','사','오','미','신','유','술','해'];
+const ELEM5=['木','木','火','火','土','土','金','金','水','水'];
+const ELEM5_KO=['목','목','화','화','토','토','금','금','수','수'];
+const ELEM5_EMOJI={'木':'🌿','火':'🔥','土':'🏔️','金':'⚡','水':'💧'};
+
+function dateToJDN(y,m,d){const a=Math.floor((14-m)/12);const yy=y+4800-a;const mm=m+12*a-3;return d+Math.floor((153*mm+2)/5)+365*yy+Math.floor(yy/4)-Math.floor(yy/100)+Math.floor(yy/400)-32045;}
+function getDayStem(y,m,d){const jdn=dateToJDN(y,m,d);return(jdn+49)%60%10;}
+function getDayBranch(y,m,d){const jdn=dateToJDN(y,m,d);return(jdn+49)%60%12;}
+
+function sajuRelation(myStemIdx,todayStemIdx){
+  const myElem=Math.floor(myStemIdx/2);const todayElem=Math.floor(todayStemIdx/2);
+  // 0=木,1=火,2=土,3=金,4=水
+  if(myElem===todayElem)return'비겁';
+  const gen=[[1],[2],[3],[4],[0]]; // 木→火,火→土,土→金,金→水,水→木
+  const over=[[2],[3],[4],[0],[1]]; // 木→土,火→金,土→水,金→木,水→火
+  if(gen[myElem][0]===todayElem)return'식상';
+  if(over[myElem][0]===todayElem)return'재성';
+  if(gen[todayElem]&&gen[todayElem][0]===myElem)return'인성';
+  return'관성';
+}
+
+const SAJU_MSGS={
+  '비겁':['동료나 친구에게서 힘을 얻는 날','나와 비슷한 에너지! 자신감 있게 밀어붙여','경쟁보다 협력이 빛나는 하루','내 페이스대로 가면 되는 날'],
+  '식상':['창의력 폭발! 아이디어가 쏟아지는 날','표현하고 싶은 게 많아지는 하루','글쓰기, 말하기, 만들기에 좋은 날','감성이 풍부해지는 하루, 기록해둬'],
+  '재성':['재물운 UP! 작은 수입이 생길 수 있어','실질적인 성과를 낼 수 있는 날','현실적인 계획을 세우면 잘 풀려','노력한 만큼 보상받는 하루'],
+  '관성':['계획적으로 움직이면 좋은 날','규칙적인 루틴이 힘을 발휘해','책임감 있게 행동하면 인정받아','조금 긴장되지만 성장하는 하루'],
+  '인성':['배움과 충전의 날! 책이나 강의 추천','직감이 잘 맞는 하루, 느낌을 믿어봐','쉬어가도 괜찮아, 에너지 충전 중','새로운 걸 배우면 쏙쏙 들어오는 날']
+};
+
+function loadSajuFortune(){
+  const bday=localStorage.getItem('ff_birthday');
+  if(!bday)return'';
+  const[m,d]=bday.split('-').map(Number);
+  // Need birth year for accurate calculation - use stored or estimate
+  const byear=parseInt(localStorage.getItem('ff_birthyear')||'0');
+  if(!byear)return'';
+  const myStem=getDayStem(byear,m,d);
+  const now=new Date();
+  const todayStem=getDayStem(now.getFullYear(),now.getMonth()+1,now.getDate());
+  const todayBranch=getDayBranch(now.getFullYear(),now.getMonth()+1,now.getDate());
+  const rel=sajuRelation(myStem,todayStem);
+  const myElem=ELEM5[myStem];
+  const todayElem=ELEM5[todayStem];
+  const seed=(now.getFullYear()*1000+now.getMonth()*100+now.getDate()+myStem)%4;
+  const msg=SAJU_MSGS[rel][seed%SAJU_MSGS[rel].length];
+  return'🔮 <b>'+STEMS_KO[myStem]+ELEM5_KO[myStem]+'일간</b> '+ELEM5_EMOJI[todayElem]+' 오늘('+STEMS_KO[todayStem]+BRANCHES_KO[todayBranch]+') '+rel+'의 날 — '+msg;
+}
+
 async function translateToKo(text){
   try{
     const resp=await fetch('https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q='+encodeURIComponent(text));
@@ -2174,7 +2226,8 @@ async function loadHoroscope(){
     const data=await resp.json();
     if(data.horoscope){
       const ko=await translateToKo(data.horoscope);
-      const msg='⭐ <b>'+z.ko+'</b> '+ko;
+      const saju=loadSajuFortune();
+      const msg='⭐ <b>'+z.ko+'</b> '+ko+(saju?'<br>'+saju:'');
       localStorage.setItem(cacheKey,msg);
       bar.innerHTML=msg;bar.style.display='block';
     }
@@ -2182,19 +2235,19 @@ async function loadHoroscope(){
     // Fallback: local Korean message
     const seed=todayStr().replace(/-/g,'').split('').reduce((a,c)=>a+c.charCodeAt(0),0);
     const msgs=HORO_MSGS[seed%HORO_MSGS.length];
-    bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msgs[seed%msgs.length];
+    const saju=loadSajuFortune();
+    bar.innerHTML='⭐ <b>'+z.ko+'</b> '+msgs[seed%msgs.length]+(saju?'<br>'+saju:'');
     bar.style.display='block';
   }
 }
 function setupBirthday(){
-  const bday=localStorage.getItem('ff_birthday');
-  if(!bday){
-    const input=prompt('생일을 입력해주세요 (MM-DD 형식, 예: 04-20)');
-    if(input&&/^\d{1,2}-\d{1,2}$/.test(input.trim())){
-      localStorage.setItem('ff_birthday',input.trim());
-      loadHoroscope();
-    }
-  }
+  const byear=prompt('태어난 년도 (예: 1998)');
+  if(!byear||!/^\d{4}$/.test(byear.trim()))return;
+  const bday=prompt('생일 월-일 (예: 04-20)');
+  if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday.trim()))return;
+  localStorage.setItem('ff_birthyear',byear.trim());
+  localStorage.setItem('ff_birthday',bday.trim());
+  loadHoroscope();
 }
 // Auto-load horoscope
 setTimeout(()=>{
@@ -3155,7 +3208,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v12';
+  const SW_VER='v13';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
