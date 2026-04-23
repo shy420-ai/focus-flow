@@ -1719,22 +1719,36 @@ function renderSheetCatPills(){
 function editCategories(){
   const cats=getCategoryList();
   const colors=['#5B7FFF','#E8849D','#1D9E75','#EF9F27','#378ADD','#9B7BB5','#E24B4A','#8DC8E8'];
-  let action=prompt('카테고리 편집\n현재: '+cats.map(c=>c.name).join(', ')+'\n\n추가하려면 이름 입력\n삭제하려면 -이름 입력 (예: -개인)');
-  if(!action||!action.trim())return;
-  action=action.trim();
-  if(action.startsWith('-')){
-    const name=action.slice(1).trim();
-    const updated=cats.filter(c=>c.name!==name);
-    saveCategoryList(updated);
-  }else{
-    const existing=cats.find(c=>c.name===action);
-    if(!existing){
-      const color=colors[cats.length%colors.length];
-      cats.push({name:action,color});
-      saveCategoryList(cats);
-    }
-  }
-  renderSheetCatPills();
+  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" id="cat-edit-overlay" onclick="if(event.target===this)closeCatEdit()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
+  h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">카테고리 편집</div>';
+  h+='<div id="cat-edit-list">';
+  cats.forEach((c,i)=>{
+    h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #f0f0f0">';
+    h+='<div style="width:14px;height:14px;border-radius:50%;background:'+c.color+';flex-shrink:0"></div>';
+    h+='<div style="flex:1;font-size:13px;color:#333">'+c.name+'</div>';
+    h+='<button onclick="removeCat('+i+')" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer">✕</button>';
+    h+='</div>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:6px;margin-top:12px">';
+  h+='<input id="cat-new-input" placeholder="새 카테고리 이름" style="flex:1;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addCatFromEdit()">';
+  h+='<button onclick="addCatFromEdit()" style="padding:8px 14px;border-radius:8px;background:var(--pink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">추가</button>';
+  h+='</div>';
+  h+='<button onclick="closeCatEdit()" style="width:100%;margin-top:12px;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">닫기</button>';
+  h+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+function closeCatEdit(){const el=document.getElementById('cat-edit-overlay');if(el)el.remove();renderSheetCatPills();}
+function removeCat(idx){const cats=getCategoryList();cats.splice(idx,1);saveCategoryList(cats);closeCatEdit();editCategories();}
+function addCatFromEdit(){
+  const input=document.getElementById('cat-new-input');if(!input)return;
+  const name=input.value.trim();if(!name)return;
+  const colors=['#5B7FFF','#E8849D','#1D9E75','#EF9F27','#378ADD','#9B7BB5','#E24B4A','#8DC8E8'];
+  const cats=getCategoryList();
+  if(cats.find(c=>c.name===name))return;
+  cats.push({name,color:colors[cats.length%colors.length]});
+  saveCategoryList(cats);closeCatEdit();editCategories();
 }
 
 // 시트
