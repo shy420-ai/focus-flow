@@ -489,6 +489,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
   </div>
   <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px;text-align:center">📑 탭 관리</div>
+    <div id="tab-toggle-list" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+  <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
     <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px;text-align:center">🌙 생리주기</div>
     <div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap">
       <button onclick="setCycleStart()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:var(--pd)">시작일 기록</button>
@@ -2788,7 +2792,8 @@ function renderViewTabs(){
   const wrap=document.getElementById('view-tabs');
   wrap.innerHTML='';
   const order=getTabOrder();
-  order.forEach(key=>{
+  const hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
+  order.filter(key=>!hidden.includes(key)).forEach(key=>{
     const btn=document.createElement('button');
     btn.className='vtab'+(key===curView?' active':'');
     btn.id='v'+key;
@@ -2872,7 +2877,30 @@ function toggleThemePopup(){
     ss.innerHTML='';se.innerHTML='';
     for(let i=0;i<=23;i++){ss.innerHTML+='<option value="'+i+'"'+(i===START?' selected':'')+'>'+i+':00</option>';}
     for(let i=1;i<=24;i++){se.innerHTML+='<option value="'+i+'"'+(i===START+HOURS?' selected':'')+'>'+i+':00</option>';}
+    // Render tab toggles
+    const tl=document.getElementById('tab-toggle-list');if(tl){
+      const hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
+      const allTabs=DEFAULT_TAB_ORDER;
+      let th='';
+      allTabs.forEach(key=>{
+        if(key==='tl')return; // 일간은 필수
+        const on=!hidden.includes(key);
+        th+='<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">';
+        th+='<span style="font-size:12px;color:#333">'+TAB_LABELS[key]+'</span>';
+        th+='<button onclick="toggleTabVisibility(\''+key+'\')" style="width:36px;height:20px;border-radius:10px;border:none;cursor:pointer;background:'+(on?'var(--pink)':'#ddd')+';position:relative;transition:background .2s"><div style="width:16px;height:16px;border-radius:50%;background:#fff;position:absolute;top:2px;'+(on?'right:2px':'left:2px')+';transition:all .2s"></div></button>';
+        th+='</div>';
+      });
+      tl.innerHTML=th;
+    }
   }
+}
+function toggleTabVisibility(key){
+  let hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
+  if(hidden.includes(key))hidden=hidden.filter(x=>x!==key);
+  else hidden.push(key);
+  localStorage.setItem('ff_hidden_tabs',JSON.stringify(hidden));
+  renderViewTabs();
+  toggleThemePopup();toggleThemePopup(); // re-render toggles
 }
 document.addEventListener('click',function(e){
   const popup=document.getElementById('theme-popup');
