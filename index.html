@@ -2393,9 +2393,18 @@ function logEnergy(level){
   const now=new Date();
   logs.push({date:todayStr(),hour:now.getHours(),level,blockId:_lastDoneBlockId,ts:Date.now()});
   saveEnergyLogs(logs);
-  document.getElementById('toast').classList.remove('show');
+  const t=document.getElementById('toast');t.classList.remove('show');
+  const labels={1:'😫 힘들었어',2:'😐 보통!',3:'😊 좋았어!',4:'🔥 최고!'};
+  showMiniToast(labels[level]||'기록 완료!');
 }
 
+function showMiniToast(msg){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%) scale(.9);background:var(--pd);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:1000;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap';
+  el.textContent=msg;document.body.appendChild(el);
+  requestAnimationFrame(()=>{el.style.opacity='1';el.style.transform='translateX(-50%) scale(1)';});
+  setTimeout(()=>{el.style.opacity='0';el.style.transform='translateX(-50%) scale(.9)';setTimeout(()=>el.remove(),200);},1500);
+}
 function getMoodLogs(){try{return JSON.parse(localStorage.getItem('ff_mood')||'[]');}catch{return[];}}
 function saveMoodLogs(l){localStorage.setItem('ff_mood',JSON.stringify(l));}
 function logMood(mood){
@@ -2405,6 +2414,7 @@ function logMood(mood){
   saveMoodLogs(logs);
   localStorage.setItem('ff_last_mood',Date.now().toString());
   const bar=document.getElementById('mood-bar');if(bar)bar.style.display='none';
+  showMiniToast(mood+' 기록됨!');
 }
 function showMoodCheck(){
   const last=parseInt(localStorage.getItem('ff_last_mood')||'0');
