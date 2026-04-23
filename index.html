@@ -462,6 +462,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button class="theme-opt" onclick="applyTheme('purple')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #C4A6D7;background:#FAF5FF;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#9B7BB5">🔮 보라</button>
     <button class="theme-opt" onclick="applyTheme('mint')" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;border:1.5px solid #7ECDB0;background:#F0FBF6;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#4EA88A">🍃 민트</button>
   </div>
+  <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
+    <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px;text-align:center">⏰ 타임라인 범위</div>
+    <div style="display:flex;align-items:center;gap:6px;justify-content:center">
+      <select id="tl-start-sel" onchange="setTimelineRange(Number(this.value),Number(document.getElementById('tl-end-sel').value)-Number(this.value))" style="padding:4px 8px;border-radius:8px;border:1px solid var(--pl);font-size:12px;font-family:inherit"></select>
+      <span style="font-size:12px;color:#aaa">~</span>
+      <select id="tl-end-sel" onchange="setTimelineRange(Number(document.getElementById('tl-start-sel').value),Number(this.value)-Number(document.getElementById('tl-start-sel').value))" style="padding:4px 8px;border-radius:8px;border:1px solid var(--pl);font-size:12px;font-family:inherit"></select>
+    </div>
+  </div>
 </div>
 
 <div class="date-tabs" id="date-tabs"></div>
@@ -812,7 +820,10 @@ let customCategories=JSON.parse(localStorage.getItem('ff_custom_cats')||'[]');
 function allCategories(){return CATEGORIES.concat(customCategories);}
 function catColor(name){const c=allCategories().find(x=>x.name===name);return c?c.color:'#aaa';}
 
-const PX=56,START=0,HOURS=24;
+const PX=56;
+let START=parseInt(localStorage.getItem('ff_tl_start')||'6');
+let HOURS=parseInt(localStorage.getItem('ff_tl_hours')||'18');
+function setTimelineRange(start,hours){START=start;HOURS=hours;localStorage.setItem('ff_tl_start',start);localStorage.setItem('ff_tl_hours',hours);buildGrid();renderTimeline();}
 const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
@@ -2096,7 +2107,14 @@ function applyTheme(name){
 }
 function toggleThemePopup(){
   const p=document.getElementById('theme-popup');
-  p.style.display=p.style.display==='none'?'block':'none';
+  const show=p.style.display==='none';
+  p.style.display=show?'block':'none';
+  if(show){
+    const ss=document.getElementById('tl-start-sel'),se=document.getElementById('tl-end-sel');
+    ss.innerHTML='';se.innerHTML='';
+    for(let i=0;i<=23;i++){ss.innerHTML+='<option value="'+i+'"'+(i===START?' selected':'')+'>'+i+':00</option>';}
+    for(let i=1;i<=24;i++){se.innerHTML+='<option value="'+i+'"'+(i===START+HOURS?' selected':'')+'>'+i+':00</option>';}
+  }
 }
 document.addEventListener('click',function(e){
   const popup=document.getElementById('theme-popup');
