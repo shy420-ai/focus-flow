@@ -2328,7 +2328,7 @@ setTimeout(()=>{
 
 // ====== VIEW TABS (draggable order) ======
 const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop'];
-const TAB_LABELS={tl:'일간',week:'주간',cal:'월별 캘린더',habit:'습관',goal:'목표',drop:'드롭'};
+const TAB_LABELS={tl:'일간',week:'주간',cal:'월별',habit:'습관',goal:'목표',drop:'드롭'};
 function getTabOrder(){
   try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=6&&arr.includes('week'))return arr;}}catch{}
   return DEFAULT_TAB_ORDER.slice();
