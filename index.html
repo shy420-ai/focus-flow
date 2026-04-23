@@ -825,15 +825,20 @@ function listenFirestore(){
 // --- End Firebase ---
 
 // --- Categories ---
-const CATEGORIES=[
+const DEFAULT_CATEGORIES=[
   {name:'일',color:'#5B7FFF'},
-  {name:'개인',color:'#E8849D'},
   {name:'건강',color:'#1D9E75'},
-  {name:'크리에이터',color:'#EF9F27'},
   {name:'공부',color:'#378ADD'}
 ];
 let customCategories=JSON.parse(localStorage.getItem('ff_custom_cats')||'[]');
-function allCategories(){return CATEGORIES.concat(customCategories);}
+function getCategoryList(){
+  const saved=localStorage.getItem('ff_cats');
+  if(saved)try{return JSON.parse(saved);}catch{}
+  return DEFAULT_CATEGORIES.slice();
+}
+function saveCategoryList(cats){localStorage.setItem('ff_cats',JSON.stringify(cats));customCategories=[];}
+const CATEGORIES=getCategoryList();
+function allCategories(){return getCategoryList();}
 function catColor(name){const c=allCategories().find(x=>x.name===name);return c?c.color:'#aaa';}
 
 const PX=56;
@@ -1686,7 +1691,28 @@ function renderSheetCatPills(){
   allCategories().forEach(c=>{
     h+='<button class="cat-pill'+(sheetCategory===c.name?' active':'')+'" style="'+(sheetCategory===c.name?'background:'+c.color+';border-color:'+c.color:'color:'+c.color+';border-color:'+c.color)+'" onclick="sheetCategory=sheetCategory===\''+c.name+'\'?\'\':\''+c.name+'\';renderSheetCatPills();">'+c.name+'</button>';
   });
+  h+='<button class="cat-pill" style="color:#aaa;border-color:#ddd;font-size:11px" onclick="editCategories()">✏️ 편집</button>';
   el.innerHTML=h;
+}
+function editCategories(){
+  const cats=getCategoryList();
+  const colors=['#5B7FFF','#E8849D','#1D9E75','#EF9F27','#378ADD','#9B7BB5','#E24B4A','#8DC8E8'];
+  let action=prompt('카테고리 편집\n현재: '+cats.map(c=>c.name).join(', ')+'\n\n추가하려면 이름 입력\n삭제하려면 -이름 입력 (예: -개인)');
+  if(!action||!action.trim())return;
+  action=action.trim();
+  if(action.startsWith('-')){
+    const name=action.slice(1).trim();
+    const updated=cats.filter(c=>c.name!==name);
+    saveCategoryList(updated);
+  }else{
+    const existing=cats.find(c=>c.name===action);
+    if(!existing){
+      const color=colors[cats.length%colors.length];
+      cats.push({name:action,color});
+      saveCategoryList(cats);
+    }
+  }
+  renderSheetCatPills();
 }
 
 // 시트
