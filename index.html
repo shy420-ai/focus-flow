@@ -2350,11 +2350,45 @@ async function viewFriend(uid,name){
         h+='<div style="font-size:12px;padding:6px 0;display:flex;align-items:center;gap:6px;border-bottom:1px solid #f0f0f0">'+(done?'<span style="font-size:14px">🌸</span>':'<span style="font-size:14px;opacity:.3">○</span>')+' <span style="'+(done?'':'opacity:.6')+'">'+hab.name+'</span></div>';
       });
     }
+    // Guestbook
+    const guestbook=d.guestbook||[];
+    h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin:14px 0 6px">💌 방명록</div>';
+    if(guestbook.length){
+      guestbook.slice(-10).reverse().forEach(g=>{
+        h+='<div style="background:#fff;border-radius:10px;padding:8px 10px;margin-bottom:6px;border:1px solid #f0f0f0">';
+        h+='<div style="font-size:10px;color:#aaa">'+g.from+' · '+(g.date||'')+'</div>';
+        h+='<div style="font-size:12px;color:#333;margin-top:2px">'+g.text+'</div>';
+        h+='</div>';
+      });
+    }else{
+      h+='<div style="color:#ccc;font-size:11px;text-align:center;padding:8px 0">아직 방명록이 없어. 첫 글을 남겨봐!</div>';
+    }
+    h+='<div style="display:flex;gap:6px;margin-top:8px">';
+    h+='<input id="guestbook-input" placeholder="응원 한마디 남기기..." style="flex:1;padding:8px 10px;border:1.5px solid var(--pl);border-radius:10px;font-size:12px;font-family:inherit;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)postGuestbook(\''+uid+'\')">';
+    h+='<button onclick="postGuestbook(\''+uid+'\')" style="padding:8px 14px;border-radius:10px;background:var(--pink);border:none;color:#fff;font-size:12px;font-weight:600;cursor:pointer">남기기</button>';
+    h+='</div>';
     h+='<button onclick="renderFriendPanel()" style="margin-top:16px;width:100%;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:var(--pd)">← 돌아가기</button>';
     document.getElementById('friend-content').innerHTML=h;
   }catch(e){alert('에러: '+e.message);}
 }
 
+async function postGuestbook(friendUid){
+  const input=document.getElementById('guestbook-input');if(!input)return;
+  const text=input.value.trim();if(!text)return;
+  if(!_uid){alert('로그인이 필요해요!');return;}
+  try{
+    const myName=auth.currentUser?.displayName||'익명';
+    const today=todayStr();
+    await db.collection('users').doc(friendUid).update({
+      guestbook:firebase.firestore.FieldValue.arrayUnion({from:myName,text,date:today,ts:Date.now()})
+    });
+    input.value='';
+    showMiniToast('💌 방명록 남겼어!');
+    // Reload friend view
+    const friends=getFriends();const f=friends.find(x=>x.uid===friendUid);
+    if(f)viewFriend(friendUid,f.name);
+  }catch(e){alert('에러: '+e.message);}
+}
 function renderFriendPanel(){
   const el=document.getElementById('friend-content');
   const myCode=getMyShareCode();
