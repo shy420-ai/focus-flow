@@ -2228,9 +2228,9 @@ async function loadHoroscope(){
   }
 }
 function setupBirthday(){
-  const byear=prompt('태어난 년도 (예: 1998)',localStorage.getItem('ff_birthyear')||'');
+  const byear=prompt('태어난 년도 (예: 2000)',localStorage.getItem('ff_birthyear')||'');
   if(!byear||!/^\d{4}$/.test(byear.trim()))return;
-  const bday=prompt('생일 월-일 (예: 04-20)',localStorage.getItem('ff_birthday')||'');
+  const bday=prompt('생일 월-일 (예: 01-15)',localStorage.getItem('ff_birthday')||'');
   if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday.trim()))return;
   localStorage.setItem('ff_birthyear',byear.trim());
   localStorage.setItem('ff_birthday',bday.trim());
