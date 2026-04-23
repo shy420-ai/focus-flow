@@ -664,22 +664,19 @@ function showLoginError(msg){
 function doLogin(){
   if(_loginBusy)return;
   _loginBusy=true;
-  const btn=document.getElementById('login-btn');
+  const btn=document.getElementById('google-btn');
   if(btn){btn.textContent='로그인 중...';btn.disabled=true;}
   const provider=new firebase.auth.GoogleAuthProvider();
-  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).then(()=>{
-    return auth.signInWithPopup(provider);
-  }).then(result=>{
+  // Call signInWithPopup directly (synchronous with click = not blocked)
+  auth.signInWithPopup(provider).then(result=>{
     // Success handled by onAuthStateChanged
   }).catch(e=>{
     _loginBusy=false;
-    if(btn){btn.textContent='Google로 시작하기';btn.disabled=false;}
+    if(btn){btn.textContent='Google 로그인';btn.disabled=false;}
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'){
       // User closed popup or double clicked — just reset
     }else if(e.code==='auth/popup-blocked'){
-      // Try redirect as fallback
-      showLoginError('팝업이 차단됐어요. 리다이렉트로 시도 중...');
-      auth.signInWithRedirect(provider);
+      showLoginError('팝업이 차단됐어요. 브라우저 설정에서 팝업을 허용해주세요.');
     }else if(e.code==='auth/unauthorized-domain'){
       showLoginError('이 도메인에서 로그인이 허용되지 않았어요. "바로 시작하기"를 이용해주세요.');
     }else if(e.message&&e.message.includes('disallowed_useragent')){
@@ -689,10 +686,8 @@ function doLogin(){
     }
   });
 }
-// Handle redirect result (for redirect fallback)
-auth.getRedirectResult().then(result=>{
-  if(result&&result.user)console.log('Redirect login OK');
-}).catch(e=>{
+// Handle redirect result (legacy)
+auth.getRedirectResult().catch(e=>{
   if(e.message&&e.message.includes('disallowed_useragent')){
     showLoginError('인앱 브라우저에서는 Google 로그인이 안 돼요! Chrome이나 Safari로 열어주세요.');
   }else if(e.code&&e.code!=='auth/popup-closed-by-user'){
@@ -2878,7 +2873,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v7';
+  const SW_VER='v8';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
