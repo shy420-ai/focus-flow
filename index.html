@@ -2202,7 +2202,7 @@ function loadSajuFortune(){
   const todayElem=ELEM5[todayStem];
   const seed=(now.getFullYear()*1000+now.getMonth()*100+now.getDate()+myStem)%4;
   const msg=SAJU_MSGS[rel][seed%SAJU_MSGS[rel].length];
-  return'🔮 <b>'+STEMS_KO[myStem]+ELEM5_KO[myStem]+'일간</b> '+ELEM5_EMOJI[todayElem]+' 오늘('+STEMS_KO[todayStem]+BRANCHES_KO[todayBranch]+') '+rel+'의 날 — '+msg;
+  return'🔮 <b>'+STEMS_KO[myStem]+ELEM5_KO[myStem]+'일간</b> '+ELEM5_EMOJI[todayElem]+' 오늘('+STEMS_KO[todayStem]+BRANCHES_KO[todayBranch]+') '+rel+'의 날<br><span style="font-size:13px">'+msg+'</span>';
 }
 
 async function translateToKo(text){
