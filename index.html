@@ -1922,7 +1922,7 @@ function parseDotFormat(raw){
 }
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
-  const p=raw.includes('.')?parseDotFormat(raw)||parse(raw):parse(raw);
+  const p=raw.includes('.')?parseDotFormat(raw)||parse(raw):parseDotFormat(raw.replace(/\s+/g,'.'))||parse(raw);
   // Override with UI picker values if set
   const uiDate=document.getElementById('sheet-date').value;
   const uiTime=document.getElementById('sheet-time').value;
