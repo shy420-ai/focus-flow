@@ -1338,11 +1338,17 @@ function editBlock(id,e){
     h+='<button class="cat-pill'+(isActive?' active':'')+'" onclick="document.getElementById(\'edit-block-cat\').value=\''+c.name+'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\')" style="'+(isActive?'background:'+c.color+';border-color:'+c.color:'color:'+c.color+';border-color:'+c.color)+'">'+c.name+'</button>';
   });
   h+='</div><input type="hidden" id="edit-block-cat" value="'+(b.category||'')+'"></div>';
+  const _eh=Math.floor(b.startHour),_em=Math.round((b.startHour%1)*60);
+  const _dh=Math.floor(b.durHour),_dm=Math.round((b.durHour%1)*60);
   h+='<div style="display:flex;gap:8px;margin-bottom:10px">';
-  h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">시작 시간</div>';
-  h+='<input id="edit-block-start" type="number" step="0.5" value="'+b.startHour+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
-  h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">소요 시간</div>';
-  h+='<input id="edit-block-dur" type="number" step="0.5" value="'+b.durHour+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
+  h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">⏰ 시작</div>';
+  h+='<input id="edit-block-start" type="time" value="'+pad(_eh)+':'+pad(_em)+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
+  h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">⏱ 소요</div>';
+  h+='<div style="display:flex;gap:3px;align-items:center"><select id="edit-block-dur-h" style="flex:1;padding:10px 4px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none">';
+  for(let i=0;i<=8;i++)h+='<option value="'+i+'"'+(i===_dh?' selected':'')+'>'+i+'</option>';
+  h+='</select><span style="font-size:10px;color:#aaa">시간</span><select id="edit-block-dur-m" style="flex:1;padding:10px 4px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none">';
+  [0,5,10,15,20,30,40,45,50].forEach(m=>{h+='<option value="'+m+'"'+(m===_dm?' selected':'')+'>'+m+'</option>';});
+  h+='</select><span style="font-size:10px;color:#aaa">분</span></div></div>';
   h+='</div>';
   h+='<button onclick="saveEditBlock(\''+id+'\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">저장</button>';
   h+='</div></div>';
@@ -1353,12 +1359,14 @@ function saveEditBlock(id){
   const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
   const name=document.getElementById('edit-block-name').value.trim();
   const cat=document.getElementById('edit-block-cat').value;
-  const start=parseFloat(document.getElementById('edit-block-start').value);
-  const dur=parseFloat(document.getElementById('edit-block-dur').value);
+  const startTime=document.getElementById('edit-block-start').value;
+  const durH=parseInt(document.getElementById('edit-block-dur-h').value)||0;
+  const durM=parseInt(document.getElementById('edit-block-dur-m').value)||0;
   if(name)b.name=name;
   b.category=cat;
-  if(!isNaN(start)&&start>=0&&start<=23.5)b.startHour=start;
-  if(!isNaN(dur)&&dur>0)b.durHour=dur;
+  if(startTime){const[hh,mm]=startTime.split(':').map(Number);b.startHour=hh+(mm/60);}
+  const totalDur=durH+(durM/60);
+  if(totalDur>0)b.durHour=totalDur;
   save();render();
   const el=document.getElementById('edit-block-overlay');if(el)el.remove();
 }
