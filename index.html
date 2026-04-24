@@ -1827,19 +1827,25 @@ function openSheet(prefillTime){document.getElementById('overlay').classList.add
   setTimeout(()=>document.getElementById('ri').focus(),300);}
 function closeSheet(){document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');document.getElementById('ri').value='';document.getElementById('parea').innerHTML='';preview=null;sheetCategory='';resetRecurUI();}
 // Back button closes modals
+// Keep a history entry so back button doesn't exit app
+history.pushState({app:true},'');
 window.addEventListener('popstate',function(e){
+  let handled=false;
   const editOverlay=document.getElementById('edit-block-overlay');
-  if(editOverlay){editOverlay.remove();return;}
-  const catEdit=document.getElementById('cat-edit-overlay');
-  if(catEdit){catEdit.remove();return;}
-  const friendPanel=document.getElementById('friend-panel');
-  if(friendPanel&&friendPanel.style.display!=='none'){closeFriendPanel();return;}
-  const themePopup=document.getElementById('theme-popup');
-  if(themePopup&&themePopup.style.display!=='none'){themePopup.style.display='none';return;}
-  const sheet=document.getElementById('sheet');
-  if(sheet&&sheet.classList.contains('show')){closeSheet();return;}
-  const memo=document.getElementById('moverlay');
-  if(memo&&memo.classList.contains('show')){closeMemo();return;}
+  if(editOverlay){editOverlay.remove();handled=true;}
+  else{const catEdit=document.getElementById('cat-edit-overlay');
+  if(catEdit){catEdit.remove();handled=true;}
+  else{const friendPanel=document.getElementById('friend-panel');
+  if(friendPanel&&friendPanel.style.display!=='none'){closeFriendPanel();handled=true;}
+  else{const themePopup=document.getElementById('theme-popup');
+  if(themePopup&&themePopup.style.display!=='none'){themePopup.style.display='none';handled=true;}
+  else{const sheet=document.getElementById('sheet');
+  if(sheet&&sheet.classList.contains('show')){closeSheet();handled=true;}
+  else{const memo=document.getElementById('moverlay');
+  if(memo&&memo.classList.contains('show')){closeMemo();handled=true;}
+  }}}}}
+  // Always push state back so next back press doesn't exit
+  history.pushState({app:true},'');
 });
 
 // 퀵 스케줄링
