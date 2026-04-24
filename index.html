@@ -453,6 +453,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <p style="font-size:10px;color:#bbb;max-width:240px;text-align:center;margin-top:8px">로그인 = 기기 간 싱크<br>바로 시작 = 이 기기에서만 저장</p>
   <p id="login-error" style="font-size:11px;color:#E24B4A;max-width:280px;text-align:center;display:none"></p>
 </div>
+<div id="onboarding"></div>
 <canvas id="confetti"></canvas>
 <div class="toast" id="toast"><span class="te" id="te"></span><div class="tm" id="tm"></div><div class="ts" id="ts"></div></div>
 
@@ -672,7 +673,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sheet" id="sheet">
   <div class="sh"></div>
   <div class="sheet-title">할 일 추가</div>
-  <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.8">🧠 <b>ADHD 팁:</b> 큰 일을 시작할 수 있을 만큼 작게 쪼개봐!<br>입력법: <b>제목 날짜 시간 소요</b> (띄어쓰기 or 점으로 구분)<br>✅ <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 한줄쓰기 오늘 14시 30분</span> <span style="opacity:.5">← 터치하면 자동 입력</span><br><span style="opacity:.5">💡 오후 1시=13시, 오후 6시=18시 (24시간제)</span></div>
+  <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:6px 10px;margin-bottom:8px;line-height:1.6">🧠 <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 내일 14시 1시간</span> ← 예시 터치</div>
   <textarea class="ri" id="ri" placeholder="제목 날짜 시간 소요 (예: 보고서 내일 14시 1시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start">
     <div style="flex:1;min-width:100px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">📅 날짜 <span id="sheet-date-dow" style="font-weight:400;font-size:9px;color:#aaa"></span></div><input type="date" id="sheet-date" onchange="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" oninput="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" style="width:100%;padding:8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;height:38px;box-sizing:border-box"></div>
@@ -3043,6 +3044,30 @@ function setupBirthday(){
   keys.forEach(k=>localStorage.removeItem(k));
   loadHoroscope();
 }
+// ====== ONBOARDING ======
+function showOnboarding(){
+  if(localStorage.getItem('ff_onboarded'))return;
+  const steps=[
+    {emoji:'📅',title:'타임라인',desc:'하루를 시간 블록으로 관리해요'},
+    {emoji:'🧠',title:'드롭',desc:'머릿속에 떠오르는 것을 바로 적어요'},
+    {emoji:'🌱',title:'습관',desc:'매일 체크하고 꽃을 키워요'},
+    {emoji:'🎯',title:'목표',desc:'만다라트로 큰 그림을 그려요'},
+    {emoji:'📊',title:'분석',desc:'에너지와 기분 패턴을 발견해요'},
+    {emoji:'➕',title:'할일 추가',desc:'제목 날짜 시간 소요 입력하면 끝!'},
+  ];
+  let idx=0;
+  function renderStep(){
+    const s=steps[idx];
+    const isLast=idx===steps.length-1;
+    const el=document.getElementById('onboarding');
+    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation()"><div style="background:#fff;border-radius:20px;padding:30px;width:80%;max-width:280px;text-align:center"><div style="font-size:48px;margin-bottom:12px">'+s.emoji+'</div><div style="font-size:18px;font-weight:700;color:var(--pd);margin-bottom:8px">'+s.title+'</div><div style="font-size:13px;color:#666;margin-bottom:20px;line-height:1.5">'+s.desc+'</div><div style="display:flex;gap:4px;justify-content:center;margin-bottom:16px">'+steps.map((_,i)=>'<div style="width:8px;height:8px;border-radius:50%;background:'+(i===idx?'var(--pink)':'#ddd')+'"></div>').join('')+'</div><button onclick="nextOnboarding()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">'+(isLast?'시작하기!':'다음')+'</button><div onclick="skipOnboarding()" style="margin-top:10px;font-size:11px;color:#aaa;cursor:pointer">건너뛰기</div></div></div>';
+  }
+  window.nextOnboarding=function(){idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}};
+  window.skipOnboarding=function(){localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';};
+  renderStep();
+}
+setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},1500);
+
 // Auto-load horoscope
 setTimeout(()=>{
   if(localStorage.getItem('ff_birthday')){
