@@ -673,7 +673,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sh"></div>
   <div class="sheet-title">할 일 추가</div>
   <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.8">🧠 <b>ADHD 팁:</b> 큰 일을 시작할 수 있을 만큼 작게 쪼개봐!<br>❌ 보고서 쓰기 3시간<br>✅ <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">컴퓨터 켜서 보고서 한 줄 쓰기 내일 14시 30분</span><br><span style="opacity:.5">↑ 터치하면 자동 입력</span></div>
-  <textarea class="ri" id="ri" placeholder="어떤 일이야? 날짜 시간 다 섞어서 말해도 돼 (Enter로 바로 추가)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
+  <textarea class="ri" id="ri" placeholder="제목.날짜.시간.소요 (예: 보고서.430.14시.2시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
     <div style="flex:1;min-width:100px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">📅 날짜</div><input type="date" id="sheet-date" onchange="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" oninput="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" style="width:100%;padding:6px 8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none"><div id="sheet-date-dow" style="font-size:13px;font-weight:600;color:var(--pd);text-align:center;margin-top:2px"></div></div>
     <div style="min-width:70px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏰ 시작</div><input type="time" id="sheet-time" step="1800" style="width:100%;padding:6px 8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none"></div>
@@ -1890,9 +1890,39 @@ function qsConfirm(){
 }
 function fh(btn){document.getElementById('ri').value=btn.textContent;}
 function toggleBuf(){bufOn=!bufOn;document.getElementById('obtn').className='obtn'+(bufOn?' on':'');renderPreview();}
+function parseDotFormat(raw){
+  // 제목.날짜.시작시간.수행시간 형식
+  const parts=raw.split('.').map(s=>s.trim()).filter(Boolean);
+  if(parts.length<2)return null;
+  const name=parts[0];
+  let date=todayStr(),startHour=null,durHour=1;
+  for(let i=1;i<parts.length;i++){
+    const s=parts[i];
+    // 날짜: 오늘/내일/모레 or 430→4월30일 or 4/30
+    if(/^오늘$/.test(s))date=todayStr();
+    else if(/^내일$/.test(s))date=addDays(todayStr(),1);
+    else if(/^모레$/.test(s))date=addDays(todayStr(),2);
+    else if(/^\d{3,4}$/.test(s)){const ds=s.length===3?'0'+s:s;const mon=ds.slice(0,2),day=ds.slice(2);const y=new Date().getFullYear();date=y+'-'+mon+'-'+day;}
+    else if(/^\d{1,2}\/\d{1,2}$/.test(s)){const[mon,day]=s.split('/');const y=new Date().getFullYear();date=y+'-'+pad(parseInt(mon))+'-'+pad(parseInt(day));}
+    // 시작시간: 14시 or 14:30 or 14
+    else if(/^\d{1,2}시$/.test(s)){startHour=parseInt(s);}
+    else if(/^\d{1,2}:\d{2}$/.test(s)){const[h,m]=s.split(':').map(Number);startHour=h+m/60;}
+    else if(/^\d{1,2}시\d{1,2}분$/.test(s)){const m=s.match(/(\d+)시(\d+)분/);startHour=parseInt(m[1])+parseInt(m[2])/60;}
+    // 수행시간: 2시간 or 30분 or 1시간30분 or 1.5시간
+    else if(/시간/.test(s)||/분/.test(s)){
+      const hm=s.match(/(\d+(?:\.\d+)?)\s*시간/);const mm=s.match(/(\d+)\s*분/);
+      durHour=(hm?parseFloat(hm[1]):0)+(mm?parseInt(mm[1])/60:0);
+      if(!hm&&mm)durHour=parseInt(mm[1])/60;
+      if(durHour<0.1)durHour=0.5;
+    }
+    // 숫자만 있으면 시작시간으로 추정 (14 → 14시)
+    else if(/^\d{1,2}$/.test(s)&&parseInt(s)>=0&&parseInt(s)<=23){startHour=parseInt(s);}
+  }
+  return{name,date,startHour,durHour,daysUntil:Math.round((new Date(date+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000)};
+}
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
-  const p=parse(raw);
+  const p=raw.includes('.')?parseDotFormat(raw)||parse(raw):parse(raw);
   // Override with UI picker values if set
   const uiDate=document.getElementById('sheet-date').value;
   const uiTime=document.getElementById('sheet-time').value;
