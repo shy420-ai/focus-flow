@@ -672,7 +672,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sheet" id="sheet">
   <div class="sh"></div>
   <div class="sheet-title">할 일 추가</div>
-  <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.8">🧠 <b>ADHD 팁:</b> 큰 일을 시작할 수 있을 만큼 작게 쪼개봐!<br>입력법: <b>제목 날짜 시간 소요</b> (띄어쓰기 or 점으로 구분)<br>✅ <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 한줄쓰기 오늘 14시 30분</span> <span style="opacity:.5">← 터치하면 자동 입력</span><br><span style="opacity:.5">💡 오후 1시=13시, 오후 6시=18시 (24시간제)</span></div>
+  <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.8">🧠 <b>ADHD 팁:</b> 큰 일을 시작할 수 있을 만큼 작게 쪼개봐!<br>입력법: <b>제목 날짜 시간 소요</b> (띄어쓰기/점/~로 구분)<br>✅ <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 한줄쓰기 오늘 14시 30분</span> <span style="opacity:.5">← 터치하면 자동 입력</span><br><span style="opacity:.5">💡 오후 1시=13시, 오후 6시=18시 (24시간제)</span></div>
   <textarea class="ri" id="ri" placeholder="제목 날짜 시간 소요 (예: 보고서 내일 14시 1시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
   <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start">
     <div style="flex:1;min-width:100px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">📅 날짜</div><input type="date" id="sheet-date" onchange="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" oninput="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" style="width:100%;padding:8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;height:38px;box-sizing:border-box"></div>
@@ -1937,7 +1937,8 @@ function parseDotFormat(raw){
 }
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
-  const p=raw.includes('.')?parseDotFormat(raw)||parse(raw):parseDotFormat(raw.replace(/\s+/g,'.'))||parse(raw);
+  const normalized=raw.replace(/[~～]/g,'.').replace(/\s+/g,' ');
+  const p=normalized.includes('.')?parseDotFormat(normalized)||parse(raw):parseDotFormat(normalized.replace(/\s+/g,'.'))||parse(raw);
   // Force date override from text keywords (highest priority)
   if(/내일/.test(raw))p.date=addDays(todayStr(),1);
   if(/모레/.test(raw))p.date=addDays(todayStr(),2);
