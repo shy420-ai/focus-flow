@@ -2126,9 +2126,6 @@ function renderDrop(){
     });
   }
   wrap.innerHTML=h;
-  // Focus input
-  const inp=document.getElementById('drop-input');
-  if(inp&&document.activeElement!==inp)setTimeout(()=>inp.focus(),100);
 }
 // Drag & drop reorder for drop items
 let _dragIdx=null;
