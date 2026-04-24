@@ -3044,29 +3044,49 @@ function setupBirthday(){
   keys.forEach(k=>localStorage.removeItem(k));
   loadHoroscope();
 }
-// ====== ONBOARDING ======
+// ====== ONBOARDING TOUR ======
 function showOnboarding(){
   if(localStorage.getItem('ff_onboarded'))return;
   const steps=[
-    {emoji:'📅',title:'타임라인',desc:'하루를 시간 블록으로 관리해요'},
-    {emoji:'🧠',title:'드롭',desc:'머릿속에 떠오르는 것을 바로 적어요'},
-    {emoji:'🌱',title:'습관',desc:'매일 체크하고 꽃을 키워요'},
-    {emoji:'🎯',title:'목표',desc:'만다라트로 큰 그림을 그려요'},
-    {emoji:'📊',title:'분석',desc:'에너지와 기분 패턴을 발견해요'},
-    {emoji:'➕',title:'할일 추가',desc:'제목 날짜 시간 소요 입력하면 끝!'},
+    {sel:'.header h1',title:'Focus Flow',desc:'ADHD를 위한 집중 플래너에 오신 걸 환영해요!',pos:'bottom'},
+    {sel:'#vtl',title:'일간 타임라인',desc:'하루를 시간 블록으로 관리해요. 블록을 드래그해서 이동할 수 있어요',pos:'bottom'},
+    {sel:'#fab-btn',title:'할일 추가',desc:'"보고서 내일 14시 1시간" 이렇게 입력하면 바로 추가돼요',pos:'top'},
+    {sel:'.view-tabs',title:'탭 전환',desc:'드롭, 주간, 습관, 목표, 분석 등 다양한 뷰를 사용해보세요. 드래그로 순서도 바꿀 수 있어요',pos:'bottom'},
+    {sel:'.clock',title:'설정',desc:'⚙️ 톱니바퀴를 누르면 테마, 친구, 타임라인 범위 등을 설정할 수 있어요',pos:'bottom'},
   ];
   let idx=0;
   function renderStep(){
     const s=steps[idx];
-    const isLast=idx===steps.length-1;
+    const target=document.querySelector(s.sel);
     const el=document.getElementById('onboarding');
-    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9000;display:flex;align-items:center;justify-content:center" onclick="event.stopPropagation()"><div style="background:#fff;border-radius:20px;padding:30px;width:80%;max-width:280px;text-align:center"><div style="font-size:48px;margin-bottom:12px">'+s.emoji+'</div><div style="font-size:18px;font-weight:700;color:var(--pd);margin-bottom:8px">'+s.title+'</div><div style="font-size:13px;color:#666;margin-bottom:20px;line-height:1.5">'+s.desc+'</div><div style="display:flex;gap:4px;justify-content:center;margin-bottom:16px">'+steps.map((_,i)=>'<div style="width:8px;height:8px;border-radius:50%;background:'+(i===idx?'var(--pink)':'#ddd')+'"></div>').join('')+'</div><button onclick="nextOnboarding()" style="width:100%;padding:12px;border-radius:12px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">'+(isLast?'시작하기!':'다음')+'</button><div onclick="skipOnboarding()" style="margin-top:10px;font-size:11px;color:#aaa;cursor:pointer">건너뛰기</div></div></div>';
+    const isLast=idx===steps.length-1;
+    if(!target){idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}return;}
+    const rect=target.getBoundingClientRect();
+    // Highlight target
+    target.style.position='relative';target.style.zIndex='9002';target.style.boxShadow='0 0 0 4px var(--pink), 0 0 20px rgba(0,0,0,.3)';target.style.borderRadius='12px';
+    // Tooltip position
+    const isTop=s.pos==='top';
+    const tipTop=isTop?rect.top-130:rect.bottom+12;
+    const tipLeft=Math.max(10,Math.min(rect.left,window.innerWidth-280));
+    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9001" onclick="nextOnboarding()"></div>'+
+      '<div style="position:fixed;top:'+tipTop+'px;left:'+tipLeft+'px;width:260px;background:#fff;border-radius:16px;padding:16px;z-index:9003;box-shadow:0 8px 30px rgba(0,0,0,.2)">'+
+      '<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:6px">'+s.title+'</div>'+
+      '<div style="font-size:12px;color:#666;line-height:1.5;margin-bottom:12px">'+s.desc+'</div>'+
+      '<div style="display:flex;justify-content:space-between;align-items:center">'+
+      '<div style="display:flex;gap:4px">'+steps.map((_,i)=>'<div style="width:6px;height:6px;border-radius:50%;background:'+(i===idx?'var(--pink)':'#ddd')+'"></div>').join('')+'</div>'+
+      '<div style="display:flex;gap:8px;align-items:center">'+
+      '<span onclick="skipOnboarding()" style="font-size:11px;color:#aaa;cursor:pointer">건너뛰기</span>'+
+      '<button onclick="nextOnboarding()" style="padding:6px 16px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:12px;font-weight:600;cursor:pointer">'+(isLast?'시작!':'다음')+'</button>'+
+      '</div></div></div>';
   }
-  window.nextOnboarding=function(){idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}};
-  window.skipOnboarding=function(){localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';};
+  function clearHighlight(){
+    steps.forEach(s=>{const t=document.querySelector(s.sel);if(t){t.style.zIndex='';t.style.boxShadow='';t.style.borderRadius='';}});
+  }
+  window.nextOnboarding=function(){clearHighlight();idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}};
+  window.skipOnboarding=function(){clearHighlight();localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';};
   renderStep();
 }
-setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},1500);
+setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},2000);
 
 // Auto-load horoscope
 setTimeout(()=>{
