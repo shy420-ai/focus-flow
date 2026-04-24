@@ -2626,6 +2626,7 @@ function renderStats(){
   h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:6px">📈 누적 데이터</div>';
   h+='<div style="font-size:12px;color:#666">에너지 기록: '+eLogs.length+'개 | 감정 기록: '+mLogs.length+'개</div>';
   h+='<div style="font-size:10px;color:#aaa;margin-top:4px">데이터가 쌓일수록 분석이 정확해져!</div>';
+  h+='<button onclick="if(confirm(\'분석 데이터를 초기화할까요?\')){localStorage.removeItem(\'ff_energy\');localStorage.removeItem(\'ff_mood\');renderStats();}" style="margin-top:8px;padding:6px 12px;border-radius:8px;border:1px solid #eee;background:#fff;font-size:11px;color:#aaa;cursor:pointer;font-family:inherit">🗑 기록 초기화</button>';
   h+='</div>';
 
   wrap.innerHTML=h;
