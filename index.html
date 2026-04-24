@@ -1923,14 +1923,17 @@ function parseDotFormat(raw){
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
   const p=raw.includes('.')?parseDotFormat(raw)||parse(raw):parseDotFormat(raw.replace(/\s+/g,'.'))||parse(raw);
-  // Override with UI picker values if set
+  // Override with UI picker values only if user explicitly changed them
   const uiDate=document.getElementById('sheet-date').value;
   const uiTime=document.getElementById('sheet-time').value;
   const uiDurH=parseInt(document.getElementById('sheet-dur-h').value)||0;
   const uiDurM=parseInt(document.getElementById('sheet-dur-m').value)||0;
-  if(uiDate)p.date=uiDate;
-  if(uiTime){const[hh,mm]=uiTime.split(':').map(Number);p.startHour=hh+(mm/60);}
-  if(uiDurH||uiDurM){p.durHour=uiDurH+(uiDurM/60);if(p.durHour<0.1)p.durHour=0.5;}
+  const hasDateInText=/오늘|내일|모레|\d{3,4}|\d{1,2}[월\/]\d{1,2}/.test(raw);
+  const hasTimeInText=/\d{1,2}시|\d{1,2}:\d{2}/.test(raw);
+  const hasDurInText=/\d+시간|\d+분/.test(raw);
+  if(uiDate&&!hasDateInText)p.date=uiDate;
+  if(uiTime&&!hasTimeInText){const[hh,mm]=uiTime.split(':').map(Number);p.startHour=hh+(mm/60);}
+  if((uiDurH||uiDurM)&&!hasDurInText){p.durHour=uiDurH+(uiDurM/60);if(p.durHour<0.1)p.durHour=0.5;}
   if(p.recurDays&&p.recurDays.length>0){
     addRecurringTask({name:p.name,days:p.recurDays,startHour:p.startHour||9,durHour:p.durHour,color:pickColor(0),category:sheetCategory});
     closeSheet();return;
