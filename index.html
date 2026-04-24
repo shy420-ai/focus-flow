@@ -674,6 +674,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sheet-title">할 일 추가</div>
   <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.8">🧠 <b>ADHD 팁:</b> 큰 일을 시작할 수 있을 만큼 작게 쪼개봐!<br>❌ 보고서 쓰기 3시간<br>✅ <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">컴퓨터 켜서 보고서 한 줄 쓰기 내일 14시 30분</span><br><span style="opacity:.5">↑ 터치하면 자동 입력</span></div>
   <textarea class="ri" id="ri" placeholder="어떤 일이야? 날짜 시간 다 섞어서 말해도 돼 (Enter로 바로 추가)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
+  <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+    <div style="flex:1;min-width:100px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">📅 날짜</div><input type="date" id="sheet-date" style="width:100%;padding:6px 8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none"></div>
+    <div style="min-width:70px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏰ 시작</div><input type="time" id="sheet-time" step="1800" style="width:100%;padding:6px 8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none"></div>
+    <div style="min-width:70px"><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏱ 소요</div><select id="sheet-dur" style="width:100%;padding:6px 4px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none"><option value="">자동</option><option value="0.17">10분</option><option value="0.33">20분</option><option value="0.5">30분</option><option value="0.75">45분</option><option value="1">1시간</option><option value="1.5">1.5시간</option><option value="2">2시간</option><option value="3">3시간</option><option value="4">4시간</option></select></div>
+  </div>
   <div style="margin-top:8px;margin-bottom:4px;font-size:11px;font-weight:700;color:var(--pd)">카테고리</div>
   <div class="cat-pills" id="sheet-cat-pills"></div>
   <div class="recur-section">
@@ -1804,7 +1809,12 @@ function addCatFromEdit(){
 
 // 시트
 function openSheet(prefillTime){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');renderSheetCatPills();
-  if(prefillTime!==undefined){const h=Math.floor(prefillTime);const m=prefillTime%1>=0.5?'30':'00';document.getElementById('ri').value=h+':'+m+' 1시간';}
+  document.getElementById('sheet-date').value=viewDate;
+  if(prefillTime!==undefined){
+    const h=Math.floor(prefillTime);const m=prefillTime%1>=0.5?'30':'00';
+    document.getElementById('sheet-time').value=pad(h)+':'+m;
+  }else{document.getElementById('sheet-time').value='';}
+  document.getElementById('sheet-dur').value='';
   history.pushState({modal:'sheet'},'');
   setTimeout(()=>document.getElementById('ri').focus(),300);}
 function closeSheet(){document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');document.getElementById('ri').value='';document.getElementById('parea').innerHTML='';preview=null;sheetCategory='';resetRecurUI();}
@@ -1882,6 +1892,13 @@ function toggleBuf(){bufOn=!bufOn;document.getElementById('obtn').className='obt
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
   const p=parse(raw);
+  // Override with UI picker values if set
+  const uiDate=document.getElementById('sheet-date').value;
+  const uiTime=document.getElementById('sheet-time').value;
+  const uiDur=document.getElementById('sheet-dur').value;
+  if(uiDate)p.date=uiDate;
+  if(uiTime){const[hh,mm]=uiTime.split(':').map(Number);p.startHour=hh+(mm>=30?0.5:mm>=15?0.25:0);}
+  if(uiDur)p.durHour=parseFloat(uiDur);
   if(p.recurDays&&p.recurDays.length>0){
     addRecurringTask({name:p.name,days:p.recurDays,startHour:p.startHour||9,durHour:p.durHour,color:pickColor(0),category:sheetCategory});
     closeSheet();return;
