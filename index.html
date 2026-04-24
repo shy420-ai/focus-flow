@@ -1923,6 +1923,10 @@ function parseDotFormat(raw){
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
   const p=raw.includes('.')?parseDotFormat(raw)||parse(raw):parseDotFormat(raw.replace(/\s+/g,'.'))||parse(raw);
+  // Force date override from text keywords (highest priority)
+  if(/내일/.test(raw))p.date=addDays(todayStr(),1);
+  if(/모레/.test(raw))p.date=addDays(todayStr(),2);
+  if(/오늘/.test(raw))p.date=todayStr();
   // Override with UI picker values only if user explicitly changed them
   const uiDate=document.getElementById('sheet-date').value;
   const uiTime=document.getElementById('sheet-time').value;
