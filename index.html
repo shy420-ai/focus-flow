@@ -38,7 +38,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .dtab{padding:6px 13px;border-radius:99px;border:1.5px solid var(--pl);font-size:12px;color:#aaa;white-space:nowrap;cursor:pointer;background:none;font-family:inherit}
 .dtab.active{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
 
-.view-tabs{background:#fff;padding:8px 12px;display:flex;gap:6px;border-bottom:1px solid var(--pl);position:sticky;top:140px;z-index:98;justify-content:center;overflow-x:auto;scrollbar-width:none}.view-tabs::-webkit-scrollbar{display:none}
+.view-tabs{background:#fff;padding:8px 12px;display:flex;gap:6px;border-bottom:1px solid var(--pl);position:sticky;top:140px;z-index:98;overflow-x:auto;scrollbar-width:none}.view-tabs::-webkit-scrollbar{display:none}
 .vtab{padding:7px 14px;border-radius:99px;border:1.5px solid var(--pl);font-size:12px;color:#aaa;cursor:pointer;background:none;font-family:inherit;font-weight:500;white-space:nowrap}
 .vtab.active{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
 .vtab[draggable=true]{cursor:grab}.vtab[draggable=true]:active{cursor:grabbing}
@@ -2365,6 +2365,7 @@ function migrateRoadmap(r){
   }
   if(!r.goals)r.goals=[];
   r.goals.forEach(g=>{if(!g.quarters)g.quarters=newGoalQ();g.quarters.forEach(q=>{if(q.title===undefined)q.title='';});});
+
   return r;
 }
 function getCurrentQ(){return Math.floor(new Date().getMonth()/3);}
@@ -2787,6 +2788,11 @@ function logMedTake(timing){
   saveMedLogs(logs);renderStats();
   showMiniToast('💊 '+(t==='아침'?'☀️ 아침약':'🌙 저녁약')+' 복용 기록!');
 }
+function clearMedTake(timing){
+  const logs=getMedLogs();const today=todayStr();
+  const filtered=logs.filter(l=>!(l.date===today&&l.type==='take'&&l.timing===timing));
+  saveMedLogs(filtered);renderStats();showMiniToast('복용 기록 초기화');
+}
 function logMedStatus(level){
   const logs=getMedLogs();const now=new Date();const today=todayStr();
   const hour=now.getHours();
@@ -2933,6 +2939,8 @@ function _renderStatsInner(wrap){
   let cfg=getMedConfig();
   // Migrate old single-med format
   if(cfg&&cfg.name&&!cfg.meds){cfg.meds=[{name:cfg.name,dose:cfg.dose||'',duration:cfg.duration||10}];delete cfg.name;delete cfg.dose;delete cfg.duration;saveMedConfig(cfg);}
+  // timing 없는 약에 DB 기반 timing 자동 부여
+  if(cfg&&cfg.meds)cfg.meds.forEach(m=>{if(!m.timing){const d=MED_DB.find(x=>x.name===m.name);m.timing=d?d.timing:'아침';}});
   if(cfg&&!cfg.meds)cfg.meds=[];
   const medLogs=getMedLogs();
   const todayTake=medLogs.find(l=>l.date===today&&l.type==='take');
@@ -3025,7 +3033,10 @@ function _renderStatsInner(wrap){
         h+='<div style="position:absolute;left:'+(gp+yp)+'%;top:0;height:100%;width:'+rp+'%;background:#E24B4A"></div>';
         h+='<div style="position:absolute;left:'+Math.max(pct-1,0)+'%;top:50%;transform:translateY(-50%);font-size:11px">💊</div>';
         h+='</div>';
-        h+='<button onclick="logMedTake(\'아침\')" style="width:100%;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit;margin-bottom:10px">🔄 다시 기록</button>';
+        h+='<div style="display:flex;gap:6px;margin-bottom:10px">';
+        h+='<button onclick="logMedTake(\'아침\')" style="flex:1;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit">🔄 다시 기록</button>';
+        h+='<button onclick="clearMedTake(\'아침\')" style="padding:6px 10px;border-radius:6px;border:1px dashed #eee;background:#fff;color:#ccc;font-size:10px;cursor:pointer;font-family:inherit">✕ 초기화</button>';
+        h+='</div>';
       }
     }
 
@@ -3060,7 +3071,10 @@ function _renderStatsInner(wrap){
         h+='<button onclick="logMedTake(\'저녁\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:#5B7FFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">🌙 저녁약 먹었어!</button>';
       }else{
         h+='<div style="font-size:11px;color:#888;margin-bottom:6px;text-align:center">✅ '+Math.floor(todayNightTake.time)+':'+String(Math.round((todayNightTake.time%1)*60)).padStart(2,'0')+' 복용 완료</div>';
-        h+='<button onclick="logMedTake(\'저녁\')" style="width:100%;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit;margin-bottom:8px">🔄 다시 기록</button>';
+        h+='<div style="display:flex;gap:6px;margin-bottom:8px">';
+        h+='<button onclick="logMedTake(\'저녁\')" style="flex:1;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit">🔄 다시 기록</button>';
+        h+='<button onclick="clearMedTake(\'저녁\')" style="padding:6px 10px;border-radius:6px;border:1px dashed #eee;background:#fff;color:#ccc;font-size:10px;cursor:pointer;font-family:inherit">✕ 초기화</button>';
+        h+='</div>';
       }
     }
     h+='</div>';
