@@ -2702,13 +2702,6 @@ function checkNudges(){
       _nudgeShown['s_'+key]=true;
       showNudge('⏰ <b>'+b.name+'</b> 시작할 시간이야! 일단 준비만 해볼까?');
     }
-    // End nudge: 10min before end
-    const endH=b.startHour+b.durHour;
-    const minsBefore=(endH-nh)*60;
-    if(minsBefore>8&&minsBefore<12&&!_nudgeShown['e_'+key]){
-      _nudgeShown['e_'+key]=true;
-      showNudge('⏳ <b>'+b.name+'</b> 10분 남았어. 마무리 준비!');
-    }
   });
 }
 function showNudge(msg){
