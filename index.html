@@ -2657,7 +2657,7 @@ function checkNightNudge(){
   const nudgeKey='ff_plan_nudge_'+todayStr()+(isNight?'_night':'_today');
   if(localStorage.getItem(nudgeKey))return;
   const bar=document.getElementById('nudge-bar');if(!bar)return;
-  const nudgeMsg=isNight?'🌙 <b>자기 전 5분!</b> 내일 할 일 3개만 적어두면 아침이 달라져':isLateNight?'🦉 <b>아직 안 잤어?</b> 오늘 할 일 적어두고 자!':'☀️ <b>좋은 아침!</b> 오늘 할 일 3개만 정해볼까?';
+  const nudgeMsg=isNight?'🌙 <b>자기 전 5분!</b> 내일 할 일 적어두면 실행률 2~3배 UP <span style="opacity:.6;font-size:9px">(Gollwitzer, 1999)</span>':isLateNight?'🦉 <b>아직 안 잤어?</b> 미리 적어두면 아침 의지력을 아낄 수 있어 <span style="opacity:.6;font-size:9px">(Decision Fatigue)</span>':'☀️ <b>좋은 아침!</b> 3개만 정하면 시작이 쉬워져 <span style="opacity:.6;font-size:9px">(ADHD CBT)</span>';
   const btnLabel=isNight?'내일 계획':'오늘 계획';
   bar.innerHTML=nudgeMsg+' <button onclick="'+(isNight?'openNightPlan()':'openSheet()')+'" style="margin-left:6px;padding:4px 12px;border-radius:8px;border:none;background:#fff;color:var(--pd);font-size:11px;font-weight:600;cursor:pointer">'+btnLabel+'</button><button onclick="this.parentElement.style.display=\'none\';localStorage.setItem(\''+nudgeKey+'\',\'1\')" style="margin-left:4px;background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px">✕</button>';
   bar.style.display='block';
