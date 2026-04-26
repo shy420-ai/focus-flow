@@ -4996,10 +4996,10 @@ buildGrid();render();applyMode();
       return Promise.all(keys.map(k=>caches.delete(k)));
     }).then(()=>{
       localStorage.setItem('ff_sw_ver',SW_VER);
-      navigator.serviceWorker.register('sw.js',{updateViaCache:'none'});
-    }).catch(()=>{navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});});
+      navigator.serviceWorker.register('sw.js?v=26',{updateViaCache:'none'});
+    }).catch(()=>{navigator.serviceWorker.register('sw.js?v=26',{updateViaCache:'none'}).catch(()=>{});});
   }else{
-    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).catch(()=>{});
+    navigator.serviceWorker.register('sw.js?v=26',{updateViaCache:'none'}).catch(()=>{});
   }
 }</script>
 </body>
