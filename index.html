@@ -884,7 +884,7 @@ const CATEGORIES=getCategoryList();
 function allCategories(){return getCategoryList();}
 function catColor(name){const c=getCategoryList().find(x=>x.name===name);return c?c.color:'#aaa';}
 
-const PX=100;
+const PX=120;
 let START=parseInt(localStorage.getItem('ff_tl_start')||'6');
 let HOURS=parseInt(localStorage.getItem('ff_tl_hours')||'18');
 function setTimelineRange(start,hours){START=start;HOURS=hours;localStorage.setItem('ff_tl_start',start);localStorage.setItem('ff_tl_hours',hours);buildGrid();renderTimeline();}
