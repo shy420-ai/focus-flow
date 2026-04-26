@@ -2639,6 +2639,31 @@ function renderStats(){
 
 // ====== NUDGE SYSTEM ======
 let _nudgeShown={};
+// ====== NIGHT PLANNING NUDGE ======
+function checkNightNudge(){
+  const now=new Date();const hour=now.getHours();
+  if(hour<21||hour>23)return; // 9~11시만
+  const nudgeKey='ff_night_nudge_'+todayStr();
+  if(localStorage.getItem(nudgeKey))return; // 오늘 이미 봤음
+  const bar=document.getElementById('nudge-bar');if(!bar)return;
+  bar.innerHTML='🌙 <b>자기 전 5분!</b> 내일 할 일 3개만 적어두면 아침이 달라져 <button onclick="openNightPlan()" style="margin-left:6px;padding:4px 12px;border-radius:8px;border:none;background:#fff;color:var(--pd);font-size:11px;font-weight:600;cursor:pointer">내일 계획</button><button onclick="this.parentElement.style.display=\'none\';localStorage.setItem(\''+nudgeKey+'\',\'1\')" style="margin-left:4px;background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px">✕</button>';
+  bar.style.display='block';
+}
+function openNightPlan(){
+  const tomorrow=addDays(todayStr(),1);
+  localStorage.setItem('ff_night_nudge_'+todayStr(),'1');
+  document.getElementById('nudge-bar').style.display='none';
+  // Open sheet with tomorrow's date
+  viewDate=tomorrow;
+  openSheet();
+  document.getElementById('sheet-date').value=tomorrow;
+  const _sd=new Date(tomorrow+'T12:00:00');
+  const dow=document.getElementById('sheet-date-dow');
+  if(dow)dow.textContent='('+['일','월','화','수','목','금','토'][_sd.getDay()]+')';
+}
+setTimeout(checkNightNudge,5000);
+setInterval(checkNightNudge,300000); // 5분마다 체크
+
 function checkNudges(){
   if(viewDate!==todayStr())return;
   const now=new Date();const nh=now.getHours()+now.getMinutes()/60;
