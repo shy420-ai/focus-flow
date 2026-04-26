@@ -4430,7 +4430,7 @@ function renderHabits(){
       const created=hab.createdAt||todayStr();
       const startDate=new Date(created+'T12:00:00');
       const now=new Date(todayStr()+'T12:00:00');
-      const daysPassed=Math.max(0,Math.floor((now-startDate)/86400000));
+      const daysPassed=Math.max(0,Math.floor((now-startDate)/86400000))+1;// +1 include today
       const totalDays=66;
       const progress=Math.min(daysPassed,totalDays);
 
