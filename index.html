@@ -3007,8 +3007,8 @@ function _renderStatsInner(wrap){
     h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️ 설정</button>';
     h+='</div>';
 
-    // 약 정보 보기 (DB 있는 약)
-    const dbMeds=cfg.meds.filter(m=>MED_DB.find(d=>d.name===m.name));
+    // 약 정보 보기 (현재 탭의 약만)
+    const dbMeds=curTabMeds.filter(m=>MED_DB.find(d=>d.name===m.name));
     if(dbMeds.length){
       h+='<details style="margin-bottom:10px"><summary style="font-size:11px;color:var(--pd);cursor:pointer">📋 약 정보 보기</summary><div style="margin-top:6px">';
       dbMeds.forEach(m=>{
