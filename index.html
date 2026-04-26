@@ -1813,7 +1813,7 @@ const CAT_PALETTE=[
 // 주황 (Orange)
 '#FF8C69','#FFDAC1','#F5C6AA',
 // 노랑 (Yellow)
-'#F7C948','#FFE156','#FFFACD',
+'#F7C948','#FFE156','#FFFACD','#FFF3B0',
 // 초록 (Green)
 '#1D9E75','#56C6A0','#B5EAD7',
 // 민트 (Mint)
@@ -1829,7 +1829,7 @@ const CAT_PALETTE=[
 // 핑크 (Pink)
 '#E8849D','#F4A7B9','#F9C4D2',
 // 뉴트럴 (Neutral)
-'#F0E4D7','#A0826D','#6B7280','#2D3748'
+'#F0E4D7','#C4B7A6','#A0826D','#6B7280','#2D3748'
 ];
 function editCategories(){
   const cats=getCategoryList();
@@ -1852,7 +1852,7 @@ function editCategories(){
   h+='<input id="cat-new-input" placeholder="새 카테고리 이름" style="flex:1;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addCatFromEdit()">';
   h+='<button onclick="addCatFromEdit()" style="padding:8px 14px;border-radius:8px;background:var(--pink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">추가</button>';
   h+='</div>';
-  h+='<div id="cat-new-palette" style="display:none;flex-wrap:wrap;gap:8px;margin-top:10px;padding:10px;background:#fafafa;border-radius:10px">';
+  h+='<div id="cat-new-palette" style="display:none;flex-wrap:wrap;gap:8px;margin-top:10px;padding:10px;background:#fafafa;border-radius:10px;justify-content:center">';
   CAT_PALETTE.forEach(c=>{
     h+='<div onclick="selectNewCatColor(\''+c+'\')" style="width:28px;height:28px;border-radius:50%;background:'+c+';cursor:pointer;border:2.5px solid #fff;box-shadow:0 0 0 1.5px '+(c==='#E8849D'?c:'transparent')+';transition:box-shadow .15s"></div>';
   });
