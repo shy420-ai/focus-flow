@@ -1118,7 +1118,7 @@ function buildGrid(){
     if(i<HOURS){
       for(let m=10;m<60;m+=10){
         const ml=document.createElement('div');
-        ml.style.cssText='position:absolute;left:0;right:0;top:'+(i*PX+Math.round(m/60*PX))+'px;border-top:1px '+(m===30?'dashed':'dotted')+' rgba(0,0,0,'+(m===30?'0.08':'0.04')+');pointer-events:none;z-index:1';
+        ml.style.cssText='position:absolute;left:0;right:0;top:'+(i*PX+Math.round(m/60*PX))+'px;border-top:1px '+(m===30?'dashed':'dotted')+' rgba(0,0,0,'+(m===30?'0.15':'0.1')+');pointer-events:none;z-index:1';
         bc.appendChild(ml);
       }
     }
