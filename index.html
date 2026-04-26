@@ -679,7 +679,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <textarea class="ri" id="ri" placeholder="제목 날짜 시간 소요 (예: 보고서 내일 14시 1시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
   <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:start">
     <div><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">📅 날짜 <span id="sheet-date-dow" style="font-weight:400;font-size:9px;color:#aaa"></span></div><input type="date" id="sheet-date" onchange="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" oninput="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" style="width:100%;padding:8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;height:38px;box-sizing:border-box"></div>
-    <div><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏰ 시작</div><input type="time" id="sheet-time" step="1800" style="width:100%;padding:8px 4px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;height:38px;box-sizing:border-box"></div>
+    <div><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏰ 시작</div><div style="display:flex;gap:2px;align-items:center;height:38px"><select id="sheet-time-h" style="flex:1;padding:8px 0;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;text-align:center;height:38px"></select><span style="font-size:8px;color:#aaa">:</span><select id="sheet-time-m" style="flex:1;padding:8px 0;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;text-align:center;height:38px"><option value="">-</option><option value="0">00</option><option value="15">15</option><option value="30">30</option><option value="45">45</option></select></div></div>
     <div><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏱ 소요</div><div style="display:flex;gap:2px;align-items:center;height:38px"><select id="sheet-dur-h" style="flex:1;padding:8px 0;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;text-align:center;height:38px"><option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select><span style="font-size:8px;color:#aaa">h</span><select id="sheet-dur-m" style="flex:1;padding:8px 0;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;text-align:center;height:38px"><option value="0">0</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="30">30</option><option value="40">40</option><option value="45">45</option><option value="50">50</option></select><span style="font-size:8px;color:#aaa">m</span></div></div>
   </div>
   <div style="margin-top:8px;margin-bottom:4px;font-size:11px;font-weight:700;color:var(--pd)">카테고리</div>
@@ -1825,10 +1825,13 @@ function addCatFromEdit(){
 function openSheet(prefillTime){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');renderSheetCatPills();
   document.getElementById('sheet-date').value=viewDate;
   const _sd=new Date(viewDate+'T12:00:00');const _dow=document.getElementById('sheet-date-dow');if(_dow)_dow.textContent='('+['일','월','화','수','목','금','토'][_sd.getDay()]+')';
+  const _sth=document.getElementById('sheet-time-h');
+  _sth.innerHTML='<option value="">-</option>';
+  for(let i=START;i<START+HOURS;i++)_sth.innerHTML+='<option value="'+i+'">'+i+'시</option>';
   if(prefillTime!==undefined){
-    const h=Math.floor(prefillTime);const m=prefillTime%1>=0.5?'30':'00';
-    document.getElementById('sheet-time').value=pad(h)+':'+m;
-  }else{document.getElementById('sheet-time').value='';}
+    const h=Math.floor(prefillTime);const m=Math.round((prefillTime%1)*60);
+    _sth.value=h;document.getElementById('sheet-time-m').value=m>=45?'45':m>=30?'30':m>=15?'15':'0';
+  }else{_sth.value='';document.getElementById('sheet-time-m').value='';}
   document.getElementById('sheet-dur').value='';
   history.pushState({modal:'sheet'},'');
   setTimeout(()=>document.getElementById('ri').focus(),300);}
@@ -1967,14 +1970,16 @@ function quickAdd(){
   if(/오늘/.test(raw))p.date=todayStr();
   // Override with UI picker values only if user explicitly changed them
   const uiDate=document.getElementById('sheet-date').value;
-  const uiTime=document.getElementById('sheet-time').value;
+  const uiTimeH=document.getElementById('sheet-time-h').value;
+  const uiTimeM=document.getElementById('sheet-time-m').value;
+  const uiTime=uiTimeH?(parseInt(uiTimeH)+(parseInt(uiTimeM||'0')/60)):null;
   const uiDurH=parseInt(document.getElementById('sheet-dur-h').value)||0;
   const uiDurM=parseInt(document.getElementById('sheet-dur-m').value)||0;
   // Only use UI pickers if text input is just a title (no date/time/duration keywords)
   const textHasInfo=/오늘|내일|모레|\d{1,2}시|\d+분|\d+시간|\d{3,4}|\d{1,2}[월\/]\d{1,2}/.test(raw);
   if(!textHasInfo){
     if(uiDate)p.date=uiDate;
-    if(uiTime){const[hh,mm]=uiTime.split(':').map(Number);p.startHour=hh+(mm/60);}
+    if(uiTime!==null)p.startHour=uiTime;
     if(uiDurH||uiDurM){p.durHour=uiDurH+(uiDurM/60);if(p.durHour<0.1)p.durHour=0.5;}
   }
   if(p.recurDays&&p.recurDays.length>0){
