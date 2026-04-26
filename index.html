@@ -3917,11 +3917,14 @@ function getTabOrder(){
   try{
     const s=localStorage.getItem('ff_tab_order');
     if(s){
-      const arr=JSON.parse(s);
+      let arr=JSON.parse(s);
       // Ensure all default tabs exist
-      const missing=DEFAULT_TAB_ORDER.filter(t=>!arr.includes(t));
-      if(missing.length)missing.forEach(t=>arr.push(t));
-      return arr.filter(t=>DEFAULT_TAB_ORDER.includes(t));
+      DEFAULT_TAB_ORDER.forEach(t=>{if(!arr.includes(t))arr.push(t);});
+      arr=arr.filter(t=>DEFAULT_TAB_ORDER.includes(t));
+      // tl must always be first
+      if(arr[0]!=='tl'){arr=arr.filter(t=>t!=='tl');arr.unshift('tl');}
+      localStorage.setItem('ff_tab_order',JSON.stringify(arr));
+      return arr;
     }
   }catch{}
   return DEFAULT_TAB_ORDER.slice();
