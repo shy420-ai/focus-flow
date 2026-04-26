@@ -3493,9 +3493,14 @@ function renderHabits(){
       h+='<div class="habit-week">';
       weekDates.forEach((wd,i)=>{
         const filled=habitLogs[wd]&&habitLogs[wd][hab.id];
+        const isActiveDay=isHabitDay(hab,wd);
         h+='<div style="display:flex;flex-direction:column;align-items:center;gap:1px">';
-        h+='<div class="habit-week-label">'+weekDayLabels[i]+'</div>';
-        h+='<div class="habit-week-cell'+(filled?' filled':'')+'" onclick="toggleHabitLog('+hab.id+',\''+wd+'\')" style="cursor:pointer"></div>';
+        h+='<div class="habit-week-label" style="'+(isActiveDay?'':'color:#ddd')+'">'+weekDayLabels[i]+'</div>';
+        if(isActiveDay){
+          h+='<div class="habit-week-cell'+(filled?' filled':'')+'" onclick="toggleHabitLog('+hab.id+',\''+wd+'\')" style="cursor:pointer"></div>';
+        }else{
+          h+='<div class="habit-week-cell" style="background:#f5f5f5;opacity:.3;cursor:default"></div>';
+        }
         h+='</div>';
       });
       h+='</div>';
