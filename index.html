@@ -1145,7 +1145,9 @@ function renderTimeline(){
     const isPast=viewDate===todayStr()&&(b.startHour+b.durHour)<nh;
     const el=document.createElement('div');
     el.className='block '+(isBuf?'c-buf':('c-'+b.color))+(b.done?' done-block':isPast?' past':'')+(String(activeMenu)===String(b.id)?' menu-open':'');
-    el.dataset.id=b.id;el.draggable=false;el.style.top=(hToY(b.startHour)+1)+'px';el.style.height=Math.max(b.durHour*PX-3,36)+'px';
+    const _bidx=blocks.filter(x=>x.date===b.date&&!x.isBuf&&(x.type==='timeline'||!x.type)).sort((a,b)=>a.startHour-b.startHour).findIndex(x=>x.id===b.id);
+    el.dataset.id=b.id;el.draggable=false;el.style.top=(hToY(b.startHour)+2)+'px';el.style.height=Math.max(b.durHour*PX-5,36)+'px';
+    if(_bidx%2===1)el.style.filter='brightness(0.92)';
     if(!isBuf){
       let menuHTML='<div class="block-menu">';
       if(b.isRecurring){
