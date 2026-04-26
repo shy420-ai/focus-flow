@@ -3364,15 +3364,24 @@ function saveBirthday(){
 function showOnboarding(){
   if(localStorage.getItem('ff_onboarded'))return;
   const steps=[
-    {sel:'.header',title:'Focus Flow',desc:'ADHD를 위한 집중 플래너에 오신 걸 환영해요!',pos:'bottom'},
-    {sel:'#date-tabs',title:'날짜 탭',desc:'오늘, 내일, 이후 날짜를 탭으로 전환할 수 있어요',pos:'bottom'},
-    {sel:'#view-tabs',title:'탭 전환',desc:'일간, 주간, 월간, 습관, 목표, 드롭, 분석 등 다양한 뷰! 드래그로 순서도 바꿀 수 있어요',pos:'bottom'},
-    {sel:'#fab-btn',title:'할일 추가',desc:'"보고서 430 14시 1시간" 이렇게 입력하면 바로 블록이 추가돼요',pos:'top'},
-    {sel:'.clock',title:'설정',desc:'⚙️ 톱니바퀴를 누르면 테마, 친구, 타임라인 범위 등을 설정할 수 있어요',pos:'bottom'},
+    {sel:'.header',title:'Welcome to Focus Flow!',desc:'ADHD 뇌과학 기반으로 설계된 집중 플래너야.\n각 기능이 왜 이렇게 만들어졌는지 알려줄게!',pos:'bottom'},
+    {sel:'#view-tl',title:'⏰ 일간 타임라인',desc:'시간 블록으로 하루를 시각화해.\n\n📚 Time Blocking (Cal Newport)\nADHD는 시간 감각이 약해서(Time Blindness) 눈에 보이는 시간 구조가 필수!',pos:'bottom',tab:'tl'},
+    {sel:'#fab-btn',title:'➕ 빠른 입력',desc:'"보고서 430 14시 1시간" 처럼 자연어로 입력하면 바로 블록 생성!\n\n📚 인지 부하 감소\n입력 단계가 적을수록 ADHD가 시작하기 쉬워져.',pos:'top'},
+    {sel:'#view-cal',title:'📅 월간 캘린더',desc:'한 달을 한눈에 보고 일정을 파악해.\n\n📚 Big Picture View\nADHD는 세부에 빠지면 전체를 놓치니까, 숲을 볼 수 있는 뷰가 중요해.',pos:'bottom',tab:'cal'},
+    {sel:'#view-habit',title:'🌱 습관 트래커',desc:'66일 챌린지로 습관을 만들어봐!\n\n📚 Habit Formation (Lally et al., 2010)\n평균 66일이면 행동이 자동화돼. 매일 체크하는 시각적 피드백이 도파민 보상 루프를 만들어줘.',pos:'bottom',tab:'habit'},
+    {sel:'#goal-content',title:'🎯 목표 트리',desc:'연간 목표 → 분기별 → 할 일로 쪼개는 역산 구조!\n\n📚 Goal Chunking (Safren et al., 2005)\n큰 목표를 작게 쪼개면 시작 저항이 줄어들어. 트리 구조로 "왜 이걸 하는지" 맥락도 유지!',pos:'bottom',tab:'goal'},
+    {sel:'#view-drop',title:'📦 드롭',desc:'지금 당장은 아니지만 언젠가 할 일들을 모아두는 곳.\n\n📚 Cognitive Offloading\n머릿속 할 일을 외부에 꺼내놓으면 작업기억 부담이 줄어들어.',pos:'bottom',tab:'drop'},
+    {sel:'#view-inbox',title:'📋 할 일 목록',desc:'오늘의 할 일을 체크리스트로 관리해.\n\n📚 Implementation Intention\n"언제, 어디서, 뭘 할지" 구체적으로 적으면 실행률이 2~3배 올라가!',pos:'bottom',tab:'inbox'},
+    {sel:'.clock',title:'⚙️ 설정',desc:'테마 변경, 친구 관리, 타임라인 범위, 생리주기 설정 등!\n취향에 맞게 커스텀해봐.',pos:'bottom',tab:'tl'},
   ];
   let idx=0;
   function renderStep(){
     const s=steps[idx];
+    // Auto-switch tab if needed
+    if(s.tab)switchView(s.tab);
+    setTimeout(()=>{_renderStepInner(s);},s.tab?300:0);
+  }
+  function _renderStepInner(s){
     const target=document.querySelector(s.sel);
     const el=document.getElementById('onboarding');
     const isLast=idx===steps.length-1;
@@ -3389,7 +3398,7 @@ function showOnboarding(){
     el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9001" onclick="nextOnboarding()"></div>'+
       '<div style="position:fixed;top:'+tipTop+'px;left:'+tipLeft+'px;width:260px;background:#fff;border-radius:16px;padding:16px;z-index:9003;box-shadow:0 8px 30px rgba(0,0,0,.2)">'+
       '<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:6px">'+s.title+'</div>'+
-      '<div style="font-size:12px;color:#666;line-height:1.5;margin-bottom:12px">'+s.desc+'</div>'+
+      '<div style="font-size:12px;color:#666;line-height:1.5;margin-bottom:12px">'+s.desc.replace(/\n/g,'<br>')+'</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div style="display:flex;gap:4px">'+steps.map((_,i)=>'<div style="width:6px;height:6px;border-radius:50%;background:'+(i===idx?'var(--pink)':'#ddd')+'"></div>').join('')+'</div>'+
       '<div style="display:flex;gap:8px;align-items:center">'+
@@ -3401,7 +3410,7 @@ function showOnboarding(){
     steps.forEach(s=>{const t=document.querySelector(s.sel);if(t){t.style.zIndex='';t.style.boxShadow='';t.style.borderRadius='';}});
   }
   window.nextOnboarding=function(){clearHighlight();idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}};
-  window.skipOnboarding=function(){clearHighlight();localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';};
+  window.skipOnboarding=function(){clearHighlight();localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';switchView('tl');};
   renderStep();
 }
 setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},2000);
