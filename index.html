@@ -2598,6 +2598,13 @@ function renderGoals(){
           h+='<button class="goal-add-btn" onclick="addQTask(\''+g.id+'\','+qi+')" style="width:26px;height:26px;font-size:14px">+</button>';
           h+='</div>';
         }
+        // 현재 분기에만 월간/주간 목표 표시
+        if(isCur){
+          h+='<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e8e8e8">';
+          h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
+          h+=renderGoalSection('week','⭐','이번 주 목표');
+          h+='</div>';
+        }
         h+='</div>';
       }
       h+='</div></div>';
@@ -2614,9 +2621,11 @@ function renderGoals(){
     h+='</div></div>';
   }
 
-  // 월간 & 주간 목표
-  h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
-  h+=renderGoalSection('week','⭐','이번 주 목표');
+  // 목표 없을 때 월간/주간만이라도 표시
+  if(!r.goals.length){
+    h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
+    h+=renderGoalSection('week','⭐','이번 주 목표');
+  }
 
   wrap.innerHTML=h;
 }
