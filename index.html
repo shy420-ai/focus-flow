@@ -2993,10 +2993,15 @@ function _renderStatsInner(wrap){
     h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     h+='<div>';
-    cfg.meds.forEach(m=>{
+    const catColors={'ADHD':'#E8849D','기분조절':'#5B7FFF','항우울':'#56C6A0','항불안':'#EF9F27','수면':'#9B7BB5','항정신병':'#378ADD'};
+    const curTabMeds=window._mediTab==='night'?nightMeds:morningMeds;
+    curTabMeds.forEach(m=>{
       const dbInfo=MED_DB.find(d=>d.name===m.name);
-      h+='<div style="font-size:13px;font-weight:700;color:var(--pd)">'+m.name+' '+m.dose+'</div>';
-      if(dbInfo)h+='<div style="font-size:9px;color:#aaa">'+dbInfo.generic+' · 피크 '+dbInfo.peak+'</div>';
+      const cc=dbInfo?catColors[dbInfo.cat]||'var(--pd)':'var(--pd)';
+      h+='<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">';
+      if(dbInfo)h+='<span style="font-size:8px;background:'+cc+';color:#fff;padding:1px 5px;border-radius:4px">'+dbInfo.cat+'</span>';
+      h+='<span style="font-size:13px;font-weight:700;color:'+cc+'">'+m.name+' '+m.dose+'</span>';
+      h+='</div>';
     });
     h+='</div>';
     h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️ 설정</button>';
@@ -3435,7 +3440,7 @@ function showMoodCheck(){
   bar.innerHTML='<div style="margin-bottom:4px">지금 기분 어때?</div><div style="display:flex;gap:12px;justify-content:center"><button ontouchend="event.preventDefault();logMood(\'😊\')" onclick="logMood(\'😊\')" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😊</button><button ontouchend="event.preventDefault();logMood(\'😐\')" onclick="logMood(\'😐\')" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😐</button><button ontouchend="event.preventDefault();logMood(\'😢\')" onclick="logMood(\'😢\')" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😢</button><button ontouchend="event.preventDefault();logMood(\'😤\')" onclick="logMood(\'😤\')" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😤</button><button ontouchend="event.preventDefault();logMood(\'🥱\')" onclick="logMood(\'🥱\')" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">🥱</button></div>';
   bar.style.display='block';
 }
-setTimeout(showMoodCheck,2000);
+// 기분 체크 → 메디 트래커로 통합됨
 
 // ====== CYCLE TRACKER ======
 function getCycleData(){try{return JSON.parse(localStorage.getItem('ff_cycle')||'null');}catch{return null;}}
@@ -4161,7 +4166,7 @@ let _lastDoneBlockId=null;
 function showDone(blockId){
   _lastDoneBlockId=blockId||null;
   const msg=MSGS[Math.floor(Math.random()*MSGS.length)];
-  showToastWithEnergy(msg.e,msg.m,msg.s);
+  showToast(msg.e,msg.m,msg.s);
   const cc=getCC();
   for(let i=0;i<80;i++){const a=Math.random()*Math.PI*2,sp=2+Math.random()*6;particles.push({x:window.innerWidth/2,y:window.innerHeight*.4,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-4,size:4+Math.random()*6,color:cc[Math.floor(Math.random()*cc.length)],rot:Math.random()*360,rotV:(Math.random()-.5)*8,life:1,decay:.013+Math.random()*.01,shape:Math.random()>.5?'rect':'circle'});}
   animC();
