@@ -3089,6 +3089,13 @@ function _renderStatsInner(wrap){
 
    }else if(window._mediTab==='night'){
     // 저녁약 탭
+    if(!nightMeds.length){
+      h+='<div style="background:#fff;border-radius:14px;padding:20px;margin-bottom:12px;border:1.5px solid var(--pl);text-align:center">';
+      h+='<div style="font-size:30px;margin-bottom:8px">🌙</div>';
+      h+='<div style="font-size:13px;color:#888;margin-bottom:10px">등록된 저녁약이 없어</div>';
+      h+='<button onclick="setupMed()" style="padding:10px 20px;border-radius:10px;border:none;background:#5B7FFF;color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">저녁약 추가하기</button>';
+      h+='</div>';
+    }
     if(nightMeds.length){
       h+='<div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">🌙 저녁약 — '+nightMeds.map(m=>m.name+' '+m.dose).join(', ')+'</div>';
       if(!todayNightTake){
