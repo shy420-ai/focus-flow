@@ -3369,8 +3369,12 @@ function showOnboarding(){
     // 2. 타임라인
     {title:'⏰ 일간 타임라인',desc:'하루를 시간 블록으로 시각화해서 관리해.\n\n📚 Time Blocking (Cal Newport)\nADHD는 시간 감각이 약한 "Time Blindness"가 있어서, 눈에 보이는 시간 구조가 필수!\n\n💡 블록을 드래그해서 시간을 옮길 수도 있어!',sel:'#view-tl',tab:'tl'},
     // 3. 인터랙티브: 더블탭 체험
-    {title:'👆 직접 해봐!',desc:'타임라인의 빈 시간을 두 번 빠르게 탭해봐!\n1시간 블록이 자동으로 생겨!',sel:'#view-tl',tab:'tl',interactive:'dblclick'},
-    // 4. 입력 시트
+    {title:'👆 직접 해봐! — 블록 생성',desc:'타임라인의 빈 시간을 두 번 빠르게 탭해봐!\n1시간 블록이 자동으로 생겨!',sel:'#view-tl',tab:'tl',interactive:'dblclick'},
+    // 4. 인터랙티브: 블록 드래그
+    {title:'👆 직접 해봐! — 블록 이동',desc:'방금 만든 블록을 꾹 누른 채로 위아래로 드래그해봐!\n시간이 이동돼!',sel:'#view-tl',tab:'tl',interactive:'drag'},
+    // 5. 인터랙티브: 리사이즈
+    {title:'👆 직접 해봐! — 시간 조절',desc:'블록 하단의 ━━ 바를 잡고 아래로 끌어봐!\n블록의 길이(소요시간)가 바뀌어!',sel:'#view-tl',tab:'tl',interactive:'resize'},
+    // 6. 입력 시트
     {title:'➕ 빠른 입력',desc:'이게 할 일 추가 시트야!\n\n"보고서 430 14시 1시간" 이렇게 자연어로 입력하면 날짜, 시간, 소요시간이 자동 파싱돼!\n\n📚 인지 부하 감소\n입력 단계가 적을수록 ADHD가 행동을 시작하기 쉬워져.\n\n💡 카테고리도 설정할 수 있어!',sel:'.sheet',tab:'tl',
       action:()=>{document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}},
     // 4. 날짜 탭
@@ -3412,17 +3416,29 @@ function showOnboarding(){
     // Highlight
     target.style.position='relative';target.style.zIndex='9002';target.style.boxShadow='0 0 0 4px var(--pink), 0 0 20px rgba(0,0,0,.3)';target.style.borderRadius='12px';
     if(rect.top<0||rect.bottom>window.innerHeight)target.scrollIntoView({behavior:'smooth',block:'center'});
-    // Interactive step: listen for user action instead of overlay click
-    if(s.interactive==='dblclick'){
-      const blockCountBefore=blocks.length;
-      const checkInterval=setInterval(()=>{
-        if(blocks.length>blockCountBefore){
-          clearInterval(checkInterval);
-          setTimeout(()=>{showMiniToast('잘했어! 🎉');setTimeout(()=>window.nextOnboarding(),800);},300);
-        }
-      },200);
-      // Store interval so we can clear it on skip
-      window._onboardInterval=checkInterval;
+    // Interactive step: listen for user action
+    if(s.interactive){
+      let checkFn;
+      if(s.interactive==='dblclick'){
+        const blockCountBefore=blocks.length;
+        checkFn=()=>blocks.length>blockCountBefore;
+      }else if(s.interactive==='drag'){
+        // Detect block position change
+        const snap=blocks.filter(b=>b.date===viewDate).map(b=>b.id+':'+b.startHour).join(',');
+        checkFn=()=>{const cur=blocks.filter(b=>b.date===viewDate).map(b=>b.id+':'+b.startHour).join(',');return cur!==snap;};
+      }else if(s.interactive==='resize'){
+        const snap=blocks.filter(b=>b.date===viewDate).map(b=>b.id+':'+b.durHour).join(',');
+        checkFn=()=>{const cur=blocks.filter(b=>b.date===viewDate).map(b=>b.id+':'+b.durHour).join(',');return cur!==snap;};
+      }
+      if(checkFn){
+        const checkInterval=setInterval(()=>{
+          if(checkFn()){
+            clearInterval(checkInterval);
+            setTimeout(()=>{showMiniToast('잘했어! 🎉');setTimeout(()=>window.nextOnboarding(),800);},300);
+          }
+        },200);
+        window._onboardInterval=checkInterval;
+      }
     }
     // Step counter
     const stepNum=(idx+1)+'/'+steps.length;
