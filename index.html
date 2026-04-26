@@ -1447,7 +1447,7 @@ function renderYearProgress(){
   const pct=Math.round((now-start)/(end-start)*100);
   const remain=Math.ceil((end-now)/(1000*60*60*24));
   yp.innerHTML='<div style="text-align:center;padding:10px 12px;background:var(--pl);border-radius:12px">'
-    +'<div style="font-size:12px;color:#666;margin-bottom:8px;font-weight:600">'+yr+'년 '+pct+'% 달려왔어! 남은 '+remain+'일 💪</div>'
+    +'<div style="font-size:12px;color:#666;margin-bottom:8px;font-weight:600">'+yr+'년 '+pct+'% 달려왔어! 남은 '+remain+'일 화이팅! 💪</div>'
     +'<div style="position:relative;height:28px;background:#f0f0f0;border-radius:14px;overflow:visible">'
     +'<div style="position:absolute;left:0;top:0;height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--pink),var(--pd));border-radius:14px;transition:width .5s"></div>'
     +'<div style="position:absolute;left:calc('+Math.max(pct-2,0)+'% - 10px);top:50%;transform:translateY(-50%) scaleX(-1);font-size:22px;z-index:2;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2))">🏃‍♀️</div>'
@@ -4298,10 +4298,11 @@ function getHabitStreak(habitId){
   return streak;
 }
 function getHabitTotalDays(habitId,createdAt){
-  let total=0;const created=createdAt||todayStr();
-  const start=new Date(created+'T12:00:00');const now=new Date(todayStr()+'T12:00:00');
-  const days=Math.floor((now-start)/86400000)+1;
-  for(let i=0;i<days;i++){const ds=addDays(created,i);if(habitLogs[ds]&&habitLogs[ds][habitId])total++;}
+  let total=0;
+  // 전체 habitLogs에서 해당 습관 체크된 날 세기
+  Object.keys(habitLogs).forEach(ds=>{
+    if(habitLogs[ds]&&habitLogs[ds][habitId])total++;
+  });
   return total;
 }
 function isHabitDay(habit,dateStr){
@@ -4430,9 +4431,11 @@ function renderHabits(){
       const created=hab.createdAt||todayStr();
       const startDate=new Date(created+'T12:00:00');
       const now=new Date(todayStr()+'T12:00:00');
-      const daysPassed=Math.max(0,Math.floor((now-startDate)/86400000))+1;// +1 include today
+      const daysPassed=Math.max(1,Math.floor((now-startDate)/86400000)+1);
       const totalDays=66;
       const progress=Math.min(daysPassed,totalDays);
+      // 실제 체크된 총 일수 (createdAt 이전 포함)
+      const actualTotal=getHabitTotalDays(hab.id,created);
 
       // Count weeks and success weeks (5+ days per week)
       let totalWeeks=Math.ceil(progress/7)||1;
@@ -4450,8 +4453,9 @@ function renderHabits(){
         totalChecked+=weekCount;
       }
 
-      const pct=Math.round(Math.min(totalChecked,totalDays)/totalDays*100);
-      const done=totalChecked>=totalDays;
+      const finalChecked=Math.max(totalChecked,actualTotal);
+      const pct=Math.round(Math.min(finalChecked,totalDays)/totalDays*100);
+      const done=finalChecked>=totalDays;
 
       // Flower growth system
       const FLOWERS=['🌱','🌿','☘️','🌷','🌸','🌺','💐'];
