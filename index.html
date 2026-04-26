@@ -797,12 +797,12 @@ auth.onAuthStateChanged(user=>{
     // Save share code for friend feature
     const sc=getMyShareCode();
     if(sc)db.collection('users').doc(_uid).set({shareCode:sc,displayName:user.displayName||''},{merge:true}).catch(()=>{});
-    switchView('tl');
+    switchView(curView);
   }else if(localStorage.getItem('ff_skip_login')||localStorage.getItem('ff_uid')){
     // Previously logged in or skipped — don't show login, load from local
     document.getElementById('login-overlay').style.display='none';
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
-    switchView('tl');
+    switchView(curView);
   }else{
     document.getElementById('login-overlay').style.display='flex';
   }
