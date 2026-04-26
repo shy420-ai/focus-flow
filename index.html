@@ -880,7 +880,7 @@ function getCategoryList(){
 function saveCategoryList(cats){localStorage.setItem('ff_cats',JSON.stringify(cats));customCategories=[];}
 const CATEGORIES=getCategoryList();
 function allCategories(){return getCategoryList();}
-function catColor(name){const c=allCategories().find(x=>x.name===name);return c?c.color:'#aaa';}
+function catColor(name){const c=getCategoryList().find(x=>x.name===name);return c?c.color:'#aaa';}
 
 const PX=80;
 let START=parseInt(localStorage.getItem('ff_tl_start')||'6');
@@ -1795,7 +1795,8 @@ function editCategories(){
     h+='</div>';
   });
   h+='</div>';
-  h+='<div style="display:flex;gap:6px;margin-top:12px">';
+  h+='<div style="display:flex;gap:6px;margin-top:12px;align-items:center">';
+  h+='<input type="color" id="cat-new-color" value="#E8849D" style="width:30px;height:30px;border:none;border-radius:50%;cursor:pointer;padding:0;background:none;flex-shrink:0">';
   h+='<input id="cat-new-input" placeholder="새 카테고리 이름" style="flex:1;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addCatFromEdit()">';
   h+='<button onclick="addCatFromEdit()" style="padding:8px 14px;border-radius:8px;background:var(--pink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">추가</button>';
   h+='</div>';
@@ -1803,16 +1804,17 @@ function editCategories(){
   h+='</div></div>';
   document.body.insertAdjacentHTML('beforeend',h);
 }
-function changeCatColor(idx,color){const cats=getCategoryList();cats[idx].color=color;saveCategoryList(cats);}
+function changeCatColor(idx,color){const cats=getCategoryList();cats[idx].color=color;saveCategoryList(cats);closeCatEdit();editCategories();}
 function closeCatEdit(){const el=document.getElementById('cat-edit-overlay');if(el)el.remove();renderSheetCatPills();}
 function removeCat(idx){const cats=getCategoryList();cats.splice(idx,1);saveCategoryList(cats);closeCatEdit();editCategories();}
 function addCatFromEdit(){
   const input=document.getElementById('cat-new-input');if(!input)return;
   const name=input.value.trim();if(!name)return;
-  const colors=['#5B7FFF','#E8849D','#1D9E75','#EF9F27','#378ADD','#9B7BB5','#E24B4A','#8DC8E8'];
+  const colorInput=document.getElementById('cat-new-color');
+  const color=colorInput?colorInput.value:'#E8849D';
   const cats=getCategoryList();
   if(cats.find(c=>c.name===name))return;
-  cats.push({name,color:colors[cats.length%colors.length]});
+  cats.push({name,color});
   saveCategoryList(cats);closeCatEdit();editCategories();
 }
 
