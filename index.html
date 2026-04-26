@@ -1147,7 +1147,7 @@ function renderTimeline(){
     el.className='block '+(isBuf?'c-buf':('c-'+b.color))+(b.done?' done-block':isPast?' past':'')+(String(activeMenu)===String(b.id)?' menu-open':'');
     const _bidx=blocks.filter(x=>x.date===b.date&&!x.isBuf&&(x.type==='timeline'||!x.type)).sort((a,c)=>a.startHour-c.startHour).findIndex(x=>x.id===b.id);
     el.dataset.id=b.id;el.draggable=false;el.style.top=(hToY(b.startHour)+2)+'px';el.style.height=Math.max(b.durHour*PX-5,36)+'px';
-    if(_bidx%2===1)el.style.opacity='0.65';
+    if(_bidx%2===1)el.style.filter='brightness(1.15) saturate(0.8)';
     if(!isBuf){
       let menuHTML='<div class="block-menu">';
       if(b.isRecurring){
