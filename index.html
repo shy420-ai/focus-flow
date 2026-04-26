@@ -2835,8 +2835,21 @@ function setupMed(){
   h+='</div>';
   h+='<button onclick="addMedToSetup()" style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--pd);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:12px">+ 약 추가</button>';
 
+  // 신체 정보
+  h+='<div style="margin-bottom:10px;border-top:1px solid #eee;padding-top:10px"><div style="font-size:11px;color:var(--pd);font-weight:600;margin-bottom:6px">🏋️ 신체 정보</div>';
+  h+='<div style="display:flex;gap:6px;margin-bottom:6px">';
+  h+='<div style="flex:1"><label style="font-size:10px;color:#888">키 (cm)</label><input id="med-height" type="number" value="'+(cfg.height||'')+'" placeholder="165" style="width:100%;padding:6px 8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:2px"></div>';
+  h+='<div style="flex:1"><label style="font-size:10px;color:#888">체중 (kg)</label><input id="med-weight" type="number" value="'+(cfg.weight||'')+'" placeholder="60" style="width:100%;padding:6px 8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:2px"></div>';
+  h+='</div>';
+  if(cfg.height&&cfg.weight){
+    const bmi=(cfg.weight/((cfg.height/100)**2)).toFixed(1);
+    const bmiLabel=bmi<18.5?'저체중':bmi<23?'정상':bmi<25?'과체중':'비만';
+    h+='<div style="font-size:11px;color:#888;text-align:center">BMI: <b>'+bmi+'</b> ('+bmiLabel+')</div>';
+  }
+  h+='</div>';
+
   // 취침시간
-  h+='<div style="margin-bottom:14px;border-top:1px solid #eee;padding-top:10px"><label style="font-size:11px;color:#888">목표 취침시간</label><select id="med-bed" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px">';
+  h+='<div style="margin-bottom:14px"><label style="font-size:11px;color:#888">목표 취침시간</label><select id="med-bed" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px">';
   for(let t=20;t<=26;t++){const hr=t%24;h+='<option value="'+t+'"'+(cfg.bedGoal===t?' selected':'')+'>'+hr+':00</option>';}
   h+='</select></div>';
 
@@ -2877,6 +2890,9 @@ function removeMedFromSetup(idx){
 function saveMedBedGoal(){
   const cfg=getMedConfig()||{meds:[],bedGoal:23};
   cfg.bedGoal=Number(document.getElementById('med-bed').value)||23;
+  const h=document.getElementById('med-height');const w=document.getElementById('med-weight');
+  if(h&&h.value)cfg.height=Number(h.value);
+  if(w&&w.value)cfg.weight=Number(w.value);
   saveMedConfig(cfg);document.getElementById('med-setup').remove();renderStats();
 }
 
@@ -2931,6 +2947,15 @@ function renderStats(){
         h+='</div>';
       });
       h+='</div></details>';
+    }
+
+    // 체중 기반 용량 참고 (콘서타/메틸페니데이트 계열만)
+    if(cfg.weight){
+      const methMeds=cfg.meds.filter(m=>['콘서타','메디키넷','페니드'].includes(m.name));
+      if(methMeds.length){
+        const mgKg=methMeds.reduce((s,m)=>{const n=parseFloat(m.dose);return s+(isNaN(n)?0:n);},0)/cfg.weight;
+        h+='<div style="font-size:10px;color:#888;margin-bottom:8px;text-align:center">💡 메틸페니데이트 체중 대비 용량: <b>'+mgKg.toFixed(2)+' mg/kg</b> (일반 범위: 0.3~1.0 mg/kg)</div>';
+      }
     }
 
     const mainMed=cfg.meds[0];
