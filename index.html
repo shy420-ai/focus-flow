@@ -2992,6 +2992,8 @@ function _renderStatsInner(wrap){
     // 오늘의 약
     h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    const morningMeds=cfg.meds.filter(m=>m.timing==='아침'||m.timing==='수시');
+    const nightMeds=cfg.meds.filter(m=>m.timing==='저녁');
     h+='<div>';
     const catColors={'ADHD':'#E8849D','기분조절':'#5B7FFF','항우울':'#56C6A0','항불안':'#EF9F27','수면':'#9B7BB5','항정신병':'#378ADD'};
     const curTabMeds=window._mediTab==='night'?nightMeds:morningMeds;
@@ -3032,9 +3034,6 @@ function _renderStatsInner(wrap){
         h+='<div style="font-size:10px;color:#888;margin-bottom:8px;text-align:center">💡 메틸페니데이트 체중 대비 용량: <b>'+mgKg.toFixed(2)+' mg/kg</b> (일반 범위: 0.3~1.0 mg/kg)</div>';
       }
     }
-
-    const morningMeds=cfg.meds.filter(m=>m.timing==='아침'||m.timing==='수시');
-    const nightMeds=cfg.meds.filter(m=>m.timing==='저녁');
 
     const statusEmoji=['😵','😐','🙂','😊','🤩'];
     const statusLabel=['최악','별로','보통','좋음','최고'];
