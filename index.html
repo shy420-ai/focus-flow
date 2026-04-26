@@ -679,8 +679,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div class="sh"></div>
   <div class="sheet-title">할 일 추가</div>
   <button onclick="quickAddEmpty()" style="width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--pink);background:var(--pl);color:var(--pd);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">⚡ 빈 블록 바로 추가</button>
-  <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:6px 10px;margin-bottom:8px;line-height:1.6">🧠 제목 날짜 시작시간 소요 → <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 내일 14시 1시간</span> ← 터치</div>
-  <textarea class="ri" id="ri" placeholder="제목 날짜 시작시간 소요 (예: 보고서 내일 14시 1시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
+  <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:6px 10px;margin-bottom:8px;line-height:1.6">🧠 제목 날짜 시작시간 소요 → <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 430 14시 1시간</span> ← 터치</div>
+  <textarea class="ri" id="ri" placeholder="제목 날짜 시작시간 소요 (예: 보고서 430 14시 1시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
   <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:start">
     <div><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">📅 날짜 <span id="sheet-date-dow" style="font-weight:400;font-size:9px;color:#aaa"></span></div><input type="date" id="sheet-date" onchange="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" oninput="const d=new Date(this.value+'T12:00:00');document.getElementById('sheet-date-dow').textContent=d.getTime()?'('+['일','월','화','수','목','금','토'][d.getDay()]+')':''" style="width:100%;padding:8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;height:38px;box-sizing:border-box"></div>
     <div><div style="font-size:10px;color:var(--pd);font-weight:600;margin-bottom:3px">⏰ 시작시간</div><input type="time" id="sheet-time" step="900" style="width:100%;padding:8px 4px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;height:38px;box-sizing:border-box"></div>
@@ -3164,7 +3164,7 @@ function showOnboarding(){
   const steps=[
     {sel:'.header h1',title:'Focus Flow',desc:'ADHD를 위한 집중 플래너에 오신 걸 환영해요!',pos:'bottom'},
     {sel:'#vtl',title:'일간 타임라인',desc:'하루를 시간 블록으로 관리해요. 블록을 드래그해서 이동할 수 있어요',pos:'bottom'},
-    {sel:'#fab-btn',title:'할일 추가',desc:'"보고서 내일 14시 1시간" 이렇게 입력하면 바로 추가돼요',pos:'top'},
+    {sel:'#fab-btn',title:'할일 추가',desc:'"보고서 430 14시 1시간" 이렇게 입력하면 바로 추가돼요',pos:'top'},
     {sel:'.view-tabs',title:'탭 전환',desc:'드롭, 주간, 습관, 목표, 분석 등 다양한 뷰를 사용해보세요. 드래그로 순서도 바꿀 수 있어요',pos:'bottom'},
     {sel:'.clock',title:'설정',desc:'⚙️ 톱니바퀴를 누르면 테마, 친구, 타임라인 범위 등을 설정할 수 있어요',pos:'bottom'},
   ];
