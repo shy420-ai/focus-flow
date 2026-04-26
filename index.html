@@ -918,7 +918,7 @@ migrateBlocks();
 function pad(n){return String(n).padStart(2,'0');}
 function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
 function addDays(ds,n){const d=new Date(ds+'T12:00:00');d.setDate(d.getDate()+n);return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
-function fmtH(h){return Math.floor(h)+':'+(h%1?'30':'00');}
+function fmtH(h){const hr=Math.floor(h);const mn=Math.round((h%1)*60);return hr+':'+String(mn).padStart(2,'0');}
 function nowH(){const n=new Date();return n.getHours()+n.getMinutes()/60;}
 function hToY(h){return (h-START)*PX;}
 function getDow(ds){return DAYS[new Date(ds+'T12:00:00').getDay()];}
