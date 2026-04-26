@@ -3159,6 +3159,17 @@ function _renderStatsInner(wrap){
       }
     }
 
+    // 상태 체크 (가이드 위에)
+    h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+    h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">지금 상태 어때?</div>';
+    const curStatus=todayStatuses.find(s=>s.hour===nowHour);
+    h+='<div style="display:flex;gap:6px;justify-content:center">';
+    statusEmoji.forEach((e,i)=>{
+      const isActive=curStatus&&curStatus.level===i;
+      h+='<button onclick="logMedStatus('+i+')" style="font-size:28px;padding:6px 8px;border-radius:12px;border:2px solid '+(isActive?'var(--pink)':'transparent')+';background:'+(isActive?'var(--pl)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span>'+e+'</span><span style="font-size:9px;color:#aaa">'+statusLabel[i]+'</span></button>';
+    });
+    h+='</div></div>';
+
     // 아침약 가이드 (모든 아침약 대상)
     if(morningMeds.length){
       h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
@@ -3182,17 +3193,6 @@ function _renderStatsInner(wrap){
       });
       h+='</div>';
     }
-
-    // 상태 체크 (아침약 탭에서)
-    h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
-    h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">지금 상태 어때?</div>';
-    const curStatus=todayStatuses.find(s=>s.hour===nowHour);
-    h+='<div style="display:flex;gap:6px;justify-content:center">';
-    statusEmoji.forEach((e,i)=>{
-      const isActive=curStatus&&curStatus.level===i;
-      h+='<button onclick="logMedStatus('+i+')" style="font-size:28px;padding:6px 8px;border-radius:12px;border:2px solid '+(isActive?'var(--pink)':'transparent')+';background:'+(isActive?'var(--pl)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span>'+e+'</span><span style="font-size:9px;color:#aaa">'+statusLabel[i]+'</span></button>';
-    });
-    h+='</div></div>';
 
     // 오늘 기록 (아침약 탭)
     const todayAllTakes=medLogs.filter(l=>l.date===today&&l.type==='take');
