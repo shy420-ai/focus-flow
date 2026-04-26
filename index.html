@@ -2425,6 +2425,12 @@ function editQTitle(gid,qi){
   if(v!==null){g.quarters[qi].title=v.trim();saveRoadmap(r);renderGoals();}
 }
 let _openTree={};// {goalId: {qi: true}}
+// 현재 분기는 기본으로 열어둠
+function ensureCurrentQOpen(){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  const cq=getCurrentQ();
+  r.goals.forEach(g=>{if(!_openTree[g.id])_openTree[g.id]={};_openTree[g.id][cq]=true;});
+}
 function toggleTreeQ(gid,qi){
   if(!_openTree[gid])_openTree[gid]={};
   _openTree[gid][qi]=!_openTree[gid][qi];
@@ -2467,6 +2473,8 @@ function renderGoals(){
   const now=new Date();const yr=now.getFullYear();
   const curQ=getCurrentQ();
   const qp=getQProgress();
+  // 현재 분기 기본 열기
+  r.goals.forEach(g=>{if(!_openTree[g.id])_openTree[g.id]={};if(_openTree[g.id][curQ]===undefined)_openTree[g.id][curQ]=true;});
   let h='';
 
   // 분기 스프린트 프로그레스
