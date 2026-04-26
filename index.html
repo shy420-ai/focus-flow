@@ -4986,7 +4986,7 @@ migrateBlocks=function(){
 };
 migrateBlocks();
 
-buildGrid();render();applyMode();
+try{buildGrid();render();applyMode();}catch(e){document.body.insertAdjacentHTML('afterbegin','<div style="background:red;color:#fff;padding:10px;font-size:12px;z-index:99999;position:fixed;top:0;left:0;right:0">앱 초기화 에러: '+e.message+'<br>'+e.stack+'</div>');console.error(e);}
 </script>
 <script>if('serviceWorker' in navigator){
   const SW_VER='v26';
