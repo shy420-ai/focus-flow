@@ -2972,12 +2972,12 @@ function _renderStatsInner(wrap){
   const nowHour=new Date().getHours();
   let h='<div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:10px">💊 메디 트래커</div>';
   // 내부 탭
-  if(!window._mediTab)window._mediTab='morning';
+  if(!window._mediTab)window._mediTab=localStorage.getItem('ff_medi_tab')||'morning';
   h+='<div style="display:flex;gap:6px;margin-bottom:12px">';
   ['morning','night','analysis'].forEach(tab=>{
     const labels={morning:'☀️ 아침약',night:'🌙 저녁약',analysis:'📊 분석'};
     const isActive=window._mediTab===tab;
-    h+='<button onclick="window._mediTab=\''+tab+'\';renderStats()" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(isActive?'var(--pink)':'var(--pl)')+';background:'+(isActive?'var(--pink)':'#fff')+';color:'+(isActive?'#fff':'var(--pd)')+';font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">'+labels[tab]+'</button>';
+    h+='<button onclick="window._mediTab=\''+tab+'\';localStorage.setItem(\'ff_medi_tab\',\''+tab+'\');renderStats()" style="flex:1;padding:8px;border-radius:10px;border:1.5px solid '+(isActive?'var(--pink)':'var(--pl)')+';background:'+(isActive?'var(--pink)':'#fff')+';color:'+(isActive?'#fff':'var(--pd)')+';font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">'+labels[tab]+'</button>';
   });
   h+='</div>';
 
