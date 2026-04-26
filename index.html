@@ -512,7 +512,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="cycle-info" style="font-size:10px;color:#aaa;text-align:center;margin-top:6px"></div>
   </div>
   <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
-    <button onclick="localStorage.removeItem('ff_onboarded');toggleThemePopup();setTimeout(showOnboarding,500)" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📖 온보딩 가이드 다시 보기</button>
+    <button onclick="localStorage.removeItem('ff_onboarded');toggleThemePopup();setTimeout(()=>showOnboarding(true),500)" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📖 온보딩 가이드 다시 보기</button>
   </div>
 </div>
 
@@ -3361,8 +3361,8 @@ function saveBirthday(){
   showMiniToast('🔮 생일 저장!');
 }
 // ====== ONBOARDING TOUR ======
-function showOnboarding(){
-  if(localStorage.getItem('ff_onboarded'))return;
+function showOnboarding(force){
+  if(!force&&localStorage.getItem('ff_onboarded'))return;
   const steps=[
     // 1. Welcome
     {title:'👋 Welcome to Focus Flow!',desc:'ADHD 뇌과학 기반으로 설계된 집중 플래너야.\n각 기능이 왜 이렇게 만들어졌는지, 직접 체험하면서 알려줄게!',sel:'.header'},
