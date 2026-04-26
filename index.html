@@ -602,7 +602,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="cal-title" id="cal-title"></div>
       <button class="cal-nav" onclick="calNext()">&#8250;</button>
     </div>
-    <div id="cal-cat-filter" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px"></div>
+    <div id="cal-cat-filter" style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px;align-items:center"></div>
     <div class="dow-row">
       <div class="dow-cell" style="color:#E24B4A">일</div>
       <div class="dow-cell">월</div><div class="dow-cell">화</div>
@@ -1455,7 +1455,7 @@ function renderCal(){
   if(cfEl){
     const userCats=allCategories();
     const cats=['전체',...userCats.map(c=>c.name)];
-    cfEl.innerHTML=cats.map(c=>{const cc=c==='전체'?'var(--pd)':(userCats.find(x=>x.name===c)||{}).color||'var(--pd)';return'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid '+cc+';background:'+(calCatFilter===c?cc:'#fff')+';color:'+(calCatFilter===c?'#fff':cc)+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>';}).join('')+'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid #ddd;background:#fff;color:#aaa;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="editCategories()">✏️ 편집</button>';
+    cfEl.innerHTML=cats.map(c=>{const cc=c==='전체'?'var(--pd)':(userCats.find(x=>x.name===c)||{}).color||'var(--pd)';return'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid '+cc+';background:'+(calCatFilter===c?cc:'#fff')+';color:'+(calCatFilter===c?'#fff':cc)+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>';}).join('')+'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid #ddd;background:#fff;color:#aaa;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:auto" onclick="editCategories()">✏️ 편집</button>';
   }
   const grid=document.getElementById('cal-grid');grid.innerHTML='';
   const today=todayStr();
