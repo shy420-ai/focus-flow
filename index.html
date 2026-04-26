@@ -1358,6 +1358,7 @@ function editBlock(id,e){
     const isActive=b.category===c.name;
     h+='<button class="cat-pill'+(isActive?' active':'')+'" data-c="'+c.color+'" onclick="document.getElementById(\'edit-block-cat\').value=\''+c.name+'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>{x.classList.remove(\'active\');x.style.background=\'\';x.style.color=x.dataset.c||\'\'});this.classList.add(\'active\');this.style.background=\''+c.color+'\';this.style.color=\'#fff\'" style="'+(isActive?'background:'+c.color+';border-color:'+c.color+';color:#fff':'color:'+c.color+';border-color:'+c.color)+'">'+c.name+'</button>';
   });
+  h+='<button class="cat-pill" style="color:#aaa;border-color:#ddd;font-size:11px" onclick="document.getElementById(\'edit-block-overlay\').remove();editCategories()">✏️ 편집</button>';
   h+='</div><input type="hidden" id="edit-block-cat" value="'+(b.category||'')+'"></div>';
   const _eh=Math.floor(b.startHour),_em=Math.round((b.startHour%1)*60);
   const _dh=Math.floor(b.durHour),_dm=Math.round((b.durHour%1)*60);
