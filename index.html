@@ -910,6 +910,13 @@ if(localStorage.getItem('ff_tab_fix')!=='v26'){
   localStorage.setItem('ff_tab_fix','v26');
 }
 if(!['tl','week','cal','habit','goal','drop','stats'].includes(curView))curView='tl';
+// v26b 일회성: 온보딩에서 생성된 "새 블록" 대량 삭제
+if(!localStorage.getItem('ff_clean_v26b')){
+  const before=blocks.length;
+  blocks=blocks.filter(b=>b.name!=='새 블록');
+  if(blocks.length<before){localStorage.setItem('ff_v3',JSON.stringify(blocks));}
+  localStorage.setItem('ff_clean_v26b','1');
+}
 let activeMenu=null,memoId=null,dragState=null,didDrag=false;
 let holdTimer=null,holdReady=false;
 let calY=new Date().getFullYear(),calM=new Date().getMonth(),calSel=null;
