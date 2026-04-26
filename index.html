@@ -859,6 +859,7 @@ function listenFirestore(){
       if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
       if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
       if(d.friends) localStorage.setItem('ff_friends',JSON.stringify(d.friends));
+      if(d.birthday&&!localStorage.getItem('ff_birthday')){localStorage.setItem('ff_birthday',d.birthday);localStorage.setItem('ff_birthyear',d.birthyear||'');}
       saveHabitLocal();
       render();
     }
@@ -3061,6 +3062,7 @@ function setupBirthday(){
   if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday.trim()))return;
   localStorage.setItem('ff_birthyear',byear.trim());
   localStorage.setItem('ff_birthday',bday.trim());
+  if(_uid)db.collection('users').doc(_uid).update({birthyear:byear.trim(),birthday:bday.trim()}).catch(()=>{});
   // Clear cached horoscope to regenerate
   const keys=Object.keys(localStorage).filter(k=>k.startsWith('ff_horo_'));
   keys.forEach(k=>localStorage.removeItem(k));
