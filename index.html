@@ -2315,6 +2315,9 @@ function addGoal(type){
   const text=input.value.trim();if(!text)return;
   const goals=getGoals();const key=goalKey(type);
   if(!goals[key])goals[key]=[];
+  const limit=type==='week'?3:type==='month'?5:10;
+  const labels={week:'주간 목표는 3개까지!',month:'월간 목표는 5개까지!'};
+  if(goals[key].length>=limit){showMiniToast(labels[type]||'목표 개수 초과!');return;}
   goals[key].push({id:Date.now().toString(),text,done:false});
   saveGoals(goals);input.value='';renderGoals();
 }
@@ -2330,8 +2333,13 @@ function deleteGoal(type,id){
 // ====== 역산 로드맵 + 분기 스프린트 ======
 function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
 function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).update({roadmap:r}).catch(()=>{});}catch{}}
-function initRoadmap(){return{yearGoal:'',milestones:[{label:'Q1 (1~3월)',targets:[],done:false},{label:'Q2 (4~6월)',targets:[],done:false},{label:'Q3 (7~9월)',targets:[],done:false},{label:'Q4 (10~12월)',targets:[],done:false}],actions:[]}}
-function migrateRoadmap(r){r.milestones.forEach(ms=>{if(typeof ms.target==='string'&&ms.target){ms.targets=[{id:Date.now().toString(),text:ms.target,done:false}];delete ms.target;}else if(!ms.targets){ms.targets=[];delete ms.target;}});return r;}
+function initRoadmap(){return{yearGoals:[],milestones:[{label:'Q1 (1~3월)',targets:[],done:false},{label:'Q2 (4~6월)',targets:[],done:false},{label:'Q3 (7~9월)',targets:[],done:false},{label:'Q4 (10~12월)',targets:[],done:false}],actions:[]}}
+function migrateRoadmap(r){
+  r.milestones.forEach(ms=>{if(typeof ms.target==='string'&&ms.target){ms.targets=[{id:Date.now().toString(),text:ms.target,done:false}];delete ms.target;}else if(!ms.targets){ms.targets=[];delete ms.target;}});
+  if(typeof r.yearGoal==='string'){r.yearGoals=r.yearGoal?[{id:Date.now().toString(),text:r.yearGoal,done:false}]:[];delete r.yearGoal;}
+  if(!r.yearGoals)r.yearGoals=[];
+  return r;
+}
 function getCurrentQ(){const m=new Date().getMonth();return Math.floor(m/3);}
 function getQProgress(){
   const now=new Date();const q=getCurrentQ();
@@ -2342,24 +2350,21 @@ function getQProgress(){
   const week=Math.ceil(elapsed/7);
   return{pct:Math.min(Math.round(elapsed/total*100),100),week,totalWeeks:Math.ceil(total/7),remain:Math.max(total-elapsed,0)};
 }
-function editYearGoal(){
-  const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" id="year-goal-overlay" onclick="if(event.target===this)this.remove()">';
-  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
-  h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">🎯 올해의 핵심 목표</div>';
-  h+='<input id="year-goal-input" value="'+r.yearGoal+'" placeholder="예: 유튜브 구독자 1만" style="width:100%;padding:10px 12px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">';
-  h+='<div style="display:flex;gap:8px;margin-top:14px">';
-  h+='<button onclick="document.getElementById(\'year-goal-overlay\').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">취소</button>';
-  h+='<button onclick="saveYearGoalFromModal()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">저장</button>';
-  h+='</div></div></div>';
-  document.body.insertAdjacentHTML('beforeend',h);
-  setTimeout(()=>{const el=document.getElementById('year-goal-input');if(el)el.focus();},100);
-}
-function saveYearGoalFromModal(){
+function addYearGoal(){
   const input=document.getElementById('year-goal-input');if(!input)return;
+  const text=input.value.trim();if(!text)return;
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  r.yearGoal=input.value.trim();saveRoadmap(r);
-  document.getElementById('year-goal-overlay').remove();renderGoals();
+  if(r.yearGoals.length>=3){showMiniToast('연간 목표는 3개까지! 🎯');return;}
+  r.yearGoals.push({id:Date.now().toString(),text,done:false});
+  saveRoadmap(r);input.value='';renderGoals();
+}
+function toggleYearGoal(id){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  const g=r.yearGoals.find(x=>x.id===id);if(g){g.done=!g.done;saveRoadmap(r);renderGoals();}
+}
+function deleteYearGoal(id){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  r.yearGoals=r.yearGoals.filter(x=>x.id!==id);saveRoadmap(r);renderGoals();
 }
 let _openQ=null;
 function toggleQDetail(qi){_openQ=_openQ===qi?null:qi;renderGoals();}
@@ -2367,6 +2372,7 @@ function addMilestoneTarget(qi){
   const input=document.getElementById('ms-input-'+qi);if(!input)return;
   const text=input.value.trim();if(!text)return;
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  if(r.milestones[qi].targets.length>=5){showMiniToast('분기 목표는 5개까지! 💪');return;}
   r.milestones[qi].targets.push({id:Date.now().toString(),text,done:false});
   saveRoadmap(r);input.value='';renderGoals();
 }
@@ -2408,9 +2414,10 @@ function renderGoalSection(type,emoji,title){
   const goals=getGoals();const key=goalKey(type);
   const items=goals[key]||[];
   const done=items.filter(x=>x.done).length;
+  const limit=type==='week'?3:type==='month'?5:10;
   const pct=items.length?Math.round(done/items.length*100):0;
   let h='<div class="goal-section">';
-  h+='<div class="goal-header"><span class="goal-header-title">'+emoji+' '+title+'</span><span class="goal-progress">'+done+'/'+items.length+' ('+pct+'%)</span></div>';
+  h+='<div class="goal-header"><span class="goal-header-title">'+emoji+' '+title+' <span style="font-size:10px;color:#aaa;font-weight:400">최대 '+limit+'개</span></span><span class="goal-progress">'+done+'/'+items.length+' ('+pct+'%)</span></div>';
   if(items.length)h+='<div class="goal-bar"><div class="goal-bar-fill" style="width:'+pct+'%"></div></div>';
   items.forEach(g=>{
     h+='<div class="goal-item">';
@@ -2434,13 +2441,21 @@ function renderGoals(){
   const qp=getQProgress();
   let h='';
 
-  // 1. 올해 핵심 목표
-  h+='<div style="text-align:center;margin-bottom:14px">';
-  h+='<div style="font-size:10px;color:#aaa;margin-bottom:4px">'+yr+'년 핵심 목표</div>';
-  if(r.yearGoal){
-    h+='<div onclick="editYearGoal()" style="font-size:18px;font-weight:800;color:var(--pd);cursor:pointer">🎯 '+r.yearGoal+'</div>';
-  }else{
-    h+='<div onclick="editYearGoal()" style="font-size:14px;color:#ccc;cursor:pointer;padding:10px;border:2px dashed #e0e0e0;border-radius:12px">터치해서 올해 목표 설정!</div>';
+  // 1. 올해 핵심 목표 (최대 3개)
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">🎯 '+yr+'년 핵심 목표 <span style="font-size:10px;color:#aaa;font-weight:400">최대 3개</span></div>';
+  r.yearGoals.forEach(g=>{
+    h+='<div class="goal-item">';
+    h+='<button class="goal-check'+(g.done?' done':'')+'" onclick="toggleYearGoal(\''+g.id+'\')">'+(g.done?'✓':'')+'</button>';
+    h+='<div class="goal-text'+(g.done?' done':'')+'" style="font-size:14px;font-weight:600">'+g.text+'</div>';
+    h+='<button class="goal-del" onclick="deleteYearGoal(\''+g.id+'\')">✕</button>';
+    h+='</div>';
+  });
+  if(r.yearGoals.length<3){
+    h+='<div class="goal-add-row">';
+    h+='<input class="goal-add-input" id="year-goal-input" placeholder="올해 핵심 목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addYearGoal()">';
+    h+='<button class="goal-add-btn" onclick="addYearGoal()">+</button>';
+    h+='</div>';
   }
   h+='</div>';
 
