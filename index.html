@@ -886,7 +886,7 @@ const CATEGORIES=getCategoryList();
 function allCategories(){return getCategoryList();}
 function catColor(name){const c=getCategoryList().find(x=>x.name===name);return c?c.color:'#aaa';}
 
-const PX=140;
+const PX=160;
 let START=parseInt(localStorage.getItem('ff_tl_start')||'6');
 let HOURS=parseInt(localStorage.getItem('ff_tl_hours')||'18');
 function setTimelineRange(start,hours){START=start;HOURS=hours;localStorage.setItem('ff_tl_start',start);localStorage.setItem('ff_tl_hours',hours);buildGrid();renderTimeline();}
@@ -1114,6 +1114,14 @@ function buildGrid(){
     let _lastTap=0;sp.ontouchend=(e)=>{const now=Date.now();if(now-_lastTap<300){e.preventDefault();const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTap=0;}else{_lastTap=now;}};
     t.appendChild(sp);tc.appendChild(t);
     const l=document.createElement('div');l.className='hour-line';l.style.top=(i*PX)+'px';l.style.height=PX+'px';bc.appendChild(l);
+    // 10분 단위 점선
+    if(i<HOURS){
+      for(let m=10;m<60;m+=10){
+        const ml=document.createElement('div');
+        ml.style.cssText='position:absolute;left:0;right:0;top:'+(i*PX+Math.round(m/60*PX))+'px;border-top:1px '+(m===30?'dashed':'dotted')+' rgba(0,0,0,'+(m===30?'0.08':'0.04')+');pointer-events:none;z-index:1';
+        bc.appendChild(ml);
+      }
+    }
   }
 }
 
