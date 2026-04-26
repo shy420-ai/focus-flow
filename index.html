@@ -3033,12 +3033,11 @@ function _renderStatsInner(wrap){
 
     const statusEmoji=['😵','😐','🙂','😊','🤩'];
     const statusLabel=['최악','별로','보통','좋음','최고'];
-
-   if(window._mediTab==='morning'){
-    // 아침약 탭
     const todayMorningTake=medLogs.find(l=>l.date===today&&l.type==='take'&&l.timing==='아침');
     const todayNightTake=medLogs.find(l=>l.date===today&&l.type==='take'&&l.timing==='저녁');
 
+   if(window._mediTab==='morning'){
+    // 아침약 탭
     // 아침약
     if(morningMeds.length){
       h+='<div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">☀️ 아침약 — '+morningMeds.map(m=>m.name+' '+m.dose).join(', ')+'</div>';
