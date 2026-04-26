@@ -3488,7 +3488,7 @@ function renderHabits(){
       h+='<button class="habit-check'+(checked?' checked':'')+'" onclick="toggleHabitLog('+hab.id+',\''+today+'\')">'+(checked?'&#10003;':'')+'</button>';
       h+='<span class="habit-name">'+hab.name+'</span>';
       if(streak>0) h+='<span class="habit-streak">&#128293; '+streak+'일 연속</span>';
-      h+='<button class="habit-del" onclick="delHabit('+hab.id+')">&#128465;</button>';
+      h+='<button class="habit-del" onclick="if(confirm(\'\\\''+hab.name.replace(/'/g,"\\'")+'\\\' 습관을 삭제할까요?\'))delHabit('+hab.id+')">✕</button>';
       h+='</div>';
       // Week view
       h+='<div class="habit-week">';
