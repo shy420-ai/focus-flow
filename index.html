@@ -1462,7 +1462,7 @@ function renderCal(){
   if(cfEl){
     const userCats=allCategories();
     const cats=['전체',...userCats.map(c=>c.name)];
-    cfEl.innerHTML=cats.map(c=>{const cc=c==='전체'?'var(--pd)':(userCats.find(x=>x.name===c)||{}).color||'var(--pd)';return'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid '+cc+';background:'+(calCatFilter===c?cc:'#fff')+';color:'+(calCatFilter===c?'#fff':cc)+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>';}).join('')+'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid #ddd;background:#fff;color:#aaa;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit;margin-left:auto" onclick="editCategories()">✏️ 편집</button>';
+    cfEl.innerHTML=cats.map(c=>{const cc=c==='전체'?'var(--pd)':(userCats.find(x=>x.name===c)||{}).color||'var(--pd)';return'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid '+cc+';background:'+(calCatFilter===c?cc:'#fff')+';color:'+(calCatFilter===c?'#fff':cc)+';font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="setCalCat(\''+c+'\')">'+c+'</button>';}).join('')+'<button style="padding:3px 10px;border-radius:99px;border:1.5px solid #ddd;background:#fff;color:#aaa;font-size:10px;font-weight:600;cursor:pointer;font-family:inherit" onclick="editCategories()">✏️</button>';
   }
   const grid=document.getElementById('cal-grid');grid.innerHTML='';
   const today=todayStr();
