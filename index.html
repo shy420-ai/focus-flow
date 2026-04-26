@@ -2848,10 +2848,15 @@ function setupMed(){
   }
   h+='</div>';
 
-  // 취침시간
-  h+='<div style="margin-bottom:14px"><label style="font-size:11px;color:#888">목표 취침시간</label><select id="med-bed" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px">';
-  for(let t=20;t<=26;t++){const hr=t%24;h+='<option value="'+t+'"'+(cfg.bedGoal===t?' selected':'')+'>'+hr+':00</option>';}
+  // 취침/기상시간
+  h+='<div style="display:flex;gap:6px;margin-bottom:14px">';
+  h+='<div style="flex:1"><label style="font-size:11px;color:#888">목표 취침</label><select id="med-bed" style="width:100%;padding:8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px">';
+  for(let t=20;t<=27;t++){const hr=t%24;h+='<option value="'+t+'"'+(cfg.bedGoal===t?' selected':'')+'>'+hr+':00</option>';}
   h+='</select></div>';
+  h+='<div style="flex:1"><label style="font-size:11px;color:#888">목표 기상</label><select id="med-wake" style="width:100%;padding:8px;border:1.5px solid var(--pl);border-radius:8px;font-size:12px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px">';
+  for(let t=5;t<=11;t++){h+='<option value="'+t+'"'+((cfg.wakeGoal||7)===t?' selected':'')+'>'+t+':00</option>';}
+  h+='</select></div>';
+  h+='</div>';
 
   h+='<div style="display:flex;gap:8px"><button onclick="document.getElementById(\'med-setup\').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">닫기</button>';
   h+='<button onclick="saveMedBedGoal()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">저장</button></div>';
@@ -2895,6 +2900,7 @@ function removeMedFromSetup(idx){
 function saveMedBedGoal(){
   const cfg=getMedConfig()||{meds:[],bedGoal:23};
   cfg.bedGoal=Number(document.getElementById('med-bed').value)||23;
+  cfg.wakeGoal=Number(document.getElementById('med-wake').value)||7;
   const h=document.getElementById('med-height');const w=document.getElementById('med-weight');
   if(h&&h.value)cfg.height=Number(h.value);
   if(w&&w.value)cfg.weight=Number(w.value);
@@ -3003,6 +3009,29 @@ function renderStats(){
       if(todayTake)h+='<div style="font-size:12px;color:#555;padding:4px 0">💊 '+Math.floor(todayTake.time)+':'+String(Math.round((todayTake.time%1)*60)).padStart(2,'0')+' 복용</div>';
       todayStatuses.forEach(s=>{
         h+='<div style="font-size:12px;color:#555;padding:4px 0">'+statusEmoji[s.level]+' '+s.hour+':00 — '+statusLabel[s.level]+'</div>';
+      });
+      h+='</div>';
+    }
+
+    // 취침약 권장 시간
+    const sleepMeds=cfg.meds.filter(m=>{const d=MED_DB.find(x=>x.name===m.name);return d&&(d.cat==='수면'||d.cat==='항정신병');});
+    const wakeGoal=cfg.wakeGoal||7;
+    if(sleepMeds.length){
+      h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+      h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">🌙 취침약 가이드</div>';
+      sleepMeds.forEach(m=>{
+        const dur=m.duration||8;
+        const sleepCycles=[6,7.5];// 4~5 수면사이클
+        sleepCycles.forEach(sc=>{
+          const bedTime=wakeGoal-sc;
+          const medTime=bedTime-0.5;// 30분 전 복용
+          const medHr=((medTime%24)+24)%24;
+          h+='<div style="font-size:12px;color:#555;padding:3px 0">💊 '+m.name+' → <b>'+Math.floor(medHr)+':'+String(Math.round((medHr%1)*60)).padStart(2,'0')+'</b> 복용 ('+sc+'시간 수면 → '+wakeGoal+':00 기상)</div>';
+        });
+        // 약 기운 완전히 빠지는 시간 역산
+        const latestMedTime=wakeGoal-dur;
+        const latestHr=((latestMedTime%24)+24)%24;
+        h+='<div style="font-size:11px;color:#E24B4A;padding:3px 0">⚠️ '+m.name+'('+dur+'시간) → <b>'+Math.floor(latestHr)+':00 이후</b>에 먹으면 아침에 약기운 남을 수 있어!</div>';
       });
       h+='</div>';
     }
