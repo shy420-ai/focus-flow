@@ -1109,8 +1109,8 @@ function buildGrid(){
     const t=document.createElement('div');t.className='time-tick';t.style.height=PX+'px';
     const hour=START+i;
     const sp=document.createElement('span');sp.textContent=hour+':00';
-    sp.ondblclick=()=>openSheet(hour);
-    let _lastTap=0;sp.ontouchend=(e)=>{const now=Date.now();if(now-_lastTap<300){e.preventDefault();openSheet(hour);_lastTap=0;}else{_lastTap=now;}};
+    sp.ondblclick=()=>{const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);};
+    let _lastTap=0;sp.ontouchend=(e)=>{const now=Date.now();if(now-_lastTap<300){e.preventDefault();const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTap=0;}else{_lastTap=now;}};
     t.appendChild(sp);tc.appendChild(t);
     const l=document.createElement('div');l.className='hour-line';l.style.top=(i*PX)+'px';l.style.height=PX+'px';bc.appendChild(l);
   }
