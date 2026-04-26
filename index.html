@@ -2975,7 +2975,7 @@ function _renderStatsInner(wrap){
   // Migrate old single-med format
   if(cfg&&cfg.name&&!cfg.meds){cfg.meds=[{name:cfg.name,dose:cfg.dose||'',duration:cfg.duration||10}];delete cfg.name;delete cfg.dose;delete cfg.duration;saveMedConfig(cfg);}
   // timing 없는 약에 DB 기반 timing 자동 부여
-  if(cfg&&cfg.meds)cfg.meds.forEach(m=>{if(!m.timing){const d=MED_DB.find(x=>x.name===m.name);m.timing=d?d.timing:'아침';}});
+  if(cfg&&cfg.meds){let changed=false;cfg.meds.forEach(m=>{if(!m.timing){const d=MED_DB.find(x=>x.name===m.name);m.timing=d?d.timing:'아침';changed=true;}});if(changed)saveMedConfig(cfg);}
   if(cfg&&!cfg.meds)cfg.meds=[];
   const medLogs=getMedLogs();
   const todayTake=medLogs.find(l=>l.date===today&&l.type==='take');
