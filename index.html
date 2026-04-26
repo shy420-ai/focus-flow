@@ -3470,6 +3470,7 @@ function renderHabits(){
   const weekDayLabels=['월','화','수','목','금','토','일'];
   let h='';
 
+  h+='<div style="font-size:10px;color:#aaa;background:var(--pl);border-radius:8px;padding:6px 10px;margin-bottom:10px;line-height:1.5">🧠 습관이 자동화되려면 평균 66일 (Phillippa Lally, 2009). 연속 아니어도 총 66일 달성하면 완성!</div>';
   // Habit add
   h+='<div class="habit-section-title">습관 관리</div>';
   h+='<div class="habit-input-row">';
@@ -3513,8 +3514,7 @@ function renderHabits(){
   // ===== 66일 챌린지 =====
   if(habits.length){
     h+='<div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--pl),#fff);border-radius:14px;border:1.5px solid var(--pink)">';
-    h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:4px">🏆 66일 챌린지</div>';
-    h+='<div style="font-size:9px;color:#aaa;margin-bottom:10px">습관이 자동화되려면 평균 66일 (Phillippa Lally, 2009). 연속 아니어도 총 66일 달성하면 완성!</div>';
+    h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px">🏆 66일 챌린지</div>';
     habits.forEach(hab=>{
       const created=hab.createdAt||todayStr();
       const startDate=new Date(created+'T12:00:00');
