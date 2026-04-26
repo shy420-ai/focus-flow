@@ -596,6 +596,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="pomo-count" id="pomo-desk-count" style="margin-top:6px"></div>
   </div>
   <div class="cal-wrap">
+    <div id="year-progress" style="margin-bottom:10px"></div>
     <div class="cal-header">
       <button class="cal-nav" onclick="calPrev()">&#8249;</button>
       <div class="cal-title" id="cal-title"></div>
@@ -1429,7 +1430,24 @@ function calPrev(){calM--;if(calM<0){calM=11;calY--;}renderCal();}
 function calNext(){calM++;if(calM>11){calM=0;calY++;}renderCal();}
 let calCatFilter='전체';
 function setCalCat(cat){calCatFilter=cat;renderCal();}
+function renderYearProgress(){
+  const yp=document.getElementById('year-progress');if(!yp)return;
+  const now=new Date();const yr=now.getFullYear();
+  const start=new Date(yr,0,1);const end=new Date(yr+1,0,1);
+  const pct=Math.round((now-start)/(end-start)*100);
+  const remain=Math.ceil((end-now)/(1000*60*60*24));
+  const msgs=['아직 갈 길이 많아, 천천히!','올해 아직 '+remain+'일 남았어!','지금 페이스 좋아!','넌 이미 '+pct+'%나 달려왔어!','남은 '+remain+'일, 충분해!'];
+  const msg=msgs[Math.floor(now.getDate()/7)%msgs.length];
+  yp.innerHTML='<div style="text-align:center;padding:8px 12px;background:var(--pl);border-radius:12px">'
+    +'<div style="font-size:11px;color:#888;margin-bottom:6px">'+yr+'년 '+pct+'% 달려왔어! '+msg+'</div>'
+    +'<div style="position:relative;height:22px;background:#f0f0f0;border-radius:11px;overflow:hidden">'
+    +'<div style="position:absolute;left:0;top:0;height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--pink),var(--pd));border-radius:11px;transition:width .5s"></div>'
+    +'<div style="position:absolute;left:'+Math.max(pct-4,0)+'%;top:50%;transform:translateY(-50%) scaleX(-1);font-size:14px;z-index:1">🏃‍♀️</div>'
+    +'<div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:13px">🚩</div>'
+    +'</div></div>';
+}
 function renderCal(){
+  renderYearProgress();
   document.getElementById('cal-title').textContent=calY+'년 '+MONTH[calM];
   // Category filter pills
   const cfEl=document.getElementById('cal-cat-filter');
