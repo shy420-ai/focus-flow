@@ -3477,13 +3477,12 @@ function showOnboarding(){
         '<span onclick="skipOnboarding()" style="font-size:10px;color:#aaa;cursor:pointer">건너뛰기</span>'+
         '<span style="font-size:10px;color:var(--pink);font-weight:600">👆 직접 해봐!</span></div>'
       :
-        '<div style="display:flex;justify-content:space-between;align-items:center">'+
-        '<div style="display:flex;gap:3px">'+steps.map((_,i)=>'<div style="width:'+(i===idx?'16px':'5px')+';height:5px;border-radius:3px;background:'+(i===idx?'var(--pink)':i<idx?'var(--pm)':'#e0e0e0')+';transition:width .2s"></div>').join('')+'</div>'+
-        '<div style="display:flex;gap:8px;align-items:center">'+
-        (idx>0?'<button onclick="prevOnboarding()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer">← 이전</button>':'')+
+        '<div style="display:flex;gap:3px;margin-bottom:10px">'+steps.map((_,i)=>'<div style="width:'+(i===idx?'16px':'5px')+';height:5px;border-radius:3px;background:'+(i===idx?'var(--pink)':i<idx?'var(--pm)':'#e0e0e0')+';transition:width .2s"></div>').join('')+'</div>'+
+        '<div style="display:flex;gap:8px;align-items:center;justify-content:flex-end">'+
+        (idx>0?'<button onclick="prevOnboarding()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer">←</button>':'')+
         '<span onclick="skipOnboarding()" style="font-size:11px;color:#aaa;cursor:pointer;padding:8px 4px">건너뛰기</span>'+
-        '<button onclick="nextOnboarding()" style="padding:8px 20px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+(isLast?'시작하기! 🚀':'다음 →')+'</button>'+
-        '</div></div>'
+        '<button onclick="nextOnboarding()" style="padding:8px 20px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+(isLast?'시작! 🚀':'다음 →')+'</button>'+
+        '</div>'
       )+'</div>';
   }
   function clearHighlight(){
