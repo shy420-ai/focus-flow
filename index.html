@@ -2742,7 +2742,7 @@ if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),dis
 // ====== MEDI TRACKER ======
 const MED_DB=[
 // ADHD
-{name:'콘서타',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['18mg','27mg','36mg','54mg'],duration:10,peak:'1~2시간',effects:['집중력 향상','충동 억제','작업 지속력 증가'],sides:['식욕감소','불면','두통','심박수 증가'],note:'아침 식후 복용. 오후 늦게 먹으면 수면 방해'},
+{name:'콘서타',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['18mg','27mg','36mg','54mg'],duration:10,doseHours:{'18mg':8,'27mg':9,'36mg':10,'54mg':12},peak:'1~2시간',effects:['집중력 향상','충동 억제','작업 지속력 증가'],sides:['식욕감소','불면','두통','심박수 증가'],note:'아침 식후 복용. 오후 늦게 먹으면 수면 방해'},
 {name:'메디키넷',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['5mg','10mg','20mg','30mg','40mg'],duration:8,peak:'1~2시간',effects:['집중력 향상','충동 억제'],sides:['식욕감소','불면','어지러움'],note:'아침 식후 복용'},
 {name:'페니드',generic:'메틸페니데이트 속방',cat:'ADHD',doses:['5mg','10mg','20mg'],duration:4,peak:'30분~1시간',effects:['빠른 집중력 향상'],sides:['식욕감소','불면','반동효과'],note:'하루 2~3회 복용. 효과가 빠르게 올라오고 빨리 떨어짐'},
 {name:'스트라테라',generic:'아토목세틴',cat:'ADHD',doses:['10mg','18mg','25mg','40mg','60mg','80mg'],duration:24,peak:'1~2주(축적형)',effects:['집중력 향상','감정 조절','불안 감소'],sides:['메스꺼움','식욕감소','졸림','입마름'],note:'매일 복용, 2~4주 후 효과. 남용 위험 없음'},
@@ -2862,9 +2862,14 @@ function selectMedFromDB(name){
   const d=MED_DB.find(x=>x.name===name);if(!d)return;
   document.getElementById('med-name').value=d.name;
   document.getElementById('med-dur').value=d.duration;
-  // Populate dose dropdown
+  // Populate dose dropdown with auto-duration
   const sel=document.getElementById('med-dose');
   sel.innerHTML=d.doses.map(ds=>'<option>'+ds+'</option>').join('');
+  sel.onchange=function(){
+    if(d.doseHours&&d.doseHours[sel.value])document.getElementById('med-dur').value=d.doseHours[sel.value];
+  };
+  // Set initial duration for first dose
+  if(d.doseHours&&d.doseHours[d.doses[0]])document.getElementById('med-dur').value=d.doseHours[d.doses[0]];
   // Show info
   const info=document.getElementById('med-db-info');
   info.style.display='block';
