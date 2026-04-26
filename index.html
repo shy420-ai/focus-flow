@@ -3372,11 +3372,11 @@ function addHabit(name){
   modal+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin-bottom:8px">주기 설정</div>';
   modal+='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
   modal+='<button class="cat-pill active" id="hs-daily" onclick="document.querySelectorAll(\'#habit-schedule-modal .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\');document.getElementById(\'hs-days-row\').style.display=\'none\'" style="background:var(--pink);color:#fff;border-color:var(--pink)">매일</button>';
-  modal+='<button class="cat-pill" id="hs-weekly" onclick="document.querySelectorAll(\'#habit-schedule-modal .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\');document.getElementById(\'hs-days-row\').style.display=\'flex\'">요일 선택</button>';
+  modal+='<button class="cat-pill" id="hs-weekly" onclick="document.querySelectorAll(\'#habit-schedule-modal .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\');document.getElementById(\'hs-days-row\').style.display=\'grid\'">요일 선택</button>';
   modal+='</div>';
-  modal+='<div id="hs-days-row" style="display:none;gap:4px;margin-bottom:12px;flex-wrap:wrap">';
+  modal+='<div id="hs-days-row" style="display:none;gap:4px;margin-bottom:12px;display:none;grid-template-columns:repeat(7,1fr)">';
   ['월','화','수','목','금','토','일'].forEach((d,i)=>{
-    modal+='<button class="cat-pill hs-day" data-day="'+i+'" onclick="this.classList.toggle(\'active\');this.style.background=this.classList.contains(\'active\')?\'var(--pink)\':\'#fff\';this.style.color=this.classList.contains(\'active\')?\'#fff\':\'var(--pd)\'" style="padding:6px 10px">'+d+'</button>';
+    modal+='<button class="cat-pill hs-day" data-day="'+i+'" onclick="this.classList.toggle(\'active\');this.style.background=this.classList.contains(\'active\')?\'var(--pink)\':\'#fff\';this.style.color=this.classList.contains(\'active\')?\'#fff\':\'var(--pd)\'" style="padding:8px 0;text-align:center;font-size:12px">'+d+'</button>';
   });
   modal+='</div>';
   modal+='<button onclick="confirmAddHabit(\''+name.trim().replace(/'/g,"\\'")+'\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">추가</button>';
