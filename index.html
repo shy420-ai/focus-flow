@@ -500,7 +500,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
     <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px;text-align:center">🌙 생리주기</div>
     <div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap">
-      <button onclick="setCycleStart()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:var(--pd)">시작일 기록</button>
+      <button onclick="setCycleStart()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:var(--pd)">🩸 시작일</button>
+      <button onclick="setCycleEnd()" style="padding:6px 12px;border-radius:8px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:var(--pd)">✅ 종료일</button>
       <button onclick="clearCycle()" style="padding:6px 12px;border-radius:8px;border:1px solid #eee;background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#aaa">초기화</button>
     </div>
     <div id="cycle-info" style="font-size:10px;color:#aaa;text-align:center;margin-top:6px"></div>
@@ -2731,6 +2732,20 @@ function setCycleStart(){
   loadCycleBar();
   const info=document.getElementById('cycle-info');
   if(info)info.textContent='마지막 시작일: '+input.trim()+' | 평균 주기: '+data.avgCycle+'일';
+}
+function setCycleEnd(){
+  const today=todayStr();
+  const input=prompt('생리 종료일 (YYYY-MM-DD)',today);
+  if(!input||!/^\d{4}-\d{2}-\d{2}$/.test(input.trim()))return;
+  const data=getCycleData();if(!data||!data.starts.length){alert('시작일을 먼저 기록해주세요');return;}
+  data.lastEnd=input.trim();
+  // Calculate average duration
+  const lastStart=data.starts[data.starts.length-1];
+  const dur=Math.round((new Date(input.trim())-new Date(lastStart))/86400000)+1;
+  if(dur>0&&dur<15)data.avgDuration=dur;
+  saveCycleData(data);
+  loadCycleBar();
+  showMiniToast('✅ 종료일 기록: '+input.trim()+' ('+dur+'일간)');
 }
 function clearCycle(){localStorage.removeItem('ff_cycle');document.getElementById('cycle-bar').style.display='none';}
 
