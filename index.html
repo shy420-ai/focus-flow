@@ -1829,7 +1829,7 @@ const CAT_PALETTE=[
 // 핑크 (Pink)
 '#E8849D','#F4A7B9','#F9C4D2',
 // 뉴트럴 (Neutral)
-'#F0E4D7','#C4B7A6','#A0826D','#6B7280','#2D3748'
+'#F0E4D7','#C4B7A6','#A0826D','#8E7B6B','#6B7280','#2D3748'
 ];
 function editCategories(){
   const cats=getCategoryList();
@@ -1852,7 +1852,7 @@ function editCategories(){
   h+='<input id="cat-new-input" placeholder="새 카테고리 이름" style="flex:1;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addCatFromEdit()">';
   h+='<button onclick="addCatFromEdit()" style="padding:8px 14px;border-radius:8px;background:var(--pink);border:none;color:#fff;font-size:13px;font-weight:600;cursor:pointer">추가</button>';
   h+='</div>';
-  h+='<div id="cat-new-palette" style="display:none;flex-wrap:wrap;gap:8px;margin-top:10px;padding:10px;background:#fafafa;border-radius:10px;justify-content:center">';
+  h+='<div id="cat-new-palette" style="display:none;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px;padding:10px;background:#fafafa;border-radius:10px;justify-items:center">';
   CAT_PALETTE.forEach(c=>{
     h+='<div onclick="selectNewCatColor(\''+c+'\')" style="width:28px;height:28px;border-radius:50%;background:'+c+';cursor:pointer;border:2.5px solid #fff;box-shadow:0 0 0 1.5px '+(c==='#E8849D'?c:'transparent')+';transition:box-shadow .15s"></div>';
   });
@@ -1864,7 +1864,7 @@ function editCategories(){
 }
 function toggleNewCatPalette(){
   const el=document.getElementById('cat-new-palette');
-  if(el)el.style.display=el.style.display==='none'?'flex':'none';
+  if(el)el.style.display=el.style.display==='none'?'grid':'none';
 }
 function selectNewCatColor(c){
   _catNewColor=c;
@@ -1875,9 +1875,9 @@ function selectNewCatColor(c){
 function openColorSwatchPicker(idx,curColor){
   if(document.getElementById('cat-swatch-picker'))document.getElementById('cat-swatch-picker').remove();
   let h='<div id="cat-swatch-picker" style="position:fixed;inset:0;background:rgba(0,0,0,.25);z-index:700;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
-  h+='<div style="background:#fff;border-radius:14px;padding:18px 20px;width:240px">';
+  h+='<div style="background:#fff;border-radius:14px;padding:18px 20px;width:280px">';
   h+='<div style="font-size:13px;font-weight:600;color:#555;margin-bottom:12px;text-align:center">색상 선택</div>';
-  h+='<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center">';
+  h+='<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:10px;justify-items:center">';
   CAT_PALETTE.forEach(c=>{
     h+='<div onclick="changeCatColor('+idx+',\''+c+'\');document.getElementById(\'cat-swatch-picker\').remove()" style="width:32px;height:32px;border-radius:50%;background:'+c+';cursor:pointer;border:2.5px solid '+(c===curColor?'#333':'#fff')+';box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .1s" ontouchstart="this.style.transform=\'scale(1.2)\'" ontouchend="this.style.transform=\'scale(1)\'"></div>';
   });
