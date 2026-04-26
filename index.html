@@ -3415,8 +3415,10 @@ function showOnboarding(){
     const isLast=idx===steps.length-1;
     if(!target){idx++;if(idx>=steps.length){window.skipOnboarding();}else{renderStep();}return;}
     const rect=target.getBoundingClientRect();
-    // Highlight
-    target.style.position='relative';target.style.zIndex='9002';target.style.boxShadow='0 0 0 4px var(--pink), 0 0 20px rgba(0,0,0,.3)';target.style.borderRadius='12px';
+    // Highlight (skip z-index boost for interactive steps to avoid blocking modals)
+    target.style.position='relative';
+    if(!isInteractive)target.style.zIndex='9002';
+    target.style.boxShadow='0 0 0 4px var(--pink), 0 0 20px rgba(0,0,0,.3)';target.style.borderRadius='12px';
     if(rect.top<0||rect.bottom>window.innerHeight)target.scrollIntoView({behavior:'smooth',block:'center'});
     // Interactive step: listen for user action
     if(s.interactive){
