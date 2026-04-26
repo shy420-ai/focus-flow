@@ -2337,7 +2337,7 @@ const Q_COLORS=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
 function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
 function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).update({roadmap:r}).catch(()=>{});}catch{}}
 function initRoadmap(){return{goals:[]}}
-function newGoalQ(){return[{tasks:[]},{tasks:[]},{tasks:[]},{tasks:[]}];}
+function newGoalQ(){return[{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]}];}
 function migrateRoadmap(r){
   // v1→v2: old flat structure → tree
   if(r.yearGoals||r.milestones){
@@ -2354,7 +2354,7 @@ function migrateRoadmap(r){
     return nr;
   }
   if(!r.goals)r.goals=[];
-  r.goals.forEach(g=>{if(!g.quarters)g.quarters=newGoalQ();});
+  r.goals.forEach(g=>{if(!g.quarters)g.quarters=newGoalQ();g.quarters.forEach(q=>{if(q.title===undefined)q.title='';});});
   return r;
 }
 function getCurrentQ(){return Math.floor(new Date().getMonth()/3);}
@@ -2405,6 +2405,13 @@ function deleteQTask(gid,qi,tid){
   const g=r.goals.find(x=>x.id===gid);if(!g)return;
   g.quarters[qi].tasks=g.quarters[qi].tasks.filter(x=>x.id!==tid);
   saveRoadmap(r);renderGoals();
+}
+function editQTitle(gid,qi){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  const g=r.goals.find(x=>x.id===gid);if(!g)return;
+  if(!g.quarters[qi].title&&g.quarters[qi].title!=='')g.quarters[qi].title='';
+  const v=prompt(Q_LABELS[qi]+' 목표:',g.quarters[qi].title);
+  if(v!==null){g.quarters[qi].title=v.trim();saveRoadmap(r);renderGoals();}
 }
 let _openTree={};// {goalId: {qi: true}}
 function toggleTreeQ(gid,qi){
@@ -2509,7 +2516,8 @@ function renderGoals(){
       // Quarter content
       h+='<div style="flex:1;margin-bottom:4px;margin-left:6px">';
       h+='<div onclick="toggleTreeQ(\''+g.id+'\','+qi+')" style="padding:6px 8px;border-radius:8px;background:'+(isCur?'var(--pl)':'#fafafa')+';cursor:pointer;display:flex;justify-content:space-between;align-items:center;'+(isCur?'border:1px solid var(--pink)':'border:1px solid transparent')+'">';
-      h+='<span style="font-size:11px;font-weight:600;color:'+(isCur?'var(--pd)':'#888')+'">'+Q_EMOJI[qi]+' '+Q_LABELS[qi];
+      const qTitle=q.title||'';
+      h+='<span style="font-size:11px;font-weight:600;color:'+(isCur?'var(--pd)':'#888')+'">'+Q_EMOJI[qi]+' '+Q_LABELS[qi]+(qTitle?': <span style="font-weight:400;color:#666">'+qTitle+'</span>':'');
       if(qTotal)h+=' <span style="font-size:9px;color:#aaa;font-weight:400">'+qDone+'/'+qTotal+'</span>';
       h+='</span>';
       h+='<span style="display:flex;gap:4px;align-items:center">';
@@ -2520,6 +2528,7 @@ function renderGoals(){
 
       if(isOpen){
         h+='<div style="padding:6px 8px;margin-top:2px">';
+        h+='<div onclick="event.stopPropagation();editQTitle(\''+g.id+'\','+qi+')" style="font-size:10px;color:'+(qTitle?'#888':'#ccc')+';cursor:pointer;margin-bottom:4px;padding:2px 0">✏️ '+(qTitle?'분기 목표: '+qTitle:'분기 목표 제목 설정')+'</div>';
         if(!qTotal)h+='<div style="color:#ccc;font-size:11px;padding:4px 0;text-align:center">할 일을 추가해봐!</div>';
         q.tasks.forEach(t=>{
           h+='<div class="goal-item" style="padding:3px 0">';
