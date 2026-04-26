@@ -3497,7 +3497,7 @@ function renderHabits(){
   const completedHabits=habits.filter(hab=>{const total=getHabitTotalDays(hab.id,hab.createdAt);return total>=66;}).length;
   const FRUITS=['🍎','🍊','🍋','🍇','🍑','🍒','🍓','🥝'];
   h+='<div style="text-align:center;margin-bottom:10px;position:relative">';
-  h+='<img src="tree.png" style="width:120px;height:auto;opacity:.9">';
+  h+='<img src="tree.png" style="width:180px;height:auto;border-radius:16px;background:#fff;padding:8px">';
   if(completedHabits>0){
     h+='<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:100px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px">';
     for(let i=0;i<completedHabits;i++)h+='<span style="font-size:18px">'+FRUITS[i%FRUITS.length]+'</span>';
