@@ -3676,13 +3676,13 @@ function renderHabits(){
       });
       h+='</div>';
 
-      // 66-day grid (dots) — 체크 횟수 기준, 빈틈 없이
+      // 66-day grid (dots) — 그라데이션 게이지
       h+='<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:6px">';
       for(let i=0;i<totalDays;i++){
         if(i<totalChecked){
-          h+='<div style="width:14px;height:14px;font-size:10px;line-height:14px;text-align:center" title="'+(i+1)+'회째">🌸</div>';
-        }else if(i===totalChecked){
-          h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pink);font-size:7px;line-height:14px;text-align:center;color:#fff" title="다음">♡</div>';
+          const ratio=i/totalDays;
+          const opacity=0.4+ratio*0.6;
+          h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pink);opacity:'+opacity.toFixed(2)+'" title="'+(i+1)+'회째"></div>';
         }else{
           h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pl)" title="'+(i+1)+'회째"></div>';
         }
