@@ -2683,6 +2683,18 @@ function logEnergy(level){
   showMiniToast(labels[level]||'기록 완료!');
 }
 
+function showConfirm(msg,onConfirm){
+  const id='confirm-'+Date.now();
+  let h='<div id="'+id+'" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:24px;width:80%;max-width:280px;text-align:center">';
+  h+='<div style="font-size:14px;color:#333;margin-bottom:20px;line-height:1.5">'+msg+'</div>';
+  h+='<div style="display:flex;gap:8px">';
+  h+='<button onclick="document.getElementById(\''+id+'\').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">취소</button>';
+  h+='<button id="'+id+'-ok" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">확인</button>';
+  h+='</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.getElementById(id+'-ok').onclick=()=>{document.getElementById(id).remove();onConfirm();};
+}
 function showMiniToast(msg){
   const el=document.createElement('div');
   el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%) scale(.9);background:var(--pd);color:#fff;padding:10px 20px;border-radius:99px;font-size:13px;font-weight:600;z-index:1000;opacity:0;transition:all .2s;pointer-events:none;white-space:nowrap';
@@ -3488,7 +3500,7 @@ function renderHabits(){
       h+='<button class="habit-check'+(checked?' checked':'')+'" onclick="toggleHabitLog('+hab.id+',\''+today+'\')">'+(checked?'&#10003;':'')+'</button>';
       h+='<span class="habit-name">'+hab.name+'</span>';
       if(streak>0) h+='<span class="habit-streak">&#128293; '+streak+'일 연속</span>';
-      h+='<button class="habit-del" onclick="if(confirm(\'\\\''+hab.name.replace(/'/g,"\\'")+'\\\' 습관을 삭제할까요?\'))delHabit('+hab.id+')">✕</button>';
+      h+='<button class="habit-del" onclick="showConfirm(\''+hab.name.replace(/'/g,"\\'")+' 습관을 삭제할까요?\',()=>delHabit('+hab.id+'))">✕</button>';
       h+='</div>';
       // Week view
       h+='<div class="habit-week">';
