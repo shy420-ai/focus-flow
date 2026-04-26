@@ -2330,7 +2330,8 @@ function deleteGoal(type,id){
 // ====== 역산 로드맵 + 분기 스프린트 ======
 function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
 function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).update({roadmap:r}).catch(()=>{});}catch{}}
-function initRoadmap(){return{yearGoal:'',milestones:[{label:'Q1 (1~3월)',target:'',done:false},{label:'Q2 (4~6월)',target:'',done:false},{label:'Q3 (7~9월)',target:'',done:false},{label:'Q4 (10~12월)',target:'',done:false}],actions:[]}}
+function initRoadmap(){return{yearGoal:'',milestones:[{label:'Q1 (1~3월)',targets:[],done:false},{label:'Q2 (4~6월)',targets:[],done:false},{label:'Q3 (7~9월)',targets:[],done:false},{label:'Q4 (10~12월)',targets:[],done:false}],actions:[]}}
+function migrateRoadmap(r){r.milestones.forEach(ms=>{if(typeof ms.target==='string'&&ms.target){ms.targets=[{id:Date.now().toString(),text:ms.target,done:false}];delete ms.target;}else if(!ms.targets){ms.targets=[];delete ms.target;}});return r;}
 function getCurrentQ(){const m=new Date().getMonth();return Math.floor(m/3);}
 function getQProgress(){
   const now=new Date();const q=getCurrentQ();
@@ -2342,18 +2343,42 @@ function getQProgress(){
   return{pct:Math.min(Math.round(elapsed/total*100),100),week,totalWeeks:Math.ceil(total/7),remain:Math.max(total-elapsed,0)};
 }
 function editYearGoal(){
-  const r=getRoadmap()||initRoadmap();
-  const v=prompt('올해의 핵심 목표:',r.yearGoal);
-  if(v!==null){r.yearGoal=v.trim();saveRoadmap(r);renderGoals();}
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" id="year-goal-overlay" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
+  h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">🎯 올해의 핵심 목표</div>';
+  h+='<input id="year-goal-input" value="'+r.yearGoal+'" placeholder="예: 유튜브 구독자 1만" style="width:100%;padding:10px 12px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">';
+  h+='<div style="display:flex;gap:8px;margin-top:14px">';
+  h+='<button onclick="document.getElementById(\'year-goal-overlay\').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">취소</button>';
+  h+='<button onclick="saveYearGoalFromModal()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">저장</button>';
+  h+='</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  setTimeout(()=>{const el=document.getElementById('year-goal-input');if(el)el.focus();},100);
 }
-function editMilestone(qi){
-  const r=getRoadmap()||initRoadmap();
-  const v=prompt(r.milestones[qi].label+' 목표:',r.milestones[qi].target);
-  if(v!==null){r.milestones[qi].target=v.trim();saveRoadmap(r);renderGoals();}
+function saveYearGoalFromModal(){
+  const input=document.getElementById('year-goal-input');if(!input)return;
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  r.yearGoal=input.value.trim();saveRoadmap(r);
+  document.getElementById('year-goal-overlay').remove();renderGoals();
 }
-function toggleMilestone(qi){
-  const r=getRoadmap()||initRoadmap();
-  r.milestones[qi].done=!r.milestones[qi].done;saveRoadmap(r);renderGoals();
+let _openQ=null;
+function toggleQDetail(qi){_openQ=_openQ===qi?null:qi;renderGoals();}
+function addMilestoneTarget(qi){
+  const input=document.getElementById('ms-input-'+qi);if(!input)return;
+  const text=input.value.trim();if(!text)return;
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  r.milestones[qi].targets.push({id:Date.now().toString(),text,done:false});
+  saveRoadmap(r);input.value='';renderGoals();
+}
+function toggleMilestoneTarget(qi,id){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  const t=r.milestones[qi].targets.find(x=>x.id===id);
+  if(t){t.done=!t.done;saveRoadmap(r);renderGoals();}
+}
+function deleteMilestoneTarget(qi,id){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  r.milestones[qi].targets=r.milestones[qi].targets.filter(x=>x.id!==id);
+  saveRoadmap(r);renderGoals();
 }
 function addAction(){
   const input=document.getElementById('action-input');if(!input)return;
@@ -2403,7 +2428,7 @@ function renderGoalSection(type,emoji,title){
 
 function renderGoals(){
   const wrap=document.getElementById('goal-content');if(!wrap)return;
-  const r=getRoadmap()||initRoadmap();
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
   const now=new Date();const yr=now.getFullYear();
   const curQ=getCurrentQ();
   const qp=getQProgress();
@@ -2436,14 +2461,37 @@ function renderGoals(){
     if(qi>0)h+='<div style="width:2px;flex:1;background:'+(isPast?'var(--pink)':'#e8e8e8')+'"></div>';
     h+='</div>';
     // Right content
-    h+='<div onclick="editMilestone('+qi+')" style="flex:1;padding:8px 10px;border-radius:10px;background:'+(isCur?'var(--pl)':'#fafafa')+';cursor:pointer;margin-bottom:8px;border:1.5px solid '+(isCur?'var(--pink)':'transparent')+'">';
+    const isOpen=_openQ===qi;
+    const tDone=ms.targets?ms.targets.filter(x=>x.done).length:0;
+    const tTotal=ms.targets?ms.targets.length:0;
+    h+='<div style="flex:1;margin-bottom:8px">';
+    h+='<div onclick="toggleQDetail('+qi+')" style="padding:8px 10px;border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';background:'+(isCur?'var(--pl)':'#fafafa')+';cursor:pointer;border:1.5px solid '+(isCur?'var(--pink)':'transparent')+';'+(isOpen?'border-bottom:none':'')+'">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center">';
-    h+='<span style="font-size:11px;font-weight:700;color:'+(isCur?'var(--pd)':'#888')+'">'+qEmoji[qi]+' '+ms.label+'</span>';
+    h+='<span style="font-size:11px;font-weight:700;color:'+(isCur?'var(--pd)':'#888')+'">'+qEmoji[qi]+' '+ms.label+(tTotal?' <span style="font-size:9px;color:#aaa;font-weight:400">'+tDone+'/'+tTotal+'</span>':'')+'</span>';
+    h+='<span style="display:flex;gap:4px;align-items:center">';
     if(isCur)h+='<span style="font-size:9px;background:var(--pink);color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">지금 여기!</span>';
-    if(ms.done)h+='<span style="font-size:9px;background:#56C6A0;color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">달성!</span>';
+    if(tTotal&&tDone===tTotal)h+='<span style="font-size:9px;background:#56C6A0;color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">달성!</span>';
+    h+='<span style="font-size:10px;color:#bbb;transition:transform .2s;display:inline-block;transform:rotate('+(isOpen?'180':'0')+'deg)">▼</span>';
+    h+='</span></div>';
+    if(!isOpen&&tTotal){
+      h+='<div style="font-size:11px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ms.targets.map(t=>t.text).join(' · ')+'</div>';
+    }
     h+='</div>';
-    if(ms.target)h+='<div style="font-size:12px;color:#555;margin-top:4px;'+(ms.done?'text-decoration:line-through;opacity:.5':'')+'">'+ms.target+'</div>';
-    else h+='<div style="font-size:11px;color:#ccc;margin-top:4px;font-style:italic">목표를 입력해봐</div>';
+    if(isOpen){
+      h+='<div style="padding:8px 10px;background:'+(isCur?'var(--pl)':'#fafafa')+';border-radius:0 0 10px 10px;border:1.5px solid '+(isCur?'var(--pink)':'#eee')+';border-top:1px dashed #e0e0e0">';
+      if(!tTotal)h+='<div style="text-align:center;color:#ccc;font-size:11px;padding:8px 0">목표를 추가해봐!</div>';
+      ms.targets.forEach(t=>{
+        h+='<div class="goal-item" style="padding:4px 0">';
+        h+='<button class="goal-check'+(t.done?' done':'')+'" onclick="toggleMilestoneTarget('+qi+',\''+t.id+'\')">'+(t.done?'✓':'')+'</button>';
+        h+='<div class="goal-text'+(t.done?' done':'')+'">'+t.text+'</div>';
+        h+='<button class="goal-del" onclick="deleteMilestoneTarget('+qi+',\''+t.id+'\')">✕</button>';
+        h+='</div>';
+      });
+      h+='<div class="goal-add-row" style="margin-top:6px">';
+      h+='<input class="goal-add-input" id="ms-input-'+qi+'" placeholder="이 분기 목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addMilestoneTarget('+qi+')">';
+      h+='<button class="goal-add-btn" onclick="addMilestoneTarget('+qi+')">+</button>';
+      h+='</div></div>';
+    }
     h+='</div></div>';
   }
   h+='</div>';
