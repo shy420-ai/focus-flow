@@ -3396,6 +3396,17 @@ function confirmAddHabit(name){
   const el=document.getElementById('habit-schedule-modal');if(el)el.remove();
   saveHabits();renderHabits();
 }
+function editHabitName(id){
+  const hab=habits.find(h=>h.id===id);if(!hab)return;
+  let h='<div id="edit-habit-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:80%;max-width:280px">';
+  h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:12px;text-align:center">습관 수정</div>';
+  h+='<input id="edit-habit-input" value="'+hab.name+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box;margin-bottom:12px">';
+  h+='<button onclick="const v=document.getElementById(\'edit-habit-input\').value.trim();if(v){const h=habits.find(x=>x.id==='+id+');if(h)h.name=v;saveHabits();renderHabits();}document.getElementById(\'edit-habit-modal\').remove()" style="width:100%;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">저장</button>';
+  h+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+  document.getElementById('edit-habit-input').focus();
+}
 function delHabit(id){
   habits=habits.filter(h=>h.id!==id);
   saveHabits();renderHabits();
@@ -3497,9 +3508,10 @@ function renderHabits(){
       const streak=getHabitStreak(hab.id);
       h+='<div class="habit-item">';
       h+='<div class="habit-top">';
-      h+='<button class="habit-check'+(checked?' checked':'')+'" onclick="toggleHabitLog('+hab.id+',\''+today+'\')">'+(checked?'&#10003;':'')+'</button>';
-      h+='<span class="habit-name">'+hab.name+'</span>';
-      if(streak>0) h+='<span class="habit-streak">&#128293; '+streak+'일 연속</span>';
+      h+='<span class="habit-name" onclick="editHabitName('+hab.id+')" style="cursor:pointer">'+hab.name+'</span>';
+      if(streak>0) h+='<span class="habit-streak">&#128293; '+streak+'일</span>';
+      const schedLabel=hab.days?'주'+hab.days.length:'매일';
+      h+='<span style="font-size:9px;color:#aaa;margin-left:4px">'+schedLabel+'</span>';
       h+='<button class="habit-del" onclick="showConfirm(\''+hab.name.replace(/'/g,"\\'")+' 습관을 삭제할까요?\',()=>delHabit('+hab.id+'))">✕</button>';
       h+='</div>';
       // Week view
