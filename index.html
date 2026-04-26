@@ -1346,7 +1346,11 @@ function editBlock(id,e){
   const _dh=Math.floor(b.durHour),_dm=Math.round((b.durHour%1)*60);
   h+='<div style="display:flex;gap:8px;margin-bottom:10px">';
   h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">⏰ 시작</div>';
-  h+='<input id="edit-block-start" type="time" value="'+pad(_eh)+':'+pad(_em)+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
+  h+='<div style="display:flex;gap:2px;align-items:center"><select id="edit-block-start-h" style="flex:1;padding:10px 2px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;text-align:center">';
+  for(let i=0;i<=23;i++)h+='<option value="'+i+'"'+(i===_eh?' selected':'')+'>'+i+'시</option>';
+  h+='</select><span style="font-size:10px;color:#aaa">:</span><select id="edit-block-start-m" style="flex:1;padding:10px 2px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;text-align:center">';
+  [0,15,30,45].forEach(m=>{h+='<option value="'+m+'"'+(m===_em?' selected':'')+'>'+pad(m)+'</option>';});
+  h+='</select></div></div>';
   h+='<div style="flex:1"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">⏱ 소요</div>';
   h+='<div style="display:flex;gap:3px;align-items:center"><select id="edit-block-dur-h" style="flex:1;padding:10px 4px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none">';
   for(let i=0;i<=8;i++)h+='<option value="'+i+'"'+(i===_dh?' selected':'')+'>'+i+'</option>';
@@ -1363,12 +1367,13 @@ function saveEditBlock(id){
   const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
   const name=document.getElementById('edit-block-name').value.trim();
   const cat=document.getElementById('edit-block-cat').value;
-  const startTime=document.getElementById('edit-block-start').value;
+  const startH=parseInt(document.getElementById('edit-block-start-h').value);
+  const startM=parseInt(document.getElementById('edit-block-start-m').value)||0;
   const durH=parseInt(document.getElementById('edit-block-dur-h').value)||0;
   const durM=parseInt(document.getElementById('edit-block-dur-m').value)||0;
   if(name)b.name=name;
   b.category=cat;
-  if(startTime){const[hh,mm]=startTime.split(':').map(Number);b.startHour=hh+(mm/60);}
+  if(!isNaN(startH))b.startHour=startH+(startM/60);
   const totalDur=durH+(durM/60);
   if(totalDur>0)b.durHour=totalDur;
   save();render();
