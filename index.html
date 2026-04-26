@@ -3926,7 +3926,9 @@ function renderViewTabs(){
   const wrap=document.getElementById('view-tabs');
   wrap.innerHTML='';
   const order=getTabOrder();
-  const hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
+  let hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
+  // 'tl'은 절대 숨기지 않음
+  if(hidden.includes('tl')){hidden=hidden.filter(x=>x!=='tl');localStorage.setItem('ff_hidden_tabs',JSON.stringify(hidden));}
   order.filter(key=>!hidden.includes(key)).forEach(key=>{
     const btn=document.createElement('button');
     btn.className='vtab'+(key===curView?' active':'');
