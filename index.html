@@ -1237,8 +1237,8 @@ function onTM(e){
   const dy=(e.touches[0].clientY-dragState.sy)/PX;
   if(Math.abs(dy)>0.3)didDrag=true;
   const b=blocks.find(x=>x.id===dragState.id);if(!b)return;
-  if(dragState.type==='move'){let ns=Math.round((dragState.origStart+dy)*2)/2;ns=Math.max(START,Math.min(START+HOURS-b.durHour,ns));b.startHour=ns;}
-  else{let nd=Math.round((dragState.origDur+dy)*2)/2;nd=Math.max(.5,Math.min(START+HOURS-b.startHour,nd));b.durHour=nd;}
+  if(dragState.type==='move'){let ns=Math.round((dragState.origStart+dy)*6)/6;ns=Math.max(START,Math.min(START+HOURS-b.durHour,ns));b.startHour=ns;}
+  else{let nd=Math.round((dragState.origDur+dy)*6)/6;nd=Math.max(1/6,Math.min(START+HOURS-b.startHour,nd));b.durHour=nd;}
   const el=document.querySelector('.block[data-id="'+dragState.id+'"]');
   if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,36)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
   e.preventDefault();
@@ -1306,8 +1306,8 @@ document.addEventListener('mousemove',e=>{
   const dy=(e.clientY-dragState.sy)/PX;
   if(Math.abs(dy)>0.3)didDrag=true;
   const b=blocks.find(x=>x.id===dragState.id);if(!b)return;
-  if(dragState.type==='move'){let ns=Math.round((dragState.origStart+dy)*2)/2;ns=Math.max(START,Math.min(START+HOURS-b.durHour,ns));b.startHour=ns;}
-  else{let nd=Math.round((dragState.origDur+dy)*2)/2;nd=Math.max(.5,Math.min(START+HOURS-b.startHour,nd));b.durHour=nd;}
+  if(dragState.type==='move'){let ns=Math.round((dragState.origStart+dy)*6)/6;ns=Math.max(START,Math.min(START+HOURS-b.durHour,ns));b.startHour=ns;}
+  else{let nd=Math.round((dragState.origDur+dy)*6)/6;nd=Math.max(1/6,Math.min(START+HOURS-b.startHour,nd));b.durHour=nd;}
   const el=document.querySelector('.block[data-id="'+dragState.id+'"]');
   if(el){el.style.top=hToY(b.startHour)+'px';el.style.height=Math.max(b.durHour*PX,36)+'px';const bt=el.querySelector('.b-time');if(bt)bt.textContent=fmtH(b.startHour)+' – '+fmtH(b.startHour+b.durHour);}
   e.preventDefault();
