@@ -3008,7 +3008,8 @@ function _renderStatsInner(wrap){
     h+='<button onclick="setupMed()" style="padding:10px 24px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">약 설정하기</button>';
     h+='</div>';
   }else{
-    // 오늘의 약
+   if(window._mediTab!=='analysis'){
+    // 오늘의 약 (아침/저녁 탭에서만)
     h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
     const morningMeds=cfg.meds.filter(m=>m.timing==='아침'||m.timing==='수시');
@@ -3054,6 +3055,7 @@ function _renderStatsInner(wrap){
         h+='<div style="font-size:10px;color:#888;margin-bottom:8px;text-align:center">💡 내 체중 기준 용량: <b>'+mgLevel+'</b> ('+mgKg.toFixed(2)+' mg/kg)<br><span style="font-size:9px;color:#bbb">보통 0.3~1.0 mg/kg · 의사와 상담 시 참고</span></div>';
       }
     }
+   } // end if not analysis
 
     const statusEmoji=['😵','😐','🙂','😊','🤩'];
     const statusLabel=['최악','별로','보통','좋음','최고'];
