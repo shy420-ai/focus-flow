@@ -1333,10 +1333,10 @@ function editBlock(id,e){
   h+='<input id="edit-block-name" value="'+b.name+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
   h+='<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">카테고리</div>';
   h+='<div style="display:flex;gap:6px;flex-wrap:wrap">';
-  h+='<button class="cat-pill'+((!b.category)?' active':'')+'" onclick="document.getElementById(\'edit-block-cat\').value=\'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\')" style="'+(!b.category?'background:var(--pink);color:#fff;border-color:var(--pink)':'')+'">없음</button>';
+  h+='<button class="cat-pill'+((!b.category)?' active':'')+'" onclick="document.getElementById(\'edit-block-cat\').value=\'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>{x.classList.remove(\'active\');x.style.background=\'\';x.style.color=x.dataset.c||\'\'});this.classList.add(\'active\');this.style.background=\'var(--pink)\';this.style.color=\'#fff\'" style="'+(!b.category?'background:var(--pink);color:#fff;border-color:var(--pink)':'')+'">없음</button>';
   allCategories().forEach(c=>{
     const isActive=b.category===c.name;
-    h+='<button class="cat-pill'+(isActive?' active':'')+'" onclick="document.getElementById(\'edit-block-cat\').value=\''+c.name+'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\')" style="'+(isActive?'background:'+c.color+';border-color:'+c.color:'color:'+c.color+';border-color:'+c.color)+'">'+c.name+'</button>';
+    h+='<button class="cat-pill'+(isActive?' active':'')+'" data-c="'+c.color+'" onclick="document.getElementById(\'edit-block-cat\').value=\''+c.name+'\';document.querySelectorAll(\'#edit-block-overlay .cat-pill\').forEach(x=>{x.classList.remove(\'active\');x.style.background=\'\';x.style.color=x.dataset.c||\'\'});this.classList.add(\'active\');this.style.background=\''+c.color+'\';this.style.color=\'#fff\'" style="'+(isActive?'background:'+c.color+';border-color:'+c.color+';color:#fff':'color:'+c.color+';border-color:'+c.color)+'">'+c.name+'</button>';
   });
   h+='</div><input type="hidden" id="edit-block-cat" value="'+(b.category||'')+'"></div>';
   const _eh=Math.floor(b.startHour),_em=Math.round((b.startHour%1)*60);
