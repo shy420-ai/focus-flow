@@ -3116,19 +3116,31 @@ async function loadHoroscope(){
   }
 }
 function setupBirthday(){
-  const byear=prompt('태어난 년도 (예: 2000)',localStorage.getItem('ff_birthyear')||'');
-  if(!byear||!/^\d{4}$/.test(byear.trim()))return;
-  const calType=prompt('양력 / 음력? (양력이면 1, 음력이면 2 입력)',localStorage.getItem('ff_cal_type')||'1');
-  if(calType)localStorage.setItem('ff_cal_type',calType.trim());
-  const bday=prompt('생일 월-일 양력 기준 (예: 01-15)\n※ 음력이면 양력으로 변환해서 입력해주세요',localStorage.getItem('ff_birthday')||'');
-  if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday.trim()))return;
-  localStorage.setItem('ff_birthyear',byear.trim());
-  localStorage.setItem('ff_birthday',bday.trim());
-  if(_uid)db.collection('users').doc(_uid).update({birthyear:byear.trim(),birthday:bday.trim()}).catch(()=>{});
-  // Clear cached horoscope to regenerate
+  let h='<div id="birthday-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:24px;width:85%;max-width:300px">';
+  h+='<div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:16px;text-align:center">🔮 생일 입력</div>';
+  h+='<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">태어난 년도</div>';
+  h+='<input id="bday-year" type="number" placeholder="2000" value="'+(localStorage.getItem('ff_birthyear')||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
+  h+='<div style="margin-bottom:12px"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">생일 (월-일, 양력 기준)</div>';
+  h+='<input id="bday-md" placeholder="01-15" value="'+(localStorage.getItem('ff_birthday')||'')+'" style="width:100%;padding:10px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box"></div>';
+  h+='<div style="font-size:9px;color:#aaa;margin-bottom:14px;text-align:center">※ 음력이면 양력으로 변환해서 입력해주세요</div>';
+  h+='<button onclick="saveBirthday()" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">저장</button>';
+  h+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+function saveBirthday(){
+  const byear=document.getElementById('bday-year').value.trim();
+  const bday=document.getElementById('bday-md').value.trim();
+  if(!byear||!/^\d{4}$/.test(byear)){showMiniToast('년도를 확인해주세요');return;}
+  if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday)){showMiniToast('월-일을 확인해주세요');return;}
+  localStorage.setItem('ff_birthyear',byear);
+  localStorage.setItem('ff_birthday',bday);
+  if(_uid)db.collection('users').doc(_uid).update({birthyear:byear,birthday:bday}).catch(()=>{});
   const keys=Object.keys(localStorage).filter(k=>k.startsWith('ff_horo_'));
   keys.forEach(k=>localStorage.removeItem(k));
+  const el=document.getElementById('birthday-modal');if(el)el.remove();
   loadHoroscope();
+  showMiniToast('🔮 생일 저장!');
 }
 // ====== ONBOARDING TOUR ======
 function showOnboarding(){
