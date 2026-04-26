@@ -548,7 +548,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div id="week-content" style="padding:8px;overflow-x:auto"></div>
 </div>
 
-<!-- Stats -->
+<!-- Medi Tracker (replaces Stats) -->
 <div id="view-stats" style="display:none">
   <div id="stats-content" style="padding:16px"></div>
 </div>
@@ -2739,12 +2739,180 @@ function renderFriendPanel(){
 if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''}).catch(()=>{});}
 
 // ====== STATS DASHBOARD ======
+// ====== MEDI TRACKER ======
+function getMedConfig(){try{return JSON.parse(localStorage.getItem('ff_med_config')||'null')}catch{return null}}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid)db.collection('users').doc(_uid).update({medConfig:c}).catch(()=>{});}catch{}}
+function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
+function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).update({medLogs:l}).catch(()=>{});}catch{}}
+function logMedTake(){
+  const cfg=getMedConfig();if(!cfg)return;
+  const logs=getMedLogs();const now=new Date();
+  const today=todayStr();
+  // Remove existing today entry
+  const existing=logs.findIndex(l=>l.date===today&&l.type==='take');
+  if(existing>=0)logs.splice(existing,1);
+  logs.push({date:today,type:'take',time:now.getHours()+now.getMinutes()/60,ts:now.toISOString()});
+  saveMedLogs(logs);renderStats();
+  showMiniToast('💊 복용 기록!');
+}
+function logMedStatus(level){
+  const logs=getMedLogs();const now=new Date();const today=todayStr();
+  const hour=now.getHours();
+  // Replace if same hour exists
+  const idx=logs.findIndex(l=>l.date===today&&l.type==='status'&&l.hour===hour);
+  if(idx>=0)logs.splice(idx,1);
+  logs.push({date:today,type:'status',hour,level,ts:now.toISOString()});
+  saveMedLogs(logs);renderStats();
+}
+function logBedtime(hour){
+  const logs=getMedLogs();const today=todayStr();
+  const idx=logs.findIndex(l=>l.date===today&&l.type==='bed');
+  if(idx>=0)logs.splice(idx,1);
+  logs.push({date:today,type:'bed',hour,ts:new Date().toISOString()});
+  saveMedLogs(logs);renderStats();
+}
+function setupMed(){
+  const cfg=getMedConfig()||{name:'',dose:'',duration:10,bedGoal:23};
+  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9010;display:flex;align-items:center;justify-content:center" id="med-setup" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
+  h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">💊 약 설정</div>';
+  h+='<div style="margin-bottom:10px"><label style="font-size:11px;color:#888">약 이름</label><input id="med-name" value="'+cfg.name+'" placeholder="예: 콘서타" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px"></div>';
+  h+='<div style="margin-bottom:10px"><label style="font-size:11px;color:#888">용량</label><input id="med-dose" value="'+cfg.dose+'" placeholder="예: 36mg" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px"></div>';
+  h+='<div style="margin-bottom:10px"><label style="font-size:11px;color:#888">예상 효과 지속시간 (시간)</label><input id="med-dur" type="number" value="'+cfg.duration+'" min="1" max="24" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px"></div>';
+  h+='<div style="margin-bottom:14px"><label style="font-size:11px;color:#888">목표 취침시간</label><select id="med-bed" style="width:100%;padding:8px 10px;border:1.5px solid var(--pl);border-radius:8px;font-size:13px;font-family:inherit;outline:none;box-sizing:border-box;margin-top:4px">';
+  for(let t=20;t<=26;t++){const hr=t%24;h+='<option value="'+t+'"'+(cfg.bedGoal===t?' selected':'')+'>'+hr+':00</option>';}
+  h+='</select></div>';
+  h+='<div style="display:flex;gap:8px"><button onclick="document.getElementById(\'med-setup\').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">취소</button>';
+  h+='<button onclick="saveMedFromSetup()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">저장</button></div>';
+  h+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
+function saveMedFromSetup(){
+  const cfg={name:document.getElementById('med-name').value.trim(),dose:document.getElementById('med-dose').value.trim(),duration:Number(document.getElementById('med-dur').value)||10,bedGoal:Number(document.getElementById('med-bed').value)||23};
+  saveMedConfig(cfg);document.getElementById('med-setup').remove();renderStats();
+}
+
 function renderStats(){
   const wrap=document.getElementById('stats-content');if(!wrap)return;
   const eLogs=getEnergyLogs();
   const mLogs=getMoodLogs();
   const today=todayStr();
-  let h='<div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:16px">📊 분석</div>';
+  const cfg=getMedConfig();
+  const medLogs=getMedLogs();
+  const todayTake=medLogs.find(l=>l.date===today&&l.type==='take');
+  const todayStatuses=medLogs.filter(l=>l.date===today&&l.type==='status').sort((a,b)=>a.hour-b.hour);
+  const nowHour=new Date().getHours();
+  let h='<div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:16px">💊 메디 트래커</div>';
+
+  // 약 설정 안 됐으면 설정 유도
+  if(!cfg||!cfg.name){
+    h+='<div style="background:#fff;border-radius:14px;padding:20px;margin-bottom:12px;border:1.5px solid var(--pl);text-align:center">';
+    h+='<div style="font-size:40px;margin-bottom:10px">💊</div>';
+    h+='<div style="font-size:14px;color:#555;margin-bottom:12px">약 정보를 설정하면<br>복용 기록 + 상태 트래킹을 시작할 수 있어!</div>';
+    h+='<button onclick="setupMed()" style="padding:10px 24px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">약 설정하기</button>';
+    h+='</div>';
+  }else{
+    // 오늘의 약
+    h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
+    h+='<span style="font-size:13px;font-weight:700;color:var(--pd)">'+cfg.name+' '+cfg.dose+'</span>';
+    h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️ 설정</button>';
+    h+='</div>';
+
+    if(!todayTake){
+      h+='<button onclick="logMedTake()" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--pink);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">💊 먹었어!</button>';
+    }else{
+      const takeH=todayTake.time;const endH=takeH+cfg.duration;
+      const elapsed=nowHour-takeH;const remaining=Math.max(endH-nowHour,0);
+      const pct=Math.min(Math.max(elapsed/cfg.duration*100,0),100);
+      h+='<div style="font-size:12px;color:#888;margin-bottom:8px;text-align:center">'+Math.floor(takeH)+':'+String(Math.round((takeH%1)*60)).padStart(2,'0')+' 복용 · 예상 효과 ~'+Math.floor(endH%24)+':00'+(remaining>0?' · 남은 '+Math.round(remaining)+'시간':'· 효과 종료')+'</div>';
+      // Progress bar
+      h+='<div style="position:relative;height:24px;background:#f0f0f0;border-radius:12px;overflow:hidden;margin-bottom:10px">';
+      const greenPct=Math.min(pct,70);const yellowPct=Math.min(Math.max(pct-70,0),20);const redPct=Math.max(pct-90,0);
+      h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+greenPct+'%;background:#56C6A0;transition:width .3s"></div>';
+      h+='<div style="position:absolute;left:'+greenPct+'%;top:0;height:100%;width:'+yellowPct+'%;background:#EF9F27;transition:width .3s"></div>';
+      h+='<div style="position:absolute;left:'+(greenPct+yellowPct)+'%;top:0;height:100%;width:'+redPct+'%;background:#E24B4A;transition:width .3s"></div>';
+      h+='<div style="position:absolute;left:'+Math.max(pct-1,0)+'%;top:50%;transform:translateY(-50%);font-size:12px;z-index:1">💊</div>';
+      h+='</div>';
+      h+='<button onclick="logMedTake()" style="width:100%;padding:8px;border-radius:8px;border:1.5px dashed var(--pl);background:#fff;color:var(--pd);font-size:11px;cursor:pointer;font-family:inherit">🔄 복용 시간 다시 기록</button>';
+    }
+    h+='</div>';
+
+    // 상태 체크
+    h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+    h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">지금 상태 어때?</div>';
+    const statusEmoji=['😵','😐','🙂','😊','🤩'];
+    const statusLabel=['최악','별로','보통','좋음','최고'];
+    const curStatus=todayStatuses.find(s=>s.hour===nowHour);
+    h+='<div style="display:flex;gap:6px;justify-content:center">';
+    statusEmoji.forEach((e,i)=>{
+      const isActive=curStatus&&curStatus.level===i;
+      h+='<button onclick="logMedStatus('+i+')" style="font-size:28px;padding:6px 8px;border-radius:12px;border:2px solid '+(isActive?'var(--pink)':'transparent')+';background:'+(isActive?'var(--pl)':'transparent')+';cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span>'+e+'</span><span style="font-size:9px;color:#aaa">'+statusLabel[i]+'</span></button>';
+    });
+    h+='</div></div>';
+
+    // 오늘 타임라인
+    if(todayStatuses.length||todayTake){
+      h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+      h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">오늘 기록</div>';
+      if(todayTake)h+='<div style="font-size:12px;color:#555;padding:4px 0">💊 '+Math.floor(todayTake.time)+':'+String(Math.round((todayTake.time%1)*60)).padStart(2,'0')+' 복용</div>';
+      todayStatuses.forEach(s=>{
+        h+='<div style="font-size:12px;color:#555;padding:4px 0">'+statusEmoji[s.level]+' '+s.hour+':00 — '+statusLabel[s.level]+'</div>';
+      });
+      h+='</div>';
+    }
+
+    // 취침 기록
+    h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+    h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">😴 취침 기록</div>';
+    const todayBed=medLogs.find(l=>l.date===today&&l.type==='bed');
+    h+='<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">';
+    for(let t=21;t<=27;t++){const hr=t%24;const isActive=todayBed&&todayBed.hour===t;
+      h+='<button onclick="logBedtime('+t+')" style="padding:6px 10px;border-radius:8px;border:1.5px solid '+(isActive?'var(--pink)':'var(--pl)')+';background:'+(isActive?'var(--pink)':'#fff')+';color:'+(isActive?'#fff':'#666')+';font-size:12px;cursor:pointer;font-family:inherit;font-weight:'+(isActive?'600':'400')+'">'+hr+':00</button>';
+    }
+    h+='</div></div>';
+
+    // 간단 분석 (데이터 3일 이상)
+    const allTakes=medLogs.filter(l=>l.type==='take');
+    const allStatuses=medLogs.filter(l=>l.type==='status');
+    if(allTakes.length>=3||allStatuses.length>=5){
+      h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+      h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">📊 약 효과 분석</div>';
+      if(allStatuses.length>=5){
+        // Average status by hours-after-take
+        const byElapsed={};
+        allStatuses.forEach(s=>{
+          const take=medLogs.find(l=>l.type==='take'&&l.date===s.date);
+          if(!take)return;
+          const elapsed=s.hour-Math.floor(take.time);
+          if(elapsed<0||elapsed>16)return;
+          if(!byElapsed[elapsed])byElapsed[elapsed]={sum:0,count:0};
+          byElapsed[elapsed].sum+=s.level;byElapsed[elapsed].count++;
+        });
+        if(Object.keys(byElapsed).length>=2){
+          let peakH=-1,peakAvg=0,dropH=-1,dropAvg=5;
+          Object.entries(byElapsed).forEach(([hr,d])=>{const avg=d.sum/d.count;if(avg>peakAvg){peakAvg=avg;peakH=hr;}if(avg<dropAvg){dropAvg=avg;dropH=hr;}});
+          h+='<div style="font-size:12px;color:#555;padding:4px 0">🏆 피크 타임: 복용 후 <b>'+peakH+'시간</b> ('+statusEmoji[Math.round(peakAvg)]+' '+peakAvg.toFixed(1)+')</div>';
+          h+='<div style="font-size:12px;color:#555;padding:4px 0">📉 효과 감소: 복용 후 <b>'+dropH+'시간</b></div>';
+        }
+      }
+      // Bedtime correlation
+      const beds=medLogs.filter(l=>l.type==='bed');
+      if(beds.length>=3){
+        const avgBed=beds.reduce((s,l)=>s+l.hour,0)/beds.length;
+        h+='<div style="font-size:12px;color:#555;padding:4px 0">😴 평균 취침: <b>'+Math.floor(avgBed%24)+':'+String(Math.round((avgBed%1)*60)).padStart(2,'0')+'</b></div>';
+      }
+      h+='<div style="font-size:10px;color:#aaa;margin-top:6px">데이터가 쌓일수록 분석이 정확해져!</div>';
+      h+='</div>';
+    }
+  }
+
+  // 기존 분석 (에너지/무드/완료율) — 접이식
+  h+='<details style="margin-bottom:12px"><summary style="font-size:13px;font-weight:700;color:var(--pd);cursor:pointer;padding:10px 0">📊 에너지·기분·완료율 분석</summary>';
+  h+='<div style="margin-top:8px">';
+
+  // 기존 분석 코드 유지
+  let h2='<div style="font-size:16px;font-weight:700;color:var(--pd);margin-bottom:16px">📊 분석</div>';
 
   // Energy heatmap by hour
   h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
@@ -2864,6 +3032,10 @@ function renderStats(){
   h+='<div style="font-size:10px;color:#aaa;margin-top:4px">데이터가 쌓일수록 분석이 정확해져!</div>';
   h+='<button onclick="if(confirm(\'분석 데이터를 초기화할까요?\')){localStorage.removeItem(\'ff_energy\');localStorage.removeItem(\'ff_mood\');renderStats();}" style="margin-top:8px;padding:6px 12px;border-radius:8px;border:1px solid #eee;background:#fff;font-size:11px;color:#aaa;cursor:pointer;font-family:inherit">🗑 기록 초기화</button>';
   h+='</div>';
+  h+='</div></details>';
+
+  // 면책 문구
+  h+='<div style="font-size:9px;color:#ccc;text-align:center;padding:8px 0">⚠️ 이 기능은 기록 도구이며 의료 조언이 아닙니다. 약 복용은 반드시 의사와 상담하세요.</div>';
 
   wrap.innerHTML=h;
 }
@@ -3514,7 +3686,7 @@ setTimeout(()=>{
 
 // ====== VIEW TABS (draggable order) ======
 const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop','stats'];
-const TAB_LABELS={tl:'일간',week:'주간',cal:'월간',habit:'습관',goal:'목표',drop:'드롭',stats:'분석'};
+const TAB_LABELS={tl:'일간',week:'주간',cal:'월간',habit:'습관',goal:'목표',drop:'드롭',stats:'메디'};
 function getTabOrder(){
   try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=7&&arr.includes('stats'))return arr;}}catch{}
   return DEFAULT_TAB_ORDER.slice();
