@@ -3369,16 +3369,15 @@ function showOnboarding(){
     // 2. 타임라인
     {title:'⏰ 일간 타임라인',desc:'하루를 시간 블록으로 시각화해서 관리해.\n\n📚 Time Blocking (Cal Newport)\nADHD는 시간 감각이 약한 "Time Blindness"가 있어서, 눈에 보이는 시간 구조가 필수!\n\n💡 블록을 드래그해서 시간을 옮길 수도 있어!',sel:'#view-tl',tab:'tl'},
     // 3. 인터랙티브: 더블탭 체험
-    {title:'👆 직접 해봐! — 블록 만들기',desc:'타임라인의 빈 시간을 두 번 빠르게 탭해봐!\n\n편집 창이 뜨면:\n1. 블록 이름을 적고\n2. 카테고리를 선택하고\n3. 시간을 설정해봐!\n\n완성하면 자동으로 다음 단계로 넘어가!',sel:'#view-tl',tab:'tl',interactive:'blockcreate'},
+    {title:'👆 빈 시간을 두 번 탭해봐!',desc:'이름·카테고리·시간 설정 후 확인!',sel:'#view-tl',tab:'tl',interactive:'blockcreate'},
     // 4. 인터랙티브: 블록 드래그
-    {title:'👆 직접 해봐! — 블록 이동',desc:'방금 만든 블록을 꾹 누른 채로 위아래로 드래그해봐!\n시간이 이동돼!',sel:'#view-tl',tab:'tl',interactive:'drag'},
-    // 5. 인터랙티브: 리사이즈
-    {title:'👆 직접 해봐! — 시간 조절',desc:'블록 하단의 ━━ 바를 잡고 아래로 끌어봐!\n블록의 길이(소요시간)가 바뀌어!',sel:'#view-tl',tab:'tl',interactive:'resize'},
+    {title:'👆 블록을 꾹 눌러서 드래그!',desc:'위아래로 움직여서 시간을 옮겨봐',sel:'#view-tl',tab:'tl',interactive:'drag'},
+    {title:'👆 블록 하단 ━━ 바를 끌어봐!',desc:'아래로 끌면 소요시간이 늘어나!',sel:'#view-tl',tab:'tl',interactive:'resize'},
     // 6. 입력 시트 설명
     {title:'➕ 빠른 입력',desc:'이게 할 일 추가 시트야!\n\n📚 인지 부하 감소\n입력 단계가 적을수록 ADHD가 행동을 시작하기 쉬워져.\n\n💡 카테고리도 설정할 수 있어!',sel:'.sheet',tab:'tl',
       action:()=>{document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}},
     // 7. 인터랙티브: 자연어 입력 체험
-    {title:'👆 직접 해봐! — 자연어 입력',desc:'입력창에 이렇게 적어봐:\n\n"공부 14시 1시간"\n\n그리고 추가하기 버튼을 눌러봐!\n자동으로 시간이 파싱돼서 블록이 생겨!',sel:'.sheet',tab:'tl',interactive:'sheetadd',
+    {title:'👆 "공부 14시 1시간" 입력해봐!',desc:'추가하기 버튼 누르면 자동 파싱!',sel:'.sheet',tab:'tl',interactive:'sheetadd',
       action:()=>{document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}},
     // 4. 날짜 탭
     {title:'📆 날짜 탭',desc:'오늘, 내일, 이후 날짜를 빠르게 전환해.\n\n💡 좌우로 스와이프해서 더 많은 날짜를 볼 수 있어!',sel:'#date-tabs',tab:'tl'},
