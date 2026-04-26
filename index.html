@@ -3484,7 +3484,7 @@ function showOnboarding(){
   }
   window.nextOnboarding=function(){if(window._onboardInterval)clearInterval(window._onboardInterval);clearHighlight();idx++;if(idx>=steps.length){window.skipOnboarding();}else{renderStep();}};
   window.prevOnboarding=function(){clearHighlight();if(idx>0){idx--;renderStep();}};
-  window.skipOnboarding=function(){if(window._onboardInterval)clearInterval(window._onboardInterval);clearHighlight();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';switchView('tl');};
+  window.skipOnboarding=function(){if(window._onboardInterval)clearInterval(window._onboardInterval);clearHighlight();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';viewDate=todayStr();switchView('tl');render();};
   renderStep();
 }
 setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},2000);
