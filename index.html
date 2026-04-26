@@ -3095,26 +3095,26 @@ function _renderStatsInner(wrap){
       }
     }
 
-    // 아침약 가이드
-    const adhdMeds=morningMeds.filter(m=>['콘서타','메디키넷','페니드'].includes(m.name));
-    if(adhdMeds.length){
+    // 아침약 가이드 (모든 아침약 대상)
+    if(morningMeds.length){
       h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
       h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">☀️ 아침약 가이드</div>';
-      adhdMeds.forEach(m=>{
+      morningMeds.forEach(m=>{
+        const dbInfo=MED_DB.find(d=>d.name===m.name);
         const bedGoal=cfg.bedGoal||23;
-        const latestTake=bedGoal-m.duration;
-        const latestHr=((latestTake%24)+24)%24;
-        h+='<div style="font-size:12px;color:#555;padding:3px 0">💊 '+m.name+' '+m.dose+' → 아침 식후 30분 이내 복용이 효과적</div>';
-        h+='<div style="font-size:12px;color:#555;padding:3px 0">⏰ 효과 지속 약 '+m.duration+'시간</div>';
-        if(todayMorningTake){
-          const fadeHr=todayMorningTake.time+Math.round(m.duration*0.7);
-          const endHr=todayMorningTake.time+m.duration;
-          h+='<div style="font-size:12px;color:#EF9F27;padding:3px 0">🟡 약 <b>'+Math.floor(fadeHr%24)+':'+String(Math.round((fadeHr%1)*60)).padStart(2,'0')+'</b>쯤부터 효과 줄어들기 시작</div>';
-          h+='<div style="font-size:12px;color:#E24B4A;padding:3px 0">🔴 약 <b>'+Math.floor(endHr%24)+':'+String(Math.round((endHr%1)*60)).padStart(2,'0')+'</b>쯤 효과 종료 예상</div>';
-        }else{
-          h+='<div style="font-size:11px;color:#aaa;padding:3px 0">💡 복용하면 약발 떨어지는 시간을 알려줄게!</div>';
+        h+='<div style="font-size:12px;font-weight:600;color:var(--pd);padding:3px 0;margin-top:4px">💊 '+m.name+' '+m.dose+'</div>';
+        if(dbInfo&&dbInfo.note)h+='<div style="font-size:11px;color:#888;padding:2px 0">📌 '+dbInfo.note+'</div>';
+        if(m.duration<48){
+          h+='<div style="font-size:11px;color:#555;padding:2px 0">⏰ 효과 지속 약 '+m.duration+'시간</div>';
+          if(todayMorningTake){
+            const fadeHr=todayMorningTake.time+Math.round(m.duration*0.7);
+            const endHr=todayMorningTake.time+m.duration;
+            h+='<div style="font-size:11px;color:#EF9F27;padding:2px 0">🟡 <b>'+Math.floor(fadeHr%24)+':'+String(Math.round((fadeHr%1)*60)).padStart(2,'0')+'</b>쯤 효과 줄어들기 시작</div>';
+            h+='<div style="font-size:11px;color:#E24B4A;padding:2px 0">🔴 <b>'+Math.floor(endHr%24)+':'+String(Math.round((endHr%1)*60)).padStart(2,'0')+'</b>쯤 효과 종료</div>';
+          }else{
+            h+='<div style="font-size:10px;color:#aaa;padding:2px 0">💡 복용하면 약발 떨어지는 시간 알려줄게</div>';
+          }
         }
-        h+='<div style="font-size:11px;color:#E24B4A;padding:3px 0">⚠️ <b>'+Math.floor(latestHr)+':00 이후</b> 복용 시 취침('+bedGoal%24+':00) 방해 가능!</div>';
       });
       h+='</div>';
     }
