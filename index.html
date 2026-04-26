@@ -3938,10 +3938,12 @@ function saveTabOrder(order){localStorage.setItem('ff_tab_order',JSON.stringify(
 function renderViewTabs(){
   const wrap=document.getElementById('view-tabs');
   wrap.innerHTML='';
-  const order=getTabOrder();
+  let order=getTabOrder();
+  // tl이 없으면 맨 앞에 강제 추가
+  if(!order.includes('tl')){order.unshift('tl');saveTabOrder(order);}
   let hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
-  // 'tl'은 절대 숨기지 않음, 잘못된 hidden 데이터 정리
-  if(hidden.includes('tl')||hidden.length>5){hidden=[];localStorage.setItem('ff_hidden_tabs','[]');}
+  // 'tl'은 절대 숨기지 않음
+  hidden=hidden.filter(x=>x!=='tl');
   order.filter(key=>!hidden.includes(key)).forEach(key=>{
     const btn=document.createElement('button');
     btn.className='vtab'+(key===curView?' active':'');
