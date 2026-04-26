@@ -2917,6 +2917,9 @@ function saveMedBedGoal(){
 
 function renderStats(){
   const wrap=document.getElementById('stats-content');if(!wrap)return;
+  try{return _renderStatsInner(wrap);}catch(e){wrap.innerHTML='<div style="color:red;padding:20px">에러: '+e.message+'</div>';console.error('renderStats error:',e);}
+}
+function _renderStatsInner(wrap){
   const eLogs=getEnergyLogs();
   const mLogs=getMoodLogs();
   const today=todayStr();
