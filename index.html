@@ -2799,6 +2799,14 @@ function logMedTake(timing){
   saveMedLogs(logs);renderStats();
   showMiniToast('💊 '+(t==='아침'?'☀️ 아침약':'🌙 저녁약')+' 복용 기록!');
 }
+function logSleepTime(level){
+  const logs=getMedLogs();const today=todayStr();
+  const idx=logs.findIndex(l=>l.date===today&&l.type==='sleeptime');
+  if(idx>=0)logs.splice(idx,1);
+  logs.push({date:today,type:'sleeptime',level,ts:new Date().toISOString()});
+  saveMedLogs(logs);renderStats();
+  showMiniToast('💤 입면 기록!');
+}
 function logWakeCondition(level){
   const logs=getMedLogs();const today=todayStr();
   const idx=logs.findIndex(l=>l.date===today&&l.type==='wake');
@@ -3053,20 +3061,34 @@ function _renderStatsInner(wrap){
     const todayNightTake=medLogs.find(l=>l.date===today&&l.type==='take'&&l.timing==='저녁');
 
    if(window._mediTab==='morning'){
-    // 기상 컨디션 체크 (오늘 아직 안 했으면)
+    // 기상 컨디션 + 입면 시간 체크
     const todayWakeLog=medLogs.find(l=>l.date===today&&l.type==='wake');
-    if(!todayWakeLog){
+    const todaySleepLog=medLogs.find(l=>l.date===today&&l.type==='sleeptime');
+    if(!todayWakeLog||!todaySleepLog){
       h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
-      h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">🌅 어젯밤 수면 어땠어?</div>';
-      const wakeEmoji=['😵','😐','🙂','😊','🤩'];
-      const wakeLabel=['최악','별로','보통','잘잤어','완벽'];
-      h+='<div style="display:flex;gap:6px;justify-content:center">';
-      wakeEmoji.forEach((e,i)=>{
-        h+='<button onclick="logWakeCondition('+i+')" style="font-size:26px;padding:6px 8px;border-radius:12px;border:2px solid transparent;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span>'+e+'</span><span style="font-size:9px;color:#aaa">'+wakeLabel[i]+'</span></button>';
-      });
-      h+='</div></div>';
+      if(!todayWakeLog){
+        h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">🌅 어젯밤 수면 어땠어?</div>';
+        const wakeEmoji=['😵','😐','🙂','😊','🤩'];
+        const wakeLabel=['최악','별로','보통','잘잤어','완벽'];
+        h+='<div style="display:flex;gap:6px;justify-content:center;margin-bottom:10px">';
+        wakeEmoji.forEach((e,i)=>{
+          h+='<button onclick="logWakeCondition('+i+')" style="font-size:26px;padding:6px 8px;border-radius:12px;border:2px solid transparent;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px"><span>'+e+'</span><span style="font-size:9px;color:#aaa">'+wakeLabel[i]+'</span></button>';
+        });
+        h+='</div>';
+      }
+      if(!todaySleepLog){
+        h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:8px">💤 어젯밤 잠드는 데 얼마나 걸렸어?</div>';
+        const sleepOpts=[{label:'바로 잠듦',icon:'💤',val:0},{label:'30분 이내',icon:'😊',val:1},{label:'30분~1시간',icon:'😐',val:2},{label:'1시간+',icon:'😵',val:3},{label:'못 잤어',icon:'🫠',val:4}];
+        h+='<div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center">';
+        sleepOpts.forEach(o=>{
+          h+='<button onclick="logSleepTime('+o.val+')" style="padding:6px 12px;border-radius:10px;border:1.5px solid var(--pl);background:#fff;font-size:12px;cursor:pointer;font-family:inherit;color:#555">'+o.icon+' '+o.label+'</button>';
+        });
+        h+='</div>';
+      }
+      h+='</div>';
     }else{
-      h+='<div style="font-size:11px;color:#888;text-align:center;margin-bottom:8px">🌅 오늘 아침 컨디션: '+statusEmoji[todayWakeLog.level]+' '+['최악','별로','보통','잘잤어','완벽'][todayWakeLog.level]+'</div>';
+      const sleepLabels=['💤 바로 잠듦','😊 30분 이내','😐 30분~1시간','😵 1시간+','🫠 못 잤어'];
+      h+='<div style="font-size:11px;color:#888;text-align:center;margin-bottom:8px">🌅 아침 컨디션: '+statusEmoji[todayWakeLog.level]+' '+['최악','별로','보통','잘잤어','완벽'][todayWakeLog.level]+' · '+(sleepLabels[todaySleepLog.level]||'')+'</div>';
     }
 
     // 아침약 탭
@@ -3260,6 +3282,29 @@ function _renderStatsInner(wrap){
       }
       const avgWake=wakeLogs.reduce((s,l)=>s+l.level,0)/wakeLogs.length;
       h+='<div style="font-size:12px;color:#888;padding:3px 0">평균 아침 컨디션: '+statusEmoji[Math.round(avgWake)]+' '+avgWake.toFixed(1)+'</div>';
+      // 입면 시간 분석
+      const sleepTimeLogs=medLogs.filter(l=>l.type==='sleeptime');
+      if(sleepTimeLogs.length>=3){
+        const sleepLabels=['바로 잠듦','30분 이내','30분~1시간','1시간+','못 잤어'];
+        const avgSleep=sleepTimeLogs.reduce((s,l)=>s+l.level,0)/sleepTimeLogs.length;
+        h+='<div style="font-size:12px;color:#888;padding:3px 0">평균 입면: '+(avgSleep<1?'💤 빨리 잠드는 편':avgSleep<2?'😊 보통':' 😵 오래 걸리는 편')+'</div>';
+        // 저녁약 시간별 입면
+        const sleepByHour={};
+        sleepTimeLogs.forEach(s=>{
+          const prevDate=new Date(s.date);prevDate.setDate(prevDate.getDate()-1);
+          const pd=prevDate.getFullYear()+'-'+String(prevDate.getMonth()+1).padStart(2,'0')+'-'+String(prevDate.getDate()).padStart(2,'0');
+          const nt=nightTakes.find(t=>t.date===pd);
+          if(!nt)return;
+          const hr=Math.floor(nt.time);
+          if(!sleepByHour[hr])sleepByHour[hr]={sum:0,count:0};
+          sleepByHour[hr].sum+=s.level;sleepByHour[hr].count++;
+        });
+        if(Object.keys(sleepByHour).length>=2){
+          let bestSH=-1,bestSA=5;
+          Object.entries(sleepByHour).forEach(([hr,d])=>{const a=d.sum/d.count;if(a<bestSA){bestSA=a;bestSH=hr;}});
+          h+='<div style="font-size:12px;color:#555;padding:3px 0">💤 저녁약 <b>'+bestSH+':00</b>에 먹을 때 가장 빨리 잠듦!</div>';
+        }
+      }
       h+='</div>';
     }
   }
