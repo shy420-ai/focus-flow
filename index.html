@@ -3494,7 +3494,7 @@ function showOnboarding(){
   window.skipOnboarding=function(){if(window._onboardInterval)clearInterval(window._onboardInterval);clearHighlight();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';viewDate=todayStr();switchView('tl');render();};
   renderStep();
 }
-setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},2000);
+// 온보딩은 설정에서 수동으로 시작
 
 // Auto-load horoscope
 setTimeout(()=>{
