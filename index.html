@@ -3042,7 +3042,8 @@ function _renderStatsInner(wrap){
       const methMeds=cfg.meds.filter(m=>['콘서타','메디키넷','페니드'].includes(m.name));
       if(methMeds.length){
         const mgKg=methMeds.reduce((s,m)=>{const n=parseFloat(m.dose);return s+(isNaN(n)?0:n);},0)/cfg.weight;
-        h+='<div style="font-size:10px;color:#888;margin-bottom:8px;text-align:center">💡 메틸페니데이트 체중 대비 용량: <b>'+mgKg.toFixed(2)+' mg/kg</b> (일반 범위: 0.3~1.0 mg/kg)</div>';
+        const mgLevel=mgKg<0.5?'낮은 편':'적정';
+        h+='<div style="font-size:10px;color:#888;margin-bottom:8px;text-align:center">💡 내 체중 기준 용량: <b>'+mgLevel+'</b> ('+mgKg.toFixed(2)+' mg/kg)<br><span style="font-size:9px;color:#bbb">보통 0.3~1.0 mg/kg · 의사와 상담 시 참고</span></div>';
       }
     }
 
