@@ -2327,43 +2327,57 @@ function deleteGoal(type,id){
   goals[key]=goals[key].filter(x=>x.id!==id);saveGoals(goals);renderGoals();
 }
 
-let _mandalaView='grid'; // 'grid' or index 0-7
-function editMandalaCell(idx){
-  const m=getMandala()||initMandala();
-  if(idx==='center'){
-    const v=prompt('핵심 목표:',m.center);
-    if(v!==null){m.center=v.trim();saveMandala(m);renderGoals();}
-  }else{
-    const v=prompt('세부 목표:',m.cells[idx]);
-    if(v!==null){m.cells[idx]=v.trim();saveMandala(m);renderGoals();}
-  }
+// ====== 역산 로드맵 + 분기 스프린트 ======
+function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
+function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).update({roadmap:r}).catch(()=>{});}catch{}}
+function initRoadmap(){return{yearGoal:'',milestones:[{label:'Q1 (1~3월)',target:'',done:false},{label:'Q2 (4~6월)',target:'',done:false},{label:'Q3 (7~9월)',target:'',done:false},{label:'Q4 (10~12월)',target:'',done:false}],actions:[]}}
+function getCurrentQ(){const m=new Date().getMonth();return Math.floor(m/3);}
+function getQProgress(){
+  const now=new Date();const q=getCurrentQ();
+  const qStart=new Date(now.getFullYear(),q*3,1);
+  const qEnd=new Date(now.getFullYear(),(q+1)*3,1);
+  const total=Math.ceil((qEnd-qStart)/(1000*60*60*24));
+  const elapsed=Math.ceil((now-qStart)/(1000*60*60*24));
+  const week=Math.ceil(elapsed/7);
+  return{pct:Math.min(Math.round(elapsed/total*100),100),week,totalWeeks:Math.ceil(total/7),remain:Math.max(total-elapsed,0)};
 }
-function openMandalaSub(idx){
-  const m=getMandala()||initMandala();
-  if(!m.cells[idx]){
-    const v=prompt('세부 목표 이름:','');
-    if(v!==null&&v.trim()){m.cells[idx]=v.trim();saveMandala(m);}
-    else return;
-  }
-  _mandalaView=idx;renderGoals();
+function editYearGoal(){
+  const r=getRoadmap()||initRoadmap();
+  const v=prompt('올해의 핵심 목표:',r.yearGoal);
+  if(v!==null){r.yearGoal=v.trim();saveRoadmap(r);renderGoals();}
 }
-function backToMandala(){_mandalaView='grid';renderGoals();}
-function addMandalaSub(idx){
-  const input=document.getElementById('msub-input');if(!input)return;
+function editMilestone(qi){
+  const r=getRoadmap()||initRoadmap();
+  const v=prompt(r.milestones[qi].label+' 목표:',r.milestones[qi].target);
+  if(v!==null){r.milestones[qi].target=v.trim();saveRoadmap(r);renderGoals();}
+}
+function toggleMilestone(qi){
+  const r=getRoadmap()||initRoadmap();
+  r.milestones[qi].done=!r.milestones[qi].done;saveRoadmap(r);renderGoals();
+}
+function addAction(){
+  const input=document.getElementById('action-input');if(!input)return;
   const text=input.value.trim();if(!text)return;
-  const m=getMandala()||initMandala();
-  if(!m.subs[idx])m.subs[idx]=[];
-  m.subs[idx].push({id:Date.now().toString(),text,done:false});
-  saveMandala(m);input.value='';renderGoals();
+  const r=getRoadmap()||initRoadmap();
+  r.actions.push({id:Date.now().toString(),text,done:false});
+  saveRoadmap(r);input.value='';renderGoals();
 }
-function toggleMandalaSub(idx,id){
-  const m=getMandala();if(!m)return;
-  const s=m.subs[idx].find(x=>x.id===id);if(s){s.done=!s.done;saveMandala(m);renderGoals();}
+function toggleAction(id){
+  const r=getRoadmap();if(!r)return;
+  const a=r.actions.find(x=>x.id===id);if(a){a.done=!a.done;saveRoadmap(r);renderGoals();}
 }
-function deleteMandalaSub(idx,id){
-  const m=getMandala();if(!m)return;
-  m.subs[idx]=m.subs[idx].filter(x=>x.id!==id);saveMandala(m);renderGoals();
+function deleteAction(id){
+  const r=getRoadmap();if(!r)return;
+  r.actions=r.actions.filter(x=>x.id!==id);saveRoadmap(r);renderGoals();
 }
+// Legacy mandala support
+let _mandalaView='grid';
+function editMandalaCell(){}
+function openMandalaSub(){}
+function backToMandala(){renderGoals();}
+function addMandalaSub(){}
+function toggleMandalaSub(){}
+function deleteMandalaSub(){}
 
 function renderGoalSection(type,emoji,title){
   const goals=getGoals();const key=goalKey(type);
@@ -2389,55 +2403,82 @@ function renderGoalSection(type,emoji,title){
 
 function renderGoals(){
   const wrap=document.getElementById('goal-content');if(!wrap)return;
-  const m=getMandala()||initMandala();
-  const now=new Date();
+  const r=getRoadmap()||initRoadmap();
+  const now=new Date();const yr=now.getFullYear();
+  const curQ=getCurrentQ();
+  const qp=getQProgress();
   let h='';
-  // Grid order: [0,1,2,3,center,4,5,6,7]
-  const order=[0,1,2,3,'c',4,5,6,7];
 
-  if(_mandalaView==='grid'){
-    h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">🎯 '+now.getFullYear()+'년 만다라트</div>';
-    h+='<div class="mandala-grid">';
-    order.forEach(idx=>{
-      if(idx==='c'){
-        h+='<div class="mandala-cell center" onclick="editMandalaCell(\'center\')">'+(m.center||'핵심 목표<br>터치해서 입력')+'</div>';
-      }else{
-        const text=m.cells[idx];
-        const subDone=m.subs[idx]?m.subs[idx].filter(x=>x.done).length:0;
-        const subTotal=m.subs[idx]?m.subs[idx].length:0;
-        const badge=subTotal?'<div style="font-size:9px;color:var(--pm);margin-top:3px">'+subDone+'/'+subTotal+'</div>':'';
-        h+='<div class="mandala-cell'+(text?' has-text':' empty')+'" onclick="openMandalaSub('+idx+')">'+(text||'터치해서 입력')+badge+'</div>';
-      }
-    });
-    h+='</div>';
-    h+='<div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:16px">셀 터치 → 세부 목표 보기 | 가운데 = 핵심 목표</div>';
-    // Monthly & Weekly
-    h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
-    h+=renderGoalSection('week','⭐','이번 주 목표');
+  // 1. 올해 핵심 목표
+  h+='<div style="text-align:center;margin-bottom:14px">';
+  h+='<div style="font-size:10px;color:#aaa;margin-bottom:4px">'+yr+'년 핵심 목표</div>';
+  if(r.yearGoal){
+    h+='<div onclick="editYearGoal()" style="font-size:18px;font-weight:800;color:var(--pd);cursor:pointer">🎯 '+r.yearGoal+'</div>';
   }else{
-    // Sub detail view
-    const idx=_mandalaView;
-    const title=m.cells[idx]||'세부 목표 '+(idx+1);
-    const subs=m.subs[idx]||[];
-    h+='<div class="mandala-detail">';
-    h+='<div class="mandala-detail-title"><button class="mandala-detail-back" onclick="backToMandala()">←</button>'+title+'</div>';
-    h+='<div style="font-size:11px;color:#aaa;margin-bottom:8px">이름 수정: <span style="color:var(--pd);cursor:pointer;text-decoration:underline" onclick="editMandalaCell('+idx+')">'+title+'</span></div>';
-    if(!subs.length)h+='<div style="text-align:center;color:#ccc;font-size:12px;padding:20px 0">세부 목표를 추가해봐!</div>';
-    subs.forEach(s=>{
-      h+='<div class="goal-item">';
-      h+='<button class="goal-check'+(s.done?' done':'')+'" onclick="toggleMandalaSub('+idx+',\''+s.id+'\')">'+(s.done?'✓':'')+'</button>';
-      h+='<div class="goal-text'+(s.done?' done':'')+'">'+s.text+'</div>';
-      h+='<button class="goal-del" onclick="deleteMandalaSub('+idx+',\''+s.id+'\')">✕</button>';
-      h+='</div>';
-    });
-    h+='<div class="goal-add-row">';
-    h+='<input class="goal-add-input" id="msub-input" placeholder="세부 목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addMandalaSub('+idx+')">';
-    h+='<button class="goal-add-btn" onclick="addMandalaSub('+idx+')">+</button>';
-    h+='</div></div>';
-    // Monthly & Weekly still visible
-    h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
-    h+=renderGoalSection('week','⭐','이번 주 목표');
+    h+='<div onclick="editYearGoal()" style="font-size:14px;color:#ccc;cursor:pointer;padding:10px;border:2px dashed #e0e0e0;border-radius:12px">터치해서 올해 목표 설정!</div>';
   }
+  h+='</div>';
+
+  // 2. 역산 로드맵 타임라인
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:12px;text-align:center">📍 역산 로드맵</div>';
+  const qColors=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
+  const qEmoji=['🌸','☀️','🍂','⛄'];
+  // Reverse order: Q4 at top, Q1 at bottom
+  for(let qi=3;qi>=0;qi--){
+    const ms=r.milestones[qi];
+    const isCur=qi===curQ;
+    const isPast=qi<curQ;
+    h+='<div style="display:flex;align-items:stretch;gap:10px;'+(qi>0?'margin-bottom:0':'')+';">';
+    // Left timeline line + dot
+    h+='<div style="display:flex;flex-direction:column;align-items:center;width:24px;flex-shrink:0">';
+    h+='<div style="width:16px;height:16px;border-radius:50%;background:'+(isPast||ms.done?qColors[qi]:'#e8e8e8')+';border:2.5px solid '+(isCur?'var(--pd)':isPast?qColors[qi]:'#ddd')+';flex-shrink:0;z-index:1;'+(isCur?'box-shadow:0 0 0 3px rgba(0,0,0,.08)':'')+'"></div>';
+    if(qi>0)h+='<div style="width:2px;flex:1;background:'+(isPast?'var(--pink)':'#e8e8e8')+'"></div>';
+    h+='</div>';
+    // Right content
+    h+='<div onclick="editMilestone('+qi+')" style="flex:1;padding:8px 10px;border-radius:10px;background:'+(isCur?'var(--pl)':'#fafafa')+';cursor:pointer;margin-bottom:8px;border:1.5px solid '+(isCur?'var(--pink)':'transparent')+'">';
+    h+='<div style="display:flex;justify-content:space-between;align-items:center">';
+    h+='<span style="font-size:11px;font-weight:700;color:'+(isCur?'var(--pd)':'#888')+'">'+qEmoji[qi]+' '+ms.label+'</span>';
+    if(isCur)h+='<span style="font-size:9px;background:var(--pink);color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">지금 여기!</span>';
+    if(ms.done)h+='<span style="font-size:9px;background:#56C6A0;color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">달성!</span>';
+    h+='</div>';
+    if(ms.target)h+='<div style="font-size:12px;color:#555;margin-top:4px;'+(ms.done?'text-decoration:line-through;opacity:.5':'')+'">'+ms.target+'</div>';
+    else h+='<div style="font-size:11px;color:#ccc;margin-top:4px;font-style:italic">목표를 입력해봐</div>';
+    h+='</div></div>';
+  }
+  h+='</div>';
+
+  // 3. 이번 분기 스프린트
+  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+  h+='<span style="font-size:13px;font-weight:700;color:var(--pd)">🏃‍♀️ Q'+(curQ+1)+' 스프린트</span>';
+  h+='<span style="font-size:11px;color:#888">'+qp.week+'주차 / '+qp.totalWeeks+'주</span>';
+  h+='</div>';
+  h+='<div style="position:relative;height:22px;background:#f0f0f0;border-radius:11px;overflow:visible;margin-bottom:10px">';
+  h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+qp.pct+'%;background:linear-gradient(90deg,'+qColors[curQ]+',var(--pd));border-radius:11px"></div>';
+  h+='<div style="position:absolute;left:calc('+Math.max(qp.pct-2,0)+'% - 8px);top:50%;transform:translateY(-50%) scaleX(-1);font-size:16px;z-index:1">🏃‍♀️</div>';
+  h+='<div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:12px">🏁</div>';
+  h+='</div>';
+  h+='<div style="font-size:10px;color:#999;margin-bottom:10px;text-align:center">남은 '+qp.remain+'일 | '+qp.pct+'% 진행</div>';
+  // Actions
+  const actionDone=r.actions.filter(x=>x.done).length;
+  if(r.actions.length)h+='<div style="font-size:11px;color:#aaa;margin-bottom:6px">핵심 할 일 '+actionDone+'/'+r.actions.length+'</div>';
+  r.actions.forEach(a=>{
+    h+='<div class="goal-item">';
+    h+='<button class="goal-check'+(a.done?' done':'')+'" onclick="toggleAction(\''+a.id+'\')">'+(a.done?'✓':'')+'</button>';
+    h+='<div class="goal-text'+(a.done?' done':'')+'">'+a.text+'</div>';
+    h+='<button class="goal-del" onclick="deleteAction(\''+a.id+'\')">✕</button>';
+    h+='</div>';
+  });
+  h+='<div class="goal-add-row">';
+  h+='<input class="goal-add-input" id="action-input" placeholder="이번 분기 핵심 할 일..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addAction()">';
+  h+='<button class="goal-add-btn" onclick="addAction()">+</button>';
+  h+='</div></div>';
+
+  // 4. 월간 & 주간 목표 (기존 유지)
+  h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
+  h+=renderGoalSection('week','⭐','이번 주 목표');
+
   wrap.innerHTML=h;
 }
 
