@@ -3597,7 +3597,7 @@ function renderWeek(){
         if(Math.floor(b.startHour)===t){
           const top=Math.round((b.startHour-t)*28);
           const height=Math.max(Math.round(b.durHour*28),14);
-          h+='<div class="week-block'+(b.done?' done':'')+'" style="top:'+top+'px;height:'+height+'px;background:'+getCatColorOrTheme(b)+'" onclick="viewDate=\''+ds+'\';switchView(\'tl\')" title="'+b.name+' '+fmtH(b.startHour)+'-'+fmtH(b.startHour+b.durHour)+'">'+b.name+'</div>';
+          h+='<div class="week-block'+(b.done?' done':'')+'" style="top:'+top+'px;height:'+height+'px;background:'+getCatColorOrTheme(b)+'" onclick="viewDate=\''+ds+'\';switchView(\'tl\');render()" title="'+b.name+' '+fmtH(b.startHour)+'-'+fmtH(b.startHour+b.durHour)+'">'+b.name+'</div>';
         }
       });
       h+='</div>';
