@@ -3024,6 +3024,8 @@ function _renderStatsInner(wrap){
     h+='<div>';
     const catColors={'ADHD':'#E8849D','기분조절':'#5B7FFF','항우울':'#56C6A0','항불안':'#EF9F27','수면':'#9B7BB5','항정신병':'#378ADD'};
     const curTabMeds=window._mediTab==='night'?nightMeds:morningMeds;
+    const curTiming=window._mediTab==='night'?'저녁':'아침';
+    const curTake=medLogs.find(l=>l.date===today&&l.type==='take'&&l.timing===curTiming);
     curTabMeds.forEach(m=>{
       const dbInfo=MED_DB.find(d=>d.name===m.name);
       const cc=dbInfo?catColors[dbInfo.cat]||'var(--pd)':'var(--pd)';
@@ -3032,6 +3034,8 @@ function _renderStatsInner(wrap){
       h+='<span style="font-size:13px;font-weight:700;color:'+cc+'">'+m.name+' '+m.dose+'</span>';
       h+='</div>';
     });
+    // 복용 시간 표시 (약 목록 옆)
+    if(curTake)h+='<div style="font-size:10px;color:#56C6A0;margin-top:4px">✅ '+Math.floor(curTake.time)+':'+String(Math.round((curTake.time%1)*60)).padStart(2,'0')+' 복용</div>';
     h+='</div>';
     h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️ 설정</button>';
     h+='</div>';
@@ -3187,7 +3191,6 @@ function _renderStatsInner(wrap){
       if(!todayNightTake){
         h+='<button onclick="logMedTake(\'저녁\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:#5B7FFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">🌙 저녁약 먹었어!</button>';
       }else{
-        h+='<div style="font-size:11px;color:#888;margin-bottom:6px;text-align:center">✅ '+Math.floor(todayNightTake.time)+':'+String(Math.round((todayNightTake.time%1)*60)).padStart(2,'0')+' 복용 완료</div>';
         h+='<div style="display:flex;gap:6px;margin-bottom:8px">';
         h+='<button onclick="logMedTake(\'저녁\')" style="flex:1;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit">🔄 다시 기록</button>';
         h+='<button onclick="clearMedTake(\'저녁\')" style="padding:6px 10px;border-radius:6px;border:1px dashed #eee;background:#fff;color:#ccc;font-size:10px;cursor:pointer;font-family:inherit">✕ 초기화</button>';
