@@ -2691,7 +2691,7 @@ function openNightPlan(){
 setTimeout(()=>{
   if(localStorage.getItem('ff_tip_hidden'))return;
   const tip=document.getElementById('tip-bar');if(!tip)return;
-  tip.innerHTML='<div style="padding:10px 16px;font-size:11px;color:var(--pd);background:var(--pl);border-radius:10px;margin:4px 16px 0;line-height:1.8;position:relative">💡 <b>타임라인 사용 팁</b><br>• 시간 숫자 두 번 탭 → 1시간 블록 바로 추가<br>• 블록 하단 핸들 드래그 → 시간 늘리기/줄이기<br>• 블록 꾹 누르고 드래그 → 블록 이동<button onclick="localStorage.setItem(\'ff_tip_hidden\',\'1\');document.getElementById(\'tip-bar\').innerHTML=\'\'" style="position:absolute;top:6px;right:8px;background:none;border:none;color:#aaa;font-size:14px;cursor:pointer">✕</button></div>';
+  tip.innerHTML='<div style="margin:8px 16px;background:#fff;border:1.5px solid var(--pink);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px color-mix(in srgb,var(--pink) 15%,transparent)"><div style="background:var(--pink);padding:8px 14px;display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;font-weight:700;color:#fff">📌 타임라인 사용 팁</span><button onclick="localStorage.setItem(\'ff_tip_hidden\',\'1\');document.getElementById(\'tip-bar\').innerHTML=\'\'" style="background:none;border:none;color:rgba(255,255,255,.7);font-size:14px;cursor:pointer">✕</button></div><div style="padding:12px 14px;font-size:12px;color:#555;line-height:2"><div>👆 시간 숫자 <b>두 번 탭</b> → 1시간 블록 바로 추가</div><div>↕️ 블록 하단 핸들 <b>드래그</b> → 시간 늘리기/줄이기</div><div>✊ 블록 <b>꾹 누르고 드래그</b> → 블록 이동</div></div></div>';
 },2000);
 setTimeout(checkNightNudge,5000);
 setInterval(checkNightNudge,300000); // 5분마다 체크
