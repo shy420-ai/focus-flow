@@ -3366,7 +3366,7 @@ function showOnboarding(){
   const steps=[
     {sel:'.header',title:'Welcome to Focus Flow!',desc:'ADHD 뇌과학 기반으로 설계된 집중 플래너야.\n각 기능이 왜 이렇게 만들어졌는지 알려줄게!',pos:'bottom'},
     {sel:'#view-tl',title:'⏰ 일간 타임라인',desc:'시간 블록으로 하루를 시각화해.\n\n📚 Time Blocking (Cal Newport)\nADHD는 시간 감각이 약해서(Time Blindness) 눈에 보이는 시간 구조가 필수!',pos:'bottom',tab:'tl'},
-    {sel:'#fab-btn',title:'➕ 빠른 입력',desc:'"보고서 430 14시 1시간" 처럼 자연어로 입력하면 바로 블록 생성!\n\n📚 인지 부하 감소\n입력 단계가 적을수록 ADHD가 시작하기 쉬워져.',pos:'top'},
+    {sel:'.sheet',title:'➕ 빠른 입력',desc:'"보고서 430 14시 1시간" 처럼 자연어로 입력하면 바로 블록 생성!\n\n📚 인지 부하 감소\n입력 단계가 적을수록 ADHD가 시작하기 쉬워져.\n\n💡 팁: 빈 시간을 두 번 탭하면 블록이 자동 생성돼!',pos:'top',tab:'tl',action:function(){document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}},
     {sel:'#view-cal',title:'📅 월간 캘린더',desc:'한 달을 한눈에 보고 일정을 파악해.\n\n📚 Big Picture View\nADHD는 세부에 빠지면 전체를 놓치니까, 숲을 볼 수 있는 뷰가 중요해.',pos:'bottom',tab:'cal'},
     {sel:'#view-habit',title:'🌱 습관 트래커',desc:'66일 챌린지로 습관을 만들어봐!\n\n📚 Habit Formation (Lally et al., 2010)\n평균 66일이면 행동이 자동화돼. 매일 체크하는 시각적 피드백이 도파민 보상 루프를 만들어줘.',pos:'bottom',tab:'habit'},
     {sel:'#goal-content',title:'🎯 목표 트리',desc:'연간 목표 → 분기별 → 할 일로 쪼개는 역산 구조!\n\n📚 Goal Chunking (Safren et al., 2005)\n큰 목표를 작게 쪼개면 시작 저항이 줄어들어. 트리 구조로 "왜 이걸 하는지" 맥락도 유지!',pos:'bottom',tab:'goal'},
@@ -3386,30 +3386,29 @@ function showOnboarding(){
     const el=document.getElementById('onboarding');
     const isLast=idx===steps.length-1;
     if(!target){idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}return;}
+    // Auto-open sheet for FAB step
+    if(s.action)s.action();
     const rect=target.getBoundingClientRect();
     // Highlight target
     target.style.position='relative';target.style.zIndex='9002';target.style.boxShadow='0 0 0 4px var(--pink), 0 0 20px rgba(0,0,0,.3)';target.style.borderRadius='12px';
     // Scroll into view if needed
     if(rect.top<0||rect.bottom>window.innerHeight)target.scrollIntoView({behavior:'smooth',block:'center'});
-    // Tooltip position
-    const isTop=s.pos==='top';
-    const tipTop=isTop?Math.max(10,rect.top-140):Math.min(rect.bottom+12,window.innerHeight-160);
-    const tipLeft=Math.max(10,Math.min(window.innerWidth/2-130,window.innerWidth-280));
-    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9001" onclick="nextOnboarding()"></div>'+
-      '<div style="position:fixed;top:'+tipTop+'px;left:'+tipLeft+'px;width:260px;background:#fff;border-radius:16px;padding:16px;z-index:9003;box-shadow:0 8px 30px rgba(0,0,0,.2)">'+
+    // Tooltip: always centered at bottom of screen for reliability
+    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9001" onclick="nextOnboarding()"></div>'+
+      '<div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:320px;background:#fff;border-radius:16px;padding:16px 18px;z-index:9003;box-shadow:0 8px 30px rgba(0,0,0,.25)">'+
       '<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:6px">'+s.title+'</div>'+
-      '<div style="font-size:12px;color:#666;line-height:1.5;margin-bottom:12px">'+s.desc.replace(/\n/g,'<br>')+'</div>'+
+      '<div style="font-size:12px;color:#666;line-height:1.6;margin-bottom:12px;max-height:40vh;overflow-y:auto">'+s.desc.replace(/\n/g,'<br>')+'</div>'+
       '<div style="display:flex;justify-content:space-between;align-items:center">'+
       '<div style="display:flex;gap:4px">'+steps.map((_,i)=>'<div style="width:6px;height:6px;border-radius:50%;background:'+(i===idx?'var(--pink)':'#ddd')+'"></div>').join('')+'</div>'+
       '<div style="display:flex;gap:8px;align-items:center">'+
       '<span onclick="skipOnboarding()" style="font-size:11px;color:#aaa;cursor:pointer">건너뛰기</span>'+
-      '<button onclick="nextOnboarding()" style="padding:6px 16px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:12px;font-weight:600;cursor:pointer">'+(isLast?'시작!':'다음')+'</button>'+
+      '<button onclick="nextOnboarding()" style="padding:8px 20px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+(isLast?'시작!':'다음 →')+'</button>'+
       '</div></div></div>';
   }
   function clearHighlight(){
     steps.forEach(s=>{const t=document.querySelector(s.sel);if(t){t.style.zIndex='';t.style.boxShadow='';t.style.borderRadius='';}});
   }
-  window.nextOnboarding=function(){clearHighlight();idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}};
+  window.nextOnboarding=function(){clearHighlight();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');idx++;if(idx>=steps.length){skipOnboarding();}else{renderStep();}};
   window.skipOnboarding=function(){clearHighlight();localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';switchView('tl');};
   renderStep();
 }
