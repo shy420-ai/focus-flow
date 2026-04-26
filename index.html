@@ -38,7 +38,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .dtab{padding:6px 13px;border-radius:99px;border:1.5px solid var(--pl);font-size:12px;color:#aaa;white-space:nowrap;cursor:pointer;background:none;font-family:inherit}
 .dtab.active{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
 
-.view-tabs{background:#fff;padding:8px 12px;display:flex;gap:6px;border-bottom:1px solid var(--pl);position:sticky;top:140px;z-index:98;overflow-x:auto;scrollbar-width:none}.view-tabs::-webkit-scrollbar{display:none}
+.view-tabs{background:#fff;padding:8px 12px;display:flex;gap:6px;border-bottom:1px solid var(--pl);position:sticky;top:76px;z-index:98;overflow-x:auto;scrollbar-width:none}.view-tabs::-webkit-scrollbar{display:none}
 .vtab{padding:7px 14px;border-radius:99px;border:1.5px solid var(--pl);font-size:12px;color:#aaa;cursor:pointer;background:none;font-family:inherit;font-weight:500;white-space:nowrap}
 .vtab.active{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:600}
 .vtab[draggable=true]{cursor:grab}.vtab[draggable=true]:active{cursor:grabbing}
@@ -522,7 +522,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="friend-content"></div>
   </div>
 </div>
-<div class="date-tabs" id="date-tabs"></div>
+<div class="date-tabs" id="date-tabs" style="display:none"></div>
 <div class="view-tabs" id="view-tabs"></div>
 <div class="summary" id="summary"></div>
 
@@ -530,6 +530,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="desktop-layout">
 <!-- 타임라인 -->
 <div id="view-tl" class="desktop-left">
+  <div id="date-nav" style="display:flex;align-items:center;justify-content:center;gap:12px;padding:10px 16px">
+    <button onclick="navDate(-1)" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--pd);padding:4px 8px">◀</button>
+    <div style="display:flex;align-items:center;gap:6px;cursor:pointer" onclick="openDatePicker()">
+      <span style="font-size:18px">📅</span>
+      <span id="date-nav-label" style="font-size:15px;font-weight:700;color:var(--pd)"></span>
+    </div>
+    <button onclick="navDate(1)" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--pd);padding:4px 8px">▶</button>
+    <button onclick="viewDate=todayStr();render()" style="background:var(--pl);border:1px solid var(--pink);border-radius:8px;font-size:10px;color:var(--pd);padding:3px 8px;cursor:pointer;font-family:inherit;font-weight:600">오늘</button>
+  </div>
   <div id="horoscope-bar" style="display:none;padding:8px 16px;font-size:12px;color:var(--pd);background:var(--pl);border-radius:10px;margin:8px 16px 0;line-height:1.5;text-align:center"></div>
   <div id="tip-bar"></div>
   <div id="nudge-bar" style="display:none;padding:10px 16px;font-size:12px;color:#fff;background:var(--pd);border-radius:10px;margin:4px 16px 0;text-align:center;line-height:1.5"></div>
@@ -1080,9 +1089,29 @@ function switchView(v){
 window.addEventListener('resize',()=>{if(isDesktop()){document.getElementById('view-tl').style.display='block';document.getElementById('view-cal').style.display='block';renderCal();if(curView==='habit'){document.getElementById('view-habit').style.display='block';}}});
 
 // 렌더
-function render(){renderDateTabs();renderTimeline();renderSummary();if(curView==='inbox'||isDesktop())renderInbox();if(curView==='habit')renderHabits();if(curView==='drop')renderDrop();if(isDesktop()){document.getElementById('view-tl').style.display='block';document.getElementById('view-cal').style.display='block';document.getElementById('view-inbox').style.display='block';}else if(curView==='cal'){renderCal();}}
+function render(){renderDateTabs();updateDateNav();renderTimeline();renderSummary();if(curView==='inbox'||isDesktop())renderInbox();if(curView==='habit')renderHabits();if(curView==='drop')renderDrop();if(isDesktop()){document.getElementById('view-tl').style.display='block';document.getElementById('view-cal').style.display='block';document.getElementById('view-inbox').style.display='block';}else if(curView==='cal'){renderCal();}}
 
 let _showPastDates=false;
+function navDate(dir){
+  const d=new Date(viewDate+'T12:00:00');d.setDate(d.getDate()+dir);
+  viewDate=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  render();
+}
+function updateDateNav(){
+  const el=document.getElementById('date-nav-label');
+  if(el)el.textContent=dateLabel(viewDate);
+}
+function openDatePicker(){
+  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9010;display:flex;align-items:center;justify-content:center" id="date-picker-overlay" onclick="if(event.target===this)this.remove()">';
+  h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
+  h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">📅 날짜 선택</div>';
+  h+='<input type="date" id="date-picker-input" value="'+viewDate+'" style="width:100%;padding:10px 12px;border:1.5px solid var(--pl);border-radius:10px;font-size:14px;font-family:inherit;outline:none;box-sizing:border-box">';
+  h+='<div style="display:flex;gap:8px;margin-top:14px">';
+  h+='<button onclick="document.getElementById(\'date-picker-overlay\').remove()" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--pl);background:#fff;font-size:13px;cursor:pointer;font-family:inherit;color:#aaa">취소</button>';
+  h+='<button onclick="viewDate=document.getElementById(\'date-picker-input\').value;document.getElementById(\'date-picker-overlay\').remove();render()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit">이동</button>';
+  h+='</div></div></div>';
+  document.body.insertAdjacentHTML('beforeend',h);
+}
 function renderDateTabs(){
   const wrap=document.getElementById('date-tabs');wrap.innerHTML='';
   const all=allDates();
@@ -3878,7 +3907,7 @@ function showOnboarding(force){
     {title:'👆 "공부 14시 1시간" 입력해봐!',desc:'추가하기 버튼 누르면 자동 파싱!',sel:'.sheet',tab:'tl',interactive:'sheetadd',
       action:()=>{document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}},
     // 4. 날짜 탭
-    {title:'📆 날짜 탭',desc:'오늘, 내일, 이후 날짜를 빠르게 전환해.\n\n💡 좌우로 스와이프해서 더 많은 날짜를 볼 수 있어!',sel:'#date-tabs',tab:'tl'},
+    {title:'📆 날짜 이동',desc:'◀▶ 화살표로 날짜를 전환하고\n📅 달력 아이콘을 터치하면 원하는 날짜로 바로 이동!',sel:'#date-nav',tab:'tl'},
     // 5. 뷰 탭 + 순서 변경
     {title:'🔄 탭 전환 & 순서 변경',desc:'여기서 다양한 뷰를 전환할 수 있어.\n\n💡 탭을 꾹 눌러서 드래그하면 순서를 바꿀 수 있어!\n자주 쓰는 탭을 앞으로 옮겨봐.\n\n📚 개인화 (Personalization)\n자기한테 맞는 환경을 만들면 도구 사용 지속률이 올라가!',sel:'#view-tabs',tab:'tl'},
     // 6. 월간 캘린더
