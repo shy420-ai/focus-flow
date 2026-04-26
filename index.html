@@ -903,6 +903,8 @@ const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
 let viewDate=todayStr(),curView=localStorage.getItem('ff_cur_view')||'tl',bufOn=false,preview=null,nid=Date.now();
+// 일간 탭이 필수이므로, 시작 시 보이게 보장
+if(!['tl','week','cal','habit','goal','drop','stats'].includes(curView))curView='tl';
 let activeMenu=null,memoId=null,dragState=null,didDrag=false;
 let holdTimer=null,holdReady=false;
 let calY=new Date().getFullYear(),calM=new Date().getMonth(),calSel=null;
@@ -3930,8 +3932,8 @@ function renderViewTabs(){
   wrap.innerHTML='';
   const order=getTabOrder();
   let hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
-  // 'tl'은 절대 숨기지 않음
-  if(hidden.includes('tl')){hidden=hidden.filter(x=>x!=='tl');localStorage.setItem('ff_hidden_tabs',JSON.stringify(hidden));}
+  // 'tl'은 절대 숨기지 않음, 잘못된 hidden 데이터 정리
+  if(hidden.includes('tl')||hidden.length>5){hidden=[];localStorage.setItem('ff_hidden_tabs','[]');}
   order.filter(key=>!hidden.includes(key)).forEach(key=>{
     const btn=document.createElement('button');
     btn.className='vtab'+(key===curView?' active':'');
@@ -4977,7 +4979,7 @@ migrateBlocks();
 buildGrid();render();applyMode();
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v25';
+  const SW_VER='v26';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
