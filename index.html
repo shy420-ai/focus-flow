@@ -3908,7 +3908,16 @@ setTimeout(()=>{
 const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop','stats'];
 const TAB_LABELS={tl:'⏰ 일간',week:'📅 주간',cal:'🗓 월간',habit:'🌱 습관',goal:'🎯 목표',drop:'📦 드롭',stats:'💊 메디'};
 function getTabOrder(){
-  try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=7&&arr.includes('stats'))return arr;}}catch{}
+  try{
+    const s=localStorage.getItem('ff_tab_order');
+    if(s){
+      const arr=JSON.parse(s);
+      // Ensure all default tabs exist
+      const missing=DEFAULT_TAB_ORDER.filter(t=>!arr.includes(t));
+      if(missing.length)missing.forEach(t=>arr.push(t));
+      return arr.filter(t=>DEFAULT_TAB_ORDER.includes(t));
+    }
+  }catch{}
   return DEFAULT_TAB_ORDER.slice();
 }
 function saveTabOrder(order){localStorage.setItem('ff_tab_order',JSON.stringify(order));}
