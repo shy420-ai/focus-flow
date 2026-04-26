@@ -3443,7 +3443,7 @@ function showOnboarding(){
     // Step counter
     const stepNum=(idx+1)+'/'+steps.length;
     const isInteractive=!!s.interactive;
-    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:9001;'+(isInteractive?'pointer-events:none':'')+'" '+(isInteractive?'':'onclick="nextOnboarding()"')+'></div>'+
+    el.innerHTML='<div style="position:fixed;inset:0;background:'+(isInteractive?'transparent':'rgba(0,0,0,.4)')+';z-index:9001;'+(isInteractive?'pointer-events:none':'')+'" '+(isInteractive?'':'onclick="nextOnboarding()"')+'></div>'+
       '<div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:340px;background:#fff;border-radius:18px;padding:18px 20px;z-index:9003;box-shadow:0 8px 30px rgba(0,0,0,.25)">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
       '<div style="font-size:15px;font-weight:700;color:var(--pd)">'+s.title+'</div>'+
