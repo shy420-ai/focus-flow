@@ -2742,42 +2742,43 @@ if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),dis
 // ====== MEDI TRACKER ======
 const MED_DB=[
 // ADHD
-{name:'콘서타',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['18mg','27mg','36mg','54mg'],duration:10,doseHours:{'18mg':8,'27mg':9,'36mg':10,'54mg':12},peak:'1~2시간',effects:['집중력 향상','충동 억제','작업 지속력 증가'],sides:['식욕감소','불면','두통','심박수 증가'],note:'아침 식후 복용. 오후 늦게 먹으면 수면 방해'},
-{name:'메디키넷',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['5mg','10mg','20mg','30mg','40mg'],duration:8,peak:'1~2시간',effects:['집중력 향상','충동 억제'],sides:['식욕감소','불면','어지러움'],note:'아침 식후 복용'},
-{name:'페니드',generic:'메틸페니데이트 속방',cat:'ADHD',doses:['5mg','10mg','20mg'],duration:4,peak:'30분~1시간',effects:['빠른 집중력 향상'],sides:['식욕감소','불면','반동효과'],note:'하루 2~3회 복용. 효과가 빠르게 올라오고 빨리 떨어짐'},
-{name:'스트라테라',generic:'아토목세틴',cat:'ADHD',doses:['10mg','18mg','25mg','40mg','60mg','80mg'],duration:24,peak:'1~2주(축적형)',effects:['집중력 향상','감정 조절','불안 감소'],sides:['메스꺼움','식욕감소','졸림','입마름'],note:'매일 복용, 2~4주 후 효과. 남용 위험 없음'},
-{name:'인튜니브',generic:'구안파신 서방',cat:'ADHD',doses:['1mg','2mg','3mg','4mg'],duration:24,peak:'축적형',effects:['과잉행동 감소','감정 조절','충동 억제'],sides:['졸림','저혈압','어지러움','피로'],note:'취침 전 복용 권장. 갑자기 중단 금지'},
+{name:'콘서타',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['18mg','27mg','36mg','54mg'],duration:10,doseHours:{'18mg':8,'27mg':9,'36mg':10,'54mg':12},peak:'1~2시간',timing:'아침',effects:['집중력 향상','충동 억제','작업 지속력 증가'],sides:['식욕감소','불면','두통','심박수 증가'],note:'아침 식후 복용. 오후 늦게 먹으면 수면 방해'},
+{name:'메디키넷',generic:'메틸페니데이트 서방',cat:'ADHD',doses:['5mg','10mg','20mg','30mg','40mg'],duration:8,peak:'1~2시간',timing:'아침',effects:['집중력 향상','충동 억제'],sides:['식욕감소','불면','어지러움'],note:'아침 식후 복용'},
+{name:'페니드',generic:'메틸페니데이트 속방',cat:'ADHD',doses:['5mg','10mg','20mg'],duration:4,peak:'30분~1시간',timing:'아침',effects:['빠른 집중력 향상'],sides:['식욕감소','불면','반동효과'],note:'하루 2~3회 복용. 효과가 빠르게 올라오고 빨리 떨어짐'},
+{name:'스트라테라',generic:'아토목세틴',cat:'ADHD',doses:['10mg','18mg','25mg','40mg','60mg','80mg'],duration:24,peak:'1~2주(축적형)',timing:'아침',effects:['집중력 향상','감정 조절','불안 감소'],sides:['메스꺼움','식욕감소','졸림','입마름'],note:'매일 복용, 2~4주 후 효과. 남용 위험 없음'},
+{name:'인튜니브',generic:'구안파신 서방',cat:'ADHD',doses:['1mg','2mg','3mg','4mg'],duration:24,peak:'축적형',timing:'저녁',effects:['과잉행동 감소','감정 조절','충동 억제'],sides:['졸림','저혈압','어지러움','피로'],note:'취침 전 복용 권장. 갑자기 중단 금지'},
 // 기분조절제
-{name:'라믹탈',generic:'라모트리진',cat:'기분조절',doses:['25mg','50mg','100mg','200mg'],duration:24,peak:'축적형',effects:['기분 안정','우울 삽화 예방'],sides:['두통','어지러움','발진(주의!)','메스꺼움'],note:'서서히 증량 필수. 발진 생기면 즉시 병원'},
-{name:'데파코트',generic:'발프로산',cat:'기분조절',doses:['250mg','500mg','750mg','1000mg'],duration:24,peak:'축적형',effects:['조증 억제','기분 안정'],sides:['체중증가','졸림','탈모','소화불량'],note:'혈중농도 검사 필요. 임신 시 금기'},
-{name:'리튬',generic:'탄산리튬',cat:'기분조절',doses:['300mg','600mg','900mg'],duration:24,peak:'축적형',effects:['조증/우울 예방','자살충동 감소'],sides:['갈증','손떨림','체중증가','갑상선 기능저하'],note:'혈중농도 모니터링 필수. 수분 섭취 중요'},
+{name:'라믹탈',generic:'라모트리진',cat:'기분조절',doses:['25mg','50mg','100mg','200mg'],duration:24,peak:'축적형',timing:'아침',effects:['기분 안정','우울 삽화 예방'],sides:['두통','어지러움','발진(주의!)','메스꺼움'],note:'서서히 증량 필수. 발진 생기면 즉시 병원'},
+{name:'데파코트',generic:'발프로산',cat:'기분조절',doses:['250mg','500mg','750mg','1000mg'],duration:24,peak:'축적형',timing:'저녁',effects:['조증 억제','기분 안정'],sides:['체중증가','졸림','탈모','소화불량'],note:'혈중농도 검사 필요. 임신 시 금기'},
+{name:'리튬',generic:'탄산리튬',cat:'기분조절',doses:['300mg','600mg','900mg'],duration:24,peak:'축적형',timing:'저녁',effects:['조증/우울 예방','자살충동 감소'],sides:['갈증','손떨림','체중증가','갑상선 기능저하'],note:'혈중농도 모니터링 필수. 수분 섭취 중요'},
 // 항우울제
-{name:'졸로푸트',generic:'설트랄린(SSRI)',cat:'항우울',doses:['25mg','50mg','100mg','200mg'],duration:24,peak:'축적형(2~4주)',effects:['우울감 감소','불안 완화','강박 완화'],sides:['메스꺼움','성기능장애','두통','불면/졸림'],note:'아침 복용 권장. 2~4주 후 효과'},
-{name:'렉사프로',generic:'에스시탈로프람(SSRI)',cat:'항우울',doses:['5mg','10mg','20mg'],duration:24,peak:'축적형(2~4주)',effects:['우울감 감소','불안 완화'],sides:['메스꺼움','졸림','성기능장애','체중변화'],note:'부작용 적은 편. 아침 또는 저녁 복용'},
-{name:'이펙사',generic:'벤라팍신(SNRI)',cat:'항우울',doses:['37.5mg','75mg','150mg','225mg'],duration:24,peak:'축적형(2~4주)',effects:['우울감 감소','불안 완화','통증 완화'],sides:['메스꺼움','어지러움','발한','혈압상승'],note:'갑자기 중단 시 금단증상 심함'},
-{name:'웰부트린',generic:'부프로피온',cat:'항우울',doses:['150mg','300mg'],duration:24,peak:'축적형',effects:['우울감 감소','집중력 향상','금연 보조'],sides:['불면','두통','입마름','경련위험(고용량)'],note:'ADHD+우울 동반 시 많이 처방. 식욕억제 효과'},
+{name:'졸로푸트',generic:'설트랄린(SSRI)',cat:'항우울',doses:['25mg','50mg','100mg','200mg'],duration:24,peak:'축적형(2~4주)',timing:'아침',effects:['우울감 감소','불안 완화','강박 완화'],sides:['메스꺼움','성기능장애','두통','불면/졸림'],note:'아침 복용 권장. 2~4주 후 효과'},
+{name:'렉사프로',generic:'에스시탈로프람(SSRI)',cat:'항우울',doses:['5mg','10mg','20mg'],duration:24,peak:'축적형(2~4주)',timing:'아침',effects:['우울감 감소','불안 완화'],sides:['메스꺼움','졸림','성기능장애','체중변화'],note:'부작용 적은 편. 아침 또는 저녁 복용'},
+{name:'이펙사',generic:'벤라팍신(SNRI)',cat:'항우울',doses:['37.5mg','75mg','150mg','225mg'],duration:24,peak:'축적형(2~4주)',timing:'아침',effects:['우울감 감소','불안 완화','통증 완화'],sides:['메스꺼움','어지러움','발한','혈압상승'],note:'갑자기 중단 시 금단증상 심함'},
+{name:'웰부트린',generic:'부프로피온',cat:'항우울',doses:['150mg','300mg'],duration:24,peak:'축적형',timing:'아침',effects:['우울감 감소','집중력 향상','금연 보조'],sides:['불면','두통','입마름','경련위험(고용량)'],note:'ADHD+우울 동반 시 많이 처방. 식욕억제 효과'},
 // 항불안/수면
-{name:'자낙스',generic:'알프라졸람(벤조)',cat:'항불안',doses:['0.25mg','0.5mg','1mg'],duration:5,peak:'30분',effects:['불안 즉시 완화','공황 억제','근육 이완'],sides:['졸림','의존성','기억력 저하','반동불안'],note:'⚠️ 의존성 주의. 단기 사용 권장'},
-{name:'아티반',generic:'로라제팜(벤조)',cat:'항불안',doses:['0.5mg','1mg','2mg'],duration:8,peak:'30분~1시간',effects:['불안 완화','수면 유도'],sides:['졸림','의존성','어지러움'],note:'⚠️ 의존성 주의'},
-{name:'스틸녹스',generic:'졸피뎀',cat:'수면',doses:['5mg','10mg'],duration:6,peak:'30분',effects:['수면 유도'],sides:['몽유병','기억상실','어지러움','의존성'],note:'취침 직전 복용. 7~8시간 수면 확보'},
+{name:'자낙스',generic:'알프라졸람(벤조)',cat:'항불안',doses:['0.25mg','0.5mg','1mg'],duration:5,peak:'30분',timing:'수시',effects:['불안 즉시 완화','공황 억제','근육 이완'],sides:['졸림','의존성','기억력 저하','반동불안'],note:'⚠️ 의존성 주의. 단기 사용 권장'},
+{name:'아티반',generic:'로라제팜(벤조)',cat:'항불안',doses:['0.5mg','1mg','2mg'],duration:8,peak:'30분~1시간',timing:'수시',effects:['불안 완화','수면 유도'],sides:['졸림','의존성','어지러움'],note:'⚠️ 의존성 주의'},
+{name:'스틸녹스',generic:'졸피뎀',cat:'수면',doses:['5mg','10mg'],duration:6,peak:'30분',timing:'저녁',effects:['수면 유도'],sides:['몽유병','기억상실','어지러움','의존성'],note:'취침 직전 복용. 7~8시간 수면 확보'},
 // 항정신병
-{name:'세로퀠',generic:'쿠에티아핀',cat:'항정신병',doses:['25mg','100mg','200mg','300mg'],duration:8,peak:'1~2시간',effects:['수면 유도(저용량)','기분 안정','조증 억제'],sides:['졸림','체중증가','어지러움','대사증후군'],note:'저용량은 수면보조로 많이 사용'},
-{name:'아빌리파이',generic:'아리피프라졸',cat:'항정신병',doses:['2mg','5mg','10mg','15mg'],duration:72,peak:'축적형',effects:['기분 안정','망상/환각 억제','우울 보조'],sides:['불안','불면','체중변화','좌불안석'],note:'반감기 매우 길어 안정적'},
+{name:'세로퀠',generic:'쿠에티아핀',cat:'항정신병',doses:['25mg','100mg','200mg','300mg'],duration:8,peak:'1~2시간',timing:'저녁',effects:['수면 유도(저용량)','기분 안정','조증 억제'],sides:['졸림','체중증가','어지러움','대사증후군'],note:'저용량은 수면보조로 많이 사용'},
+{name:'아빌리파이',generic:'아리피프라졸',cat:'항정신병',doses:['2mg','5mg','10mg','15mg'],duration:72,peak:'축적형',timing:'아침',effects:['기분 안정','망상/환각 억제','우울 보조'],sides:['불안','불면','체중변화','좌불안석'],note:'반감기 매우 길어 안정적'},
 ];
 function getMedConfig(){try{return JSON.parse(localStorage.getItem('ff_med_config')||'null')}catch{return null}}
 function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid)db.collection('users').doc(_uid).update({medConfig:c}).catch(()=>{});}catch{}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
 function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).update({medLogs:l}).catch(()=>{});}catch{}}
-function logMedTake(){
+function logMedTake(timing){
   const cfg=getMedConfig();if(!cfg)return;
   const logs=getMedLogs();const now=new Date();
   const today=todayStr();
-  // Remove existing today entry
-  const existing=logs.findIndex(l=>l.date===today&&l.type==='take');
+  const t=timing||'아침';
+  // Remove existing today entry for same timing
+  const existing=logs.findIndex(l=>l.date===today&&l.type==='take'&&l.timing===t);
   if(existing>=0)logs.splice(existing,1);
-  logs.push({date:today,type:'take',time:now.getHours()+now.getMinutes()/60,ts:now.toISOString()});
+  logs.push({date:today,type:'take',timing:t,time:now.getHours()+now.getMinutes()/60,ts:now.toISOString()});
   saveMedLogs(logs);renderStats();
-  showMiniToast('💊 복용 기록!');
+  showMiniToast('💊 '+(t==='아침'?'☀️ 아침약':'🌙 저녁약')+' 복용 기록!');
 }
 function logMedStatus(level){
   const logs=getMedLogs();const now=new Date();const today=todayStr();
@@ -2888,9 +2889,11 @@ function addMedToSetup(){
   const name=document.getElementById('med-name').value.trim();if(!name)return;
   const dose=document.getElementById('med-dose').value;
   const dur=Number(document.getElementById('med-dur').value)||10;
+  const dbInfo=MED_DB.find(d=>d.name===name);
+  const timing=dbInfo?dbInfo.timing:'아침';
   const cfg=getMedConfig()||{meds:[],bedGoal:23};
   if(!cfg.meds)cfg.meds=[];
-  cfg.meds.push({name,dose:dose==='직접입력'?'':dose,duration:dur});
+  cfg.meds.push({name,dose:dose==='직접입력'?'':dose,duration:dur,timing});
   saveMedConfig(cfg);document.getElementById('med-setup').remove();setupMed();
 }
 function removeMedFromSetup(idx){
@@ -2969,23 +2972,43 @@ function renderStats(){
       }
     }
 
-    const mainMed=cfg.meds[0];
-    if(!todayTake){
-      h+='<button onclick="logMedTake()" style="width:100%;padding:14px;border-radius:12px;border:none;background:var(--pink);color:#fff;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">💊 먹었어!</button>';
-    }else{
-      const takeH=todayTake.time;const endH=takeH+mainMed.duration;
-      const elapsed=nowHour-takeH;const remaining=Math.max(endH-nowHour,0);
-      const pct=Math.min(Math.max(elapsed/mainMed.duration*100,0),100);
-      h+='<div style="font-size:12px;color:#888;margin-bottom:8px;text-align:center">'+Math.floor(takeH)+':'+String(Math.round((takeH%1)*60)).padStart(2,'0')+' 복용 · 예상 효과 ~'+Math.floor(endH%24)+':00'+(remaining>0?' · 남은 '+Math.round(remaining)+'시간':'· 효과 종료')+'</div>';
-      // Progress bar
-      h+='<div style="position:relative;height:24px;background:#f0f0f0;border-radius:12px;overflow:hidden;margin-bottom:10px">';
-      const greenPct=Math.min(pct,70);const yellowPct=Math.min(Math.max(pct-70,0),20);const redPct=Math.max(pct-90,0);
-      h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+greenPct+'%;background:#56C6A0;transition:width .3s"></div>';
-      h+='<div style="position:absolute;left:'+greenPct+'%;top:0;height:100%;width:'+yellowPct+'%;background:#EF9F27;transition:width .3s"></div>';
-      h+='<div style="position:absolute;left:'+(greenPct+yellowPct)+'%;top:0;height:100%;width:'+redPct+'%;background:#E24B4A;transition:width .3s"></div>';
-      h+='<div style="position:absolute;left:'+Math.max(pct-1,0)+'%;top:50%;transform:translateY(-50%);font-size:12px;z-index:1">💊</div>';
-      h+='</div>';
-      h+='<button onclick="logMedTake()" style="width:100%;padding:8px;border-radius:8px;border:1.5px dashed var(--pl);background:#fff;color:var(--pd);font-size:11px;cursor:pointer;font-family:inherit">🔄 복용 시간 다시 기록</button>';
+    // 아침약 / 저녁약 구분
+    const morningMeds=cfg.meds.filter(m=>m.timing==='아침'||m.timing==='수시');
+    const nightMeds=cfg.meds.filter(m=>m.timing==='저녁');
+    const todayMorningTake=medLogs.find(l=>l.date===today&&l.type==='take'&&l.timing==='아침');
+    const todayNightTake=medLogs.find(l=>l.date===today&&l.type==='take'&&l.timing==='저녁');
+
+    // 아침약
+    if(morningMeds.length){
+      h+='<div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">☀️ 아침약 — '+morningMeds.map(m=>m.name+' '+m.dose).join(', ')+'</div>';
+      if(!todayMorningTake){
+        h+='<button onclick="logMedTake(\'아침\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:10px">☀️ 아침약 먹었어!</button>';
+      }else{
+        const mainMed=morningMeds[0];
+        const takeH=todayMorningTake.time;const endH=takeH+mainMed.duration;
+        const elapsed=nowHour-takeH;const remaining=Math.max(endH-nowHour,0);
+        const pct=Math.min(Math.max(elapsed/mainMed.duration*100,0),100);
+        h+='<div style="font-size:11px;color:#888;margin-bottom:6px;text-align:center">'+Math.floor(takeH)+':'+String(Math.round((takeH%1)*60)).padStart(2,'0')+' 복용 · 예상 ~'+Math.floor(endH%24)+':00'+(remaining>0?' · 남은 '+Math.round(remaining)+'시간':' · 효과 종료')+'</div>';
+        h+='<div style="position:relative;height:20px;background:#f0f0f0;border-radius:10px;overflow:hidden;margin-bottom:6px">';
+        const gp=Math.min(pct,70),yp=Math.min(Math.max(pct-70,0),20),rp=Math.max(pct-90,0);
+        h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+gp+'%;background:#56C6A0"></div>';
+        h+='<div style="position:absolute;left:'+gp+'%;top:0;height:100%;width:'+yp+'%;background:#EF9F27"></div>';
+        h+='<div style="position:absolute;left:'+(gp+yp)+'%;top:0;height:100%;width:'+rp+'%;background:#E24B4A"></div>';
+        h+='<div style="position:absolute;left:'+Math.max(pct-1,0)+'%;top:50%;transform:translateY(-50%);font-size:11px">💊</div>';
+        h+='</div>';
+        h+='<button onclick="logMedTake(\'아침\')" style="width:100%;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit;margin-bottom:10px">🔄 다시 기록</button>';
+      }
+    }
+
+    // 저녁약
+    if(nightMeds.length){
+      h+='<div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">🌙 저녁약 — '+nightMeds.map(m=>m.name+' '+m.dose).join(', ')+'</div>';
+      if(!todayNightTake){
+        h+='<button onclick="logMedTake(\'저녁\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:#5B7FFF;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;margin-bottom:8px">🌙 저녁약 먹었어!</button>';
+      }else{
+        h+='<div style="font-size:11px;color:#888;margin-bottom:6px;text-align:center">✅ '+Math.floor(todayNightTake.time)+':'+String(Math.round((todayNightTake.time%1)*60)).padStart(2,'0')+' 복용 완료</div>';
+        h+='<button onclick="logMedTake(\'저녁\')" style="width:100%;padding:6px;border-radius:6px;border:1px dashed var(--pl);background:#fff;color:#aaa;font-size:10px;cursor:pointer;font-family:inherit;margin-bottom:8px">🔄 다시 기록</button>';
+      }
     }
     h+='</div>';
 
@@ -3860,7 +3883,7 @@ setTimeout(()=>{
 
 // ====== VIEW TABS (draggable order) ======
 const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop','stats'];
-const TAB_LABELS={tl:'일간',week:'주간',cal:'월간',habit:'습관',goal:'목표',drop:'드롭',stats:'메디'};
+const TAB_LABELS={tl:'⏰ 일간',week:'📅 주간',cal:'🗓 월간',habit:'🌱 습관',goal:'🎯 목표',drop:'📦 드롭',stats:'💊 메디'};
 function getTabOrder(){
   try{const s=localStorage.getItem('ff_tab_order');if(s){const arr=JSON.parse(s);if(arr.length>=7&&arr.includes('stats'))return arr;}}catch{}
   return DEFAULT_TAB_ORDER.slice();
