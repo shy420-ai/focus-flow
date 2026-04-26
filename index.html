@@ -3493,7 +3493,19 @@ function renderHabits(){
   const weekDayLabels=['월','화','수','목','금','토','일'];
   let h='';
 
-  h+='<div style="font-size:10px;color:#aaa;background:var(--pl);border-radius:10px;padding:10px 14px;margin-bottom:10px;line-height:1.7;text-align:center">🧠 습관이 자동화되려면 평균 66일<br><span style="font-size:9px;opacity:.7">(Phillippa Lally, 2009)</span><br>연속 아니어도 총 66일 달성하면 완성!</div>';
+  // Habit tree
+  const completedHabits=habits.filter(hab=>{const total=getHabitTotalDays(hab.id,hab.createdAt);return total>=66;}).length;
+  const FRUITS=['🍎','🍊','🍋','🍇','🍑','🍒','🍓','🥝'];
+  h+='<div style="text-align:center;margin-bottom:10px;position:relative">';
+  h+='<img src="tree.png" style="width:120px;height:auto;opacity:.9">';
+  if(completedHabits>0){
+    h+='<div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:100px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px">';
+    for(let i=0;i<completedHabits;i++)h+='<span style="font-size:18px">'+FRUITS[i%FRUITS.length]+'</span>';
+    h+='</div>';
+  }
+  h+='<div style="font-size:10px;color:#aaa;margin-top:4px">66일 달성 습관마다 열매가 열려요 🌳</div>';
+  h+='</div>';
+  h+='<div style="font-size:10px;color:#aaa;background:var(--pl);border-radius:10px;padding:8px 14px;margin-bottom:10px;line-height:1.7;text-align:center">🧠 습관이 자동화되려면 평균 66일 <span style="font-size:9px;opacity:.7">(Phillippa Lally, 2009)</span><br>연속 아니어도 총 66일 달성하면 완성!</div>';
   // Habit add
   h+='<div class="habit-section-title">습관 관리</div>';
   h+='<div class="habit-input-row">';
