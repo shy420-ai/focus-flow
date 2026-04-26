@@ -3367,8 +3367,10 @@ function showOnboarding(){
     // 1. Welcome
     {title:'👋 Welcome to Focus Flow!',desc:'ADHD 뇌과학 기반으로 설계된 집중 플래너야.\n각 기능이 왜 이렇게 만들어졌는지, 직접 체험하면서 알려줄게!',sel:'.header'},
     // 2. 타임라인
-    {title:'⏰ 일간 타임라인',desc:'하루를 시간 블록으로 시각화해서 관리해.\n\n📚 Time Blocking (Cal Newport)\nADHD는 시간 감각이 약한 "Time Blindness"가 있어서, 눈에 보이는 시간 구조가 필수!\n\n💡 블록을 드래그해서 시간을 옮길 수 있어.\n💡 빈 시간을 두 번 탭하면 블록이 자동 생성돼!',sel:'#view-tl',tab:'tl'},
-    // 3. 입력 시트
+    {title:'⏰ 일간 타임라인',desc:'하루를 시간 블록으로 시각화해서 관리해.\n\n📚 Time Blocking (Cal Newport)\nADHD는 시간 감각이 약한 "Time Blindness"가 있어서, 눈에 보이는 시간 구조가 필수!\n\n💡 블록을 드래그해서 시간을 옮길 수도 있어!',sel:'#view-tl',tab:'tl'},
+    // 3. 인터랙티브: 더블탭 체험
+    {title:'👆 직접 해봐!',desc:'타임라인의 빈 시간을 두 번 빠르게 탭해봐!\n1시간 블록이 자동으로 생겨!',sel:'#view-tl',tab:'tl',interactive:'dblclick'},
+    // 4. 입력 시트
     {title:'➕ 빠른 입력',desc:'이게 할 일 추가 시트야!\n\n"보고서 430 14시 1시간" 이렇게 자연어로 입력하면 날짜, 시간, 소요시간이 자동 파싱돼!\n\n📚 인지 부하 감소\n입력 단계가 적을수록 ADHD가 행동을 시작하기 쉬워져.\n\n💡 카테고리도 설정할 수 있어!',sel:'.sheet',tab:'tl',
       action:()=>{document.getElementById('overlay').classList.add('show');document.getElementById('sheet').classList.add('show');}},
     // 4. 날짜 탭
@@ -3376,11 +3378,11 @@ function showOnboarding(){
     // 5. 뷰 탭 + 순서 변경
     {title:'🔄 탭 전환 & 순서 변경',desc:'여기서 다양한 뷰를 전환할 수 있어.\n\n💡 탭을 꾹 눌러서 드래그하면 순서를 바꿀 수 있어!\n자주 쓰는 탭을 앞으로 옮겨봐.\n\n📚 개인화 (Personalization)\n자기한테 맞는 환경을 만들면 도구 사용 지속률이 올라가!',sel:'#view-tabs',tab:'tl'},
     // 6. 월간 캘린더
-    {title:'📅 월간 캘린더',desc:'한 달을 한눈에! 카테고리별 필터도 가능해.\n\n📚 Big Picture View\nADHD는 세부에 빠지면 전체를 놓침. 숲을 볼 수 있는 뷰가 중요해.\n\n💡 날짜를 터치하면 그날 일정이 아래에 표시돼.',sel:'#view-cal',tab:'cal'},
+    {title:'📅 월간 캘린더',desc:'한 달을 한눈에! 카테고리별 필터도 가능해.\n\n🏃‍♀️ 상단 프로그레스바: 올해의 몇%를 왔는지 보여줘!\n\n📚 Goal Gradient Effect\n목표에 가까워질수록 동기가 높아지는 효과! 그리고 ADHD의 Time Blindness를 보완해서 "올해 어디쯤 왔는지" 시간 감각을 잡아줘.\n\n💡 날짜를 터치하면 그날 일정이 아래에 표시돼.',sel:'#view-cal',tab:'cal'},
     // 7. 습관 트래커
-    {title:'🌱 66일 습관 챌린지',desc:'과학적으로 검증된 66일 습관 형성 시스템!\n\n📚 Habit Formation (Lally et al., 2010)\n평균 66일이면 행동이 자동화돼.\n매일 체크하는 시각적 피드백이 도파민 보상 루프를 만들어줘.\n\n💡 꽃이 자라나는 걸 보면서 동기부여!',sel:'#view-habit',tab:'habit'},
+    {title:'🌱 66일 습관 챌린지',desc:'과학적으로 검증된 66일 습관 형성 시스템!\n\n📚 Habit Formation (Lally et al., 2010)\n평균 66일이면 행동이 자동화돼.\n\n🌳 습관을 달성할 때마다 나무에 열매가 하나씩 열려!\n매일 체크하면 꽃이 자라나고, 나무가 풍성해지는 걸 보면서 동기부여!\n\n📚 시각적 피드백 → 도파민 보상 루프\n작은 성취를 눈에 보이게 만들면 "또 해야지" 동기가 생겨.',sel:'#view-habit',tab:'habit'},
     // 8. 목표 트리
-    {title:'🎯 목표 트리 (역산 계획법)',desc:'연간 목표 → 분기별 → 할 일로 쪼개는 트리 구조!\n\n📚 Goal Chunking (Safren et al., 2005)\n큰 목표를 작게 쪼개면 시작 저항이 줄어들어.\n트리로 "왜 이걸 하는지" 맥락을 항상 볼 수 있어.\n\n💡 연간 최대 3개, 분기별 5개, 주간 3개 — 과부하 방지!',sel:'#goal-content',tab:'goal'},
+    {title:'🎯 목표 트리 (역산 계획법)',desc:'연간 목표를 분기→할 일로 쪼개는 트리 구조!\n\n예시:\n🎯 유튜브 구독자 1만\n├ Q1: 채널 세팅 + 영상 10개\n├ Q2: 구독자 2000명 (쇼츠 주3회)\n├ Q3: 5000명 (콜라보)\n└ Q4: 1만 돌파!\n\n📚 역산 계획법 (Park et al., 2017)\n끝에서 거꾸로 쪼개면 "지금 뭐 해야 하는지"가 명확해져.\n\n💡 연간 3개, 분기 5개, 주간 3개 제한 — ADHD 과부하 방지!',sel:'#goal-content',tab:'goal'},
     // 9. 드롭
     {title:'📦 드롭 (언젠가 할 것)',desc:'지금 당장은 아니지만 머릿속을 떠도는 것들을 여기에!\n\n📚 Cognitive Offloading (Risko & Gilbert, 2016)\n머릿속 할 일을 외부에 꺼내놓으면 작업기억 부담이 줄어들어.\n\n💡 드롭에서 타임라인으로 드래그해서 일정에 넣을 수 있어.',sel:'#view-drop',tab:'drop'},
     // 10. 설정
@@ -3410,9 +3412,22 @@ function showOnboarding(){
     // Highlight
     target.style.position='relative';target.style.zIndex='9002';target.style.boxShadow='0 0 0 4px var(--pink), 0 0 20px rgba(0,0,0,.3)';target.style.borderRadius='12px';
     if(rect.top<0||rect.bottom>window.innerHeight)target.scrollIntoView({behavior:'smooth',block:'center'});
+    // Interactive step: listen for user action instead of overlay click
+    if(s.interactive==='dblclick'){
+      const blockCountBefore=blocks.length;
+      const checkInterval=setInterval(()=>{
+        if(blocks.length>blockCountBefore){
+          clearInterval(checkInterval);
+          setTimeout(()=>{showMiniToast('잘했어! 🎉');setTimeout(()=>window.nextOnboarding(),800);},300);
+        }
+      },200);
+      // Store interval so we can clear it on skip
+      window._onboardInterval=checkInterval;
+    }
     // Step counter
     const stepNum=(idx+1)+'/'+steps.length;
-    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:9001" onclick="nextOnboarding()"></div>'+
+    const isInteractive=!!s.interactive;
+    el.innerHTML='<div style="position:fixed;inset:0;background:rgba(0,0,0,.2);z-index:9001;'+(isInteractive?'pointer-events:none':'')+'" '+(isInteractive?'':'onclick="nextOnboarding()"')+'></div>'+
       '<div style="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);width:calc(100% - 24px);max-width:340px;background:#fff;border-radius:18px;padding:18px 20px;z-index:9003;box-shadow:0 8px 30px rgba(0,0,0,.25)">'+
       '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
       '<div style="font-size:15px;font-weight:700;color:var(--pd)">'+s.title+'</div>'+
@@ -3423,15 +3438,16 @@ function showOnboarding(){
       '<div style="display:flex;gap:8px;align-items:center">'+
       (idx>0?'<button onclick="prevOnboarding()" style="padding:8px 14px;border-radius:8px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer">← 이전</button>':'')+
       '<span onclick="skipOnboarding()" style="font-size:11px;color:#aaa;cursor:pointer;padding:8px 4px">건너뛰기</span>'+
-      '<button onclick="nextOnboarding()" style="padding:8px 20px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+(isLast?'시작하기! 🚀':'다음 →')+'</button>'+
+      (isInteractive?'<span style="font-size:11px;color:var(--pink);font-weight:600;padding:8px 4px;animation:pulse 1.5s infinite">👆 위에서 직접 해봐!</span>':
+      '<button onclick="nextOnboarding()" style="padding:8px 20px;border-radius:8px;border:none;background:var(--pink);color:#fff;font-size:13px;font-weight:600;cursor:pointer">'+(isLast?'시작하기! 🚀':'다음 →')+'</button>')+
       '</div></div></div>';
   }
   function clearHighlight(){
     steps.forEach(s=>{const t=document.querySelector(s.sel);if(t){t.style.zIndex='';t.style.boxShadow='';t.style.borderRadius='';}});
   }
-  window.nextOnboarding=function(){clearHighlight();idx++;if(idx>=steps.length){window.skipOnboarding();}else{renderStep();}};
+  window.nextOnboarding=function(){if(window._onboardInterval)clearInterval(window._onboardInterval);clearHighlight();idx++;if(idx>=steps.length){window.skipOnboarding();}else{renderStep();}};
   window.prevOnboarding=function(){clearHighlight();if(idx>0){idx--;renderStep();}};
-  window.skipOnboarding=function(){clearHighlight();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';switchView('tl');};
+  window.skipOnboarding=function(){if(window._onboardInterval)clearInterval(window._onboardInterval);clearHighlight();document.getElementById('overlay').classList.remove('show');document.getElementById('sheet').classList.remove('show');localStorage.setItem('ff_onboarded','1');document.getElementById('onboarding').innerHTML='';switchView('tl');};
   renderStep();
 }
 setTimeout(()=>{if(!localStorage.getItem('ff_onboarded'))showOnboarding();},2000);
