@@ -903,7 +903,12 @@ const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
 let viewDate=todayStr(),curView=localStorage.getItem('ff_cur_view')||'tl',bufOn=false,preview=null,nid=Date.now();
-// 일간 탭이 필수이므로, 시작 시 보이게 보장
+// v26 일회성 탭 복구
+if(localStorage.getItem('ff_tab_fix')!=='v26'){
+  localStorage.removeItem('ff_tab_order');
+  localStorage.removeItem('ff_hidden_tabs');
+  localStorage.setItem('ff_tab_fix','v26');
+}
 if(!['tl','week','cal','habit','goal','drop','stats'].includes(curView))curView='tl';
 let activeMenu=null,memoId=null,dragState=null,didDrag=false;
 let holdTimer=null,holdReady=false;
