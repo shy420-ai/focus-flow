@@ -3008,12 +3008,12 @@ function _renderStatsInner(wrap){
     h+='<button onclick="setupMed()" style="padding:10px 24px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">약 설정하기</button>';
     h+='</div>';
   }else{
+    const morningMeds=cfg.meds.filter(m=>m.timing==='아침'||m.timing==='수시');
+    const nightMeds=cfg.meds.filter(m=>m.timing==='저녁');
    if(window._mediTab!=='analysis'){
     // 오늘의 약 (아침/저녁 탭에서만)
     h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
     h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">';
-    const morningMeds=cfg.meds.filter(m=>m.timing==='아침'||m.timing==='수시');
-    const nightMeds=cfg.meds.filter(m=>m.timing==='저녁');
     h+='<div>';
     const catColors={'ADHD':'#E8849D','기분조절':'#5B7FFF','항우울':'#56C6A0','항불안':'#EF9F27','수면':'#9B7BB5','항정신병':'#378ADD'};
     const curTabMeds=window._mediTab==='night'?nightMeds:morningMeds;
