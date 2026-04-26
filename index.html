@@ -3351,7 +3351,37 @@ function saveHabits(){saveHabitLocal();saveToFirestore();}
 
 function addHabit(name){
   if(!name.trim())return;
-  habits.push({id:Date.now(),name:name.trim(),createdAt:todayStr()});
+  // Show schedule picker
+  const el=document.getElementById('habit-schedule-modal');
+  if(el)el.remove();
+  let modal='<div id="habit-schedule-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" onclick="if(event.target===this)this.remove()">';
+  modal+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
+  modal+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:12px;text-align:center">'+name.trim()+'</div>';
+  modal+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin-bottom:8px">주기 설정</div>';
+  modal+='<div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">';
+  modal+='<button class="cat-pill active" id="hs-daily" onclick="document.querySelectorAll(\'#habit-schedule-modal .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\');document.getElementById(\'hs-days-row\').style.display=\'none\'" style="background:var(--pink);color:#fff;border-color:var(--pink)">매일</button>';
+  modal+='<button class="cat-pill" id="hs-weekly" onclick="document.querySelectorAll(\'#habit-schedule-modal .cat-pill\').forEach(x=>x.classList.remove(\'active\'));this.classList.add(\'active\');document.getElementById(\'hs-days-row\').style.display=\'flex\'">요일 선택</button>';
+  modal+='</div>';
+  modal+='<div id="hs-days-row" style="display:none;gap:4px;margin-bottom:12px;flex-wrap:wrap">';
+  ['월','화','수','목','금','토','일'].forEach((d,i)=>{
+    modal+='<button class="cat-pill hs-day" data-day="'+i+'" onclick="this.classList.toggle(\'active\');this.style.background=this.classList.contains(\'active\')?\'var(--pink)\':\'#fff\';this.style.color=this.classList.contains(\'active\')?\'#fff\':\'var(--pd)\'" style="padding:6px 10px">'+d+'</button>';
+  });
+  modal+='</div>';
+  modal+='<button onclick="confirmAddHabit(\''+name.trim().replace(/'/g,"\\'")+'\')" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--pink);color:#fff;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit">추가</button>';
+  modal+='</div></div>';
+  document.body.insertAdjacentHTML('beforeend',modal);
+}
+function confirmAddHabit(name){
+  const isDaily=document.getElementById('hs-daily').classList.contains('active');
+  let days=null;
+  if(!isDaily){
+    days=[];
+    document.querySelectorAll('.hs-day.active').forEach(el=>days.push(parseInt(el.dataset.day)));
+    if(days.length===0){alert('요일을 선택해주세요');return;}
+    if(days.length===7)days=null; // 7일=매일
+  }
+  habits.push({id:Date.now(),name,createdAt:todayStr(),days});
+  const el=document.getElementById('habit-schedule-modal');if(el)el.remove();
   saveHabits();renderHabits();
 }
 function delHabit(id){
@@ -3370,6 +3400,19 @@ function getHabitStreak(habitId){
     else break;
   }
   return streak;
+}
+function getHabitTotalDays(habitId,createdAt){
+  let total=0;const created=createdAt||todayStr();
+  const start=new Date(created+'T12:00:00');const now=new Date(todayStr()+'T12:00:00');
+  const days=Math.floor((now-start)/86400000)+1;
+  for(let i=0;i<days;i++){const ds=addDays(created,i);if(habitLogs[ds]&&habitLogs[ds][habitId])total++;}
+  return total;
+}
+function isHabitDay(habit,dateStr){
+  if(!habit.days)return true; // 매일
+  const d=new Date(dateStr+'T12:00:00');
+  const dow=d.getDay();const mondayIdx=dow===0?6:dow-1;
+  return habit.days.includes(mondayIdx);
 }
 function getWeekDates(){
   const today=new Date(todayStr()+'T12:00:00');
@@ -3465,7 +3508,8 @@ function renderHabits(){
   // ===== 66일 챌린지 =====
   if(habits.length){
     h+='<div style="margin-top:16px;padding:14px;background:linear-gradient(135deg,var(--pl),#fff);border-radius:14px;border:1.5px solid var(--pink)">';
-    h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:10px">🏆 66일 챌린지 (주 5회 = 성공)</div>';
+    h+='<div style="font-size:14px;font-weight:700;color:var(--pd);margin-bottom:4px">🏆 66일 챌린지</div>';
+    h+='<div style="font-size:9px;color:#aaa;margin-bottom:10px">습관이 자동화되려면 평균 66일 (Phillippa Lally, 2009). 연속 아니어도 총 66일 달성하면 완성!</div>';
     habits.forEach(hab=>{
       const created=hab.createdAt||todayStr();
       const startDate=new Date(created+'T12:00:00');
@@ -3490,8 +3534,8 @@ function renderHabits(){
         totalChecked+=weekCount;
       }
 
-      const pct=Math.round(progress/totalDays*100);
-      const done=progress>=totalDays;
+      const pct=Math.round(Math.min(totalChecked,totalDays)/totalDays*100);
+      const done=totalChecked>=totalDays;
 
       // Flower growth system
       const FLOWERS=['🌱','🌿','☘️','🌷','🌸','🌺','💐'];
@@ -3510,14 +3554,14 @@ function renderHabits(){
       if(done)flowerLevel=FLOWERS.length-1;
       const flower=FLOWERS[flowerLevel];
       const flowerName=['씨앗','새싹','줄기','봉오리','개화','만개','완성!'][flowerLevel];
+      const flowerMsg=['시작이 반이야!','뿌리 내리는 중','뇌가 기억하기 시작해','절반 왔어! 대단해','자동 모드 진입 중','거의 습관이 됐어!','66일 완성! 이제 네 것이야 🎉'][flowerLevel];
 
       // Flower display
       h+='<div style="margin-bottom:12px">';
       h+='<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">';
       h+='<div style="font-size:12px;font-weight:600;color:#555">'+hab.name+'</div>';
       h+='<div style="font-size:36px;line-height:1;transition:all .3s" id="flower-'+hab.id+'">'+flower+'</div>';
-      h+='<div style="font-size:11px;color:var(--pd);font-weight:600">'+flowerName+'</div>';
-      if(done)h+='<div style="font-size:11px;color:#1D9E75;font-weight:700">✅ 66일 달성!</div>';
+      h+='<div><div style="font-size:11px;color:var(--pd);font-weight:600">'+flowerName+'</div><div style="font-size:9px;color:#aaa">'+flowerMsg+'</div></div>';
       h+='</div>';
 
       // Flower stage indicator
@@ -3548,9 +3592,10 @@ function renderHabits(){
       // Progress bar
       h+='<div style="display:flex;align-items:center;gap:8px">';
       h+='<div style="flex:1;height:6px;background:var(--pl);border-radius:3px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:var(--pd);border-radius:3px"></div></div>';
-      h+='<span style="font-size:11px;color:var(--pd);font-weight:600;white-space:nowrap">'+progress+'/'+totalDays+'일</span>';
+      h+='<span style="font-size:11px;color:var(--pd);font-weight:600;white-space:nowrap">'+totalChecked+'/'+totalDays+'일 달성</span>';
       h+='</div>';
-      h+='<div style="font-size:10px;color:#999;margin-top:4px">성공 주: '+successWeeks+'/'+totalWeeks+'주 · 총 '+totalChecked+'일 체크</div>';
+      const scheduleLabel=hab.days?'주 '+hab.days.length+'회 ('+ hab.days.map(d=>['월','화','수','목','금','토','일'][d]).join('')+')':'매일';
+      h+='<div style="font-size:10px;color:#999;margin-top:4px">'+scheduleLabel+' · D+'+daysPassed+' · 연속 '+getHabitStreak(hab.id)+'일'+(totalChecked>=66?' · ✅ 66일 달성!':'')+'</div>';
       h+='</div>';
     });
     h+='</div>';
