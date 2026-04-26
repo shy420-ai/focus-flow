@@ -2642,11 +2642,24 @@ let _nudgeShown={};
 // ====== NIGHT PLANNING NUDGE ======
 function checkNightNudge(){
   const now=new Date();const hour=now.getHours();
-  if(hour<21||hour>23)return; // 9~11시만
-  const nudgeKey='ff_night_nudge_'+todayStr();
-  if(localStorage.getItem(nudgeKey))return; // 오늘 이미 봤음
+  const tomorrow=addDays(todayStr(),1);
+  const tomorrowBlocks=blocks.filter(b=>b.date===tomorrow&&!b.isBuf&&(b.type==='timeline'||!b.type));
+  const todayBlocks=blocks.filter(b=>b.date===todayStr()&&!b.isBuf&&(b.type==='timeline'||!b.type));
+  // 밤 9~11시: 내일 계획 넛지
+  // 새벽 0~5시: 오늘 계획 안 세웠으면 넛지
+  // 아침 6~9시: 오늘 계획 없으면 넛지
+  const isNight=hour>=21&&hour<=23;
+  const isLateNight=hour>=0&&hour<=5;
+  const isMorning=hour>=6&&hour<=9;
+  if(!isNight&&!isLateNight&&!isMorning)return;
+  if(isNight&&tomorrowBlocks.length>0)return; // 이미 내일 계획 있음
+  if((isLateNight||isMorning)&&todayBlocks.length>0)return; // 이미 오늘 계획 있음
+  const nudgeKey='ff_plan_nudge_'+todayStr()+(isNight?'_night':'_today');
+  if(localStorage.getItem(nudgeKey))return;
   const bar=document.getElementById('nudge-bar');if(!bar)return;
-  bar.innerHTML='🌙 <b>자기 전 5분!</b> 내일 할 일 3개만 적어두면 아침이 달라져 <button onclick="openNightPlan()" style="margin-left:6px;padding:4px 12px;border-radius:8px;border:none;background:#fff;color:var(--pd);font-size:11px;font-weight:600;cursor:pointer">내일 계획</button><button onclick="this.parentElement.style.display=\'none\';localStorage.setItem(\''+nudgeKey+'\',\'1\')" style="margin-left:4px;background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px">✕</button>';
+  const nudgeMsg=isNight?'🌙 <b>자기 전 5분!</b> 내일 할 일 3개만 적어두면 아침이 달라져':isLateNight?'🦉 <b>아직 안 잤어?</b> 오늘 할 일 적어두고 자!':'☀️ <b>좋은 아침!</b> 오늘 할 일 3개만 정해볼까?';
+  const btnLabel=isNight?'내일 계획':'오늘 계획';
+  bar.innerHTML=nudgeMsg+' <button onclick="'+(isNight?'openNightPlan()':'openSheet()')+'" style="margin-left:6px;padding:4px 12px;border-radius:8px;border:none;background:#fff;color:var(--pd);font-size:11px;font-weight:600;cursor:pointer">'+btnLabel+'</button><button onclick="this.parentElement.style.display=\'none\';localStorage.setItem(\''+nudgeKey+'\',\'1\')" style="margin-left:4px;background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:14px">✕</button>';
   bar.style.display='block';
 }
 function openNightPlan(){
