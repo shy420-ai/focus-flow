@@ -3917,7 +3917,7 @@ setTimeout(()=>{
 
 // ====== VIEW TABS (draggable order) ======
 const DEFAULT_TAB_ORDER=['tl','week','cal','habit','goal','drop','stats'];
-const TAB_LABELS={tl:'⏰ 일간',week:'📅 주간',cal:'🗓 월간',habit:'🌱 습관',goal:'🎯 목표',drop:'📦 드롭',stats:'💊 메디'};
+const TAB_LABELS={tl:'일간',week:'주간',cal:'월간',habit:'습관',goal:'목표',drop:'드롭',stats:'💊메디'};
 function getTabOrder(){
   try{
     const s=localStorage.getItem('ff_tab_order');
@@ -3942,8 +3942,9 @@ function renderViewTabs(){
   // tl이 없으면 맨 앞에 강제 추가
   if(!order.includes('tl')){order.unshift('tl');saveTabOrder(order);}
   let hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
-  // 'tl'은 절대 숨기지 않음
+  // 'tl'은 절대 숨기지 않음 + 디버그 로그
   hidden=hidden.filter(x=>x!=='tl');
+  console.log('[FF] tab order:',order,'hidden:',hidden);
   order.filter(key=>!hidden.includes(key)).forEach(key=>{
     const btn=document.createElement('button');
     btn.className='vtab'+(key===curView?' active':'');
