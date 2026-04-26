@@ -2816,15 +2816,31 @@ function setupMed(){
   h+='<div style="background:#fff;border-radius:16px;padding:20px;width:90%;max-width:340px;max-height:85vh;overflow-y:auto">';
   h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">💊 약 설정</div>';
 
-  // 기존 약 목록
-  cfg.meds.forEach((m,i)=>{
+  // 아침약 목록
+  const mornMeds=cfg.meds.map((m,i)=>({...m,idx:i})).filter(m=>m.timing==='아침'||m.timing==='수시');
+  const nightMedsSetup=cfg.meds.map((m,i)=>({...m,idx:i})).filter(m=>m.timing==='저녁');
+
+  h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin-bottom:6px">☀️ 아침약</div>';
+  if(!mornMeds.length)h+='<div style="font-size:11px;color:#ccc;margin-bottom:8px;padding:6px 0">등록된 아침약이 없어</div>';
+  mornMeds.forEach(m=>{
     const dbInfo=MED_DB.find(d=>d.name===m.name);
-    h+='<div style="background:var(--pl);border-radius:10px;padding:10px;margin-bottom:8px;position:relative">';
-    h+='<button onclick="removeMedFromSetup('+i+')" style="position:absolute;top:6px;right:8px;background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>';
-    const timingIcon=m.timing==='저녁'?'🌙':m.timing==='수시'?'🕐':'☀️';
-    h+='<div style="font-size:13px;font-weight:600;color:var(--pd)">'+timingIcon+' '+m.name+' '+m.dose+'</div>';
-    h+='<div style="font-size:10px;color:#888">'+m.timing+' · 지속 '+m.duration+'시간</div>';
-    if(dbInfo)h+='<div style="font-size:10px;color:#aaa;margin-top:2px">'+dbInfo.generic+' · '+dbInfo.cat+'</div>';
+    h+='<div style="background:#FFF5F5;border-radius:10px;padding:10px;margin-bottom:6px;position:relative">';
+    h+='<button onclick="removeMedFromSetup('+m.idx+')" style="position:absolute;top:6px;right:8px;background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>';
+    h+='<div style="font-size:13px;font-weight:600;color:var(--pd)">☀️ '+m.name+' '+m.dose+'</div>';
+    h+='<div style="font-size:10px;color:#888">지속 '+m.duration+'시간</div>';
+    if(dbInfo)h+='<div style="font-size:10px;color:#aaa;margin-top:2px">'+dbInfo.generic+'</div>';
+    h+='</div>';
+  });
+
+  h+='<div style="font-size:12px;font-weight:600;color:var(--pd);margin-top:10px;margin-bottom:6px">🌙 저녁약</div>';
+  if(!nightMedsSetup.length)h+='<div style="font-size:11px;color:#ccc;margin-bottom:8px;padding:6px 0">등록된 저녁약이 없어</div>';
+  nightMedsSetup.forEach(m=>{
+    const dbInfo=MED_DB.find(d=>d.name===m.name);
+    h+='<div style="background:#F0F0FF;border-radius:10px;padding:10px;margin-bottom:6px;position:relative">';
+    h+='<button onclick="removeMedFromSetup('+m.idx+')" style="position:absolute;top:6px;right:8px;background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>';
+    h+='<div style="font-size:13px;font-weight:600;color:#5B7FFF">🌙 '+m.name+' '+m.dose+'</div>';
+    h+='<div style="font-size:10px;color:#888">지속 '+m.duration+'시간</div>';
+    if(dbInfo)h+='<div style="font-size:10px;color:#aaa;margin-top:2px">'+dbInfo.generic+'</div>';
     h+='</div>';
   });
 
