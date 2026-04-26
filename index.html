@@ -2330,85 +2330,95 @@ function deleteGoal(type,id){
   goals[key]=goals[key].filter(x=>x.id!==id);saveGoals(goals);renderGoals();
 }
 
-// ====== 역산 로드맵 + 분기 스프린트 ======
+// ====== 목표 트리 (B안: 연간→분기→할일) ======
+const Q_LABELS=['Q1 (1~3월)','Q2 (4~6월)','Q3 (7~9월)','Q4 (10~12월)'];
+const Q_EMOJI=['🌸','☀️','🍂','⛄'];
+const Q_COLORS=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
 function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
 function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).update({roadmap:r}).catch(()=>{});}catch{}}
-function initRoadmap(){return{yearGoals:[],milestones:[{label:'Q1 (1~3월)',targets:[],done:false},{label:'Q2 (4~6월)',targets:[],done:false},{label:'Q3 (7~9월)',targets:[],done:false},{label:'Q4 (10~12월)',targets:[],done:false}],actions:[]}}
+function initRoadmap(){return{goals:[]}}
+function newGoalQ(){return[{tasks:[]},{tasks:[]},{tasks:[]},{tasks:[]}];}
 function migrateRoadmap(r){
-  r.milestones.forEach(ms=>{if(typeof ms.target==='string'&&ms.target){ms.targets=[{id:Date.now().toString(),text:ms.target,done:false}];delete ms.target;}else if(!ms.targets){ms.targets=[];delete ms.target;}});
-  if(typeof r.yearGoal==='string'){r.yearGoals=r.yearGoal?[{id:Date.now().toString(),text:r.yearGoal,done:false}]:[];delete r.yearGoal;}
-  if(!r.yearGoals)r.yearGoals=[];
+  // v1→v2: old flat structure → tree
+  if(r.yearGoals||r.milestones){
+    const nr=initRoadmap();
+    const old=r.yearGoals||[];if(typeof r.yearGoal==='string'&&r.yearGoal)old.push({id:Date.now().toString(),text:r.yearGoal,done:false});
+    old.forEach(g=>{nr.goals.push({id:g.id,text:g.text,quarters:newGoalQ()});});
+    // migrate shared milestones into first goal if exists
+    if(r.milestones&&nr.goals.length){
+      r.milestones.forEach((ms,qi)=>{
+        const targets=ms.targets||[];if(typeof ms.target==='string'&&ms.target)targets.push({id:Date.now().toString(),text:ms.target,done:false});
+        nr.goals[0].quarters[qi].tasks=targets;
+      });
+    }
+    return nr;
+  }
+  if(!r.goals)r.goals=[];
+  r.goals.forEach(g=>{if(!g.quarters)g.quarters=newGoalQ();});
   return r;
 }
-function getCurrentQ(){const m=new Date().getMonth();return Math.floor(m/3);}
+function getCurrentQ(){return Math.floor(new Date().getMonth()/3);}
 function getQProgress(){
   const now=new Date();const q=getCurrentQ();
   const qStart=new Date(now.getFullYear(),q*3,1);
   const qEnd=new Date(now.getFullYear(),(q+1)*3,1);
   const total=Math.ceil((qEnd-qStart)/(1000*60*60*24));
   const elapsed=Math.ceil((now-qStart)/(1000*60*60*24));
-  const week=Math.ceil(elapsed/7);
-  return{pct:Math.min(Math.round(elapsed/total*100),100),week,totalWeeks:Math.ceil(total/7),remain:Math.max(total-elapsed,0)};
+  return{pct:Math.min(Math.round(elapsed/total*100),100),week:Math.ceil(elapsed/7),totalWeeks:Math.ceil(total/7),remain:Math.max(total-elapsed,0)};
 }
+// CRUD
 function addYearGoal(){
   const input=document.getElementById('year-goal-input');if(!input)return;
   const text=input.value.trim();if(!text)return;
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  if(r.yearGoals.length>=3){showMiniToast('연간 목표는 3개까지! 🎯');return;}
-  r.yearGoals.push({id:Date.now().toString(),text,done:false});
+  if(r.goals.length>=3){showMiniToast('연간 목표는 3개까지! 🎯');return;}
+  r.goals.push({id:Date.now().toString(),text,quarters:newGoalQ()});
   saveRoadmap(r);input.value='';renderGoals();
-}
-function toggleYearGoal(id){
-  const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  const g=r.yearGoals.find(x=>x.id===id);if(g){g.done=!g.done;saveRoadmap(r);renderGoals();}
 }
 function deleteYearGoal(id){
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  r.yearGoals=r.yearGoals.filter(x=>x.id!==id);saveRoadmap(r);renderGoals();
+  r.goals=r.goals.filter(x=>x.id!==id);saveRoadmap(r);renderGoals();
 }
-let _openQ=null;
-function toggleQDetail(qi){_openQ=_openQ===qi?null:qi;renderGoals();}
-function addMilestoneTarget(qi){
-  const input=document.getElementById('ms-input-'+qi);if(!input)return;
+function editYearGoalText(id){
+  const r=migrateRoadmap(getRoadmap()||initRoadmap());
+  const g=r.goals.find(x=>x.id===id);if(!g)return;
+  const v=prompt('목표 수정:',g.text);
+  if(v!==null&&v.trim()){g.text=v.trim();saveRoadmap(r);renderGoals();}
+}
+function addQTask(gid,qi){
+  const input=document.getElementById('qt-'+gid+'-'+qi);if(!input)return;
   const text=input.value.trim();if(!text)return;
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  if(r.milestones[qi].targets.length>=5){showMiniToast('분기 목표는 5개까지! 💪');return;}
-  r.milestones[qi].targets.push({id:Date.now().toString(),text,done:false});
+  const g=r.goals.find(x=>x.id===gid);if(!g)return;
+  if(g.quarters[qi].tasks.length>=5){showMiniToast('분기 할 일은 5개까지!');return;}
+  g.quarters[qi].tasks.push({id:Date.now().toString(),text,done:false});
   saveRoadmap(r);input.value='';renderGoals();
 }
-function toggleMilestoneTarget(qi,id){
+function toggleQTask(gid,qi,tid){
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  const t=r.milestones[qi].targets.find(x=>x.id===id);
+  const g=r.goals.find(x=>x.id===gid);if(!g)return;
+  const t=g.quarters[qi].tasks.find(x=>x.id===tid);
   if(t){t.done=!t.done;saveRoadmap(r);renderGoals();}
 }
-function deleteMilestoneTarget(qi,id){
+function deleteQTask(gid,qi,tid){
   const r=migrateRoadmap(getRoadmap()||initRoadmap());
-  r.milestones[qi].targets=r.milestones[qi].targets.filter(x=>x.id!==id);
+  const g=r.goals.find(x=>x.id===gid);if(!g)return;
+  g.quarters[qi].tasks=g.quarters[qi].tasks.filter(x=>x.id!==tid);
   saveRoadmap(r);renderGoals();
 }
-function addAction(){
-  const input=document.getElementById('action-input');if(!input)return;
-  const text=input.value.trim();if(!text)return;
-  const r=getRoadmap()||initRoadmap();
-  r.actions.push({id:Date.now().toString(),text,done:false});
-  saveRoadmap(r);input.value='';renderGoals();
+let _openTree={};// {goalId: {qi: true}}
+function toggleTreeQ(gid,qi){
+  if(!_openTree[gid])_openTree[gid]={};
+  _openTree[gid][qi]=!_openTree[gid][qi];
+  renderGoals();
 }
-function toggleAction(id){
-  const r=getRoadmap();if(!r)return;
-  const a=r.actions.find(x=>x.id===id);if(a){a.done=!a.done;saveRoadmap(r);renderGoals();}
-}
-function deleteAction(id){
-  const r=getRoadmap();if(!r)return;
-  r.actions=r.actions.filter(x=>x.id!==id);saveRoadmap(r);renderGoals();
-}
-// Legacy mandala support
+// Legacy
 let _mandalaView='grid';
-function editMandalaCell(){}
-function openMandalaSub(){}
-function backToMandala(){renderGoals();}
-function addMandalaSub(){}
-function toggleMandalaSub(){}
-function deleteMandalaSub(){}
+function editMandalaCell(){}function openMandalaSub(){}function backToMandala(){renderGoals();}
+function addMandalaSub(){}function toggleMandalaSub(){}function deleteMandalaSub(){}
+function editMilestone(){}function toggleMilestone(){}function addMilestoneTarget(){}
+function toggleMilestoneTarget(){}function deleteMilestoneTarget(){}
+function addAction(){}function toggleAction(){}function deleteAction(){}
 
 function renderGoalSection(type,emoji,title){
   const goals=getGoals();const key=goalKey(type);
@@ -2441,104 +2451,106 @@ function renderGoals(){
   const qp=getQProgress();
   let h='';
 
-  // 1. 올해 핵심 목표 (최대 3개)
-  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
-  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">🎯 '+yr+'년 핵심 목표 <span style="font-size:10px;color:#aaa;font-weight:400">최대 3개</span></div>';
-  r.yearGoals.forEach(g=>{
-    h+='<div class="goal-item">';
-    h+='<button class="goal-check'+(g.done?' done':'')+'" onclick="toggleYearGoal(\''+g.id+'\')">'+(g.done?'✓':'')+'</button>';
-    h+='<div class="goal-text'+(g.done?' done':'')+'" style="font-size:14px;font-weight:600">'+g.text+'</div>';
-    h+='<button class="goal-del" onclick="deleteYearGoal(\''+g.id+'\')">✕</button>';
-    h+='</div>';
-  });
-  if(r.yearGoals.length<3){
-    h+='<div class="goal-add-row">';
-    h+='<input class="goal-add-input" id="year-goal-input" placeholder="올해 핵심 목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addYearGoal()">';
-    h+='<button class="goal-add-btn" onclick="addYearGoal()">+</button>';
-    h+='</div>';
-  }
+  // 분기 스프린트 프로그레스
+  h+='<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">';
+  h+='<span style="font-size:12px;font-weight:700;color:var(--pd)">🏃‍♀️ Q'+(curQ+1)+' 스프린트</span>';
+  h+='<span style="font-size:10px;color:#888">'+qp.week+'주차/'+qp.totalWeeks+'주 · 남은 '+qp.remain+'일</span>';
   h+='</div>';
-
-  // 2. 역산 로드맵 타임라인
-  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
-  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:12px;text-align:center">📍 역산 로드맵</div>';
-  const qColors=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
-  const qEmoji=['🌸','☀️','🍂','⛄'];
-  // Reverse order: Q4 at top, Q1 at bottom
-  for(let qi=3;qi>=0;qi--){
-    const ms=r.milestones[qi];
-    const isCur=qi===curQ;
-    const isPast=qi<curQ;
-    h+='<div style="display:flex;align-items:stretch;gap:10px;'+(qi>0?'margin-bottom:0':'')+';">';
-    // Left timeline line + dot
-    h+='<div style="display:flex;flex-direction:column;align-items:center;width:24px;flex-shrink:0">';
-    h+='<div style="width:16px;height:16px;border-radius:50%;background:'+(isPast||ms.done?qColors[qi]:'#e8e8e8')+';border:2.5px solid '+(isCur?'var(--pd)':isPast?qColors[qi]:'#ddd')+';flex-shrink:0;z-index:1;'+(isCur?'box-shadow:0 0 0 3px rgba(0,0,0,.08)':'')+'"></div>';
-    if(qi>0)h+='<div style="width:2px;flex:1;background:'+(isPast?'var(--pink)':'#e8e8e8')+'"></div>';
-    h+='</div>';
-    // Right content
-    const isOpen=_openQ===qi;
-    const tDone=ms.targets?ms.targets.filter(x=>x.done).length:0;
-    const tTotal=ms.targets?ms.targets.length:0;
-    h+='<div style="flex:1;margin-bottom:8px">';
-    h+='<div onclick="toggleQDetail('+qi+')" style="padding:8px 10px;border-radius:'+(isOpen?'10px 10px 0 0':'10px')+';background:'+(isCur?'var(--pl)':'#fafafa')+';cursor:pointer;border:1.5px solid '+(isCur?'var(--pink)':'transparent')+';'+(isOpen?'border-bottom:none':'')+'">';
-    h+='<div style="display:flex;justify-content:space-between;align-items:center">';
-    h+='<span style="font-size:11px;font-weight:700;color:'+(isCur?'var(--pd)':'#888')+'">'+qEmoji[qi]+' '+ms.label+(tTotal?' <span style="font-size:9px;color:#aaa;font-weight:400">'+tDone+'/'+tTotal+'</span>':'')+'</span>';
-    h+='<span style="display:flex;gap:4px;align-items:center">';
-    if(isCur)h+='<span style="font-size:9px;background:var(--pink);color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">지금 여기!</span>';
-    if(tTotal&&tDone===tTotal)h+='<span style="font-size:9px;background:#56C6A0;color:#fff;padding:2px 6px;border-radius:99px;font-weight:600">달성!</span>';
-    h+='<span style="font-size:10px;color:#bbb;transition:transform .2s;display:inline-block;transform:rotate('+(isOpen?'180':'0')+'deg)">▼</span>';
-    h+='</span></div>';
-    if(!isOpen&&tTotal){
-      h+='<div style="font-size:11px;color:#888;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ms.targets.map(t=>t.text).join(' · ')+'</div>';
-    }
-    h+='</div>';
-    if(isOpen){
-      h+='<div style="padding:8px 10px;background:'+(isCur?'var(--pl)':'#fafafa')+';border-radius:0 0 10px 10px;border:1.5px solid '+(isCur?'var(--pink)':'#eee')+';border-top:1px dashed #e0e0e0">';
-      if(!tTotal)h+='<div style="text-align:center;color:#ccc;font-size:11px;padding:8px 0">목표를 추가해봐!</div>';
-      ms.targets.forEach(t=>{
-        h+='<div class="goal-item" style="padding:4px 0">';
-        h+='<button class="goal-check'+(t.done?' done':'')+'" onclick="toggleMilestoneTarget('+qi+',\''+t.id+'\')">'+(t.done?'✓':'')+'</button>';
-        h+='<div class="goal-text'+(t.done?' done':'')+'">'+t.text+'</div>';
-        h+='<button class="goal-del" onclick="deleteMilestoneTarget('+qi+',\''+t.id+'\')">✕</button>';
-        h+='</div>';
-      });
-      h+='<div class="goal-add-row" style="margin-top:6px">';
-      h+='<input class="goal-add-input" id="ms-input-'+qi+'" placeholder="이 분기 목표 추가..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addMilestoneTarget('+qi+')">';
-      h+='<button class="goal-add-btn" onclick="addMilestoneTarget('+qi+')">+</button>';
-      h+='</div></div>';
-    }
-    h+='</div></div>';
-  }
-  h+='</div>';
-
-  // 3. 이번 분기 스프린트
-  h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:12px;border:1.5px solid var(--pl)">';
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
-  h+='<span style="font-size:13px;font-weight:700;color:var(--pd)">🏃‍♀️ Q'+(curQ+1)+' 스프린트</span>';
-  h+='<span style="font-size:11px;color:#888">'+qp.week+'주차 / '+qp.totalWeeks+'주</span>';
-  h+='</div>';
-  h+='<div style="position:relative;height:22px;background:#f0f0f0;border-radius:11px;overflow:visible;margin-bottom:10px">';
-  h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+qp.pct+'%;background:linear-gradient(90deg,'+qColors[curQ]+',var(--pd));border-radius:11px"></div>';
+  h+='<div style="position:relative;height:20px;background:#f0f0f0;border-radius:10px;overflow:visible">';
+  h+='<div style="position:absolute;left:0;top:0;height:100%;width:'+qp.pct+'%;background:linear-gradient(90deg,'+Q_COLORS[curQ]+',var(--pd));border-radius:10px"></div>';
   h+='<div style="position:absolute;left:calc('+Math.max(qp.pct-2,0)+'% - 8px);top:50%;transform:translateY(-50%) scaleX(-1);font-size:16px;z-index:1">🏃‍♀️</div>';
   h+='<div style="position:absolute;right:4px;top:50%;transform:translateY(-50%);font-size:12px">🏁</div>';
-  h+='</div>';
-  h+='<div style="font-size:10px;color:#999;margin-bottom:10px;text-align:center">남은 '+qp.remain+'일 | '+qp.pct+'% 진행</div>';
-  // Actions
-  const actionDone=r.actions.filter(x=>x.done).length;
-  if(r.actions.length)h+='<div style="font-size:11px;color:#aaa;margin-bottom:6px">핵심 할 일 '+actionDone+'/'+r.actions.length+'</div>';
-  r.actions.forEach(a=>{
-    h+='<div class="goal-item">';
-    h+='<button class="goal-check'+(a.done?' done':'')+'" onclick="toggleAction(\''+a.id+'\')">'+(a.done?'✓':'')+'</button>';
-    h+='<div class="goal-text'+(a.done?' done':'')+'">'+a.text+'</div>';
-    h+='<button class="goal-del" onclick="deleteAction(\''+a.id+'\')">✕</button>';
-    h+='</div>';
-  });
-  h+='<div class="goal-add-row">';
-  h+='<input class="goal-add-input" id="action-input" placeholder="이번 분기 핵심 할 일..." onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addAction()">';
-  h+='<button class="goal-add-btn" onclick="addAction()">+</button>';
   h+='</div></div>';
 
-  // 4. 월간 & 주간 목표 (기존 유지)
+  // 목표 트리
+  h+='<div style="font-size:13px;font-weight:700;color:var(--pd);margin-bottom:10px;text-align:center">🎯 '+yr+'년 목표 트리 <span style="font-size:10px;color:#aaa;font-weight:400">최대 3개</span></div>';
+
+  r.goals.forEach(g=>{
+    // Count total tasks across all quarters
+    let totalTasks=0,doneTasks=0;
+    g.quarters.forEach(q=>{q.tasks.forEach(t=>{totalTasks++;if(t.done)doneTasks++;});});
+    const allDone=totalTasks>0&&doneTasks===totalTasks;
+    const pct=totalTasks?Math.round(doneTasks/totalTasks*100):0;
+
+    h+='<div style="background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;border:1.5px solid var(--pl)">';
+    // Goal header
+    h+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    h+='<span style="font-size:16px">🎯</span>';
+    h+='<div style="flex:1;cursor:pointer" onclick="editYearGoalText(\''+g.id+'\')">';
+    h+='<div style="font-size:14px;font-weight:700;color:var(--pd)'+(allDone?';text-decoration:line-through;opacity:.5':'')+'">'+g.text+'</div>';
+    if(totalTasks)h+='<div style="font-size:10px;color:#aaa;margin-top:2px">'+doneTasks+'/'+totalTasks+' 완료 ('+pct+'%)</div>';
+    h+='</div>';
+    if(allDone)h+='<span style="font-size:9px;background:#56C6A0;color:#fff;padding:2px 8px;border-radius:99px;font-weight:600">달성!</span>';
+    h+='<button onclick="deleteYearGoal(\''+g.id+'\')" style="background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button>';
+    h+='</div>';
+    // Progress bar
+    if(totalTasks){
+      h+='<div style="height:4px;background:#f0f0f0;border-radius:2px;margin-bottom:10px;overflow:hidden">';
+      h+='<div style="height:100%;width:'+pct+'%;background:var(--pink);border-radius:2px;transition:width .3s"></div>';
+      h+='</div>';
+    }
+    // Quarters tree
+    for(let qi=0;qi<4;qi++){
+      const q=g.quarters[qi];
+      const isCur=qi===curQ;
+      const isPast=qi<curQ;
+      const isOpen=_openTree[g.id]&&_openTree[g.id][qi];
+      const qDone=q.tasks.filter(t=>t.done).length;
+      const qTotal=q.tasks.length;
+      const qAllDone=qTotal>0&&qDone===qTotal;
+
+      h+='<div style="display:flex;gap:0;margin-left:6px">';
+      // Tree line
+      h+='<div style="display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0">';
+      h+='<div style="width:10px;height:10px;border-radius:50%;background:'+(qAllDone?'#56C6A0':isCur?'var(--pink)':isPast?Q_COLORS[qi]:'#e0e0e0')+';border:2px solid '+(isCur?'var(--pd)':'transparent')+';flex-shrink:0;z-index:1"></div>';
+      if(qi<3)h+='<div style="width:1.5px;flex:1;background:#e8e8e8"></div>';
+      h+='</div>';
+      // Quarter content
+      h+='<div style="flex:1;margin-bottom:4px;margin-left:6px">';
+      h+='<div onclick="toggleTreeQ(\''+g.id+'\','+qi+')" style="padding:6px 8px;border-radius:8px;background:'+(isCur?'var(--pl)':'#fafafa')+';cursor:pointer;display:flex;justify-content:space-between;align-items:center;'+(isCur?'border:1px solid var(--pink)':'border:1px solid transparent')+'">';
+      h+='<span style="font-size:11px;font-weight:600;color:'+(isCur?'var(--pd)':'#888')+'">'+Q_EMOJI[qi]+' '+Q_LABELS[qi];
+      if(qTotal)h+=' <span style="font-size:9px;color:#aaa;font-weight:400">'+qDone+'/'+qTotal+'</span>';
+      h+='</span>';
+      h+='<span style="display:flex;gap:4px;align-items:center">';
+      if(isCur)h+='<span style="font-size:8px;background:var(--pink);color:#fff;padding:1px 5px;border-radius:99px;font-weight:600">NOW</span>';
+      if(qAllDone)h+='<span style="font-size:8px;background:#56C6A0;color:#fff;padding:1px 5px;border-radius:99px">✓</span>';
+      h+='<span style="font-size:9px;color:#ccc;display:inline-block;transform:rotate('+(isOpen?'180':'0')+'deg);transition:transform .15s">▼</span>';
+      h+='</span></div>';
+
+      if(isOpen){
+        h+='<div style="padding:6px 8px;margin-top:2px">';
+        if(!qTotal)h+='<div style="color:#ccc;font-size:11px;padding:4px 0;text-align:center">할 일을 추가해봐!</div>';
+        q.tasks.forEach(t=>{
+          h+='<div class="goal-item" style="padding:3px 0">';
+          h+='<button class="goal-check'+(t.done?' done':'')+'" onclick="toggleQTask(\''+g.id+'\','+qi+',\''+t.id+'\')" style="width:18px;height:18px;font-size:10px">'+(t.done?'✓':'')+'</button>';
+          h+='<div class="goal-text'+(t.done?' done':'')+'" style="font-size:12px">'+t.text+'</div>';
+          h+='<button class="goal-del" onclick="deleteQTask(\''+g.id+'\','+qi+',\''+t.id+'\')" style="font-size:12px">✕</button>';
+          h+='</div>';
+        });
+        if(qTotal<5){
+          h+='<div class="goal-add-row" style="margin-top:4px">';
+          h+='<input class="goal-add-input" id="qt-'+g.id+'-'+qi+'" placeholder="할 일 추가..." style="font-size:11px;padding:6px 8px" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addQTask(\''+g.id+'\','+qi+')">';
+          h+='<button class="goal-add-btn" onclick="addQTask(\''+g.id+'\','+qi+')" style="width:26px;height:26px;font-size:14px">+</button>';
+          h+='</div>';
+        }
+        h+='</div>';
+      }
+      h+='</div></div>';
+    }
+    h+='</div>';
+  });
+
+  // 목표 추가
+  if(r.goals.length<3){
+    h+='<div style="background:#fff;border-radius:14px;padding:12px 14px;margin-bottom:12px;border:1.5px dashed #e0e0e0">';
+    h+='<div class="goal-add-row">';
+    h+='<input class="goal-add-input" id="year-goal-input" placeholder="올해 핵심 목표 추가... ('+r.goals.length+'/3)" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addYearGoal()">';
+    h+='<button class="goal-add-btn" onclick="addYearGoal()">+</button>';
+    h+='</div></div>';
+  }
+
+  // 월간 & 주간 목표
   h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
   h+=renderGoalSection('week','⭐','이번 주 목표');
 
