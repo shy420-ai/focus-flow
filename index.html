@@ -3676,19 +3676,15 @@ function renderHabits(){
       });
       h+='</div>';
 
-      // 66-day grid (dots)
+      // 66-day grid (dots) — 체크 횟수 기준, 빈틈 없이
       h+='<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:6px">';
       for(let i=0;i<totalDays;i++){
-        const dateStr=addDays(created,i);
-        const checked=habitLogs[dateStr]&&habitLogs[dateStr][hab.id];
-        const isPast=i<progress;
-        const isToday=i===daysPassed;
-        if(checked){
-          h+='<div style="width:14px;height:14px;font-size:10px;line-height:14px;text-align:center" title="Day '+(i+1)+'">🌸</div>';
-        }else if(isToday){
-          h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pink);font-size:7px;line-height:14px;text-align:center;color:#fff" title="오늘">♡</div>';
+        if(i<totalChecked){
+          h+='<div style="width:14px;height:14px;font-size:10px;line-height:14px;text-align:center" title="'+(i+1)+'회째">🌸</div>';
+        }else if(i===totalChecked){
+          h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pink);font-size:7px;line-height:14px;text-align:center;color:#fff" title="다음">♡</div>';
         }else{
-          h+='<div style="width:14px;height:14px;border-radius:7px;background:'+(isPast?'var(--pink)':'var(--pl)')+';opacity:'+(isPast?'0.3':'1')+'" title="Day '+(i+1)+'"></div>';
+          h+='<div style="width:14px;height:14px;border-radius:7px;background:var(--pl)" title="'+(i+1)+'회째"></div>';
         }
       }
       h+='</div>';
