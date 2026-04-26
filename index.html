@@ -1352,7 +1352,7 @@ setTimeout(renderDeskDump,500);
 function editBlock(id,e){
   if(e)e.stopPropagation();
   const b=blocks.find(x=>String(x.id)===String(id));if(!b)return;
-  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:600;display:flex;align-items:center;justify-content:center" id="edit-block-overlay" onclick="if(event.target===this){this.remove();activeMenu=null;renderTimeline();}">';
+  let h='<div style="position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:9010;display:flex;align-items:center;justify-content:center" id="edit-block-overlay" onclick="if(event.target===this){this.remove();activeMenu=null;renderTimeline();}">';
   h+='<div style="background:#fff;border-radius:16px;padding:20px;width:85%;max-width:300px">';
   h+='<div style="font-size:15px;font-weight:700;color:var(--pd);margin-bottom:14px;text-align:center">블록 수정</div>';
   h+='<div style="margin-bottom:10px"><div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:4px">이름</div>';
