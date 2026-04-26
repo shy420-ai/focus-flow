@@ -674,6 +674,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <div class="sheet" id="sheet">
   <div class="sh"></div>
   <div class="sheet-title">할 일 추가</div>
+  <button onclick="quickAddEmpty()" style="width:100%;padding:10px;border-radius:10px;border:1.5px dashed var(--pink);background:var(--pl);color:var(--pd);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:10px">⚡ 빈 블록 바로 추가</button>
   <div style="font-size:10px;color:var(--pd);background:var(--pl);border-radius:8px;padding:6px 10px;margin-bottom:8px;line-height:1.6">🧠 <span class="hchip" onclick="fh(this)" style="display:inline;padding:2px 6px;font-size:10px;cursor:pointer">보고서 내일 14시 1시간</span> ← 예시 터치</div>
   <textarea class="ri" id="ri" placeholder="제목 날짜 시간 소요 (예: 보고서 내일 14시 1시간)" rows="2" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();quickAdd();}"></textarea>
   <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:start">
@@ -1946,6 +1947,15 @@ function parseDotFormat(raw){
     else if(/^\d{1,2}$/.test(s)){const n=parseInt(s);if(startHour!==null&&n<=12){durHour=n;}else if(n>=0&&n<=23){startHour=n;}}
   }
   return{name,date,startHour,durHour,daysUntil:Math.round((new Date(date+'T12:00:00')-new Date(todayStr()+'T12:00:00'))/86400000)};
+}
+function quickAddEmpty(){
+  const now=new Date();
+  const startH=now.getHours()+(now.getMinutes()>=30?0.5:0);
+  const id=String(nid++);
+  blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:startH,durHour:1,color:'pink',done:false,memo:'',category:''});
+  save();closeSheet();render();
+  // 바로 수정 모달 열기
+  setTimeout(()=>editBlock(id),300);
 }
 function quickAdd(){
   const raw=document.getElementById('ri').value.trim();if(!raw)return;
