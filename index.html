@@ -2353,6 +2353,9 @@ function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));try{if(
 function goalKey(type){
   const d=new Date();
   if(type==='month')return 'm'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  // month_4 → m2026-04 형태
+  if(type.startsWith('month_')){const mo=parseInt(type.split('_')[1]);return 'm'+d.getFullYear()+'-'+String(mo).padStart(2,'0');}
+  if(type==='week'){const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-(day-1));return 'w'+mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');}
   const day=d.getDay()||7;const mon=new Date(d);mon.setDate(d.getDate()-(day-1));
   return 'w'+mon.getFullYear()+'-'+String(mon.getMonth()+1).padStart(2,'0')+'-'+String(mon.getDate()).padStart(2,'0');
 }
@@ -2598,11 +2601,55 @@ function renderGoals(){
           h+='<button class="goal-add-btn" onclick="addQTask(\''+g.id+'\','+qi+')" style="width:26px;height:26px;font-size:14px">+</button>';
           h+='</div>';
         }
-        // 현재 분기에만 월간/주간 목표 표시
+        // 현재 분기: 월별→주간 계층 표시
         if(isCur){
           h+='<div style="margin-top:10px;padding-top:8px;border-top:1px dashed #e8e8e8">';
-          h+=renderGoalSection('month','📅',(now.getMonth()+1)+'월 목표');
-          h+=renderGoalSection('week','⭐','이번 주 목표');
+          // 해당 분기의 3개 월
+          const qMonths=[qi*3+1,qi*3+2,qi*3+3];
+          const curMonth=now.getMonth()+1;
+          qMonths.forEach(mo=>{
+            const mKey='m'+now.getFullYear()+'-'+String(mo).padStart(2,'0');
+            const mGoals=(getGoals()[mKey]||[]);
+            const mDone=mGoals.filter(x=>x.done).length;
+            const isCurMonth=mo===curMonth;
+            h+='<div style="margin-bottom:8px;margin-left:4px">';
+            h+='<div style="font-size:12px;font-weight:700;color:'+(isCurMonth?'var(--pd)':'#aaa')+';margin-bottom:4px">📅 '+mo+'월'+(isCurMonth?' ← 이번 달':'')+(mGoals.length?' <span style="font-size:10px;font-weight:400;color:#aaa">'+mDone+'/'+mGoals.length+'</span>':'')+'</div>';
+            mGoals.forEach(mg=>{
+              h+='<div class="goal-item" style="padding:2px 0;margin-left:8px">';
+              h+='<button class="goal-check'+(mg.done?' done':'')+'" onclick="toggleGoal(\'month_'+mo+'\',\''+mg.id+'\')" style="width:16px;height:16px;font-size:9px">'+(mg.done?'✓':'')+'</button>';
+              h+='<div class="goal-text'+(mg.done?' done':'')+'" style="font-size:11px">'+mg.text+'</div>';
+              h+='<button class="goal-del" onclick="deleteGoal(\'month_'+mo+'\',\''+mg.id+'\')" style="font-size:11px">✕</button>';
+              h+='</div>';
+            });
+            if(mGoals.length<5){
+              h+='<div class="goal-add-row" style="margin-left:8px;margin-top:2px">';
+              h+='<input class="goal-add-input" id="goal-input-month_'+mo+'" placeholder="'+mo+'월 목표..." style="font-size:10px;padding:5px 7px" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addGoal(\'month_'+mo+'\')">';
+              h+='<button class="goal-add-btn" onclick="addGoal(\'month_'+mo+'\')" style="width:22px;height:22px;font-size:12px">+</button>';
+              h+='</div>';
+            }
+            // 이번 달이면 주간 목표 표시
+            if(isCurMonth){
+              h+='<div style="margin-left:16px;margin-top:6px">';
+              h+='<div style="font-size:11px;font-weight:600;color:var(--pd);margin-bottom:3px">⭐ 이번 주 목표 <span style="font-size:9px;color:#aaa;font-weight:400">최대 3개</span></div>';
+              const wKey=goalKey('week');
+              const wGoals=(getGoals()[wKey]||[]);
+              wGoals.forEach(wg=>{
+                h+='<div class="goal-item" style="padding:2px 0">';
+                h+='<button class="goal-check'+(wg.done?' done':'')+'" onclick="toggleGoal(\'week\',\''+wg.id+'\')" style="width:14px;height:14px;font-size:8px">'+(wg.done?'✓':'')+'</button>';
+                h+='<div class="goal-text'+(wg.done?' done':'')+'" style="font-size:10px">'+wg.text+'</div>';
+                h+='<button class="goal-del" onclick="deleteGoal(\'week\',\''+wg.id+'\')" style="font-size:10px">✕</button>';
+                h+='</div>';
+              });
+              if(wGoals.length<3){
+                h+='<div class="goal-add-row" style="margin-top:2px">';
+                h+='<input class="goal-add-input" id="goal-input-week" placeholder="이번 주 목표..." style="font-size:10px;padding:4px 6px" onkeydown="if(event.key===\'Enter\'&&!event.isComposing)addGoal(\'week\')">';
+                h+='<button class="goal-add-btn" onclick="addGoal(\'week\')" style="width:20px;height:20px;font-size:11px">+</button>';
+                h+='</div>';
+              }
+              h+='</div>';
+            }
+            h+='</div>';
+          });
           h+='</div>';
         }
         h+='</div>';
