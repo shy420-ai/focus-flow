@@ -832,15 +832,23 @@ function loadFromFirestore(){
   db.collection('users').doc(_uid).get().then(doc=>{
     if(doc.exists){
       const d=doc.data();
-      if(d.tasks){
-        blocks=d.tasks;
-        migrateBlocks();
-        localStorage.setItem('ff_v3',JSON.stringify(blocks));
-      }
+      if(d.tasks){blocks=d.tasks;migrateBlocks();localStorage.setItem('ff_v3',JSON.stringify(blocks));}
       if(d.habits) habits=d.habits;
       if(d.habitLogs) habitLogs=d.habitLogs;
       if(d.metrics) metrics=d.metrics;
       if(d.metricLogs) metricLogs=d.metricLogs;
+      if(d.recurring){recurring=d.recurring;localStorage.setItem('ff_recurring',JSON.stringify(d.recurring));}
+      if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
+      if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
+      if(d.roadmap) localStorage.setItem('ff_roadmap',JSON.stringify(d.roadmap));
+      if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
+      if(d.friends) localStorage.setItem('ff_friends',JSON.stringify(d.friends));
+      if(d.medConfig) localStorage.setItem('ff_med_config',JSON.stringify(d.medConfig));
+      if(d.medLogs) localStorage.setItem('ff_med_logs',JSON.stringify(d.medLogs));
+      if(d.energy) localStorage.setItem('ff_energy',JSON.stringify(d.energy));
+      if(d.mood) localStorage.setItem('ff_mood',JSON.stringify(d.mood));
+      if(d.birthday){localStorage.setItem('ff_birthday',d.birthday);if(d.birthyear)localStorage.setItem('ff_birthyear',d.birthyear);}
+      if(d.nickname) localStorage.setItem('ff_nickname',d.nickname);
       saveHabitLocal();
       render();
     }
