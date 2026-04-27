@@ -903,12 +903,12 @@ function saveToFirestore(){
     metricLogs:metricLogs,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   };
-  // 로컬에 있는 추가 데이터도 포함
-  ['ff_roadmap:roadmap','ff_goals:goals','ff_drops:drops','ff_med_config:medConfig','ff_med_logs:medLogs'].forEach(pair=>{
-    const [key,field]=pair.split(':');
-    const val=localStorage.getItem(key);
-    if(val&&val!=='null'&&val!=='undefined'){try{data[field]=JSON.parse(val);}catch{}}
-  });
+  // 로컬에 있는 추가 데이터도 포함 — 직접 getter 사용
+  const _mc=getMedConfig();if(_mc)data.medConfig=_mc;
+  const _ml=getMedLogs();if(_ml&&_ml.length)data.medLogs=_ml;
+  const _rm=getRoadmap();if(_rm)data.roadmap=_rm;
+  const _gl=getGoals();if(_gl&&Object.keys(_gl).length)data.goals=_gl;
+  const _dr=getDropItems();if(_dr&&_dr.length)data.drops=_dr;
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
     showMiniToast('mc:'+(localStorage.getItem('ff_med_config')?'Y':'N')+' road:'+(localStorage.getItem('ff_roadmap')?'Y':'N'));
