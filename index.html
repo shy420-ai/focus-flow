@@ -835,8 +835,12 @@ auth.onAuthStateChanged(user=>{
     const vi=document.getElementById('ver-info');if(vi)vi.textContent='v28 ☁️'+user.email.split('@')[0];
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     loadFromFirestore();
-    // 로컬에만 있는 데이터 Firebase로 업로드 (로그인 전에 생성된 데이터)
-    setTimeout(()=>saveToFirestore(),2000);
+    // 로컬 데이터 Firebase로 강제 업로드 (3초 후 — loadFromFirestore 완료 기다림)
+    setTimeout(()=>{
+      saveToFirestore();
+      const vi=document.getElementById('ver-info');
+      if(vi)vi.textContent='v28 ☁️'+user.email.split('@')[0]+' ✓';
+    },3000);
     listenFirestore();
     // Save share code for friend feature
     const sc=getMyShareCode();
@@ -881,8 +885,10 @@ function loadFromFirestore(){
       if(d.nickname) localStorage.setItem('ff_nickname',d.nickname);
       saveHabitLocal();
       render();
+      if(curView==='stats')renderStats();
+      if(curView==='goal')renderGoals();
     }
-  }).catch(()=>{});
+  }).catch(e=>{console.error('[FF] loadFromFirestore fail:',e);});
 }
 function saveToFirestore(){
   if(!_uid)return;
