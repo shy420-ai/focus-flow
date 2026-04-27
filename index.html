@@ -2256,7 +2256,7 @@ function getDropItems(){
 }
 function saveDropItems(items){
   try{localStorage.setItem('ff_drops',JSON.stringify(items));}catch(e){}
-  try{if(_uid)db.collection('users').doc(_uid).update({drops:items}).catch(()=>{});}catch(e){}
+  try{if(_uid)db.collection('users').doc(_uid).set({drops:items},{merge:true}).catch(()=>{});}catch(e){}
 }
 function addDropItem(text){
   if(!text||!text.trim())return;
@@ -2411,10 +2411,10 @@ document.addEventListener('click',function(e){
 // ====== GOALS (연/월/주 목표) ======
 // Mandala + Goals data
 function getMandala(){try{return JSON.parse(localStorage.getItem('ff_mandala')||'null')}catch{return null}}
-function saveMandala(m){localStorage.setItem('ff_mandala',JSON.stringify(m));try{if(_uid)db.collection('users').doc(_uid).update({mandala:m}).catch(()=>{});}catch{}}
+function saveMandala(m){localStorage.setItem('ff_mandala',JSON.stringify(m));try{if(_uid)db.collection('users').doc(_uid).set({mandala:m},{merge:true}).catch(()=>{});}catch{}}
 function initMandala(){return{center:'',cells:['','','','','','','',''],subs:[[],[],[],[],[],[],[],[]]}}
 function getGoals(){try{return JSON.parse(localStorage.getItem('ff_goals')||'{}');}catch{return{};}}
-function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));try{if(_uid)db.collection('users').doc(_uid).update({goals:g}).catch(()=>{});}catch{}}
+function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));try{if(_uid)db.collection('users').doc(_uid).set({goals:g},{merge:true}).catch(()=>{});}catch{}}
 function goalKey(type){
   const d=new Date();
   if(type==='month')return 'm'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
@@ -2449,7 +2449,7 @@ const Q_LABELS=['Q1 (1~3월)','Q2 (4~6월)','Q3 (7~9월)','Q4 (10~12월)'];
 const Q_EMOJI=['🌸','☀️','🍂','⛄'];
 const Q_COLORS=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
 function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
-function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).update({roadmap:r}).catch(()=>{});}catch{}}
+function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).set({roadmap:r},{merge:true}).catch(()=>{});}catch{}}
 function initRoadmap(){return{goals:[]}}
 function newGoalQ(){return[{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]}];}
 function migrateRoadmap(r){
@@ -2750,7 +2750,7 @@ function getMyShareCode(){
   return Math.abs(h).toString(36).toUpperCase().slice(0,6);
 }
 function getFriends(){try{return JSON.parse(localStorage.getItem('ff_friends')||'[]');}catch{return[];}}
-function saveFriends(f){localStorage.setItem('ff_friends',JSON.stringify(f));if(_uid)db.collection('users').doc(_uid).update({friends:f}).catch(()=>{});}
+function saveFriends(f){localStorage.setItem('ff_friends',JSON.stringify(f));if(_uid)db.collection('users').doc(_uid).set({friends:f},{merge:true}).catch(()=>{});}
 
 function toggleFriendPanel(){
   const p=document.getElementById('friend-panel');
@@ -2777,7 +2777,7 @@ async function addFriend(){
     friends.push({uid:friendUid,code:trimmed,name:fd.displayName||'친구'});
     saveFriends(friends);
     // Save my share code to Firestore if not already
-    await db.collection('users').doc(_uid).update({shareCode:getMyShareCode()});
+    await db.collection('users').doc(_uid).set({shareCode:getMyShareCode()});
     renderFriendPanel();
   }catch(e){alert('에러: '+e.message);}
 }
@@ -2909,7 +2909,7 @@ function renderFriendPanel(){
   el.innerHTML=h;
 }
 // Save share code on login
-if(_uid){db.collection('users').doc(_uid).update({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''}).catch(()=>{});}
+if(_uid){db.collection('users').doc(_uid).set({shareCode:getMyShareCode(),displayName:auth.currentUser?.displayName||''},{merge:true}).catch(()=>{});}
 
 // ====== STATS DASHBOARD ======
 // ====== MEDI TRACKER ======
@@ -2955,9 +2955,9 @@ function forceMedSync(){
     showMiniToast('동기화 실패: '+e.message);
   });
 }
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid){db.collection('users').doc(_uid).update({medConfig:c}).then(()=>console.log('[FF] medConfig synced')).catch(e=>console.error('[FF] medConfig sync fail',e));}else{console.warn('[FF] medConfig: _uid is null, not syncing');}}catch(e){console.error('[FF] saveMedConfig error',e);}}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid){db.collection('users').doc(_uid).set({medConfig:c},{merge:true}).then(()=>showMiniToast('☁️ 동기화!')).catch(e=>showMiniToast('동기화 실패'));}else{console.warn('[FF] medConfig: no uid');}}catch(e){console.error(e);}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
-function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).update({medLogs:l}).catch(()=>{});}catch{}}
+function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).set({medLogs:l},{merge:true}).catch(()=>{});}catch{}}
 function logMedTake(timing){
   const cfg=getMedConfig();if(!cfg)return;
   const logs=getMedLogs();const now=new Date();
@@ -4029,7 +4029,7 @@ function saveBirthday(){
   if(!bday||!/^\d{1,2}-\d{1,2}$/.test(bday)){showMiniToast('월-일을 확인해주세요');return;}
   localStorage.setItem('ff_birthyear',byear);
   localStorage.setItem('ff_birthday',bday);
-  if(_uid)db.collection('users').doc(_uid).update({birthyear:byear,birthday:bday}).catch(()=>{});
+  if(_uid)db.collection('users').doc(_uid).set({birthyear:byear,birthday:bday},{merge:true}).catch(()=>{});
   const keys=Object.keys(localStorage).filter(k=>k.startsWith('ff_horo_'));
   keys.forEach(k=>localStorage.removeItem(k));
   const el=document.getElementById('birthday-modal');if(el)el.remove();
@@ -4325,7 +4325,7 @@ function saveNickname(){
   const input=document.getElementById('nickname-input');if(!input)return;
   const name=input.value.trim();if(!name)return;
   localStorage.setItem('ff_nickname',name);
-  if(_uid)db.collection('users').doc(_uid).update({displayName:name}).catch(()=>{});
+  if(_uid)db.collection('users').doc(_uid).set({displayName:name},{merge:true}).catch(()=>{});
   showMiniToast('닉네임 저장: '+name);
 }
 function toggleTabVisibility(key){
