@@ -907,11 +907,11 @@ function saveToFirestore(){
   try{const r=localStorage.getItem('ff_roadmap');if(r)data.roadmap=JSON.parse(r);}catch{}
   try{const g=localStorage.getItem('ff_goals');if(g)data.goals=JSON.parse(g);}catch{}
   try{const d=localStorage.getItem('ff_drops');if(d)data.drops=JSON.parse(d);}catch{}
-  try{const mc=localStorage.getItem('ff_med_config');if(mc)data.medConfig=JSON.parse(mc);}catch{}
+  try{const mc=localStorage.getItem('ff_med_config');console.log('[FF] mc raw:',mc);if(mc&&mc!=='null')data.medConfig=JSON.parse(mc);}catch(e){console.error('[FF] medConfig parse error',e);}
   try{const ml=localStorage.getItem('ff_med_logs');if(ml)data.medLogs=JSON.parse(ml);}catch{}
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
-    showMiniToast('☁️ 업로드 OK: '+Object.keys(data).filter(k=>k!=='updatedAt').join(', '));
+    showMiniToast('☁️ OK: '+Object.keys(data).filter(k=>k!=='updatedAt').join(',')+' mc:'+(localStorage.getItem('ff_med_config')?'Y':'N'));
   }).catch(e=>{
     _skipRemote=false;
     showMiniToast('❌ 동기화 실패: '+e.message);
