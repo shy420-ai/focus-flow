@@ -2942,6 +2942,19 @@ const MED_DB=[
 {name:'아빌리파이',generic:'아리피프라졸',cat:'항정신병',doses:['2mg','5mg','10mg','15mg'],duration:72,peak:'축적형',timing:'아침',effects:['기분 안정','망상/환각 억제','우울 보조'],sides:['불안','불면','체중변화','좌불안석'],note:'반감기 매우 길어 안정적'},
 ];
 function getMedConfig(){try{return JSON.parse(localStorage.getItem('ff_med_config')||'null')}catch{return null}}
+function forceMedSync(){
+  if(!_uid){showMiniToast('로그인 필요!');return;}
+  const mc=localStorage.getItem('ff_med_config');
+  const ml=localStorage.getItem('ff_med_logs');
+  const data={};
+  if(mc)data.medConfig=JSON.parse(mc);
+  if(ml)data.medLogs=JSON.parse(ml);
+  db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
+    showMiniToast('🔄 메디 동기화 완료!');
+  }).catch(e=>{
+    showMiniToast('동기화 실패: '+e.message);
+  });
+}
 function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid){db.collection('users').doc(_uid).update({medConfig:c}).then(()=>console.log('[FF] medConfig synced')).catch(e=>console.error('[FF] medConfig sync fail',e));}else{console.warn('[FF] medConfig: _uid is null, not syncing');}}catch(e){console.error('[FF] saveMedConfig error',e);}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
 function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).update({medLogs:l}).catch(()=>{});}catch{}}
@@ -3193,7 +3206,8 @@ function _renderStatsInner(wrap){
     // 복용 시간 표시 (약 목록 옆)
     if(curTake)h+='<div style="font-size:10px;color:#56C6A0;margin-top:4px">✅ '+Math.floor(curTake.time)+':'+String(Math.round((curTake.time%1)*60)).padStart(2,'0')+' 복용</div>';
     h+='</div>';
-    h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️ 설정</button>';
+    h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️</button>';
+    h+='<button onclick="forceMedSync()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">🔄</button>';
     h+='</div>';
 
     // 약 정보 보기 (현재 탭의 약만)
