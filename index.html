@@ -1405,10 +1405,16 @@ function addDeskDump(){
 }
 function renderDeskDump(){
   const el=document.getElementById('desk-dump-list');if(!el)return;
-  const items=blocks.filter(b=>b.type==='inbox'&&(b.priority==='someday'||!b.priority)&&!b.done);
+  const items=blocks.filter(b=>b.type==='inbox'&&(b.priority==='someday'||!b.priority));
+  const todo=items.filter(b=>!b.done);
+  const done=items.filter(b=>b.done);
   if(items.length===0){el.innerHTML='<div style="font-size:11px;color:#ccc;text-align:center;padding:8px">아직 없어 ✨</div>';return;}
-  el.innerHTML=items.slice(0,10).map(b=>'<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--pl)"><input type="checkbox" onchange="toggleDone(\''+b.id+'\',event);renderDeskDump()" style="accent-color:var(--pink)"><span style="font-size:12px;color:#555;flex:1">'+b.name+'</span><button onclick="blocks=blocks.filter(x=>x.id!==\''+b.id+'\');save();renderDeskDump()" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px">×</button></div>').join('')
-    +(items.length>10?'<div style="font-size:10px;color:#aaa;text-align:center;padding:4px">+'+(items.length-10)+'개 더</div>':'');
+  let html=todo.slice(0,10).map(b=>'<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid var(--pl)"><input type="checkbox" onchange="toggleDone(\''+b.id+'\',event);renderDeskDump()" style="accent-color:var(--pink)"><span style="font-size:12px;color:#555;flex:1">'+b.name+'</span><button onclick="blocks=blocks.filter(x=>x.id!==\''+b.id+'\');save();renderDeskDump()" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:14px">×</button></div>').join('');
+  if(done.length){
+    html+='<div style="font-size:10px;color:#aaa;margin-top:8px;margin-bottom:4px">완료 '+done.length+'개</div>';
+    html+=done.slice(0,5).map(b=>'<div style="display:flex;align-items:center;gap:6px;padding:3px 0;opacity:.5"><input type="checkbox" checked onchange="toggleDone(\''+b.id+'\',event);renderDeskDump()" style="accent-color:var(--pink)"><span style="font-size:11px;color:#aaa;flex:1;text-decoration:line-through">'+b.name+'</span><button onclick="blocks=blocks.filter(x=>x.id!==\''+b.id+'\');save();renderDeskDump()" style="background:none;border:none;color:#ddd;cursor:pointer;font-size:14px">×</button></div>').join('');
+  }
+  el.innerHTML=html;
 }
 // Render on load
 setTimeout(renderDeskDump,500);
