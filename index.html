@@ -449,10 +449,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <h1>Focus Flow</h1>
   <p>ADHD 집중 플래너</p>
   <div id="login-form" style="display:flex;flex-direction:column;gap:8px;width:260px;margin-top:8px">
-    <input id="login-email" type="email" placeholder="이메일" style="padding:12px 14px;border-radius:10px;border:1.5px solid #ddd;font-size:14px;font-family:inherit;outline:none;text-align:center">
-    <input id="login-pw" type="password" placeholder="비밀번호 (6자 이상)" style="padding:12px 14px;border-radius:10px;border:1.5px solid #ddd;font-size:14px;font-family:inherit;outline:none;text-align:center">
-    <button id="login-btn" onclick="doEmailLogin()" style="padding:14px 32px;border-radius:12px;border:none;background:var(--pink);color:#fff;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit">로그인 / 회원가입</button>
-    <button id="google-btn" onclick="doLogin()" style="padding:12px 32px;border-radius:12px;border:1.5px solid #ddd;background:#fff;color:#333;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18"> Google 로그인</button>
+    <button id="google-btn" onclick="doLogin()" style="padding:14px 32px;border-radius:12px;border:1.5px solid #ddd;background:#fff;color:#333;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px"><img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="18" height="18"> Google로 시작하기</button>
   </div>
   <button onclick="startWithoutLogin()" style="background:transparent;color:var(--pd);border:1.5px solid var(--pd);margin-top:8px;padding:14px 32px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit">로그인 없이 바로 시작</button>
   <p style="font-size:10px;color:#bbb;max-width:240px;text-align:center;margin-top:8px">로그인 = 기기 간 싱크<br>바로 시작 = 이 기기에서만 저장</p>
@@ -471,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="header">
-  <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div><div style="font-size:8px;color:rgba(255,255,255,.4)">v28</div></div>
+  <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div><div style="font-size:8px;color:rgba(255,255,255,.4)" id="ver-info">v28</div></div>
   <div id="mode-toggle" style="display:none"></div>
   <div style="display:flex;align-items:center;gap:6px"><button onclick="location.reload()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#fff;opacity:.6">↻</button><button id="theme-btn" onclick="toggleThemePopup()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:#fff;opacity:.8;position:relative;top:2px">⚙</button><div class="clock" id="clock"></div></div>
 </div>
@@ -832,6 +829,7 @@ auth.onAuthStateChanged(user=>{
     localStorage.setItem('ff_uid',user.uid);
     localStorage.removeItem('ff_skip_login');
     document.getElementById('login-overlay').style.display='none';
+    const vi=document.getElementById('ver-info');if(vi)vi.textContent='v28 ☁️'+user.email.split('@')[0];
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     loadFromFirestore();
     // 로컬에만 있는 데이터 Firebase로 업로드 (로그인 전에 생성된 데이터)
