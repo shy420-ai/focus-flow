@@ -1186,16 +1186,20 @@ function buildGrid(){
     const t=document.createElement('div');t.className='time-tick';t.style.height=PX+'px';
     const hour=START+i;
     const sp=document.createElement('span');sp.textContent=hour+':00';
+    if(i<HOURS){
     sp.ondblclick=()=>{const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);};
     let _lastTap=0;sp.ontouchend=(e)=>{const now=Date.now();if(now-_lastTap<300){e.preventDefault();const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTap=0;}else{_lastTap=now;}};
+    }
     t.appendChild(sp);
     // 30분 표시
     if(i<HOURS){const half=document.createElement('div');half.style.cssText='font-size:8px;color:#ccc;text-align:right;padding-right:8px;position:absolute;top:'+(PX/2-5)+'px;right:0';half.textContent=':30';t.style.position='relative';t.appendChild(half);}
     tc.appendChild(t);
     const l=document.createElement('div');l.className='hour-line';l.style.top=(i*PX)+'px';l.style.height=PX+'px';
     // 빈 영역 더블탭으로 블록 추가
-    l.ondblclick=(e)=>{if(e.target!==l)return;const subH=Math.floor(e.offsetY/PX*6)/6;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour+subH,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);};
-    let _lastTapL=0;l.ontouchend=(e)=>{if(e.target!==l)return;const now2=Date.now();if(now2-_lastTapL<300){e.preventDefault();const touch=e.changedTouches[0];const rect=l.getBoundingClientRect();const subH=Math.floor((touch.clientY-rect.top)/PX*6)/6;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour+subH,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTapL=0;}else{_lastTapL=now2;}};
+    if(i<HOURS){
+    l.ondblclick=(e)=>{if(e.target!==l||hour>=START+HOURS)return;const subH=Math.floor(e.offsetY/PX*6)/6;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour+subH,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);};
+    let _lastTapL=0;l.ontouchend=(e)=>{if(e.target!==l||hour>=START+HOURS)return;const now2=Date.now();if(now2-_lastTapL<300){e.preventDefault();const touch=e.changedTouches[0];const rect=l.getBoundingClientRect();const subH=Math.floor((touch.clientY-rect.top)/PX*6)/6;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour+subH,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTapL=0;}else{_lastTapL=now2;}};
+    }
     bc.appendChild(l);
     // 10분 단위 점선
     if(i<HOURS){
