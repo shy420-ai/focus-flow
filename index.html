@@ -2971,9 +2971,9 @@ function forceMedSync(){
     showMiniToast('동기화 실패: '+e.message);
   });
 }
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));if(_uid){saveToFirestore();showMiniToast('☁️ 저장 중...');}else{showMiniToast('로그인 필요');}}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));if(_uid){db.collection('users').doc(_uid).set({medConfig:c},{merge:true}).then(()=>showMiniToast('💊 약 동기화 OK!')).catch(e=>showMiniToast('❌ '+e.message));saveToFirestore();}else{showMiniToast('로그인 필요');}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
-function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));saveToFirestore();}
+function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));if(_uid)db.collection('users').doc(_uid).set({medLogs:l},{merge:true}).catch(()=>{});saveToFirestore();}
 function logMedTake(timing){
   const cfg=getMedConfig();if(!cfg)return;
   const logs=getMedLogs();const now=new Date();
