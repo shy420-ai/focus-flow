@@ -904,11 +904,11 @@ function saveToFirestore(){
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   };
   // 로컬에 있는 추가 데이터도 포함
-  try{const r=localStorage.getItem('ff_roadmap');if(r)data.roadmap=JSON.parse(r);}catch{}
-  try{const g=localStorage.getItem('ff_goals');if(g)data.goals=JSON.parse(g);}catch{}
-  try{const d=localStorage.getItem('ff_drops');if(d)data.drops=JSON.parse(d);}catch{}
-  try{const mc=localStorage.getItem('ff_med_config');console.log('[FF] mc raw:',mc);if(mc&&mc!=='null')data.medConfig=JSON.parse(mc);}catch(e){console.error('[FF] medConfig parse error',e);}
-  try{const ml=localStorage.getItem('ff_med_logs');if(ml)data.medLogs=JSON.parse(ml);}catch{}
+  ['ff_roadmap:roadmap','ff_goals:goals','ff_drops:drops','ff_med_config:medConfig','ff_med_logs:medLogs'].forEach(pair=>{
+    const [key,field]=pair.split(':');
+    const val=localStorage.getItem(key);
+    if(val&&val!=='null'&&val!=='undefined'){try{data[field]=JSON.parse(val);}catch{}}
+  });
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
     showMiniToast('mc:'+(localStorage.getItem('ff_med_config')?'Y':'N')+' road:'+(localStorage.getItem('ff_roadmap')?'Y':'N'));
