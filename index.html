@@ -4348,11 +4348,11 @@ function showDone(blockId){
 function showToastWithEnergy(e,m,s){
   document.getElementById('te').innerHTML=e;document.getElementById('tm').textContent=m;
   document.getElementById('ts').innerHTML=s+'<div style="font-size:10px;color:#aaa;margin-top:10px">내 에너지는?</div><div style="display:flex;gap:12px;justify-content:center;margin-top:4px"><button ontouchend="event.preventDefault();logEnergy(1)" onclick="logEnergy(1)" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😫</button><button ontouchend="event.preventDefault();logEnergy(2)" onclick="logEnergy(2)" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😐</button><button ontouchend="event.preventDefault();logEnergy(3)" onclick="logEnergy(3)" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">😊</button><button ontouchend="event.preventDefault();logEnergy(4)" onclick="logEnergy(4)" style="font-size:24px;background:none;border:none;cursor:pointer;padding:4px">🔥</button></div>';
-  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),600);
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),400);
 }
 function showToast(e,m,s){
   document.getElementById('te').innerHTML=e;document.getElementById('tm').textContent=m;document.getElementById('ts').textContent=s;
-  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),600);
+  const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),400);
 }
 let raf=null;
 function animC(){
