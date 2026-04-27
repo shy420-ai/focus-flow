@@ -968,6 +968,13 @@ const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
 let viewDate=todayStr(),curView=localStorage.getItem('ff_cur_view')||'tl',bufOn=false,preview=null,nid=Date.now();
+// v27b 강제 캐시 삭제
+if(localStorage.getItem('ff_cache_fix')!=='v27b'){
+  if('caches' in window)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
+  if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
+  localStorage.setItem('ff_cache_fix','v27b');
+  setTimeout(()=>location.reload(),500);
+}
 // v26 일회성 탭 복구
 if(localStorage.getItem('ff_tab_fix')!=='v26'){
   localStorage.removeItem('ff_tab_order');
