@@ -909,6 +909,9 @@ function saveToFirestore(){
   const _rm=getRoadmap();if(_rm)data.roadmap=_rm;
   const _gl=getGoals();if(_gl&&Object.keys(_gl).length)data.goals=_gl;
   const _dr=getDropItems();if(_dr&&_dr.length)data.drops=_dr;
+  const _bd=localStorage.getItem('ff_birthday');if(_bd)data.birthday=_bd;
+  const _by=localStorage.getItem('ff_birthyear');if(_by)data.birthyear=_by;
+  const _nn=localStorage.getItem('ff_nickname');if(_nn)data.nickname=_nn;
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
   }).catch(e=>{
