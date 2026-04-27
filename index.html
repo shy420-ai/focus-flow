@@ -3225,8 +3225,7 @@ function _renderStatsInner(wrap){
     // 복용 시간 표시 (약 목록 옆)
     if(curTake)h+='<div style="font-size:10px;color:#56C6A0;margin-top:4px">✅ '+Math.floor(curTake.time)+':'+String(Math.round((curTake.time%1)*60)).padStart(2,'0')+' 복용</div>';
     h+='</div>';
-    h+='<button onclick="setupMed()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">⚙️</button>';
-    h+='<button onclick="forceMedSync()" style="background:none;border:none;color:#aaa;font-size:12px;cursor:pointer">🔄</button>';
+    h+='<button onclick="setupMed()" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer;padding:4px">⚙</button>';
     h+='</div>';
 
     // 약 정보 보기 (현재 탭의 약만)
