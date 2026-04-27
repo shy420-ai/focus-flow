@@ -826,6 +826,8 @@ auth.onAuthStateChanged(user=>{
     document.getElementById('login-overlay').style.display='none';
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     loadFromFirestore();
+    // 로컬에만 있는 데이터 Firebase로 업로드 (로그인 전에 생성된 데이터)
+    setTimeout(()=>saveToFirestore(),2000);
     listenFirestore();
     // Save share code for friend feature
     const sc=getMyShareCode();
@@ -876,7 +878,7 @@ function loadFromFirestore(){
 function saveToFirestore(){
   if(!_uid)return;
   _skipRemote=true;
-  db.collection('users').doc(_uid).set({
+  const data={
     tasks:blocks,
     recurring:recurring,
     habits:habits,
@@ -884,7 +886,14 @@ function saveToFirestore(){
     metrics:metrics,
     metricLogs:metricLogs,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
-  },{merge:true}).then(()=>{
+  };
+  // 로컬에 있는 추가 데이터도 포함
+  try{const r=localStorage.getItem('ff_roadmap');if(r)data.roadmap=JSON.parse(r);}catch{}
+  try{const g=localStorage.getItem('ff_goals');if(g)data.goals=JSON.parse(g);}catch{}
+  try{const d=localStorage.getItem('ff_drops');if(d)data.drops=JSON.parse(d);}catch{}
+  try{const mc=localStorage.getItem('ff_med_config');if(mc)data.medConfig=JSON.parse(mc);}catch{}
+  try{const ml=localStorage.getItem('ff_med_logs');if(ml)data.medLogs=JSON.parse(ml);}catch{}
+  db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
   });
 }
