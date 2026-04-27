@@ -863,7 +863,9 @@ auth.onAuthStateChanged(user=>{
   }
 });
 function loadFromFirestore(){
+  alert('loadFromFirestore 시작: uid='+_uid);
   db.collection('users').doc(_uid).get().then(doc=>{
+    alert('doc.exists='+doc.exists);
     if(doc.exists){
       const d=doc.data();
       if(d.tasks){blocks=d.tasks;migrateBlocks();localStorage.setItem('ff_v3',JSON.stringify(blocks));}
@@ -889,7 +891,7 @@ function loadFromFirestore(){
       if(curView==='goal')renderGoals();
       alert('Firebase 키: '+Object.keys(d).join(', ')+'\nmedConfig: '+(d.medConfig?'있음':'없음'));
     }
-  }).catch(e=>{showMiniToast('❌ 로드 실패: '+e.message);});
+  }).catch(e=>{alert('❌ 로드 실패: '+e.message);});
 }
 function saveToFirestore(){
   if(!_uid)return;
