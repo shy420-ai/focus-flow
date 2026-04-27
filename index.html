@@ -516,7 +516,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
     <button onclick="localStorage.removeItem('ff_onboarded');toggleThemePopup();setTimeout(()=>{try{showOnboarding(true);}catch(e){alert('온보딩 에러: '+e.message);}},500)" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--pl);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit">📖 온보딩 가이드 다시 보기</button>
   </div>
-  <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px;text-align:center">
+  <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
+    <button onclick="saveToFirestore();showMiniToast('☁️ 전체 동기화 중...')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--pd);background:#fff;color:var(--pd);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;margin-bottom:8px">☁️ 전체 데이터 동기화</button>
+  </div>
+  <div style="margin-top:8px;border-top:1px solid var(--pl);padding-top:10px;text-align:center">
     <a href="https://qr.kakaopay.com/FH24plHDs" target="_blank" style="display:inline-block;width:100%;padding:10px;border-radius:10px;background:linear-gradient(135deg,#FFE156,#FFDAC1);color:#333;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;box-sizing:border-box">☕ 개발자에게 커피 한 잔 사주기</a>
     <div style="font-size:9px;color:#bbb;margin-top:4px">Focus Flow가 도움이 됐다면 응원해주세요!</div>
   </div>
