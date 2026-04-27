@@ -3160,7 +3160,7 @@ function saveMedBedGoal(){
   const h=document.getElementById('med-height');const w=document.getElementById('med-weight');
   if(h&&h.value)cfg.height=Number(h.value);
   if(w&&w.value)cfg.weight=Number(w.value);
-  saveMedConfig(cfg);document.getElementById('med-setup').remove();renderStats();showMiniToast('💊 저장됨!');
+  saveMedConfig(cfg);document.getElementById('med-setup').remove();renderStats();setTimeout(()=>alert('동기화 결과: uid='+ (_uid?'있음':'없음')),1000);
 }
 
 function renderStats(){
