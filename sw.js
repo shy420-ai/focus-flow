@@ -1,7 +1,12 @@
-const CACHE_NAME = 'focus-flow-v27';
+const CACHE_NAME = 'focus-flow-v28';
 
 self.addEventListener('install', event => {
+  // 즉시 활성화
   self.skipWaiting();
+  // 모든 이전 캐시 삭제
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+  );
 });
 
 self.addEventListener('activate', event => {
@@ -14,10 +19,10 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
-  // HTML pages: always network first, never serve stale cache
+  // HTML pages: ALWAYS from network, bypass all caches
   if (event.request.mode === 'navigate' || url.pathname.endsWith('.html') || url.pathname.endsWith('/')) {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(event.request))
+      fetch(event.request, {cache: 'no-store'}).catch(() => caches.match(event.request))
     );
     return;
   }

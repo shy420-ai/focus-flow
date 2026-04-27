@@ -471,7 +471,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="header">
-  <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div><div style="font-size:8px;color:rgba(255,255,255,.4)">v27b</div></div>
+  <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div><div style="font-size:8px;color:rgba(255,255,255,.4)">v28</div></div>
   <div id="mode-toggle" style="display:none"></div>
   <div style="display:flex;align-items:center;gap:6px"><button onclick="location.reload()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#fff;opacity:.6">↻</button><button id="theme-btn" onclick="toggleThemePopup()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:#fff;opacity:.8;position:relative;top:2px">⚙</button><div class="clock" id="clock"></div></div>
 </div>
@@ -966,10 +966,10 @@ const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10�
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
 let viewDate=todayStr(),curView=localStorage.getItem('ff_cur_view')||'tl',bufOn=false,preview=null,nid=Date.now();
 // v27b 강제 캐시 삭제
-if(localStorage.getItem('ff_cache_fix')!=='v27b'){
+if(localStorage.getItem('ff_cache_fix')!=='v28'){
   if('caches' in window)caches.keys().then(ks=>ks.forEach(k=>caches.delete(k)));
   if(navigator.serviceWorker)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>r.unregister()));
-  localStorage.setItem('ff_cache_fix','v27b');
+  localStorage.setItem('ff_cache_fix','v28');
   setTimeout(()=>location.reload(),500);
 }
 // v26 일회성 탭 복구
@@ -5290,7 +5290,7 @@ setTimeout(()=>{
 },500);
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v27';
+  const SW_VER='v28';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
@@ -5299,10 +5299,10 @@ setTimeout(()=>{
       return Promise.all(keys.map(k=>caches.delete(k)));
     }).then(()=>{
       localStorage.setItem('ff_sw_ver',SW_VER);
-      navigator.serviceWorker.register('sw.js?v=27',{updateViaCache:'none'});
-    }).catch(()=>{navigator.serviceWorker.register('sw.js?v=27',{updateViaCache:'none'}).catch(()=>{});});
+      navigator.serviceWorker.register('sw.js?v=28',{updateViaCache:'none'});
+    }).catch(()=>{navigator.serviceWorker.register('sw.js?v=28',{updateViaCache:'none'}).catch(()=>{});});
   }else{
-    navigator.serviceWorker.register('sw.js?v=27',{updateViaCache:'none'}).catch(()=>{});
+    navigator.serviceWorker.register('sw.js?v=28',{updateViaCache:'none'}).catch(()=>{});
   }
 }</script>
 </body>
