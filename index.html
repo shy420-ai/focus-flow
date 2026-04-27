@@ -911,7 +911,7 @@ function saveToFirestore(){
   try{const ml=localStorage.getItem('ff_med_logs');if(ml)data.medLogs=JSON.parse(ml);}catch{}
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
-    showMiniToast('☁️ OK: '+Object.keys(data).filter(k=>k!=='updatedAt').join(',')+' mc:'+(localStorage.getItem('ff_med_config')?'Y':'N'));
+    showMiniToast('mc:'+(localStorage.getItem('ff_med_config')?'Y':'N')+' road:'+(localStorage.getItem('ff_roadmap')?'Y':'N'));
   }).catch(e=>{
     _skipRemote=false;
     showMiniToast('❌ 동기화 실패: '+e.message);
