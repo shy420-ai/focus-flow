@@ -468,7 +468,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <div class="header">
-  <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div><div style="font-size:8px;color:rgba(255,255,255,.4)" id="ver-info">v28</div></div>
+  <div><h1>focus <span>flow</span></h1><div class="today-label" id="today-label"></div></div>
   <div id="mode-toggle" style="display:none"></div>
   <div style="display:flex;align-items:center;gap:6px"><button onclick="location.reload()" style="background:none;border:none;cursor:pointer;font-size:16px;padding:4px;color:#fff;opacity:.6">↻</button><button id="theme-btn" onclick="toggleThemePopup()" style="background:none;border:none;cursor:pointer;font-size:20px;padding:4px;color:#fff;opacity:.8;position:relative;top:2px">⚙</button><div class="clock" id="clock"></div></div>
 </div>
@@ -836,14 +836,11 @@ auth.onAuthStateChanged(user=>{
     localStorage.setItem('ff_uid',user.uid);
     localStorage.removeItem('ff_skip_login');
     document.getElementById('login-overlay').style.display='none';
-    const vi=document.getElementById('ver-info');if(vi)vi.textContent='v28 ☁️'+user.email.split('@')[0];
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     loadFromFirestore();
     // 로컬 데이터 Firebase로 강제 업로드 (3초 후 — loadFromFirestore 완료 기다림)
     setTimeout(()=>{
       saveToFirestore();
-      const vi=document.getElementById('ver-info');
-      if(vi)vi.textContent='v28 ☁️'+user.email.split('@')[0]+' ✓';
     },3000);
     listenFirestore();
     // Save share code for friend feature
@@ -914,7 +911,6 @@ function saveToFirestore(){
   const _dr=getDropItems();if(_dr&&_dr.length)data.drops=_dr;
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
-    showMiniToast('☁️ 동기화 완료');
   }).catch(e=>{
     _skipRemote=false;
     showMiniToast('❌ 동기화 실패: '+e.message);
@@ -2974,7 +2970,7 @@ function forceMedSync(){
     showMiniToast('동기화 실패: '+e.message);
   });
 }
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));if(_uid){db.collection('users').doc(_uid).set({medConfig:c},{merge:true}).then(()=>showMiniToast('💊 약 동기화 OK!')).catch(e=>showMiniToast('❌ '+e.message));saveToFirestore();}else{showMiniToast('로그인 필요');}}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));if(_uid){db.collection('users').doc(_uid).set({medConfig:c},{merge:true}).catch(()=>{});saveToFirestore();}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
 function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));if(_uid)db.collection('users').doc(_uid).set({medLogs:l},{merge:true}).catch(()=>{});saveToFirestore();}
 function logMedTake(timing){
