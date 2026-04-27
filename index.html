@@ -2256,7 +2256,7 @@ function getDropItems(){
 }
 function saveDropItems(items){
   try{localStorage.setItem('ff_drops',JSON.stringify(items));}catch(e){}
-  try{if(_uid)db.collection('users').doc(_uid).set({drops:items},{merge:true}).catch(()=>{});}catch(e){}
+  saveToFirestore();
 }
 function addDropItem(text){
   if(!text||!text.trim())return;
@@ -2411,10 +2411,10 @@ document.addEventListener('click',function(e){
 // ====== GOALS (연/월/주 목표) ======
 // Mandala + Goals data
 function getMandala(){try{return JSON.parse(localStorage.getItem('ff_mandala')||'null')}catch{return null}}
-function saveMandala(m){localStorage.setItem('ff_mandala',JSON.stringify(m));try{if(_uid)db.collection('users').doc(_uid).set({mandala:m},{merge:true}).catch(()=>{});}catch{}}
+function saveMandala(m){localStorage.setItem('ff_mandala',JSON.stringify(m));saveToFirestore();}
 function initMandala(){return{center:'',cells:['','','','','','','',''],subs:[[],[],[],[],[],[],[],[]]}}
 function getGoals(){try{return JSON.parse(localStorage.getItem('ff_goals')||'{}');}catch{return{};}}
-function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));try{if(_uid)db.collection('users').doc(_uid).set({goals:g},{merge:true}).catch(()=>{});}catch{}}
+function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));saveToFirestore();}
 function goalKey(type){
   const d=new Date();
   if(type==='month')return 'm'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
@@ -2449,7 +2449,7 @@ const Q_LABELS=['Q1 (1~3월)','Q2 (4~6월)','Q3 (7~9월)','Q4 (10~12월)'];
 const Q_EMOJI=['🌸','☀️','🍂','⛄'];
 const Q_COLORS=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
 function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
-function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));try{if(_uid)db.collection('users').doc(_uid).set({roadmap:r},{merge:true}).catch(()=>{});}catch{}}
+function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));saveToFirestore();}
 function initRoadmap(){return{goals:[]}}
 function newGoalQ(){return[{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]}];}
 function migrateRoadmap(r){
@@ -2750,7 +2750,7 @@ function getMyShareCode(){
   return Math.abs(h).toString(36).toUpperCase().slice(0,6);
 }
 function getFriends(){try{return JSON.parse(localStorage.getItem('ff_friends')||'[]');}catch{return[];}}
-function saveFriends(f){localStorage.setItem('ff_friends',JSON.stringify(f));if(_uid)db.collection('users').doc(_uid).set({friends:f},{merge:true}).catch(()=>{});}
+function saveFriends(f){localStorage.setItem('ff_friends',JSON.stringify(f));saveToFirestore();}
 
 function toggleFriendPanel(){
   const p=document.getElementById('friend-panel');
@@ -2955,9 +2955,9 @@ function forceMedSync(){
     showMiniToast('동기화 실패: '+e.message);
   });
 }
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid){db.collection('users').doc(_uid).set({medConfig:c},{merge:true}).then(()=>showMiniToast('☁️ 동기화!')).catch(e=>showMiniToast('동기화 실패'));}else{console.warn('[FF] medConfig: no uid');}}catch(e){console.error(e);}}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));saveToFirestore();}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
-function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).set({medLogs:l},{merge:true}).catch(()=>{});}catch{}}
+function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));saveToFirestore();}
 function logMedTake(timing){
   const cfg=getMedConfig();if(!cfg)return;
   const logs=getMedLogs();const now=new Date();
