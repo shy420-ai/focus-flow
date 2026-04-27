@@ -2992,7 +2992,7 @@ function setupMed(){
   cats.forEach(cat=>{
     h+='<div style="width:100%;font-size:10px;color:var(--pd);font-weight:600;margin-top:4px">'+cat+'</div>';
     MED_DB.filter(d=>d.cat===cat).forEach(d=>{
-      h+='<button onclick="selectMedFromDB(\''+d.name+'\')" style="padding:4px 8px;border-radius:6px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#555">'+d.name+'</button>';
+      h+='<button id="mdb-'+d.name+'" onclick="selectMedFromDB(\''+d.name+'\')" style="padding:4px 8px;border-radius:6px;border:1px solid var(--pl);background:#fff;font-size:11px;cursor:pointer;font-family:inherit;color:#555">'+d.name+'</button>';
     });
   });
   h+='</div>';
@@ -3038,6 +3038,8 @@ function setupMed(){
 }
 function selectMedFromDB(name){
   const d=MED_DB.find(x=>x.name===name);if(!d)return;
+  // 선택 표시
+  MED_DB.forEach(m=>{const b=document.getElementById('mdb-'+m.name);if(b){b.style.background=m.name===name?'var(--pink)':'#fff';b.style.color=m.name===name?'#fff':'#555';b.style.borderColor=m.name===name?'var(--pink)':'var(--pl)';}});
   document.getElementById('med-name').value=d.name;
   document.getElementById('med-dur').value=d.duration;
   // Populate dose dropdown with auto-duration
