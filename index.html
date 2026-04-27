@@ -3046,10 +3046,13 @@ function selectMedFromDB(name){
   const sel=document.getElementById('med-dose');
   sel.innerHTML=d.doses.map(ds=>'<option>'+ds+'</option>').join('');
   sel.onchange=function(){
-    if(d.doseHours&&d.doseHours[sel.value])document.getElementById('med-dur').value=d.doseHours[sel.value];
+    if(d.doseHours&&d.doseHours[sel.value]){document.getElementById('med-dur').value=d.doseHours[sel.value];}
   };
-  // Set initial duration for first dose
-  if(d.doseHours&&d.doseHours[d.doses[0]])document.getElementById('med-dur').value=d.doseHours[d.doses[0]];
+  // Set initial duration based on selected dose
+  const initDose=d.doses[0];
+  if(d.doseHours&&d.doseHours[initDose]){document.getElementById('med-dur').value=d.doseHours[initDose];}
+  // Also add inline onchange as backup
+  sel.setAttribute('onchange','(function(v){var dh='+JSON.stringify(d.doseHours||{})+';if(dh[v])document.getElementById("med-dur").value=dh[v];})(this.value)');
   // Set timing
   const timingSel=document.getElementById('med-timing');
   if(timingSel&&d.timing)timingSel.value=d.timing;
