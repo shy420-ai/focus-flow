@@ -497,6 +497,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <span style="font-size:12px;color:#aaa">~</span>
       <select id="tl-end-sel" onchange="setTimelineRange(Number(document.getElementById('tl-start-sel').value),Number(this.value)-Number(document.getElementById('tl-start-sel').value))" style="padding:4px 8px;border-radius:8px;border:1px solid var(--pl);font-size:12px;font-family:inherit"></select>
     </div>
+    <div style="margin-top:8px;display:flex;align-items:center;gap:6px;justify-content:center">
+      <span style="font-size:11px;color:#888">간격</span>
+      <input type="range" min="80" max="200" step="20" value="" id="tl-px-slider" oninput="PX=Number(this.value);localStorage.setItem('ff_px',PX);buildGrid();renderTimeline();document.getElementById('tl-px-val').textContent=PX+'px'" style="flex:1;accent-color:var(--pink)">
+      <span id="tl-px-val" style="font-size:11px;color:#888;min-width:36px"></span>
+    </div>
   </div>
   <div style="margin-top:12px;border-top:1px solid var(--pl);padding-top:10px">
     <div style="font-size:12px;font-weight:700;color:var(--pd);margin-bottom:8px;text-align:center">📑 탭 관리</div>
@@ -913,7 +918,7 @@ const CATEGORIES=getCategoryList();
 function allCategories(){return getCategoryList();}
 function catColor(name){const c=getCategoryList().find(x=>x.name===name);return c?c.color:'#aaa';}
 
-const PX=180;
+let PX=parseInt(localStorage.getItem('ff_px'))||140;
 let START=parseInt(localStorage.getItem('ff_tl_start')||'6');
 let HOURS=parseInt(localStorage.getItem('ff_tl_hours')||'18');
 function setTimelineRange(start,hours){START=start;HOURS=hours;localStorage.setItem('ff_tl_start',start);localStorage.setItem('ff_tl_hours',hours);buildGrid();renderTimeline();}
@@ -4221,6 +4226,7 @@ function toggleThemePopup(){
     const ni=document.getElementById('nickname-input');if(ni)ni.value=localStorage.getItem('ff_nickname')||auth.currentUser?.displayName||'';
     for(let i=0;i<=23;i++){ss.innerHTML+='<option value="'+i+'"'+(i===START?' selected':'')+'>'+i+':00</option>';}
     for(let i=1;i<=24;i++){se.innerHTML+='<option value="'+i+'"'+(i===START+HOURS?' selected':'')+'>'+i+':00</option>';}
+    const pxSlider=document.getElementById('tl-px-slider');if(pxSlider){pxSlider.value=PX;document.getElementById('tl-px-val').textContent=PX+'px';}
     // Render tab toggles
     const tl=document.getElementById('tab-toggle-list');if(tl){
       const hidden=JSON.parse(localStorage.getItem('ff_hidden_tabs')||'[]');
