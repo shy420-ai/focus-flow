@@ -1170,8 +1170,8 @@ function buildGrid(){
     tc.appendChild(t);
     const l=document.createElement('div');l.className='hour-line';l.style.top=(i*PX)+'px';l.style.height=PX+'px';
     // 빈 영역 더블탭으로 블록 추가
-    l.ondblclick=(e)=>{if(e.target!==l)return;const clickY=e.offsetY;const subHour=Math.round(clickY/PX*6)/6;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour+subHour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);};
-    let _lastTapL=0;l.ontouchend=(e)=>{if(e.target!==l)return;const now2=Date.now();if(now2-_lastTapL<300){e.preventDefault();const touch=e.changedTouches[0];const rect=l.getBoundingClientRect();const clickY=touch.clientY-rect.top;const subHour=Math.round(clickY/PX*6)/6;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour+subHour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTapL=0;}else{_lastTapL=now2;}};
+    l.ondblclick=(e)=>{if(e.target!==l)return;const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);};
+    let _lastTapL=0;l.ontouchend=(e)=>{if(e.target!==l)return;const now2=Date.now();if(now2-_lastTapL<300){e.preventDefault();const id=String(nid++);blocks.push({id,type:'timeline',name:'새 블록',date:viewDate,startHour:hour,durHour:1,color:'pink',done:false,memo:'',category:''});save();render();setTimeout(()=>editBlock(id),300);_lastTapL=0;}else{_lastTapL=now2;}};
     bc.appendChild(l);
     // 10분 단위 점선
     if(i<HOURS){
