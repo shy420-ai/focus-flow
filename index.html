@@ -725,6 +725,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 </div>
 
 <script>
+// 전역 에러 핸들러 — 이쁜 팝업으로 표시
+window.onerror=function(msg,src,line,col,err){
+  const el=document.createElement('div');
+  el.style.cssText='position:fixed;bottom:60px;left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:340px;background:#fff;border:2px solid #E24B4A;border-radius:14px;padding:14px;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.15)';
+  el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;font-weight:700;color:#E24B4A">⚠️ 오류 발생</span><button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#ccc;font-size:16px;cursor:pointer">✕</button></div><div style="font-size:11px;color:#555;line-height:1.5;word-break:break-all">'+msg+'<br><span style="color:#aaa">line '+line+'</span></div>';
+  document.body.appendChild(el);
+  setTimeout(()=>{if(el.parentElement)el.remove();},8000);
+};
+window.addEventListener('unhandledrejection',function(e){
+  window.onerror('Promise: '+(e.reason?.message||e.reason||'unknown'),'',0,0,e.reason);
+});
 // --- Firebase Init ---
 firebase.initializeApp({
   apiKey:"AIzaSyBhmG3I73wzy8KxmPlf6nH8wHd1etO32zg",
@@ -2931,7 +2942,7 @@ const MED_DB=[
 {name:'아빌리파이',generic:'아리피프라졸',cat:'항정신병',doses:['2mg','5mg','10mg','15mg'],duration:72,peak:'축적형',timing:'아침',effects:['기분 안정','망상/환각 억제','우울 보조'],sides:['불안','불면','체중변화','좌불안석'],note:'반감기 매우 길어 안정적'},
 ];
 function getMedConfig(){try{return JSON.parse(localStorage.getItem('ff_med_config')||'null')}catch{return null}}
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid)db.collection('users').doc(_uid).update({medConfig:c}).catch(()=>{});}catch{}}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));try{if(_uid){db.collection('users').doc(_uid).update({medConfig:c}).then(()=>console.log('[FF] medConfig synced')).catch(e=>console.error('[FF] medConfig sync fail',e));}else{console.warn('[FF] medConfig: _uid is null, not syncing');}}catch(e){console.error('[FF] saveMedConfig error',e);}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
 function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));try{if(_uid)db.collection('users').doc(_uid).update({medLogs:l}).catch(()=>{});}catch{}}
 function logMedTake(timing){
