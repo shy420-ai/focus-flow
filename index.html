@@ -873,15 +873,13 @@ function loadFromFirestore(){
       if(d.metrics) metrics=d.metrics;
       if(d.metricLogs) metricLogs=d.metricLogs;
       if(d.recurring){recurring=d.recurring;localStorage.setItem('ff_recurring',JSON.stringify(d.recurring));}
-      if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
-      if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
-      if(d.roadmap) localStorage.setItem('ff_roadmap',JSON.stringify(d.roadmap));
+      if(d.drops){dropItems=d.drops;localStorage.setItem('ff_drops',JSON.stringify(d.drops));}
+      if(d.goals){goalsData=d.goals;localStorage.setItem('ff_goals',JSON.stringify(d.goals));}
+      if(d.roadmap){roadmapData=d.roadmap;localStorage.setItem('ff_roadmap',JSON.stringify(d.roadmap));}
       if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
       if(d.friends) localStorage.setItem('ff_friends',JSON.stringify(d.friends));
-      if(d.medConfig) localStorage.setItem('ff_med_config',JSON.stringify(d.medConfig));
-      if(d.medLogs) localStorage.setItem('ff_med_logs',JSON.stringify(d.medLogs));
-      if(d.energy) localStorage.setItem('ff_energy',JSON.stringify(d.energy));
-      if(d.mood) localStorage.setItem('ff_mood',JSON.stringify(d.mood));
+      if(d.medConfig){medConfig=d.medConfig;localStorage.setItem('ff_med_config',JSON.stringify(d.medConfig));}
+      if(d.medLogs){medLogs=d.medLogs;localStorage.setItem('ff_med_logs',JSON.stringify(d.medLogs));}
       if(d.birthday){localStorage.setItem('ff_birthday',d.birthday);if(d.birthyear)localStorage.setItem('ff_birthyear',d.birthyear);}
       if(d.nickname) localStorage.setItem('ff_nickname',d.nickname);
       saveHabitLocal();
@@ -903,12 +901,12 @@ function saveToFirestore(){
     metricLogs:metricLogs,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp()
   };
-  // 로컬에 있는 추가 데이터도 포함 — 직접 getter 사용
-  const _mc=getMedConfig();if(_mc)data.medConfig=_mc;
-  const _ml=getMedLogs();if(_ml&&_ml.length)data.medLogs=_ml;
-  const _rm=getRoadmap();if(_rm)data.roadmap=_rm;
-  const _gl=getGoals();if(_gl&&Object.keys(_gl).length)data.goals=_gl;
-  const _dr=getDropItems();if(_dr&&_dr.length)data.drops=_dr;
+  // 전역 변수 직접 포함 — blocks와 같은 방식
+  if(medConfig)data.medConfig=medConfig;
+  if(medLogs&&medLogs.length)data.medLogs=medLogs;
+  if(roadmapData)data.roadmap=roadmapData;
+  if(goalsData&&Object.keys(goalsData).length)data.goals=goalsData;
+  if(dropItems&&dropItems.length)data.drops=dropItems;
   const _bd=localStorage.getItem('ff_birthday');if(_bd)data.birthday=_bd;
   const _by=localStorage.getItem('ff_birthyear');if(_by)data.birthyear=_by;
   const _nn=localStorage.getItem('ff_nickname');if(_nn)data.nickname=_nn;
@@ -934,12 +932,12 @@ function listenFirestore(){
       if(d.habitLogs) habitLogs=d.habitLogs;
       if(d.metrics) metrics=d.metrics;
       if(d.metricLogs) metricLogs=d.metricLogs;
-      if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
-      if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
+      if(d.drops){dropItems=d.drops;localStorage.setItem('ff_drops',JSON.stringify(d.drops));}
+      if(d.goals){goalsData=d.goals;localStorage.setItem('ff_goals',JSON.stringify(d.goals));}
       if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
-      if(d.roadmap) localStorage.setItem('ff_roadmap',JSON.stringify(d.roadmap));
-      if(d.medConfig) localStorage.setItem('ff_med_config',JSON.stringify(d.medConfig));
-      if(d.medLogs) localStorage.setItem('ff_med_logs',JSON.stringify(d.medLogs));
+      if(d.roadmap){roadmapData=d.roadmap;localStorage.setItem('ff_roadmap',JSON.stringify(d.roadmap));}
+      if(d.medConfig){medConfig=d.medConfig;localStorage.setItem('ff_med_config',JSON.stringify(d.medConfig));}
+      if(d.medLogs){medLogs=d.medLogs;localStorage.setItem('ff_med_logs',JSON.stringify(d.medLogs));}
       if(d.friends) localStorage.setItem('ff_friends',JSON.stringify(d.friends));
       if(d.birthday&&!localStorage.getItem('ff_birthday')){localStorage.setItem('ff_birthday',d.birthday);localStorage.setItem('ff_birthyear',d.birthyear||'');}
       saveHabitLocal();
@@ -973,6 +971,11 @@ function setTimelineRange(start,hours){START=start;HOURS=hours;localStorage.setI
 const DAYS=['일','월','화','수','목','금','토'];
 const MONTH=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
 let blocks=JSON.parse(localStorage.getItem('ff_v3')||'[]');
+let medConfig=JSON.parse(localStorage.getItem('ff_med_config')||'null');
+let medLogs=JSON.parse(localStorage.getItem('ff_med_logs')||'[]');
+let roadmapData=JSON.parse(localStorage.getItem('ff_roadmap')||'null');
+let goalsData=JSON.parse(localStorage.getItem('ff_goals')||'{}');
+let dropItems=JSON.parse(localStorage.getItem('ff_drops')||'[]');
 let viewDate=todayStr(),curView=localStorage.getItem('ff_cur_view')||'tl',bufOn=false,preview=null,nid=Date.now();
 // v27b 강제 캐시 삭제
 if(localStorage.getItem('ff_cache_fix')!=='v28'){
@@ -2268,11 +2271,9 @@ setInterval(updateClock,10000);updateClock();
 setInterval(()=>{renderTimeline();renderSummary();},60000);
 
 // ====== DROP (Brain Dump) ======
-function getDropItems(){
-  const raw=localStorage.getItem('ff_drops');
-  try{return raw?JSON.parse(raw):[]}catch{return[]}
-}
+function getDropItems(){return dropItems||[];}
 function saveDropItems(items){
+  dropItems=items;
   try{localStorage.setItem('ff_drops',JSON.stringify(items));}catch(e){}
   saveToFirestore();
 }
@@ -2431,8 +2432,8 @@ document.addEventListener('click',function(e){
 function getMandala(){try{return JSON.parse(localStorage.getItem('ff_mandala')||'null')}catch{return null}}
 function saveMandala(m){localStorage.setItem('ff_mandala',JSON.stringify(m));saveToFirestore();}
 function initMandala(){return{center:'',cells:['','','','','','','',''],subs:[[],[],[],[],[],[],[],[]]}}
-function getGoals(){try{return JSON.parse(localStorage.getItem('ff_goals')||'{}');}catch{return{};}}
-function saveGoals(g){localStorage.setItem('ff_goals',JSON.stringify(g));saveToFirestore();}
+function getGoals(){return goalsData||{};}
+function saveGoals(g){goalsData=g;localStorage.setItem('ff_goals',JSON.stringify(g));saveToFirestore();}
 function goalKey(type){
   const d=new Date();
   if(type==='month')return 'm'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
@@ -2466,8 +2467,8 @@ function deleteGoal(type,id){
 const Q_LABELS=['Q1 (1~3월)','Q2 (4~6월)','Q3 (7~9월)','Q4 (10~12월)'];
 const Q_EMOJI=['🌸','☀️','🍂','⛄'];
 const Q_COLORS=['#FF9AA2','#FFE156','#56C6A0','#8DC8E8'];
-function getRoadmap(){try{return JSON.parse(localStorage.getItem('ff_roadmap')||'null')}catch{return null}}
-function saveRoadmap(r){localStorage.setItem('ff_roadmap',JSON.stringify(r));saveToFirestore();}
+function getRoadmap(){return roadmapData;}
+function saveRoadmap(r){roadmapData=r;localStorage.setItem('ff_roadmap',JSON.stringify(r));saveToFirestore();}
 function initRoadmap(){return{goals:[]}}
 function newGoalQ(){return[{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]},{title:'',tasks:[]}];}
 function migrateRoadmap(r){
@@ -2959,7 +2960,7 @@ const MED_DB=[
 {name:'세로퀠',generic:'쿠에티아핀',cat:'항정신병',doses:['25mg','100mg','200mg','300mg'],duration:8,peak:'1~2시간',timing:'저녁',effects:['수면 유도(저용량)','기분 안정','조증 억제'],sides:['졸림','체중증가','어지러움','대사증후군'],note:'저용량은 수면보조로 많이 사용'},
 {name:'아빌리파이',generic:'아리피프라졸',cat:'항정신병',doses:['2mg','5mg','10mg','15mg'],duration:72,peak:'축적형',timing:'아침',effects:['기분 안정','망상/환각 억제','우울 보조'],sides:['불안','불면','체중변화','좌불안석'],note:'반감기 매우 길어 안정적'},
 ];
-function getMedConfig(){try{return JSON.parse(localStorage.getItem('ff_med_config')||'null')}catch{return null}}
+function getMedConfig(){return medConfig;}
 function forceMedSync(){
   if(!_uid){showMiniToast('로그인 필요!');return;}
   const mc=localStorage.getItem('ff_med_config');
@@ -2973,9 +2974,9 @@ function forceMedSync(){
     showMiniToast('동기화 실패: '+e.message);
   });
 }
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));if(_uid){db.collection('users').doc(_uid).set({medConfig:c},{merge:true}).catch(()=>{});saveToFirestore();}}
-function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
-function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));if(_uid)db.collection('users').doc(_uid).set({medLogs:l},{merge:true}).catch(()=>{});saveToFirestore();}
+function saveMedConfig(c){medConfig=c;localStorage.setItem('ff_med_config',JSON.stringify(c));saveToFirestore();}
+function getMedLogs(){return medLogs||[];}
+function saveMedLogs(l){medLogs=l;localStorage.setItem('ff_med_logs',JSON.stringify(l));saveToFirestore();}
 function logMedTake(timing){
   const cfg=getMedConfig();if(!cfg)return;
   const logs=getMedLogs();const now=new Date();
