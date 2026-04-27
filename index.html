@@ -2777,7 +2777,7 @@ async function addFriend(){
     friends.push({uid:friendUid,code:trimmed,name:fd.displayName||'친구'});
     saveFriends(friends);
     // Save my share code to Firestore if not already
-    await db.collection('users').doc(_uid).set({shareCode:getMyShareCode()});
+    await db.collection('users').doc(_uid).set({shareCode:getMyShareCode()},{merge:true});
     renderFriendPanel();
   }catch(e){alert('에러: '+e.message);}
 }
