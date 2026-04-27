@@ -887,8 +887,9 @@ function loadFromFirestore(){
       render();
       if(curView==='stats')renderStats();
       if(curView==='goal')renderGoals();
+      showMiniToast('☁️ 다운: '+Object.keys(d).filter(k=>k!=='updatedAt').join(', '));
     }
-  }).catch(e=>{console.error('[FF] loadFromFirestore fail:',e);});
+  }).catch(e=>{showMiniToast('❌ 로드 실패: '+e.message);});
 }
 function saveToFirestore(){
   if(!_uid)return;
@@ -910,11 +911,10 @@ function saveToFirestore(){
   try{const ml=localStorage.getItem('ff_med_logs');if(ml)data.medLogs=JSON.parse(ml);}catch{}
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
-    console.log('[FF] saveToFirestore OK, keys:',Object.keys(data).join(','));
+    showMiniToast('☁️ 업로드 OK: '+Object.keys(data).filter(k=>k!=='updatedAt').join(', '));
   }).catch(e=>{
     _skipRemote=false;
-    console.error('[FF] saveToFirestore FAIL:',e);
-    showMiniToast('☁️ 동기화 실패: '+e.message);
+    showMiniToast('❌ 동기화 실패: '+e.message);
   });
 }
 function listenFirestore(){
