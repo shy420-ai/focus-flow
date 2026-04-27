@@ -280,7 +280,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .habit-input::placeholder{color:#ccc}
 .habit-add-btn{width:44px;height:44px;border-radius:12px;background:var(--pink);border:none;color:#fff;font-size:22px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center}
 .habit-section-title{font-size:11px;font-weight:700;color:var(--pm);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
-.week-grid{display:grid;grid-template-columns:40px repeat(7,1fr);font-size:10px;min-width:500px}
+.week-grid{display:grid;grid-template-columns:32px repeat(7,1fr);font-size:10px;width:100%}
 .week-header{text-align:center;font-weight:700;color:var(--pd);padding:6px 2px;border-bottom:1.5px solid var(--pl);font-size:11px}
 .week-header.today{background:var(--pink);color:#fff;border-radius:8px 8px 0 0}
 .week-time{color:#bbb;font-size:9px;text-align:right;padding-right:4px;height:28px;line-height:28px;border-top:1px solid var(--pl)}
@@ -560,7 +560,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- Weekly View -->
 <div id="view-week" style="display:none">
-  <div id="week-content" style="padding:8px;overflow-x:auto"></div>
+  <div id="week-content" style="padding:8px"></div>
 </div>
 
 <!-- Medi Tracker (replaces Stats) -->
@@ -3695,10 +3695,12 @@ function loadCycleBar(){
 setTimeout(loadCycleBar,1200);
 
 // ====== WEEKLY VIEW ======
+let _weekOffset=0;
 function getWeekStart(){
   const d=new Date();const day=d.getDay()||7;
-  d.setDate(d.getDate()-(day-1));d.setHours(0,0,0,0);return d;
+  d.setDate(d.getDate()-(day-1)+_weekOffset*7);d.setHours(0,0,0,0);return d;
 }
+function navWeek(dir){_weekOffset+=dir;renderWeek();}
 function renderWeek(){
   const wrap=document.getElementById('week-content');if(!wrap)return;
   let wh='';
@@ -3706,6 +3708,14 @@ function renderWeek(){
     wh+='<div style="font-size:11px;color:#888;background:var(--pl);border-radius:10px;padding:8px 14px;margin-bottom:8px;text-align:center;position:relative">💡 블록을 터치하면 해당 날짜 타임라인으로 이동!<button onclick="localStorage.setItem(\'ff_week_tip_hide\',\'1\');renderWeek()" style="position:absolute;top:4px;right:8px;background:none;border:none;color:#ccc;font-size:14px;cursor:pointer">✕</button></div>';
   }
   const weekStart=getWeekStart();
+  // 주간 네비게이션
+  const wsEnd=new Date(weekStart);wsEnd.setDate(wsEnd.getDate()+6);
+  wh+='<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px">';
+  wh+='<button onclick="navWeek(-1)" style="background:var(--pl);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--pd);display:flex;align-items:center;justify-content:center">‹</button>';
+  wh+='<span style="font-size:13px;font-weight:700;color:var(--pd)">'+(weekStart.getMonth()+1)+'/'+weekStart.getDate()+' ~ '+(wsEnd.getMonth()+1)+'/'+wsEnd.getDate()+'</span>';
+  wh+='<button onclick="navWeek(1)" style="background:var(--pl);border:none;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;color:var(--pd);display:flex;align-items:center;justify-content:center">›</button>';
+  if(_weekOffset!==0)wh+='<button onclick="_weekOffset=0;renderWeek()" style="background:var(--pl);border:1.5px solid var(--pink);border-radius:8px;font-size:10px;color:var(--pd);padding:3px 8px;cursor:pointer;font-family:inherit;font-weight:600">이번 주</button>';
+  wh+='</div>';
   const days=[];for(let i=0;i<7;i++){const d=new Date(weekStart);d.setDate(weekStart.getDate()+i);days.push(d);}
   const today=todayStr();
   const dayLabels=['월','화','수','목','금','토','일'];
