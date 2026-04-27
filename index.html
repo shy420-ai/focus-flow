@@ -887,7 +887,7 @@ function loadFromFirestore(){
       render();
       if(curView==='stats')renderStats();
       if(curView==='goal')renderGoals();
-      showMiniToast('☁️ 다운: '+Object.keys(d).filter(k=>k!=='updatedAt').join(', '));
+      alert('Firebase 키: '+Object.keys(d).join(', ')+'\nmedConfig: '+(d.medConfig?'있음':'없음'));
     }
   }).catch(e=>{showMiniToast('❌ 로드 실패: '+e.message);});
 }
