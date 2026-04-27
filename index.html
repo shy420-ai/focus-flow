@@ -5281,7 +5281,7 @@ setTimeout(()=>{
 },500);
 </script>
 <script>if('serviceWorker' in navigator){
-  const SW_VER='v26';
+  const SW_VER='v27';
   if(localStorage.getItem('ff_sw_ver')!==SW_VER){
     // One-time: clear old caches + re-register SW
     navigator.serviceWorker.getRegistrations().then(regs=>{
@@ -5290,10 +5290,10 @@ setTimeout(()=>{
       return Promise.all(keys.map(k=>caches.delete(k)));
     }).then(()=>{
       localStorage.setItem('ff_sw_ver',SW_VER);
-      navigator.serviceWorker.register('sw.js?v=26',{updateViaCache:'none'});
-    }).catch(()=>{navigator.serviceWorker.register('sw.js?v=26',{updateViaCache:'none'}).catch(()=>{});});
+      navigator.serviceWorker.register('sw.js?v=27',{updateViaCache:'none'});
+    }).catch(()=>{navigator.serviceWorker.register('sw.js?v=27',{updateViaCache:'none'}).catch(()=>{});});
   }else{
-    navigator.serviceWorker.register('sw.js?v=26',{updateViaCache:'none'}).catch(()=>{});
+    navigator.serviceWorker.register('sw.js?v=27',{updateViaCache:'none'}).catch(()=>{});
   }
 }</script>
 </body>
