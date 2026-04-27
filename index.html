@@ -863,9 +863,7 @@ auth.onAuthStateChanged(user=>{
   }
 });
 function loadFromFirestore(){
-  alert('loadFromFirestore 시작: uid='+_uid);
   db.collection('users').doc(_uid).get().then(doc=>{
-    alert('doc.exists='+doc.exists);
     if(doc.exists){
       const d=doc.data();
       if(d.tasks){blocks=d.tasks;migrateBlocks();localStorage.setItem('ff_v3',JSON.stringify(blocks));}
@@ -889,9 +887,8 @@ function loadFromFirestore(){
       render();
       if(curView==='stats')renderStats();
       if(curView==='goal')renderGoals();
-      alert('Firebase 키: '+Object.keys(d).join(', ')+'\nmedConfig: '+(d.medConfig?'있음':'없음'));
     }
-  }).catch(e=>{alert('❌ 로드 실패: '+e.message);});
+  }).catch(()=>{});
 }
 function saveToFirestore(){
   if(!_uid)return;
@@ -913,7 +910,7 @@ function saveToFirestore(){
   const _dr=getDropItems();if(_dr&&_dr.length)data.drops=_dr;
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
-    showMiniToast('mc:'+(localStorage.getItem('ff_med_config')?'Y':'N')+' road:'+(localStorage.getItem('ff_roadmap')?'Y':'N'));
+    showMiniToast('☁️ 동기화 완료');
   }).catch(e=>{
     _skipRemote=false;
     showMiniToast('❌ 동기화 실패: '+e.message);
@@ -3162,13 +3159,7 @@ function saveMedBedGoal(){
   const h=document.getElementById('med-height');const w=document.getElementById('med-weight');
   if(h&&h.value)cfg.height=Number(h.value);
   if(w&&w.value)cfg.weight=Number(w.value);
-  localStorage.setItem('ff_med_config',JSON.stringify(cfg));
-  document.getElementById('med-setup').remove();renderStats();
-  if(_uid){
-    db.collection('users').doc(_uid).set({medConfig:cfg},{merge:true})
-      .then(()=>alert('✅ Firebase에 medConfig 저장 성공!'))
-      .catch(e=>alert('❌ Firebase 실패: '+e.message));
-  }else{alert('로그인 안 됨');}
+  saveMedConfig(cfg);document.getElementById('med-setup').remove();renderStats();
 }
 
 function renderStats(){
