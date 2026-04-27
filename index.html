@@ -782,8 +782,7 @@ function showLoginError(msg){
   const el=document.getElementById('login-error');
   if(el){el.textContent=msg;el.style.display='block';}
 }
-// 앱 시작 시 redirect 결과 처리
-auth.getRedirectResult().catch(()=>{});
+// redirect 방식 제거 (Safari storage partitioning 이슈)
 function doLogin(){
   if(_loginBusy)return;
   _loginBusy=true;
@@ -797,16 +796,14 @@ function doLogin(){
     if(btn){btn.textContent='Google 로그인';btn.disabled=false;}
     if(e.code==='auth/popup-closed-by-user'||e.code==='auth/cancelled-popup-request'){
       // User closed popup — just reset
-    }else if(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment'){
-      // 팝업 안 되는 환경 → redirect로 폴백
-      auth.signInWithRedirect(provider);
+    }else if(e.code==='auth/popup-blocked'){
+      showLoginError('팝업이 차단됐어요! 브라우저 설정에서 팝업 허용 후 다시 시도하거나, 이메일 로그인을 이용해주세요.');
     }else if(e.code==='auth/unauthorized-domain'){
       showLoginError('이 도메인에서 로그인이 허용되지 않았어요. "바로 시작하기"를 이용해주세요.');
     }else if(e.message&&e.message.includes('disallowed_useragent')){
       showLoginError('인앱 브라우저에서는 Google 로그인이 안 돼요! Chrome이나 Safari로 열어주세요.');
     }else{
-      // 기타 에러도 redirect 시도
-      try{auth.signInWithRedirect(provider);}catch(e2){showLoginError('로그인 실패: '+(e.message||'알 수 없는 에러'));}
+      showLoginError('로그인 실패: '+(e.message||'알 수 없는 에러')+' — 이메일 로그인을 이용해주세요.');
     }
   });
 }
