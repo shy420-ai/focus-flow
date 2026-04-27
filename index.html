@@ -902,6 +902,9 @@ function listenFirestore(){
       if(d.drops) localStorage.setItem('ff_drops',JSON.stringify(d.drops));
       if(d.goals) localStorage.setItem('ff_goals',JSON.stringify(d.goals));
       if(d.mandala) localStorage.setItem('ff_mandala',JSON.stringify(d.mandala));
+      if(d.roadmap) localStorage.setItem('ff_roadmap',JSON.stringify(d.roadmap));
+      if(d.medConfig) localStorage.setItem('ff_med_config',JSON.stringify(d.medConfig));
+      if(d.medLogs) localStorage.setItem('ff_med_logs',JSON.stringify(d.medLogs));
       if(d.friends) localStorage.setItem('ff_friends',JSON.stringify(d.friends));
       if(d.birthday&&!localStorage.getItem('ff_birthday')){localStorage.setItem('ff_birthday',d.birthday);localStorage.setItem('ff_birthyear',d.birthyear||'');}
       saveHabitLocal();
