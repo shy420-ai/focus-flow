@@ -3160,7 +3160,13 @@ function saveMedBedGoal(){
   const h=document.getElementById('med-height');const w=document.getElementById('med-weight');
   if(h&&h.value)cfg.height=Number(h.value);
   if(w&&w.value)cfg.weight=Number(w.value);
-  saveMedConfig(cfg);document.getElementById('med-setup').remove();renderStats();setTimeout(()=>alert('동기화 결과: uid='+ (_uid?'있음':'없음')),1000);
+  localStorage.setItem('ff_med_config',JSON.stringify(cfg));
+  document.getElementById('med-setup').remove();renderStats();
+  if(_uid){
+    db.collection('users').doc(_uid).set({medConfig:cfg},{merge:true})
+      .then(()=>alert('✅ Firebase에 medConfig 저장 성공!'))
+      .catch(e=>alert('❌ Firebase 실패: '+e.message));
+  }else{alert('로그인 안 됨');}
 }
 
 function renderStats(){
