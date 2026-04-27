@@ -906,6 +906,11 @@ function saveToFirestore(){
   try{const ml=localStorage.getItem('ff_med_logs');if(ml)data.medLogs=JSON.parse(ml);}catch{}
   db.collection('users').doc(_uid).set(data,{merge:true}).then(()=>{
     setTimeout(()=>{_skipRemote=false},1000);
+    console.log('[FF] saveToFirestore OK, keys:',Object.keys(data).join(','));
+  }).catch(e=>{
+    _skipRemote=false;
+    console.error('[FF] saveToFirestore FAIL:',e);
+    showMiniToast('☁️ 동기화 실패: '+e.message);
   });
 }
 function listenFirestore(){
@@ -2955,7 +2960,7 @@ function forceMedSync(){
     showMiniToast('동기화 실패: '+e.message);
   });
 }
-function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));saveToFirestore();}
+function saveMedConfig(c){localStorage.setItem('ff_med_config',JSON.stringify(c));if(_uid){saveToFirestore();showMiniToast('☁️ 저장 중...');}else{showMiniToast('로그인 필요');}}
 function getMedLogs(){try{return JSON.parse(localStorage.getItem('ff_med_logs')||'[]')}catch{return[]}}
 function saveMedLogs(l){localStorage.setItem('ff_med_logs',JSON.stringify(l));saveToFirestore();}
 function logMedTake(timing){
