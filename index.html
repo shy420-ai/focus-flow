@@ -833,12 +833,12 @@ auth.onAuthStateChanged(user=>{
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     switchView(curView);
   }else if(localStorage.getItem('ff_uid')){
-    // Previously logged in but session expired — auto re-hide and wait
+    // Previously logged in but session expired — use local data, don't force re-login
     document.getElementById('login-overlay').style.display='none';
     viewDate=todayStr();curView=localStorage.getItem('ff_cur_view')||'tl';
     switchView(curView);
-    // Session might restore shortly, wait 3s then show login if still no user
-    setTimeout(()=>{if(!_uid)document.getElementById('login-overlay').style.display='flex';},3000);
+    // Show subtle re-login prompt instead of blocking
+    setTimeout(()=>{if(!_uid){showMiniToast('로그인하면 동기화돼요');document.getElementById('login-overlay').style.display='none';}},2000);
   }else{
     document.getElementById('login-overlay').style.display='flex';
   }
