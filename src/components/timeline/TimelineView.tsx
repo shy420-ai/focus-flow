@@ -1,0 +1,449 @@
+import { useState, useEffect } from 'react'
+import { useAppStore } from '../../store/AppStore'
+import { todayStr, fmtH, addDays } from '../../lib/date'
+import { NowLine } from './NowLine'
+import { TimeBlock } from './TimeBlock'
+import { AddBlockSheet } from './AddBlockSheet'
+import { EditBlockModal } from './EditBlockModal'
+import { getHoroscopeText } from '../../lib/saju'
+import { generateRecurringBlocks } from '../../lib/recurring'
+import { showMiniToast } from '../../lib/miniToast'
+import type { Block } from '../../types/block'
+
+function BirthdayModal({ onClose }: { onClose: () => void }) {
+  const [year, setYear] = useState(localStorage.getItem('ff_birthyear') || '')
+  const [md, setMd] = useState(localStorage.getItem('ff_birthday') || '')
+
+  function save() {
+    if (!year || !/^\d{4}$/.test(year)) { showMiniToast('년도를 확인해주세요'); return }
+    if (!md || !/^\d{1,2}-\d{1,2}$/.test(md)) { showMiniToast('월-일을 확인해주세요'); return }
+    localStorage.setItem('ff_birthyear', year)
+    localStorage.setItem('ff_birthday', md)
+    Object.keys(localStorage).filter((k) => k.startsWith('ff_horo_')).forEach((k) => localStorage.removeItem(k))
+    window.dispatchEvent(new CustomEvent('ff-birthday-set'))
+    showMiniToast('🔮 생일 저장!')
+    onClose()
+  }
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.3)', zIndex: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ background: '#fff', borderRadius: 16, padding: 24, width: '85%', maxWidth: 300 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)', marginBottom: 16, textAlign: 'center' }}>🔮 생일 입력</div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>태어난 년도</div>
+          <input
+            type="number"
+            placeholder="2000"
+            value={year}
+            onChange={(e) => setYear(e.target.value)}
+            style={{ width: '100%', padding: 10, border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>생일 (월-일, 양력 기준)</div>
+          <input
+            placeholder="01-15"
+            value={md}
+            onChange={(e) => setMd(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && save()}
+            style={{ width: '100%', padding: 10, border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+          />
+        </div>
+        <div style={{ fontSize: 9, color: '#aaa', marginBottom: 14, textAlign: 'center' }}>※ 음력이면 양력으로 변환해서 입력해주세요</div>
+        <button
+          onClick={save}
+          style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+        >저장</button>
+      </div>
+    </div>
+  )
+}
+
+const DEFAULT_START = 6
+const DEFAULT_HOURS = 18
+const DEFAULT_PX = 140
+
+function loadTlSettings() {
+  return {
+    start: parseInt(localStorage.getItem('ff_tl_start') || String(DEFAULT_START)),
+    hours: parseInt(localStorage.getItem('ff_tl_hours') || String(DEFAULT_HOURS)),
+    px: parseInt(localStorage.getItem('ff_px') || String(DEFAULT_PX)),
+  }
+}
+
+interface MemoSheetState {
+  id: string
+  memo: string
+}
+
+export function TimelineView() {
+  const blocks = useAppStore((s) => s.blocks)
+  const curDate = useAppStore((s) => s.curDate)
+  const updateBlock = useAppStore((s) => s.updateBlock)
+  const recurring = useAppStore((s) => s.recurring)
+
+  const [activeMenu, setActiveMenu] = useState<string | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [memoState, setMemoState] = useState<MemoSheetState | null>(null)
+  const [editId, setEditId] = useState<string | null>(null)
+  const [nudgeBar, setNudgeBar] = useState<{ text: string; type: string } | null>(null)
+  const [tipHidden, setTipHidden] = useState(!!localStorage.getItem('ff_tip_hidden'))
+  const [tlSettings, setTlSettings] = useState(loadTlSettings)
+  const [showBirthdayModal, setShowBirthdayModal] = useState(false)
+
+  useEffect(() => {
+    function onRange(e: Event) {
+      const d = (e as CustomEvent).detail as { start: number; hours: number }
+      setTlSettings((prev) => ({ ...prev, start: d.start, hours: d.hours }))
+    }
+    function onPx(e: Event) {
+      const val = (e as CustomEvent).detail as number
+      setTlSettings((prev) => ({ ...prev, px: val }))
+    }
+    window.addEventListener('ff-tl-range', onRange)
+    window.addEventListener('ff-tl-px', onPx)
+    return () => {
+      window.removeEventListener('ff-tl-range', onRange)
+      window.removeEventListener('ff-tl-px', onPx)
+    }
+  }, [])
+
+  const { start: START, hours: HOURS, px: PX } = tlSettings
+  const [cycleBar, setCycleBar] = useState<{ bg: string; color: string; text: string } | null>(null)
+  const [horoscopeText, setHoroscopeText] = useState<string | null>(null)
+  const [horoscopeHint, setHoroscopeHint] = useState<'no-birthday' | 'no-year' | null>(null)
+
+
+  useEffect(() => {
+    function loadHoroscope() {
+      const bday = localStorage.getItem('ff_birthday')
+      const byear = localStorage.getItem('ff_birthyear')
+      if (!bday) {
+        setHoroscopeHint('no-birthday')
+        setHoroscopeText(null)
+      } else if (!byear) {
+        setHoroscopeHint('no-year')
+        setHoroscopeText(null)
+      } else {
+        setHoroscopeHint(null)
+        setHoroscopeText(getHoroscopeText())
+      }
+    }
+    loadHoroscope()
+    window.addEventListener('ff-birthday-set', loadHoroscope)
+    return () => window.removeEventListener('ff-birthday-set', loadHoroscope)
+  }, [])
+
+  useEffect(() => {
+    function computeCycleBar() {
+      try {
+        const data = JSON.parse(localStorage.getItem('ff_cycle') || 'null')
+        if (!data?.starts?.length) { setCycleBar(null); return }
+        const lastStart = data.starts[data.starts.length - 1]
+        const daysSince = Math.round((new Date(todayStr() + 'T12:00:00').getTime() - new Date(lastStart + 'T12:00:00').getTime()) / 86400000) + 1
+        const cycleDay = ((daysSince - 1) % data.avgCycle) + 1
+        if (cycleDay >= 1 && cycleDay <= 5) {
+          setCycleBar({ bg: '#F8D0D0', color: '#C45A78', text: `🩸 생리 ${cycleDay}일차 — 무리하지 마. 가벼운 일 위주로 해도 충분해!` })
+        } else if (cycleDay >= data.avgCycle - 4) {
+          setCycleBar({ bg: '#FFF3E0', color: '#B8720A', text: '⚠️ PMS 기간 — 컨디션 관리 기간. 하나만 해도 괜찮아 💛' })
+        } else {
+          const daysUntilPeriod = data.avgCycle - cycleDay + 1
+          if (daysUntilPeriod <= 7) {
+            setCycleBar({ bg: '#FFF3E0', color: '#B8720A', text: `📅 생리 예정 ${daysUntilPeriod}일 전 — 컨디션 변화에 주의하세요` })
+          } else { setCycleBar(null) }
+        }
+      } catch { setCycleBar(null) }
+    }
+    computeCycleBar()
+    window.addEventListener('ff-cycle-changed', computeCycleBar)
+    return () => window.removeEventListener('ff-cycle-changed', computeCycleBar)
+  }, [])
+
+  useEffect(() => {
+    function checkNudge() {
+      const hour = new Date().getHours()
+      const today = todayStr()
+      const tomorrow = addDays(today, 1)
+      const isNight = hour >= 21 && hour <= 23
+      const isLateNight = hour >= 0 && hour <= 5
+      const isMorning = hour >= 6 && hour <= 9
+      if (!isNight && !isLateNight && !isMorning) { setNudgeBar(null); return }
+      const todayB = blocks.filter((b) => b.date === today && !b.isBuf && (b.type === 'timeline' || !b.type))
+      const tomorrowB = blocks.filter((b) => b.date === tomorrow && !b.isBuf && (b.type === 'timeline' || !b.type))
+      if (isNight && tomorrowB.length > 0) { setNudgeBar(null); return }
+      if ((isLateNight || isMorning) && todayB.length > 0) { setNudgeBar(null); return }
+      const nudgeKey = 'ff_plan_nudge_' + today + (isNight ? '_night' : '_today')
+      if (localStorage.getItem(nudgeKey)) { setNudgeBar(null); return }
+      const msg = isNight
+        ? '🌙 자기 전 5분! 미리 계획을 적어두면 실행률이 올라가요'
+        : isLateNight ? '🦉 아직 안 잤어? 미리 계획을 적어두면 아침 의지력을 아낄 수 있어'
+        : '☀️ 좋은 아침! 3개만 정하면 시작이 쉬워져'
+      setNudgeBar({ text: msg, type: isNight ? 'night' : 'today' })
+    }
+    checkNudge()
+    const iv = setInterval(checkNudge, 300000)
+    return () => clearInterval(iv)
+  }, [blocks])
+
+  const today = todayStr()
+
+  // Filter blocks for current date (includes recurring blocks)
+  const realBlocks: Block[] = blocks.filter(
+    (b) =>
+      (b.type === 'timeline' || (!b.type && !b.isBuf)) &&
+      b.date === curDate &&
+      !b.isBuf,
+  )
+  const recurBlocks: Block[] = generateRecurringBlocks(curDate, recurring, blocks)
+  const timelineBlocks: Block[] = [...realBlocks, ...recurBlocks].sort(
+    (a, b) => a.startHour - b.startHour,
+  )
+
+  function handleMemoOpen(id: string) {
+    const block = blocks.find((b) => b.id === id)
+    if (block) {
+      setMemoState({ id, memo: block.memo })
+    }
+  }
+
+  function handleMemoSave() {
+    if (!memoState) return
+    updateBlock(memoState.id, { memo: memoState.memo })
+    setMemoState(null)
+  }
+
+  return (
+    <div className="tl-wrap">
+      {/* 사용 팁 — 그리드 위에 표시 (원본 tip-bar 위치) */}
+      {!tipHidden && (
+        <div style={{ margin: '8px 16px 0' }}>
+          <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, overflow: 'hidden', boxShadow: '0 2px 12px color-mix(in srgb, var(--pink) 15%, transparent)' }}>
+            <div style={{ background: 'var(--pink)', padding: '8px 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>📌 타임라인 사용 팁</span>
+              <button onClick={() => { localStorage.setItem('ff_tip_hidden', '1'); setTipHidden(true) }} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,.7)', fontSize: 14, cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ padding: '12px 14px', fontSize: 12, color: '#555', lineHeight: 2 }}>
+              <div>👆 빈 칸 <b>두 번 탭</b> → 해당 시간에 블록 바로 추가</div>
+              <div>↕️ 블록 하단 핸들 <b>드래그</b> → 시간 늘리기/줄이기</div>
+              <div>✊ 블록 <b>꾹 누르고 드래그</b> → 블록 이동</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* 호로스코프 바 — 3가지 상태 */}
+      {horoscopeText ? (
+        <div
+          onClick={() => setShowBirthdayModal(true)}
+          style={{ padding: '8px 16px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '8px 16px 0', lineHeight: 1.5, textAlign: 'center', cursor: 'pointer' }}
+          dangerouslySetInnerHTML={{ __html: horoscopeText }}
+        />
+      ) : horoscopeHint === 'no-birthday' ? (
+        <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '8px 16px 0', lineHeight: 1.5, textAlign: 'center' }}>
+          ⭐ <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>생일 입력하면 오늘의 운세를 볼 수 있어!</span>
+        </div>
+      ) : horoscopeHint === 'no-year' ? (
+        <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '8px 16px 0', lineHeight: 1.5, textAlign: 'center' }}>
+          🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
+        </div>
+      ) : null}
+      {/* 너지 바 — 인라인, 원본 nudge-bar 위치 */}
+      {nudgeBar && (
+        <div style={{ padding: '10px 16px', fontSize: 12, color: '#fff', background: 'var(--pd)', borderRadius: 10, margin: '4px 16px 0', textAlign: 'center', lineHeight: 1.5 }}>
+          <div dangerouslySetInnerHTML={{ __html: nudgeBar.text }} />
+          <div style={{ marginTop: 6, display: 'flex', justifyContent: 'center', gap: 8 }}>
+            <button
+              style={{ padding: '5px 14px', borderRadius: 8, border: 'none', background: '#fff', color: 'var(--pd)', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}
+              onClick={() => {
+                const key = 'ff_plan_nudge_' + today + (nudgeBar.type === 'night' ? '_night' : '_today')
+                localStorage.setItem(key, '1')
+                setNudgeBar(null)
+              }}
+            >{nudgeBar.type === 'night' ? '내일 계획' : '오늘 계획'}</button>
+            <button
+              style={{ padding: '5px 10px', borderRadius: 8, background: 'none', border: '1px solid rgba(255,255,255,.3)', color: 'rgba(255,255,255,.7)', fontSize: 11, cursor: 'pointer' }}
+              onClick={() => {
+                const key = 'ff_plan_nudge_' + today + (nudgeBar.type === 'night' ? '_night' : '_today')
+                localStorage.setItem(key, '1')
+                setNudgeBar(null)
+              }}
+            >닫기</button>
+          </div>
+        </div>
+      )}
+      {/* 사이클 바 */}
+      {cycleBar && (
+        <div style={{ padding: '8px 16px', fontSize: 12, borderRadius: 10, margin: '4px 16px 0', lineHeight: 1.5, textAlign: 'center', background: cycleBar.bg, color: cycleBar.color }}>
+          {cycleBar.text}
+        </div>
+      )}
+      <div className="timeline">
+        {/* Time column */}
+        <div className="time-col">
+          {Array.from({ length: HOURS + 1 }, (_, i) => {
+            const hour = START + i
+            return (
+              <div key={hour} className="time-tick" style={{ height: `${PX}px` }}>
+                <span>{hour}:00</span>
+                {i < HOURS && (
+                  <span
+                    className="half-label"
+                    style={{ position: 'absolute', bottom: PX / 2 - 5, right: 0, fontSize: '8px', color: '#ccc', paddingRight: '8px' }}
+                  >
+                    :30
+                  </span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Blocks column */}
+        <div
+          className="blocks-col"
+          style={{ position: 'relative', height: `${HOURS * PX}px` }}
+          onClick={() => setActiveMenu(null)}
+          onDoubleClick={(e) => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            const relY = e.clientY - rect.top
+            const hour = START + Math.floor(relY / PX)
+            const subH = Math.round((relY % PX) / PX * 6) / 6
+            const startHour = hour + subH
+            const newId = String(Date.now())
+            useAppStore.getState().addBlock({
+              id: newId, type: 'timeline', name: '새 블록',
+              date: curDate, startHour, durHour: 1,
+              color: 'pink', done: false, memo: '', category: '',
+              deadline: null, priority: null,
+            })
+            setEditId(newId)
+          }}
+        >
+          {/* Hour lines */}
+          {Array.from({ length: HOURS + 1 }, (_, i) => (
+            <div
+              key={i}
+              className="hour-line"
+              style={{ top: `${i * PX}px` }}
+            />
+          ))}
+
+          {/* 10-minute sub-lines */}
+          {Array.from({ length: HOURS }, (_, i) =>
+            [10, 20, 30, 40, 50].map((m) => (
+              <div
+                key={`${i}-${m}`}
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${i * PX + Math.round((m / 60) * PX)}px`,
+                  borderTop: `1px ${m === 30 ? 'dashed' : 'dotted'} rgba(0,0,0,${m === 30 ? '0.15' : '0.1'})`,
+                  pointerEvents: 'none',
+                  zIndex: 1,
+                }}
+              />
+            )),
+          )}
+
+          {/* Empty state */}
+          {timelineBlocks.length === 0 && (
+            <div className="empty-tl">
+              이 날엔 아직 할 일이 없어
+              <br />+ 버튼으로 추가해봐
+            </div>
+          )}
+
+          {/* Now line */}
+          {curDate === today && (
+            <NowLine startHour={START} totalHours={HOURS} px={PX} />
+          )}
+
+          {/* Time blocks */}
+          {timelineBlocks.map((block, index) => (
+            <TimeBlock
+              key={block.id}
+              block={block}
+              curDate={curDate}
+              startHour={START}
+              px={PX}
+              isMenuOpen={activeMenu === block.id}
+              onMenuToggle={setActiveMenu}
+              onMemo={handleMemoOpen}
+              onEdit={(id) => setEditId(id)}
+              index={index}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* FAB */}
+      <button className="fab" onClick={() => setSheetOpen(true)}>
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
+          <line x1="11" y1="2" x2="11" y2="20" />
+          <line x1="2" y1="11" x2="20" y2="11" />
+        </svg>
+      </button>
+
+      {/* Add block sheet */}
+      <AddBlockSheet
+        isOpen={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onQuickEmpty={(id) => { setSheetOpen(false); setTimeout(() => setEditId(id), 300) }}
+      />
+
+      {/* Edit block modal */}
+      {editId && (() => {
+        const b = blocks.find((x) => x.id === editId)
+        return b ? <EditBlockModal block={b} onClose={() => setEditId(null)} /> : null
+      })()}
+
+      {/* Memo sheet */}
+      {memoState && (
+        <div className="moverlay show" onClick={() => setMemoState(null)}>
+          <div className="msheet" style={{ background: '#fff' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: '15px', fontWeight: 700, color: '#333', marginBottom: '12px' }}>
+              {blocks.find((b) => b.id === memoState.id)?.name} 메모
+            </div>
+            <textarea
+              className="mi"
+              rows={4}
+              placeholder="링크, 참고사항..."
+              value={memoState.memo}
+              onChange={(e) => setMemoState((prev) => (prev ? { ...prev, memo: e.target.value } : prev))}
+              style={{ background: '#fff', color: '#333' }}
+            />
+            <div className="mbtns">
+              <button className="mcancel" onClick={() => setMemoState(null)}>취소</button>
+              <button className="msave" onClick={handleMemoSave}>저장</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Summary bar */}
+      {timelineBlocks.length > 0 && (
+        <div style={{ position: 'fixed', bottom: 100, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '6px', zIndex: 100 }}>
+          <span style={{ background: 'var(--pl)', border: '1px solid var(--pink)', borderRadius: '99px', padding: '4px 12px', fontSize: '12px', color: 'var(--pd)', fontWeight: 500 }}>
+            총 {Math.round(timelineBlocks.reduce((s, b) => s + b.durHour, 0) * 10) / 10}h
+          </span>
+          <span style={{ background: 'var(--pl)', border: '1px solid var(--pink)', borderRadius: '99px', padding: '4px 12px', fontSize: '12px', color: 'var(--pd)', fontWeight: 500 }}>
+            완료 {timelineBlocks.filter((b) => b.done).length}/{timelineBlocks.length}
+          </span>
+        </div>
+      )}
+
+      {/* Done toast */}
+
+      {/* Birthday modal */}
+      {showBirthdayModal && <BirthdayModal onClose={() => setShowBirthdayModal(false)} />}
+
+      {/* Time label helper */}
+      <div style={{ display: 'none' }}>
+        {Array.from({ length: HOURS }, (_, i) => fmtH(START + i))}
+      </div>
+    </div>
+  )
+}
