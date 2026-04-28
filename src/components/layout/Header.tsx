@@ -16,7 +16,7 @@ export function Header() {
   const minutes = pad(now.getMinutes())
 
   return (
-    <div className="header" style={{ position: 'relative' }}>
+    <div className="header">
       <div>
         <h1>
           focus <span>flow</span>
