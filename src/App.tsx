@@ -55,8 +55,10 @@ function AppContent() {
 
   return (
     <>
-      <Header />
-      <ViewTabs />
+      <div style={{ position: 'sticky', top: 0, zIndex: 100 }}>
+        <Header />
+        <ViewTabs />
+      </div>
       {isDesktop && curView !== 'week' ? (
         <div className="desktop-layout">
           <div className="desktop-left">

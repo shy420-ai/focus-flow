@@ -22,9 +22,6 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  position: sticky;
-  top: 0;
-  z-index: 100;
   padding-top: max(32px, env(safe-area-inset-top, 32px));
 }
 .header h1 { font-size: 22px; font-weight: 700; color: #fff; line-height: 1.2; margin: 0; }
@@ -71,9 +68,6 @@ body {
   display: flex;
   gap: 6px;
   border-bottom: 1px solid var(--pl);
-  position: sticky;
-  top: 76px;
-  z-index: 98;
   overflow-x: auto;
   scrollbar-width: none;
 }
