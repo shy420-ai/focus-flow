@@ -431,3 +431,26 @@ body {
 .qs-submit { padding: 8px 16px; border-radius: 10px; border: none; background: var(--pink); color: #fff; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 6px; width: 100%; font-family: inherit; }
 .obtn { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all .15s; border: 1.5px solid var(--pl); background: #fff; color: var(--pd); }
 .obtn.active { background: var(--pink); color: #fff; border-color: var(--pink); }
+
+/* ===== Desktop Split Layout ===== */
+.desktop-layout { display: block; }
+.desktop-left { display: block; }
+.desktop-right { display: block; }
+
+@media (min-width: 768px) {
+  .desktop-layout { display: flex; gap: 0; width: 100%; align-items: flex-start; }
+  .desktop-left { width: 40%; flex-shrink: 0; flex-grow: 0; }
+  .desktop-right {
+    width: 60%; flex-shrink: 0; flex-grow: 0;
+    border-left: 1px solid var(--pl);
+    position: sticky; top: 90px;
+    height: calc(100vh - 90px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--pink) 30%, transparent) transparent;
+  }
+  .desktop-right::-webkit-scrollbar { width: 6px; }
+  .desktop-right::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--pink) 30%, transparent); border-radius: 3px; }
+  .desktop-right::-webkit-scrollbar-track { background: transparent; }
+  .desktop-week { width: 100%; }
+}

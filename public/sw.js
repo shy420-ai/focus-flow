@@ -1,10 +1,12 @@
-const CACHE = 'ff-react-v1'
+const CACHE = 'ff-react-v2'
+const BASE = new URL(self.registration.scope).pathname
+
 const STATIC = [
-  '/',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/tree.png',
+  BASE,
+  BASE + 'manifest.json',
+  BASE + 'icon-192.png',
+  BASE + 'icon-512.png',
+  BASE + 'tree.png',
 ]
 
 self.addEventListener('install', (e) => {
@@ -23,7 +25,6 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return
-  // Firebase/Firestore: always network
   if (e.request.url.includes('firestore') || e.request.url.includes('googleapis')) return
 
   e.respondWith(

@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
-export default defineConfig({
-  base: '/focus-flow/',
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/focus-flow/' : '/',
   plugins: [tailwindcss(), react()],
   resolve: {
     alias: {
@@ -16,4 +16,4 @@ export default defineConfig({
       overlay: true,
     },
   },
-})
+}))
