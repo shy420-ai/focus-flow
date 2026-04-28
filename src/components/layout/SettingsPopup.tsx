@@ -62,8 +62,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   function handleTheme(name: ThemeName) {
     applyTheme(name)
     setTheme(name)
-    // Reload so the status bar color (meta theme-color) updates on Android PWA
-    setTimeout(() => location.reload(), 150)
   }
 
   function saveNickname() {
