@@ -196,7 +196,7 @@ export function HabitView() {
     <div className="habit-wrap">
       {/* Habit tree */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 10, position: 'relative' }}>
-        <img src="/tree.png" style={{ width: 180, height: 'auto', display: 'block' }} alt="habit tree" />
+        <img src={import.meta.env.BASE_URL + 'tree.png'} style={{ width: 180, height: 'auto', display: 'block' }} alt="habit tree" />
         {completedHabits > 0 && (
           <div style={{ position: 'absolute', top: 10, left: '50%', transform: 'translateX(-50%)', width: 100, display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 2 }}>
             {Array.from({ length: completedHabits }, (_, i) => (
