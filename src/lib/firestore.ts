@@ -109,42 +109,47 @@ function entryXpForMonth(data: UserDoc): number {
   return 0
 }
 
-export async function getTopXp(n: number = 10): Promise<LeaderEntry[]> {
+// Fetch a generous slice ordered by monthlyXp (single-field — no composite index needed),
+// then filter client-side to the current month tag. Avoids requiring the user to set
+// up a Firestore composite index before the leaderboard works.
+async function fetchMonthlyEntries(maxFetch: number = 100): Promise<Array<{ uid: string; data: UserDoc }>> {
   const db = getDb()
-  const month = curMonthTag()
-  const q = query(collection(db, 'users'), where('monthlyXpMonth', '==', month), orderBy('monthlyXp', 'desc'), limit(n))
+  const q = query(collection(db, 'users'), orderBy('monthlyXp', 'desc'), limit(maxFetch))
   const snap = await getDocs(q)
-  return snap.docs.map((d) => {
-    const data = d.data() as UserDoc
-    return {
-      uid: d.id,
-      nickname: data.nickname || 'ADHD-' + d.id.slice(0, 4),
-      xp: entryXpForMonth(data),
-    }
-  })
+  const month = curMonthTag()
+  return snap.docs
+    .map((d) => ({ uid: d.id, data: d.data() as UserDoc }))
+    .filter(({ data }) => data.monthlyXpMonth === month && typeof data.monthlyXp === 'number')
 }
 
-export async function getRankSnapshot(_myUid: string, myXp: number, ahead: number = 5): Promise<{ rank: number | null; total: number; ahead: LeaderEntry[] }> {
-  const db = getDb()
-  const month = curMonthTag()
-  const allQ = query(collection(db, 'users'), where('monthlyXpMonth', '==', month))
-  const all = await getDocs(allQ)
-  const total = all.size
-  let rank = 0
-  all.docs.forEach((d) => {
-    const x = entryXpForMonth(d.data() as UserDoc)
+function toLeaderEntry({ uid, data }: { uid: string; data: UserDoc }): LeaderEntry {
+  return {
+    uid,
+    nickname: data.nickname || 'ADHD-' + uid.slice(0, 4),
+    xp: entryXpForMonth(data),
+  }
+}
+
+export async function getTopXp(n: number = 10): Promise<LeaderEntry[]> {
+  const entries = await fetchMonthlyEntries(50)
+  return entries.slice(0, n).map(toLeaderEntry)
+}
+
+export async function getRankSnapshot(myUid: string, myXp: number, ahead: number = 5): Promise<{ rank: number | null; total: number; ahead: LeaderEntry[] }> {
+  const entries = await fetchMonthlyEntries(200)
+  // Make sure my own row is represented even if I'm beyond the fetch slice (rare).
+  const total = entries.length || 1
+  let rank = 1
+  for (const e of entries) {
+    const x = entryXpForMonth(e.data)
     if (x > myXp) rank++
-  })
-  rank += 1
-  const aheadQ = query(collection(db, 'users'), where('monthlyXpMonth', '==', month), where('monthlyXp', '>', myXp), orderBy('monthlyXp', 'asc'), limit(ahead))
-  const aheadSnap = await getDocs(aheadQ)
-  const aheadList: LeaderEntry[] = aheadSnap.docs.map((d) => {
-    const data = d.data() as UserDoc
-    return {
-      uid: d.id,
-      nickname: data.nickname || 'ADHD-' + d.id.slice(0, 4),
-      xp: entryXpForMonth(data),
-    }
-  }).reverse()
-  return { rank: total > 0 ? rank : null, total, ahead: aheadList }
+  }
+  // Top N people just ahead of me (smallest gap first)
+  const aheadList = entries
+    .filter((e) => e.uid !== myUid && entryXpForMonth(e.data) > myXp)
+    .sort((a, b) => entryXpForMonth(a.data) - entryXpForMonth(b.data))
+    .slice(0, ahead)
+    .reverse() // top of UI = furthest ahead
+    .map(toLeaderEntry)
+  return { rank, total, ahead: aheadList }
 }
