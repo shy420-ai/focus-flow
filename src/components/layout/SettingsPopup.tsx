@@ -133,7 +133,13 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
 
   return (
     <div
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      onPointerDown={(e) => {
+        // Only close if the press STARTED on the backdrop itself.
+        // Without this, mobile taps on the gear icon (which opens the popup)
+        // can bubble a touchend onto the freshly-rendered backdrop and close
+        // the popup instantly.
+        if (e.target === e.currentTarget) onClose()
+      }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 56 }}
     >
     <div
