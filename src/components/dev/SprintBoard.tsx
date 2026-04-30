@@ -341,7 +341,7 @@ export function SprintBoard() {
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <button onClick={() => bumpGoal(g.id, -step)}
-                    style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>앗 -{step} 🫣</button>
+                    style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>아쉽다 🫣 -{step}</button>
                   <input
                     type="number"
                     value={step}
