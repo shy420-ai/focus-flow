@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { todayStr, fmtH, addDays } from '../../lib/date'
 import { NowLine } from './NowLine'
@@ -115,6 +115,30 @@ export function TimelineView() {
   }, [])
 
   const { start: START, hours: HOURS, px: PX } = tlSettings
+  const timelineRef = useRef<HTMLDivElement>(null)
+
+  // Scroll the page so that the current hour is near the top of the viewport.
+  // Runs on mount and again whenever the current hour rolls over.
+  useEffect(() => {
+    function scrollToNow() {
+      const el = timelineRef.current
+      if (!el) return
+      const now = new Date()
+      const nh = now.getHours() + now.getMinutes() / 60
+      if (nh < START || nh > START + HOURS) return
+      const elTop = el.getBoundingClientRect().top + window.scrollY
+      const target = elTop + (nh - START) * PX - 80  // 80px breathing room above
+      window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
+    }
+    // Initial scroll after layout settles
+    const initial = setTimeout(scrollToNow, 100)
+    // Re-scroll at the top of every hour
+    const minuteCheck = setInterval(() => {
+      const m = new Date().getMinutes()
+      if (m === 0) scrollToNow()
+    }, 60_000)
+    return () => { clearTimeout(initial); clearInterval(minuteCheck) }
+  }, [START, HOURS, PX])
   const [cycleBar, setCycleBar] = useState<{ bg: string; color: string; text: string } | null>(null)
   const [horoscopeText, setHoroscopeText] = useState<string | null>(null)
   const [horoscopeHint, setHoroscopeHint] = useState<'no-birthday' | 'no-year' | null>(null)
@@ -285,7 +309,7 @@ export function TimelineView() {
           {cycleBar.text}
         </div>
       )}
-      <div className="timeline">
+      <div className="timeline" ref={timelineRef}>
         {/* Time column */}
         <div className="time-col">
           {Array.from({ length: HOURS + 1 }, (_, i) => {
