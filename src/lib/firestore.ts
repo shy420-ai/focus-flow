@@ -108,7 +108,7 @@ export async function getTopXp(n: number = 10): Promise<LeaderEntry[]> {
   })
 }
 
-export async function getRankSnapshot(myUid: string, myXp: number, ahead: number = 5): Promise<{ rank: number | null; total: number; ahead: LeaderEntry[] }> {
+export async function getRankSnapshot(_myUid: string, myXp: number, ahead: number = 5): Promise<{ rank: number | null; total: number; ahead: LeaderEntry[] }> {
   const db = getDb()
   const allQ = query(collection(db, 'users'), where('xp', '>', 0))
   const all = await getDocs(allQ)
