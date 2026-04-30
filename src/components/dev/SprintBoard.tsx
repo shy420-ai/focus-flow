@@ -269,7 +269,7 @@ export function SprintBoard() {
             {/* Increment buttons */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
               <button onClick={() => increment(g.id, -1)}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>−1</button>
+                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1.2 }}>되돌리기 ↩️</button>
               <button onClick={() => increment(g.id, 1)}
                 style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌</button>
               <button onClick={() => increment(g.id, 5)}
