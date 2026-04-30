@@ -60,6 +60,14 @@ export function xpInLevel(xp?: number): { current: number; needed: number; pct: 
   return { current, needed: PER_LEVEL, pct }
 }
 
+export function resetXp(): void {
+  localStorage.setItem(KEY, '0')
+  localStorage.setItem(MONTH_KEY, '0')
+  localStorage.setItem(MONTH_TAG, curMonth())
+  window.dispatchEvent(new CustomEvent('ff-xp-changed'))
+  queue()
+}
+
 registerCollect(() => ({
   xp: getXp(),
   monthlyXp: getMonthlyXp(),

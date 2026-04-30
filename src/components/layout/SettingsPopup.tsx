@@ -13,6 +13,7 @@ import { flushSync } from '../../lib/syncManager'
 import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
+import { resetXp, getXp, getLevel } from '../../lib/xp'
 
 interface Props {
   onClose: () => void
@@ -323,9 +324,19 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       {/* 사용자 통계 */}
       <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8, marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>📊 통계</div>
-        <div style={{ fontSize: 11, color: '#666' }}>
+        <div style={{ fontSize: 11, color: '#666', marginBottom: 8 }}>
           전체 사용자: {userCount == null ? '...' : userCount.toLocaleString() + '명'}
+          {' · '}내 레벨: Lv.{getLevel(getXp())} ({getXp()} XP)
         </div>
+        <button
+          onClick={async () => {
+            if (await showConfirm('레벨/XP를 0으로 초기화할까? (다시 쌓아야 해)')) {
+              resetXp()
+              showMiniToast('🔄 레벨 초기화 완료')
+            }
+          }}
+          style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed #ddd', background: '#fff', color: '#999', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+        >🔄 레벨 초기화</button>
       </div>
 
       {/* 온보딩 */}
