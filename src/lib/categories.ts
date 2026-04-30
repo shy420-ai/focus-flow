@@ -14,9 +14,9 @@ const CAT_COLORS = [
 export function getCategories(): Category[] {
   try {
     const raw = localStorage.getItem(KEY)
-    if (!raw) return DEFAULT_CATEGORIES
+    if (raw === null) return DEFAULT_CATEGORIES
     const parsed = JSON.parse(raw) as Category[]
-    if (!Array.isArray(parsed) || parsed.length === 0) return DEFAULT_CATEGORIES
+    if (!Array.isArray(parsed)) return DEFAULT_CATEGORIES
     return parsed
   } catch {
     return DEFAULT_CATEGORIES
@@ -40,7 +40,7 @@ export function addCategory(name: string): void {
 
 export function removeCategory(name: string): void {
   const cats = getCategories().filter((c) => c.name !== name)
-  saveCategories(cats.length > 0 ? cats : DEFAULT_CATEGORIES)
+  saveCategories(cats)
 }
 
 export function updateCategoryColor(name: string, color: string): void {
