@@ -1,0 +1,2 @@
+echo "🔨 pre-push: 타입 체크 + 빌드 돌려서 GitHub Actions에 배포 실패하지 않도록 검증"
+pnpm build
