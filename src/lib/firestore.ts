@@ -11,6 +11,7 @@ import {
   orderBy,
   limit,
   getDocs,
+  getCountFromServer,
   arrayUnion,
   updateDoc,
   type Unsubscribe,
@@ -152,4 +153,10 @@ export async function getRankSnapshot(myUid: string, myXp: number, ahead: number
     .reverse() // top of UI = furthest ahead
     .map(toLeaderEntry)
   return { rank, total, ahead: aheadList }
+}
+
+export async function getUserCount(): Promise<number> {
+  const db = getDb()
+  const snap = await getCountFromServer(collection(db, 'users'))
+  return snap.data().count
 }

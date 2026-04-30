@@ -10,6 +10,7 @@ import { showConfirm } from '../../lib/showConfirm'
 import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
 import { flushSync } from '../../lib/syncManager'
+import { getUserCount } from '../../lib/firestore'
 
 interface Props {
   onClose: () => void
@@ -54,6 +55,11 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   useEffect(() => {
     const t = setTimeout(() => { armedRef.current = true }, 200)
     return () => clearTimeout(t)
+  }, [])
+
+  const [userCount, setUserCount] = useState<number | null>(null)
+  useEffect(() => {
+    getUserCount().then(setUserCount).catch(() => setUserCount(null))
   }, [])
   useBackClose(true, onClose)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
@@ -301,6 +307,14 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
             style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
           >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
         )}
+      </div>
+
+      {/* 사용자 통계 */}
+      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8, marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>📊 통계</div>
+        <div style={{ fontSize: 11, color: '#666' }}>
+          전체 사용자: {userCount == null ? '...' : userCount.toLocaleString() + '명'}
+        </div>
       </div>
 
       {/* 온보딩 */}
