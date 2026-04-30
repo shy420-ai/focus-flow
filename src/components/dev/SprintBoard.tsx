@@ -119,7 +119,8 @@ export function SprintBoard() {
     if (!sprint) return
     const g = sprint.goals.find((x) => x.id === id)
     if (!g) return
-    const next = Math.max(0, g.current + n)
+    const cur = typeof g.current === 'number' && !isNaN(g.current) ? g.current : 0
+    const next = Math.max(0, cur + n)
     updateGoal(id, { current: next })
   }
 
@@ -219,8 +220,8 @@ export function SprintBoard() {
                 <option value="개">개</option>
                 <option value=""></option>
               </select>
-              <button onClick={() => removeGoal(g.id)}
-                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
+              <button onClick={() => { if (confirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
+                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>✕</button>
             </div>
 
             {/* Big progress display */}
