@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { applyTheme, getTheme } from '../../lib/theme'
 import { THEMES, THEME_LABELS, type ThemeName } from '../../constants/themes'
 import { useAppStore, type CurView } from '../../store/AppStore'
@@ -54,17 +54,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [px, setPx] = useState(parseInt(localStorage.getItem(PX_KEY) || '140'))
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
   const [cycleData, setCycleData] = useState(() => loadCycleData())
-  const popupRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (popupRef.current && !popupRef.current.contains(e.target as Node)) {
-        onClose()
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [onClose])
 
   function handleTheme(name: ThemeName) {
     applyTheme(name)
@@ -144,15 +133,21 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
 
   return (
     <div
-      ref={popupRef}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 56 }}
+    >
+    <div
+      onClick={(e) => e.stopPropagation()}
       style={{
-        position: 'fixed', top: 56, left: '50%', transform: 'translateX(-50%)',
         background: '#fff', border: '2px solid var(--pink)', borderRadius: 14,
-        padding: 12, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,.15)',
+        padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,.15)',
         width: 'calc(100% - 24px)', maxWidth: 360, maxHeight: '80vh', overflowY: 'auto',
       }}
     >
-      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 12, textAlign: 'center' }}>⚙️ 설정</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--pd)', textAlign: 'center', marginLeft: 28 }}>⚙️ 설정</div>
+        <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
+      </div>
 
       {/* 닉네임 */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
@@ -291,6 +286,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           style={{ display: 'inline-block', width: '100%', padding: 10, borderRadius: 10, background: 'linear-gradient(135deg,#FFE156,#FFDAC1)', color: '#333', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', boxSizing: 'border-box', textAlign: 'center' }}
         >☕ 개발자에게 커피 한 잔 사주기</a>
       </div>
+    </div>
     </div>
   )
 }
