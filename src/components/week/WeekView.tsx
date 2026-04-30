@@ -70,22 +70,24 @@ export function WeekView() {
       )}
 
       {/* Navigation */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '8px 8px 4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 16px 4px' }}>
         <button
           onClick={() => setOffset((o) => o - 1)}
-          style={{ background: 'var(--pl)', border: 'none', width: 32, height: 32, borderRadius: '50%', fontSize: 16, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'var(--pl)', border: 'none', width: 32, height: 32, borderRadius: '50%', fontSize: 16, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >‹</button>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>
-          {weekStart.getMonth() + 1}/{weekStart.getDate()} ~ {weekEnd.getMonth() + 1}/{weekEnd.getDate()}
-        </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>
+            {weekStart.getMonth() + 1}/{weekStart.getDate()} ~ {weekEnd.getMonth() + 1}/{weekEnd.getDate()}
+          </span>
+          <button
+            onClick={() => setOffset(0)}
+            style={{ background: 'var(--pl)', border: '1.5px solid var(--pink)', borderRadius: 8, fontSize: 10, color: 'var(--pd)', padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: offset === 0 ? 0.4 : 1 }}
+          >이번 주</button>
+        </div>
         <button
           onClick={() => setOffset((o) => o + 1)}
-          style={{ background: 'var(--pl)', border: 'none', width: 32, height: 32, borderRadius: '50%', fontSize: 16, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          style={{ background: 'var(--pl)', border: 'none', width: 32, height: 32, borderRadius: '50%', fontSize: 16, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
         >›</button>
-        <button
-          onClick={() => setOffset(0)}
-          style={{ background: 'var(--pl)', border: '1.5px solid var(--pink)', borderRadius: 8, fontSize: 10, color: 'var(--pd)', padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: offset === 0 ? 0.4 : 1 }}
-        >이번 주</button>
       </div>
 
       {/* Grid */}
