@@ -28,7 +28,7 @@ interface CompletedSprint {
 
 const KEY = 'ff_sprint'
 const HISTORY_KEY = 'ff_sprint_history'
-const SPRINT_DAYS = 14
+const SPRINT_DAYS = 7
 
 function loadSprint(): Sprint | null {
   try {
@@ -176,9 +176,9 @@ export function SprintBoard() {
       <>
       {levelHeader}
       <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 2주 챌린지 (실험)</div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 1주 챌린지 (실험)</div>
         <div style={{ fontSize: 11, color: '#888', marginBottom: 14, lineHeight: 1.6, textAlign: 'center' }}>
-          ADHD 뇌가 잡을 수 있는 시간 = 약 2주<br />
+          ADHD엔 1주가 딱 잡힘<br />
           작은 목표 1~3개로 시작해봐
         </div>
 
