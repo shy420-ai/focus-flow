@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useMedStore } from '../../store/MedStore'
-import { useAppStore } from '../../store/AppStore'
-import { todayStr, addDays } from '../../lib/date'
+import { todayStr } from '../../lib/date'
 import type { MedItem } from '../../types/med'
 
 // ── MED DB ────────────────────────────────────────────────────────────────────
@@ -60,7 +59,7 @@ function MedSetup({ onClose }: { onClose: () => void }) {
 
   const [name, setName] = useState('')
   const [dose, setDose] = useState('')
-  const [timing, setTiming] = useState<'아침' | '저녁' | '수시'>('아침')
+  const [timing, setTiming] = useState<'아침' | '점심' | '저녁' | '수시'>('아침')
   const [dur, setDur] = useState('10')
   const [height, setHeight] = useState(String(config?.height || ''))
   const [weight, setWeight] = useState(String(config?.weight || ''))
@@ -141,7 +140,7 @@ function MedSetup({ onClose }: { onClose: () => void }) {
           )}
         </div>
         <div style={{ display: 'flex', gap: 6, marginBottom: 12, alignItems: 'center' }}>
-          {(['아침', '저녁', '수시'] as const).map((t) => (
+          {(['아침', '점심', '저녁', '수시'] as const).map((t) => (
             <button key={t} onClick={() => setTiming(t)}
               style={{ flex: 1, padding: '6px 0', borderRadius: 8, border: '1.5px solid ' + (timing === t ? 'var(--pink)' : 'var(--pl)'), background: timing === t ? 'var(--pink)' : '#fff', color: timing === t ? '#fff' : 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
               {t}
@@ -495,119 +494,107 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
   )
 }
 
-// ── Analysis Tab ──────────────────────────────────────────────────────────────
-function AnalysisTab() {
+// ── Lunch Tab ─────────────────────────────────────────────────────────────────
+function LunchTab({ onSetup }: { onSetup: () => void }) {
+  const config = useMedStore((s) => s.config)
   const logs = useMedStore((s) => s.logs)
-  const blocks = useAppStore((s) => s.blocks)
+  const logTake = useMedStore((s) => s.logTake)
+  const clearTake = useMedStore((s) => s.clearTake)
+  const logStatus = useMedStore((s) => s.logStatus)
+
   const today = todayStr()
-  const last7 = Array.from({ length: 7 }, (_, i) => addDays(today, -6 + i))
+  const now = new Date()
+  const nowHour = now.getHours()
 
-  // Block completion rate
-  let totalB = 0, doneB = 0
-  last7.forEach((ds) => {
-    const dayB = blocks.filter((b) => b.date === ds && !b.isBuf && (b.type === 'timeline' || !b.type))
-    totalB += dayB.length; doneB += dayB.filter((b) => b.done).length
-  })
-  const rate = totalB ? Math.round(doneB / totalB * 100) : 0
+  const lunchMeds = (config?.meds || []).filter((m) => m.timing === '점심')
+  const todayLunchTake = logs.find((l) => l.date === today && l.type === 'take' && l.timing === '점심')
+  const todayStatuses = logs.filter((l) => l.date === today && l.type === 'status').sort((a, b) => (a.hour ?? 0) - (b.hour ?? 0))
+  const curStatus = todayStatuses.find((s) => s.hour === nowHour)
 
-  // Med take streak
-  let streak = 0, d = today
-  for (let i = 0; i < 30; i++) {
-    if (logs.some((l) => l.date === d && l.type === 'take' && l.timing === '아침')) { streak++; d = addDays(d, -1) }
-    else break
-  }
-
-  // Status by day
-  const avgStatus = last7.map((ds) => {
-    const ss = logs.filter((l) => l.date === ds && l.type === 'status' && l.level !== undefined)
-    return ss.length ? ss.reduce((s, l) => s + (l.level ?? 0), 0) / ss.length : null
-  })
-  const wakeData = last7.map((ds) => logs.find((l) => l.date === ds && l.type === 'wake'))
-
-  // Effect analysis: peak status after take
-  const morningTakes = logs.filter((l) => l.type === 'take' && l.timing === '아침' && l.time !== undefined)
-  const peakAnalysis: { hours: number; avg: number }[] = []
-  if (morningTakes.length >= 3) {
-    for (let h = 1; h <= 12; h++) {
-      const vals: number[] = []
-      morningTakes.forEach((t) => {
-        const targetHour = Math.round((t.time! + h))
-        const s = logs.find((l) => l.date === t.date && l.type === 'status' && l.hour === targetHour)
-        if (s?.level !== undefined) vals.push(s.level)
-      })
-      if (vals.length >= 2) peakAnalysis.push({ hours: h, avg: vals.reduce((a, b) => a + b) / vals.length })
-    }
-  }
-  const peakHour = peakAnalysis.length ? peakAnalysis.reduce((a, b) => a.avg > b.avg ? a : b) : null
-  const lowHour = peakAnalysis.length ? peakAnalysis.reduce((a, b) => a.avg < b.avg ? a : b) : null
-
-  // Insights
-  let insight: string
-  if (totalB >= 5) {
-    if (rate >= 80) insight = '엄청 잘하고 있어! 이 페이스 유지해 💪'
-    else if (rate >= 50) insight = '절반 이상 해내고 있어. 조금만 더!'
-    else insight = '블록을 더 작게 쪼개보는 건 어때?'
-  } else {
-    insight = '블록 데이터가 더 쌓이면 맞춤 인사이트를 알려줄게!'
+  if (!lunchMeds.length) {
+    return (
+      <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 12, border: '1.5px solid var(--pl)', textAlign: 'center' }}>
+        <div style={{ fontSize: 30, marginBottom: 8 }}>🥪</div>
+        <div style={{ fontSize: 13, color: '#888', marginBottom: 12 }}>등록된 점심약이 없어</div>
+        <button onClick={onSetup}
+          style={{ padding: '8px 20px', borderRadius: 10, border: 'none', background: '#F4A261', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+          점심약 추가하기</button>
+      </div>
+    )
   }
 
   return (
     <div>
-      {/* Block completion */}
-      <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 10 }}>✅ 이번 주 완료율</div>
-        <div style={{ height: 8, background: 'var(--pl)', borderRadius: 4, marginBottom: 6 }}>
-          <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 4, width: rate + '%', transition: 'width .3s' }} />
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--pd)', textAlign: 'center' }}>{doneB}/{totalB}개 완료 ({rate}%)</div>
+      {/* Drug cards */}
+      {lunchMeds.map((m) => (
+        <DrugCard key={m.name} med={m} todayTake={todayLunchTake} curH={nowHour} />
+      ))}
+
+      {/* Take button */}
+      <div style={{ marginBottom: 12 }}>
+        {!todayLunchTake ? (
+          <button onClick={() => logTake('점심')}
+            style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: '#F4A261', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            🥪 점심약 먹었어!</button>
+        ) : (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => logTake('점심')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🔄 다시 기록</button>
+            <button onClick={() => clearTake('점심')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>✕ 초기화</button>
+          </div>
+        )}
       </div>
 
-      {/* Med streak */}
-      {streak > 0 && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💊 연속 복용 스트릭</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--pink)', textAlign: 'center' }}>🔥 {streak}일</div>
-        </div>
-      )}
+      {/* 점심약 가이드 */}
+      <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🥪 점심약 가이드</div>
+        {lunchMeds.map((m) => {
+          const db = MED_DB.find((d) => d.name === m.name)
+          if (!db || db.duration >= 24) return null
+          const take = todayLunchTake
+          return (
+            <div key={m.name} style={{ marginBottom: 8, padding: '6px 10px', background: 'var(--pl)', borderRadius: 8 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>{m.name}</div>
+              {db.note && <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>📌 {db.note}</div>}
+              <div style={{ fontSize: 11, color: '#888' }}>⏱ 효과 지속 약 {m.duration}시간</div>
+              {take ? (
+                <>
+                  <div style={{ fontSize: 11, color: '#EF9F27' }}>
+                    🟡 {Math.floor(take.time! + m.duration * 0.7)}:{String(Math.round(((take.time! + m.duration * 0.7) % 1) * 60)).padStart(2, '0')}쯤 효과 줄어들기 시작
+                  </div>
+                  <div style={{ fontSize: 11, color: '#E24B4A' }}>
+                    🔴 {Math.floor(take.time! + m.duration)}:{String(Math.round(((take.time! + m.duration) % 1) * 60)).padStart(2, '0')}쯤 효과 종료
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 11, color: '#aaa' }}>💡 복용하면 약발 떨어지는 시간 알려줄게</div>
+              )}
+            </div>
+          )
+        })}
+      </div>
 
-      {/* Drug effect analysis */}
-      {peakHour && (
+      {/* Status check */}
+      <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>지금 상태 어때?</div>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center' }}>
+          {STATUS_EMOJI.map((e, i) => (
+            <button key={i} onClick={() => logStatus(i)}
+              style={{ fontSize: 28, padding: '6px 8px', borderRadius: 12, border: '2px solid ' + (curStatus?.level === i ? 'var(--pink)' : 'transparent'), background: curStatus?.level === i ? 'var(--pl)' : 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+              <span>{e}</span><span style={{ fontSize: 9, color: '#aaa' }}>{STATUS_LABEL[i]}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Today log */}
+      {todayLunchTake && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>💊 약 효과 분석</div>
-          <div style={{ fontSize: 12, color: '#555', lineHeight: 1.8 }}>
-            <div>📈 피크 타임: 복용 후 <b>{peakHour.hours}시간째</b> (평균 {STATUS_EMOJI[Math.round(peakHour.avg)]})</div>
-            {lowHour && <div>📉 효과 감소: 복용 후 <b>{lowHour.hours}시간째</b></div>}
-            <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>데이터가 쌓일수록 분석이 정확해져!</div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>오늘 점심 기록</div>
+          <div style={{ fontSize: 12, color: '#555', padding: '4px 0' }}>
+            💊 {Math.floor(todayLunchTake.time!)}:{String(Math.round(((todayLunchTake.time! % 1) * 60))).padStart(2, '0')} 점심약 복용
           </div>
         </div>
       )}
-
-      {/* Daily status */}
-      <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 10 }}>😊 일별 상태 기록</div>
-        <div style={{ display: 'flex', gap: 4, alignItems: 'flex-end', height: 60, justifyContent: 'space-between' }}>
-          {last7.map((ds, i) => {
-            const avg = avgStatus[i]; const wake = wakeData[i]
-            return (
-              <div key={ds} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-                <div style={{ fontSize: avg !== null ? 18 : 14, opacity: avg !== null ? 1 : 0.25 }}>
-                  {avg !== null ? STATUS_EMOJI[Math.round(avg)] : (wake ? STATUS_EMOJI[wake.level!] : '·')}
-                </div>
-                <div style={{ fontSize: 9, color: ds === today ? 'var(--pd)' : '#bbb', fontWeight: ds === today ? 700 : 400 }}>
-                  {parseInt(ds.slice(8))}일
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Insights */}
-      <div style={{ background: 'linear-gradient(135deg, var(--pl), #fff)', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💡 인사이트</div>
-        <div style={{ fontSize: 13, color: '#555', lineHeight: 1.6 }}>{insight}</div>
-      </div>
-
     </div>
   )
 }
@@ -615,8 +602,10 @@ function AnalysisTab() {
 // ── Main StatsView ─────────────────────────────────────────────────────────────
 export function StatsView() {
   const config = useMedStore((s) => s.config)
-  const [tab, setTab] = useState<'morning' | 'night' | 'analysis'>(() =>
-    (localStorage.getItem('ff_medi_tab') as 'morning' | 'night' | 'analysis') || 'morning')
+  const [tab, setTab] = useState<'morning' | 'lunch' | 'night'>(() => {
+    const saved = localStorage.getItem('ff_medi_tab')
+    return (saved === 'morning' || saved === 'lunch' || saved === 'night') ? saved : 'morning'
+  })
   const [showSetup, setShowSetup] = useState(false)
 
   function setTabPersist(t: typeof tab) {
@@ -626,8 +615,8 @@ export function StatsView() {
   const hasMeds = (config?.meds?.length ?? 0) > 0
   const TABS = [
     { id: 'morning' as const, label: '☀️ 아침약' },
+    { id: 'lunch' as const, label: '🥪 점심약' },
     { id: 'night' as const, label: '🌙 저녁약' },
-    { id: 'analysis' as const, label: '📊 분석' },
   ]
 
   return (
@@ -648,7 +637,7 @@ export function StatsView() {
         ))}
       </div>
 
-      {!hasMeds && tab !== 'analysis' ? (
+      {!hasMeds ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 12, border: '1.5px solid var(--pl)', textAlign: 'center' }}>
           <div style={{ fontSize: 40, marginBottom: 10 }}>💊</div>
           <div style={{ fontSize: 14, color: '#555', marginBottom: 12 }}>약 정보를 설정하면<br />복용 기록 + 상태 트래킹을 시작할 수 있어!</div>
@@ -659,8 +648,8 @@ export function StatsView() {
       ) : (
         <>
           {tab === 'morning' && <MorningTab />}
+          {tab === 'lunch' && <LunchTab onSetup={() => setShowSetup(true)} />}
           {tab === 'night' && <EveningTab onSetup={() => setShowSetup(true)} />}
-          {tab === 'analysis' && <AnalysisTab />}
         </>
       )}
 

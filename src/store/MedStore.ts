@@ -14,9 +14,9 @@ interface MedState {
 interface MedActions {
   setConfig: (cfg: MedConfig) => void
   addMed: (med: MedItem) => void
-  removeMed: (name: string, timing: '아침' | '저녁' | '수시') => void
-  logTake: (timing: '아침' | '저녁') => void
-  clearTake: (timing: '아침' | '저녁') => void
+  removeMed: (name: string, timing: '아침' | '점심' | '저녁' | '수시') => void
+  logTake: (timing: '아침' | '점심' | '저녁') => void
+  clearTake: (timing: '아침' | '점심' | '저녁') => void
   logStatus: (level: number) => void
   logWake: (level: number) => void
   logSleepTime: (level: number) => void
