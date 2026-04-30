@@ -5,6 +5,7 @@ import { nid } from '../../lib/id'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { getCategories } from '../../lib/categories'
 import { CatEditModal } from '../ui/CatEditModal'
+import { getHoliday } from '../../lib/holidays'
 import type { Block } from '../../types/block'
 
 const MONTH = [
@@ -41,11 +42,17 @@ function DayCell({ ds, dayNum, isToday, isSelected, isPast, isOther, dow, dayBlo
     if (isPast) cls += ' past'
   }
 
-  const numCls = 'cal-num' + (dow === 0 ? ' sun' : dow === 6 ? ' sat' : '')
+  const holiday = getHoliday(ds)
+  const numCls = 'cal-num' + ((dow === 0 || holiday) ? ' sun' : dow === 6 ? ' sat' : '')
 
   return (
     <div className={cls} onClick={() => !isOther && onClick(ds)}>
       <div className={numCls}>{dayNum}</div>
+      {holiday && !isOther && (
+        <div style={{ fontSize: 8, color: '#E24B4A', fontWeight: 600, lineHeight: 1.1, textAlign: 'center', padding: '0 2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+          {holiday}
+        </div>
+      )}
       {dayBlocks.length > 0 && (
         <>
           <div className="cal-dots">

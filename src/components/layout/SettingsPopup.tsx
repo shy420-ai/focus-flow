@@ -308,18 +308,16 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         )}
       </div>
 
-      {/* 개발자 모드 */}
+      {/* 옵션 */}
       <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
+        <button
+          onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
+          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+        >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
         <button
           onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
           style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
         >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
-        {devOn && (
-          <button
-            onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
-            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-          >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
-        )}
       </div>
 
       {/* 사용자 통계 */}
