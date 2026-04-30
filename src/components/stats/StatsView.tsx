@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMedStore } from '../../store/MedStore'
 import { todayStr } from '../../lib/date'
+import { useBackClose } from '../../hooks/useBackClose'
 import type { MedItem } from '../../types/med'
 
 // ── MED DB ────────────────────────────────────────────────────────────────────
@@ -52,6 +53,7 @@ const SLEEP_LABEL = ['💤 바로 잠듦', '😊 30분 이내', '😐 30분~1시
 
 // ── MedSetup ──────────────────────────────────────────────────────────────────
 function MedSetup({ onClose }: { onClose: () => void }) {
+  useBackClose(true, onClose)
   const config = useMedStore((s) => s.config)
   const addMed = useMedStore((s) => s.addMed)
   const removeMed = useMedStore((s) => s.removeMed)

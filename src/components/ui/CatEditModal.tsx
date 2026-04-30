@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Category } from '../../constants/categories'
 import { getCategories, addCategory, removeCategory, updateCategoryColor, CAT_COLORS } from '../../lib/categories'
 import { showMiniToast } from '../../lib/miniToast'
+import { useBackClose } from '../../hooks/useBackClose'
 
 interface CatEditModalProps {
   onClose: () => void
@@ -17,6 +18,7 @@ export function CatEditModal({ onClose, onChange }: CatEditModalProps) {
   })
   const [pickingNewColor, setPickingNewColor] = useState(false)
   const [editingColor, setEditingColor] = useState<string | null>(null)
+  useBackClose(true, onClose)
 
   function refresh() {
     setCats(getCategories())

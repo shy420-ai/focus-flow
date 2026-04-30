@@ -8,11 +8,13 @@ import { EditBlockModal } from './EditBlockModal'
 import { getHoroscopeText } from '../../lib/saju'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
+import { useBackClose } from '../../hooks/useBackClose'
 import type { Block } from '../../types/block'
 
 function BirthdayModal({ onClose }: { onClose: () => void }) {
   const [year, setYear] = useState(localStorage.getItem('ff_birthyear') || '')
   const [md, setMd] = useState(localStorage.getItem('ff_birthday') || '')
+  useBackClose(true, onClose)
 
   function save() {
     if (!year || !/^\d{4}$/.test(year)) { showMiniToast('년도를 확인해주세요'); return }

@@ -5,6 +5,7 @@ import { useAppStore, type CurView } from '../../store/AppStore'
 import { todayStr, pad } from '../../lib/date'
 import { signOutUser } from '../../lib/auth'
 import { isDevMode, setDevMode } from '../../lib/devMode'
+import { useBackClose } from '../../hooks/useBackClose'
 
 interface Props {
   onClose: () => void
@@ -41,6 +42,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
+  useBackClose(true, onClose)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
   const [tlStart, setTlStart] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6'))

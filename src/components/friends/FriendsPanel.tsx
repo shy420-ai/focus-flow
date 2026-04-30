@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
+import { useBackClose } from '../../hooks/useBackClose'
 import type { UserDoc } from '../../lib/firestore'
 
 interface Friend {
@@ -160,6 +161,7 @@ export function FriendsPanel({ onClose }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
+  useBackClose(true, onClose)
 
   const myCode = uid ? getMyShareCode(uid) : null
   const myName = localStorage.getItem('ff_nickname') || displayName || '익명'

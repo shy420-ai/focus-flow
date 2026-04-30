@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { getCategories } from '../../lib/categories'
 import { CatEditModal } from '../ui/CatEditModal'
+import { useBackClose } from '../../hooks/useBackClose'
 import type { Block } from '../../types/block'
 import type { Category } from '../../constants/categories'
 
@@ -27,6 +28,7 @@ export function EditBlockModal({ block, onClose, onCancel }: Props) {
   const [durationM, setDurationM] = useState(durM)
   const [categories, setCategories] = useState<Category[]>(getCategories)
   const [showCatEdit, setShowCatEdit] = useState(false)
+  useBackClose(true, onCancel ?? onClose)
 
   useEffect(() => {
     function onCatsChanged() { setCategories(getCategories()) }

@@ -7,6 +7,7 @@ import { useAppStore } from '../../store/AppStore'
 import { todayStr, fmtH } from '../../lib/date'
 import { getCategories } from '../../lib/categories'
 import { CatEditModal } from '../ui/CatEditModal'
+import { useBackClose } from '../../hooks/useBackClose'
 import type { Category } from '../../constants/categories'
 
 interface AddBlockSheetProps {
@@ -36,6 +37,7 @@ export function AddBlockSheet({ isOpen, onClose, onQuickEmpty }: AddBlockSheetPr
   const curDate = useAppStore((s) => s.curDate)
   const addBlock = useAppStore((s) => s.addBlock)
   const addRecurring = useAppStore((s) => s.addRecurring)
+  useBackClose(isOpen, onClose)
 
   const [input, setInput] = useState('')
   const [date, setDate] = useState(curDate)
