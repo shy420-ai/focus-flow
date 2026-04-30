@@ -82,8 +82,13 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       return
     }
     localStorage.setItem('ff_nickname', trimmed)
-    await flushSync()  // push immediately so leaderboard reflects the new name
-    showMiniToast('✅ 닉네임 저장됨')
+    setNickname(trimmed)  // reflect trimmed value in the input
+    showMiniToast('✅ 닉네임 저장됨')  // show toast first so user sees feedback even if sync is slow/offline
+    try {
+      await flushSync()
+    } catch (err) {
+      console.error('[saveNickname] sync failed', err)
+    }
   }
 
   function setTlRange(start: number, end: number) {
