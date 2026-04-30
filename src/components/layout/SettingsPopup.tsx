@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { applyTheme, getTheme } from '../../lib/theme'
 import { THEMES, THEME_LABELS, type ThemeName } from '../../constants/themes'
 import { useAppStore, type CurView } from '../../store/AppStore'
@@ -46,7 +46,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
   const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
-  const backdropDownRef = useRef(false)
   useBackClose(true, onClose)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
@@ -134,22 +133,14 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
 
   return (
     <div
-      onMouseDown={(e) => { backdropDownRef.current = e.target === e.currentTarget }}
-      onTouchStart={(e) => { backdropDownRef.current = e.target === e.currentTarget }}
-      onClick={(e) => {
-        // Only close when the press STARTED on the backdrop AND ended on the backdrop.
-        // This prevents the gear-tap from bleeding through into a backdrop click.
-        if (e.target === e.currentTarget && backdropDownRef.current) onClose()
-        backdropDownRef.current = false
-      }}
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 56 }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 56, pointerEvents: 'none' }}
     >
     <div
-      onClick={(e) => e.stopPropagation()}
       style={{
         background: '#fff', border: '2px solid var(--pink)', borderRadius: 14,
         padding: 12, boxShadow: '0 8px 24px rgba(0,0,0,.15)',
         width: 'calc(100% - 24px)', maxWidth: 360, maxHeight: '80vh', overflowY: 'auto',
+        pointerEvents: 'auto',
       }}
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
