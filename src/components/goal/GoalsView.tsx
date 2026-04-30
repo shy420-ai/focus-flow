@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { showConfirm } from '../../lib/showConfirm'
+import { isDevMode } from '../../lib/devMode'
+import { SprintBoard } from '../dev/SprintBoard'
 import {
   useGoalStore,
   getCurrentQ,
@@ -262,6 +264,7 @@ export function GoalsView() {
 
   return (
     <div style={{ padding: '16px', paddingBottom: 120 }}>
+      {isDevMode() && <SprintBoard />}
       {/* Q Sprint progress */}
       <div style={{ background: '#fff', borderRadius: 14, padding: '12px 14px', marginBottom: 12, border: '1.5px solid var(--pl)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
