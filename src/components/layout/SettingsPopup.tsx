@@ -4,6 +4,7 @@ import { THEMES, THEME_LABELS, type ThemeName } from '../../constants/themes'
 import { useAppStore, type CurView } from '../../store/AppStore'
 import { todayStr, pad } from '../../lib/date'
 import { signOutUser } from '../../lib/auth'
+import { isDevMode, setDevMode } from '../../lib/devMode'
 
 interface Props {
   onClose: () => void
@@ -39,6 +40,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const uid = useAppStore((s) => s.uid)
   const displayName = useAppStore((s) => s.displayName)
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
+  const [devOn, setDevOn] = useState<boolean>(isDevMode())
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
   const [tlStart, setTlStart] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6'))
@@ -250,6 +252,14 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
             style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid #ddd', background: '#fff', color: '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
           >🚪 로그아웃</button>
         )}
+      </div>
+
+      {/* 개발자 모드 */}
+      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
+        <button
+          onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
+          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+        >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
       </div>
 
       {/* 온보딩 */}
