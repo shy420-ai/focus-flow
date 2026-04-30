@@ -5,6 +5,7 @@ import { useAppStore, type CurView } from '../../store/AppStore'
 import { todayStr, pad } from '../../lib/date'
 import { queue } from '../../lib/syncManager'
 import { showMiniToast } from '../../lib/miniToast'
+import { signOutUser } from '../../lib/auth'
 
 interface Props {
   onClose: () => void
@@ -39,6 +40,7 @@ function saveCycleData(d: unknown) {
 export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const uid = useAppStore((s) => s.uid)
   const displayName = useAppStore((s) => s.displayName)
+  const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
   const [tlStart, setTlStart] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6'))
@@ -292,6 +294,25 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pd)', background: '#fff', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}
         >{syncing ? '동기화 중...' : '☁️ 전체 데이터 동기화'}</button>
       )}
+
+      {/* 로그인 / 로그아웃 */}
+      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
+        {!uid ? (
+          <button
+            onClick={() => { setSkipLogin(false); onClose() }}
+            style={{ width: '100%', padding: 10, borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+          >🔑 로그인하기 (기기간 싱크)</button>
+        ) : (
+          <button
+            onClick={async () => {
+              if (!confirm('로그아웃하면 이 기기에서는 로컬 데이터로만 작동해요. 계속할까요?')) return
+              await signOutUser()
+              onClose()
+            }}
+            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid #ddd', background: '#fff', color: '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+          >🚪 로그아웃</button>
+        )}
+      </div>
 
       {/* 온보딩 */}
       <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
