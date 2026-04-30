@@ -222,15 +222,15 @@ export function TimelineView() {
       {horoscopeText ? (
         <div
           onClick={() => setShowBirthdayModal(true)}
-          style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 16px', lineHeight: 1.45, textAlign: 'center', cursor: 'pointer' }}
+          style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '-8px 16px 4px', lineHeight: 1.45, textAlign: 'center', cursor: 'pointer' }}
           dangerouslySetInnerHTML={{ __html: horoscopeText }}
         />
       ) : horoscopeHint === 'no-birthday' ? (
-        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 16px', lineHeight: 1.45, textAlign: 'center' }}>
+        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '-8px 16px 4px', lineHeight: 1.45, textAlign: 'center' }}>
           ⭐ <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>생일 입력하면 오늘의 운세를 볼 수 있어!</span>
         </div>
       ) : horoscopeHint === 'no-year' ? (
-        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 16px', lineHeight: 1.45, textAlign: 'center' }}>
+        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '-8px 16px 4px', lineHeight: 1.45, textAlign: 'center' }}>
           🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
         </div>
       ) : null}

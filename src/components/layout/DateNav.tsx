@@ -25,7 +25,7 @@ export function DateNav() {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '8px 16px', position: 'relative' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '6px 16px 4px', position: 'relative' }}>
       <button
         onClick={() => nav(-1)}
         style={{ background: 'var(--pl)', border: 'none', width: 38, height: 38, borderRadius: '50%', fontSize: 20, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
