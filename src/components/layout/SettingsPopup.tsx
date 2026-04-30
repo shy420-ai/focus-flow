@@ -7,6 +7,7 @@ import { signOutUser } from '../../lib/auth'
 import { isDevMode, setDevMode } from '../../lib/devMode'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
+import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
 import { queue } from '../../lib/syncManager'
 
@@ -69,8 +70,14 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   }
 
   function saveNickname() {
-    localStorage.setItem('ff_nickname', nickname)
+    const trimmed = nickname.trim()
+    if (!trimmed) {
+      showMiniToast('닉네임을 입력해줘')
+      return
+    }
+    localStorage.setItem('ff_nickname', trimmed)
     queue()  // sync nickname to Firestore so leaderboard reflects the chosen name
+    showMiniToast('✅ 닉네임 저장됨')
   }
 
   function setTlRange(start: number, end: number) {
