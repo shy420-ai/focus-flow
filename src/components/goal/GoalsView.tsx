@@ -262,9 +262,16 @@ export function GoalsView() {
     setYearInput('')
   }
 
+  if (isDevMode()) {
+    return (
+      <div style={{ padding: '16px', paddingBottom: 120 }}>
+        <SprintBoard />
+      </div>
+    )
+  }
+
   return (
     <div style={{ padding: '16px', paddingBottom: 120 }}>
-      {isDevMode() && <SprintBoard />}
       {/* Q Sprint progress */}
       <div style={{ background: '#fff', borderRadius: 14, padding: '12px 14px', marginBottom: 12, border: '1.5px solid var(--pl)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
