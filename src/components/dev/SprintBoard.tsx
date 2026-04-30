@@ -233,13 +233,7 @@ export function SprintBoard() {
     <>
     {levelHeader}
     <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>⚡ 챌린지 D-{daysLeft}</div>
-        <button onClick={endSprint}
-          style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
-          끝내기
-        </button>
-      </div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 10 }}>⚡ 챌린지 D-{daysLeft}</div>
 
       <div style={{ height: 4, background: 'var(--pl)', borderRadius: 2, marginBottom: 4, overflow: 'hidden' }}>
         <div style={{ height: '100%', background: '#ddd', width: sprintProgress + '%', transition: 'width .3s' }} />
@@ -342,8 +336,14 @@ export function SprintBoard() {
       )}
 
       {daysLeft === 0 && (
-        <div style={{ marginTop: 10, padding: 10, background: '#FFF8E1', borderRadius: 8, fontSize: 11, color: '#8B6914', textAlign: 'center' }}>
-          🏁 챌린지 종료! 끝내기 누르면 히스토리 저장 + 다음 챌린지 시작 가능
+        <div style={{ marginTop: 10, padding: 12, background: '#FFF8E1', borderRadius: 8, textAlign: 'center' }}>
+          <div style={{ fontSize: 11, color: '#8B6914', marginBottom: 8, lineHeight: 1.5 }}>
+            🏁 챌린지 종료! 결과를 히스토리에 저장하고 다음 챌린지 시작
+          </div>
+          <button onClick={endSprint}
+            style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#8B6914', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            마무리하기
+          </button>
         </div>
       )}
 
