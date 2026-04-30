@@ -276,25 +276,62 @@ export function SprintBoard() {
                 style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
             </div>
 
-            {/* Baseline (Past Me) */}
-            {baseline && (
-              <div style={{ padding: '6px 10px', background: '#fff', borderRadius: 8, fontSize: 11, color: '#666', lineHeight: 1.5 }}>
-                <div style={{ fontWeight: 700, color: 'var(--pd)', marginBottom: 2 }}>🪞 저번 sprint: {baselineCurrent}{baseline.unit} (목표 {baseline.target}{baseline.unit})</div>
-                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
-                  <button onClick={() => updateGoal(g.id, { target: safe || 1, unit: baseline.unit })}
-                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', fontSize: 10, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>안전 {safe}{baseline.unit}</button>
-                  <button onClick={() => updateGoal(g.id, { target: stretch || 1, unit: baseline.unit })}
-                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--pink)', background: 'var(--pink)', fontSize: 10, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>도전 {stretch}{baseline.unit}</button>
-                  <button onClick={() => updateGoal(g.id, { target: risk || 1, unit: baseline.unit })}
-                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #E24B4A', background: '#fff', fontSize: 10, color: '#E24B4A', cursor: 'pointer', fontFamily: 'inherit' }}>무리 {risk}{baseline.unit}</button>
+            {/* Baseline (Past Me) - 동기부여 강화 */}
+            {baseline && (() => {
+              const maxVal = Math.max(g.target, baselineCurrent, g.current, 1)
+              const pastBarPct = (baselineCurrent / maxVal) * 100
+              const nowBarPct = (g.current / maxVal) * 100
+              return (
+                <div style={{ padding: 10, background: '#fff', borderRadius: 10 }}>
+                  {/* Big motivating headline */}
+                  {diff > 0 ? (
+                    <div style={{ background: 'linear-gradient(135deg, #FFE0EC, #FFC8E0)', padding: '10px 12px', borderRadius: 10, marginBottom: 10, textAlign: 'center' }}>
+                      <div style={{ fontSize: 11, color: 'var(--pd)', marginBottom: 2 }}>🚀 자기 베스트 갱신중</div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--pd)', lineHeight: 1.1 }}>+{diff}{g.unit}</div>
+                      <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>저번의 너보다 빠름</div>
+                    </div>
+                  ) : diff < 0 ? (
+                    <div style={{ background: '#FFF8E1', padding: '10px 12px', borderRadius: 10, marginBottom: 10, textAlign: 'center' }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: '#8B6914' }}>🫂 {Math.abs(diff)}{g.unit} 뒤지는 중</div>
+                      <div style={{ fontSize: 10, color: '#8B6914', marginTop: 2 }}>천천히 따라잡으면 돼</div>
+                    </div>
+                  ) : (
+                    <div style={{ background: 'var(--pl)', padding: '8px 12px', borderRadius: 10, marginBottom: 10, textAlign: 'center', fontSize: 11, color: 'var(--pd)' }}>
+                      🤝 저번 sprint랑 동률 — 한 번만 더
+                    </div>
+                  )}
+
+                  {/* Visual comparison bar */}
+                  <div style={{ marginBottom: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, color: '#888', marginBottom: 4 }}>
+                      <span style={{ width: 32, flexShrink: 0 }}>저번</span>
+                      <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', background: '#bbb', borderRadius: 4, width: pastBarPct + '%' }} />
+                      </div>
+                      <span style={{ width: 36, textAlign: 'right', flexShrink: 0 }}>{baselineCurrent}{baseline.unit}</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, color: 'var(--pd)' }}>
+                      <span style={{ width: 32, fontWeight: 700, flexShrink: 0 }}>지금</span>
+                      <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 4, width: nowBarPct + '%', transition: 'width .3s' }} />
+                      </div>
+                      <span style={{ width: 36, textAlign: 'right', fontWeight: 700, flexShrink: 0 }}>{g.current}{g.unit}</span>
+                    </div>
+                  </div>
+
+                  {/* Quick target picker */}
+                  <div style={{ fontSize: 10, color: '#888', marginBottom: 4 }}>👇 다음 sprint 목표 한번에 정하기</div>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={() => updateGoal(g.id, { target: safe || 1, unit: baseline.unit })}
+                      style={{ flex: 1, padding: '6px 4px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', fontSize: 10, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>안전 {safe}{baseline.unit}</button>
+                    <button onClick={() => updateGoal(g.id, { target: stretch || 1, unit: baseline.unit })}
+                      style={{ flex: 1, padding: '6px 4px', borderRadius: 6, border: '1px solid var(--pink)', background: 'var(--pink)', fontSize: 10, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>도전 {stretch}{baseline.unit}</button>
+                    <button onClick={() => updateGoal(g.id, { target: risk || 1, unit: baseline.unit })}
+                      style={{ flex: 1, padding: '6px 4px', borderRadius: 6, border: '1px solid #E24B4A', background: '#fff', fontSize: 10, color: '#E24B4A', cursor: 'pointer', fontFamily: 'inherit' }}>무리 {risk}{baseline.unit}</button>
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: diff > 0 ? '#1FA176' : diff < 0 ? '#EF9F27' : '#888', marginTop: 6 }}>
-                  {diff > 0 ? `+${diff}${g.unit} 앞서있어` :
-                    diff < 0 ? `${diff}${g.unit}, 따라잡아보자` :
-                    '저번 sprint랑 동률'}
-                </div>
-              </div>
-            )}
+              )
+            })()}
           </div>
         )
       })}
