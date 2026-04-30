@@ -117,27 +117,36 @@ export function TimelineView() {
   const { start: START, hours: HOURS, px: PX } = tlSettings
   const timelineRef = useRef<HTMLDivElement>(null)
 
-  // Scroll the page so that the current hour is near the top of the viewport.
-  // Runs on mount and again whenever the current hour rolls over.
+  // Auto-scroll the page so the current time sits near the top of the viewport.
+  // Runs on mount, then every minute. Pauses for 90s after the user manually
+  // scrolls (so they can browse other times without being snapped back).
   useEffect(() => {
-    function scrollToNow() {
+    let pausedUntil = 0
+    function scrollToNow(force = false) {
+      if (!force && Date.now() < pausedUntil) return
       const el = timelineRef.current
       if (!el) return
       const now = new Date()
       const nh = now.getHours() + now.getMinutes() / 60
       if (nh < START || nh > START + HOURS) return
       const elTop = el.getBoundingClientRect().top + window.scrollY
-      const target = elTop + (nh - START) * PX - 80  // 80px breathing room above
+      const target = elTop + (nh - START) * PX - 80
       window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
     }
-    // Initial scroll after layout settles
-    const initial = setTimeout(scrollToNow, 100)
-    // Re-scroll at the top of every hour
-    const minuteCheck = setInterval(() => {
-      const m = new Date().getMinutes()
-      if (m === 0) scrollToNow()
-    }, 60_000)
-    return () => { clearTimeout(initial); clearInterval(minuteCheck) }
+    function onUserScroll() {
+      // Treat any user wheel/touch as a manual override
+      pausedUntil = Date.now() + 90_000
+    }
+    const initial = setTimeout(() => scrollToNow(true), 100)
+    const tick = setInterval(() => scrollToNow(false), 60_000)
+    window.addEventListener('wheel', onUserScroll, { passive: true })
+    window.addEventListener('touchmove', onUserScroll, { passive: true })
+    return () => {
+      clearTimeout(initial)
+      clearInterval(tick)
+      window.removeEventListener('wheel', onUserScroll)
+      window.removeEventListener('touchmove', onUserScroll)
+    }
   }, [START, HOURS, PX])
   const [cycleBar, setCycleBar] = useState<{ bg: string; color: string; text: string } | null>(null)
   const [horoscopeText, setHoroscopeText] = useState<string | null>(null)
