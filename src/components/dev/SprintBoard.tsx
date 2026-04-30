@@ -27,7 +27,16 @@ const SPRINT_DAYS = 14
 function loadSprint(): Sprint | null {
   try {
     const raw = localStorage.getItem(KEY)
-    return raw ? (JSON.parse(raw) as Sprint) : null
+    if (!raw) return null
+    const s = JSON.parse(raw) as Sprint
+    s.goals = (s.goals || []).map((g) => ({
+      id: g.id || String(Date.now() + Math.random()),
+      name: g.name || '',
+      target: typeof g.target === 'number' && g.target > 0 ? g.target : 10,
+      unit: g.unit ?? '회',
+      current: typeof g.current === 'number' ? g.current : 0,
+    }))
+    return s
   } catch {
     return null
   }
@@ -170,23 +179,71 @@ export function SprintBoard() {
         return (
           <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
             {/* Name + delete */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10, alignItems: 'center' }}>
               <input
                 value={g.name}
                 onChange={(e) => updateGoal(g.id, { name: e.target.value })}
                 placeholder="목표 이름 (ex. 운동)"
-                style={{ flex: 1, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+                style={{ flex: 1, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
               />
               <button onClick={() => removeGoal(g.id)}
                 style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11 }}>✕</button>
             </div>
 
+            {/* Big progress display */}
+            <div style={{ background: '#fff', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--pd)' }}>
+                  {g.current}<span style={{ fontSize: 14, color: '#aaa', fontWeight: 500 }}> / {g.target}{g.unit}</span>
+                </span>
+                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>
+              </div>
+              <div style={{ height: 8, background: 'var(--pl)', borderRadius: 4, overflow: 'hidden' }}>
+                <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
+              </div>
+            </div>
+
+            {/* Increment buttons */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              <button onClick={() => increment(g.id, -1)}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>−1</button>
+              <button onClick={() => increment(g.id, 1)}
+                style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+1</button>
+              <button onClick={() => increment(g.id, 5)}
+                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
+            </div>
+
+            {/* Target + unit (settings, smaller) */}
+            <details style={{ marginBottom: baseline ? 8 : 0 }}>
+              <summary style={{ fontSize: 11, color: '#888', cursor: 'pointer', userSelect: 'none', padding: '2px 0' }}>⚙ 목표 설정</summary>
+              <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
+                <span style={{ fontSize: 11, color: '#666' }}>목표</span>
+                <input
+                  type="number"
+                  value={g.target}
+                  onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
+                  style={{ width: 60, padding: '4px 8px', border: '1.5px solid #fff', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center' }}
+                />
+                <select
+                  value={g.unit}
+                  onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
+                  style={{ padding: '4px 6px', border: '1.5px solid #fff', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+                >
+                  <option value="회">회</option>
+                  <option value="시간">시간</option>
+                  <option value="분">분</option>
+                  <option value="페이지">페이지</option>
+                  <option value="개">개</option>
+                  <option value="">단위 X</option>
+                </select>
+              </div>
+            </details>
+
             {/* Baseline (Past Me) */}
             {baseline && (
-              <div style={{ marginBottom: 8, padding: '6px 10px', background: '#fff', borderRadius: 8, fontSize: 11, color: '#666', lineHeight: 1.5 }}>
-                <div style={{ fontWeight: 700, color: 'var(--pd)', marginBottom: 2 }}>📊 Past Me 베이스라인</div>
-                저번 sprint: <b>{baselineCurrent}{baseline.unit}</b> 달성 (목표 {baseline.target}{baseline.unit})
-                <div style={{ marginTop: 4, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              <div style={{ padding: '6px 10px', background: '#fff', borderRadius: 8, fontSize: 11, color: '#666', lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 700, color: 'var(--pd)', marginBottom: 2 }}>🪞 저번 sprint: {baselineCurrent}{baseline.unit} (목표 {baseline.target}{baseline.unit})</div>
+                <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 4 }}>
                   <button onClick={() => updateGoal(g.id, { target: safe || 1, unit: baseline.unit })}
                     style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', fontSize: 10, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>안전 {safe}{baseline.unit}</button>
                   <button onClick={() => updateGoal(g.id, { target: stretch || 1, unit: baseline.unit })}
@@ -194,58 +251,13 @@ export function SprintBoard() {
                   <button onClick={() => updateGoal(g.id, { target: risk || 1, unit: baseline.unit })}
                     style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #E24B4A', background: '#fff', fontSize: 10, color: '#E24B4A', cursor: 'pointer', fontFamily: 'inherit' }}>무리 {risk}{baseline.unit}</button>
                 </div>
+                <div style={{ fontSize: 11, color: diff > 0 ? '#1FA176' : diff < 0 ? '#EF9F27' : '#888', marginTop: 6 }}>
+                  {diff > 0 ? `+${diff}${g.unit} 앞서있어` :
+                    diff < 0 ? `${diff}${g.unit}, 따라잡아보자` :
+                    '저번 sprint랑 동률'}
+                </div>
               </div>
             )}
-
-            {/* Target + unit */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
-              <span style={{ fontSize: 11, color: '#666' }}>목표</span>
-              <input
-                type="number"
-                value={g.target}
-                onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
-                style={{ width: 60, padding: '4px 8px', border: '1.5px solid #fff', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center' }}
-              />
-              <select
-                value={g.unit}
-                onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
-                style={{ padding: '4px 6px', border: '1.5px solid #fff', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
-              >
-                <option value="회">회</option>
-                <option value="시간">시간</option>
-                <option value="분">분</option>
-                <option value="페이지">페이지</option>
-                <option value="개">개</option>
-                <option value="">단위 X</option>
-              </select>
-              <span style={{ flex: 1, textAlign: 'right', fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>
-                {g.current}{g.unit && '/' + g.target + g.unit} ({p}%)
-              </span>
-            </div>
-
-            {/* Progress bar */}
-            <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
-            </div>
-
-            {/* Past Me running compare */}
-            {baseline && (
-              <div style={{ fontSize: 11, color: diff > 0 ? '#1FA176' : diff < 0 ? '#EF9F27' : '#888', marginBottom: 8, textAlign: 'center' }}>
-                {diff > 0 ? `🪞 저번 sprint보다 +${diff}${g.unit} 앞서있어` :
-                  diff < 0 ? `🪞 저번 sprint 같은 단계 ${diff}${g.unit}, 따라잡아보자` :
-                  '🪞 저번 sprint랑 동률'}
-              </div>
-            )}
-
-            {/* Increment buttons */}
-            <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => increment(g.id, -1)}
-                style={{ flex: 1, padding: 6, borderRadius: 6, border: 'none', background: '#fff', color: '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>−1</button>
-              <button onClick={() => increment(g.id, 1)}
-                style={{ flex: 2, padding: 6, borderRadius: 6, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+1</button>
-              <button onClick={() => increment(g.id, 5)}
-                style={{ flex: 1, padding: 6, borderRadius: 6, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
-            </div>
           </div>
         )
       })}
