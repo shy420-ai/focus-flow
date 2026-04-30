@@ -124,6 +124,35 @@ export function SprintBoard() {
     updateGoal(id, { current: next })
   }
 
+  function addDemoHistory() {
+    if (!sprint || sprint.goals.length === 0) {
+      alert('먼저 목표를 1개 이상 입력해줘 (이름까지). 그 이름으로 가짜 저번 sprint 만들어줄게')
+      return
+    }
+    const named = sprint.goals.filter((g) => g.name.trim())
+    if (named.length === 0) {
+      alert('목표 이름을 1개 이상 적어줘. Past Me가 같은 이름끼리 매칭함')
+      return
+    }
+    const fake: CompletedSprint = {
+      startDate: '2026-04-15',
+      endDate: '2026-04-29',
+      goals: named.map((g) => ({
+        id: 'demo-' + g.id,
+        name: g.name.trim(),
+        target: g.target,
+        unit: g.unit,
+        current: Math.max(1, Math.round(g.target * 0.75)),
+      })),
+    }
+    setHistory([...history, fake])
+  }
+
+  function clearHistory() {
+    if (!confirm('히스토리 다 지울까? (Past Me 비교 사라짐)')) return
+    setHistory([])
+  }
+
   if (!sprint) {
     return (
       <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
@@ -282,6 +311,23 @@ export function SprintBoard() {
           🏁 스프린트 종료! 끝내기 누르면 히스토리 저장 + 다음 sprint 시작 가능
         </div>
       )}
+
+      {/* Past Me 미리보기 도구 (개발자 전용) */}
+      <div style={{ marginTop: 12, padding: 10, background: '#FAFAFA', borderRadius: 8, fontSize: 10, color: '#888', lineHeight: 1.5 }}>
+        <div style={{ fontWeight: 700, marginBottom: 4 }}>🔮 Past Me 미리보기 도구</div>
+        <div style={{ marginBottom: 6 }}>실제 sprint 끝내지 않고도 Past Me가 어떻게 보이는지 확인 가능</div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={addDemoHistory}
+            style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px solid #ddd', background: '#fff', color: '#666', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>
+            🎯 가짜 저번 sprint 추가
+          </button>
+          <button onClick={clearHistory}
+            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>
+            🗑 히스토리 초기화
+          </button>
+        </div>
+        <div style={{ fontSize: 9, color: '#bbb', marginTop: 4 }}>현재 히스토리: {history.length}개</div>
+      </div>
     </div>
   )
 }
