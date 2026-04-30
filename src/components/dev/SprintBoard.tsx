@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { todayStr } from '../../lib/date'
+import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
+import { showMiniToast } from '../../lib/miniToast'
 
 interface SprintGoal {
   id: string
@@ -67,25 +69,18 @@ function daysBetween(a: string, b: string): number {
   return Math.floor(ms / (1000 * 60 * 60 * 24))
 }
 
-function pct(g: SprintGoal): number {
-  if (!g.target) return 0
-  return Math.min(Math.round((g.current / g.target) * 100), 100)
-}
-
-// Baseline lookup: most recent completed sprint with same goal name
-function findBaseline(history: CompletedSprint[], goalName: string): SprintGoal | null {
-  const trimmed = goalName.trim()
-  if (!trimmed) return null
-  for (let i = history.length - 1; i >= 0; i--) {
-    const match = history[i].goals.find((g) => g.name.trim() === trimmed)
-    if (match) return match
-  }
-  return null
+function sprintOverall(s: { overall?: number; goals: SprintGoal[] }): number {
+  if (typeof s.overall === 'number') return s.overall
+  // legacy: compute avg from goal counters
+  if (!s.goals.length) return 0
+  const avg = s.goals.reduce((sum, g) => sum + (g.target ? Math.min(100, (g.current / g.target) * 100) : 0), 0) / s.goals.length
+  return Math.round(avg)
 }
 
 export function SprintBoard() {
   const [sprint, setSprint] = useState<Sprint | null>(loadSprint())
   const [history, setHistory] = useState<CompletedSprint[]>(loadHistory())
+  const [xp, setXp] = useState<number>(getXp())
 
   useEffect(() => { saveSprint(sprint) }, [sprint])
   useEffect(() => { saveHistory(history) }, [history])
@@ -100,6 +95,9 @@ export function SprintBoard() {
     const completed: CompletedSprint = { startDate: sprint.startDate, endDate: todayStr(), goals: sprint.goals }
     setHistory([...history, completed])
     setSprint(null)
+    const result = addXp(100)
+    setXp(result.newXp)
+    if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
   }
 
   function addGoal() {
@@ -117,14 +115,6 @@ export function SprintBoard() {
     setSprint({ ...sprint, goals: sprint.goals.filter((g) => g.id !== id) })
   }
 
-  function increment(id: string, n: number) {
-    if (!sprint) return
-    const g = sprint.goals.find((x) => x.id === id)
-    if (!g) return
-    const cur = typeof g.current === 'number' && !isNaN(g.current) ? g.current : 0
-    const next = Math.max(0, cur + n)
-    updateGoal(id, { current: next })
-  }
 
   function addDemoHistory() {
     if (!sprint || sprint.goals.length === 0) {
@@ -155,8 +145,30 @@ export function SprintBoard() {
     setHistory([])
   }
 
+  const lv = getLevel(xp)
+  const xpProg = xpInLevel(xp)
+  const levelHeader = (
+    <div style={{ background: 'linear-gradient(135deg, var(--pink), var(--pd))', borderRadius: 14, padding: 14, marginBottom: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div>
+          <span style={{ fontSize: 11, opacity: 0.85, marginRight: 6 }}>나의 레벨</span>
+          <span style={{ fontSize: 24, fontWeight: 800 }}>Lv.{lv}</span>
+        </div>
+        <span style={{ fontSize: 11, opacity: 0.9 }}>{xpProg.current}/{xpProg.needed} XP</span>
+      </div>
+      <div style={{ height: 8, background: 'rgba(255,255,255,.2)', borderRadius: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', background: '#fff', width: xpProg.pct + '%', borderRadius: 4, transition: 'width .3s' }} />
+      </div>
+      <div style={{ fontSize: 9, marginTop: 6, opacity: 0.85 }}>
+        +5 XP per 행동 · +100 XP per 스프린트 완료
+      </div>
+    </div>
+  )
+
   if (!sprint) {
     return (
+      <>
+      {levelHeader}
       <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 2주 스프린트 (실험)</div>
         <div style={{ fontSize: 11, color: '#888', marginBottom: 14, lineHeight: 1.6, textAlign: 'center' }}>
@@ -165,13 +177,13 @@ export function SprintBoard() {
         </div>
 
         <div style={{ background: 'var(--pl)', borderRadius: 10, padding: 12, marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🧠 목표 잘 세우는 법 (ADHD ver.)</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🧠 ADHD 친화 목표 세팅</div>
           <div style={{ fontSize: 11, color: '#555', lineHeight: 1.8 }}>
-            <div>✅ <b>아주 구체적으로</b> — '운동' X, '운동 12회' O</div>
-            <div>✅ <b>작게 쪼개기</b> — 한방에 X, 여러번 점진적</div>
-            <div>✅ <b>% 보이게</b> — 끝 안 보이면 ADHD 뇌가 포기함</div>
+            <div>✅ <b>구체적으로</b> — '잘하기' X, '운동/글쓰기' O</div>
             <div>✅ <b>1~3개만</b> — 더 많으면 인지부담 폭증</div>
-            <div>✅ <b>완벽보다 점진</b> — 50%만 해도 OK, 0보다 1점</div>
+            <div>✅ <b>전체 % 슬라이더</b>로 진척 직관화</div>
+            <div>✅ <b>저번 sprint와 비교</b>로 성장 시각화</div>
+            <div>✅ <b>완벽보다 점진</b> — 50%만 해도 OK</div>
           </div>
         </div>
 
@@ -185,28 +197,34 @@ export function SprintBoard() {
           </div>
         )}
       </div>
+      </>
     )
   }
 
   const elapsed = daysBetween(sprint.startDate, todayStr())
   const daysLeft = Math.max(SPRINT_DAYS - elapsed, 0)
   const sprintProgress = Math.min((elapsed / SPRINT_DAYS) * 100, 100)
-  const avgGoal = sprint.goals.length
-    ? Math.round(sprint.goals.reduce((s, g) => s + pct(g), 0) / sprint.goals.length)
-    : 0
-  const overallManual = typeof sprint.overall === 'number'
-  const overall = overallManual ? sprint.overall! : avgGoal
+  const overall = sprintOverall(sprint)
+  const lastSprint = history.length ? history[history.length - 1] : null
+  const lastOverall = lastSprint ? sprintOverall(lastSprint) : null
+  const diff = lastOverall != null ? overall - lastOverall : null
 
   function setOverall(n: number) {
-    setSprint({ ...sprint!, overall: Math.max(0, Math.min(100, n)) })
-  }
-  function clearOverall() {
     if (!sprint) return
-    const { overall: _o, ...rest } = sprint
-    setSprint(rest)
+    const prev = sprintOverall(sprint)
+    const next = Math.max(0, Math.min(100, n))
+    setSprint({ ...sprint, overall: next })
+    if (next > prev) {
+      const gained = next - prev  // each % = 1 XP
+      const result = addXp(gained)
+      setXp(result.newXp)
+      if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
+    }
   }
 
   return (
+    <>
+    {levelHeader}
     <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>⚡ 스프린트 D-{daysLeft}</div>
@@ -225,16 +243,20 @@ export function SprintBoard() {
 
       {/* 전체 진행률 (큰 카드 - hero) */}
       <div style={{ background: 'linear-gradient(135deg, #FFE0EC, #FFF8FA)', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🎯 스프린트 전체 진행률</span>
-          {overallManual ? (
-            <button onClick={clearOverall} style={{ fontSize: 9, color: '#888', background: '#fff', border: '1px solid #ddd', borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}>자동으로</button>
-          ) : (
-            <span style={{ fontSize: 9, color: '#aaa' }}>자동 계산 (목표 평균)</span>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>🎯 스프린트 전체 진행률</div>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
+          <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--pd)', lineHeight: 1 }}>{overall}<span style={{ fontSize: 18, color: 'var(--pink)' }}>%</span></span>
+          {diff != null && lastOverall != null && (
+            diff > 0 ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#1FA176' }}>↑ +{diff}% (저번 {lastOverall}%)</span>
+            ) : diff < 0 ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: '#EF9F27' }}>↓ {diff}% (저번 {lastOverall}%)</span>
+            ) : (
+              <span style={{ fontSize: 12, color: '#888' }}>= 저번이랑 동률</span>
+            )
           )}
         </div>
-        <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--pd)', lineHeight: 1, marginBottom: 6 }}>{overall}<span style={{ fontSize: 18, color: 'var(--pink)' }}>%</span></div>
-        <div style={{ height: 12, background: '#fff', borderRadius: 6, marginBottom: 8, overflow: 'hidden' }}>
+        <div style={{ height: 12, background: '#fff', borderRadius: 6, marginBottom: 10, overflow: 'hidden' }}>
           <div style={{ height: '100%', background: 'var(--pink)', width: overall + '%', transition: 'width .3s', borderRadius: 6 }} />
         </div>
         <input type="range" min={0} max={100} value={overall}
@@ -242,139 +264,27 @@ export function SprintBoard() {
           style={{ width: '100%', accentColor: 'var(--pink)' }}
         />
         <div style={{ fontSize: 10, color: '#888', marginTop: 4, textAlign: 'center' }}>
-          드래그해서 직접 조정 가능 · 카운터로도 자동 반영됨
+          오늘의 진척도 직접 드래그 · 1% = 1 XP
         </div>
       </div>
-      <div style={{ fontSize: 10, color: '#666', background: 'var(--pl)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, lineHeight: 1.5 }}>
-        💡 행동 1번 = +1 탭. 작게 자주 쪼개서 % 채워가는 게 핵심
-      </div>
-
-      {sprint.goals.map((g) => {
-        const p = pct(g)
-        const baseline = findBaseline(history, g.name)
-        const baselineCurrent = baseline?.current ?? 0
-        const safe = baselineCurrent
-        const stretch = Math.round(baselineCurrent * 1.22)
-        const risk = Math.round(baselineCurrent * 1.55)
-        const diff = baseline ? g.current - baselineCurrent : 0
-        return (
-          <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
-            {/* Name + target + unit + delete (한 줄) */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10, alignItems: 'center' }}>
-              <input
-                value={g.name}
-                onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                placeholder="이름 (ex.운동)"
-                style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
-              />
-              <input
-                type="number"
-                value={g.target}
-                onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
-                style={{ width: 50, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
-              />
-              <select
-                value={g.unit}
-                onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
-                style={{ padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0 }}
-              >
-                <option value="회">회</option>
-                <option value="시간">h</option>
-                <option value="분">m</option>
-                <option value="페이지">p</option>
-                <option value="개">개</option>
-                <option value=""></option>
-              </select>
-              <button onClick={() => { if (confirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
-                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>✕</button>
-            </div>
-
-            {/* Big progress display */}
-            <div style={{ background: '#fff', borderRadius: 8, padding: '10px 12px', marginBottom: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--pd)' }}>
-                  {g.current}<span style={{ fontSize: 14, color: '#aaa', fontWeight: 500 }}> / {g.target}{g.unit}</span>
-                </span>
-                <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>
-              </div>
-              <div style={{ height: 8, background: 'var(--pl)', borderRadius: 4, overflow: 'hidden' }}>
-                <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
-              </div>
-            </div>
-
-            {/* Increment buttons */}
-            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-              <button onClick={() => increment(g.id, -1)}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', lineHeight: 1.2 }}>앗 실수 🫣</button>
-              <button onClick={() => increment(g.id, 1)}
-                style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌</button>
-              <button onClick={() => increment(g.id, 5)}
-                style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
-            </div>
-
-            {/* Baseline (Past Me) - 동기부여 강화 */}
-            {baseline && (() => {
-              const maxVal = Math.max(g.target, baselineCurrent, g.current, 1)
-              const pastBarPct = (baselineCurrent / maxVal) * 100
-              const nowBarPct = (g.current / maxVal) * 100
-              return (
-                <div style={{ padding: 10, background: '#fff', borderRadius: 10 }}>
-                  {/* Big motivating headline */}
-                  {diff > 0 ? (
-                    <div style={{ background: 'linear-gradient(135deg, #FFE0EC, #FFC8E0)', padding: '10px 12px', borderRadius: 10, marginBottom: 10, textAlign: 'center' }}>
-                      <div style={{ fontSize: 11, color: 'var(--pd)', marginBottom: 2 }}>🚀 자기 베스트 갱신중</div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--pd)', lineHeight: 1.1 }}>+{diff}{g.unit}</div>
-                      <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>저번의 너보다 빠름</div>
-                    </div>
-                  ) : diff < 0 ? (
-                    <div style={{ background: '#FFF8E1', padding: '10px 12px', borderRadius: 10, marginBottom: 10, textAlign: 'center' }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: '#8B6914' }}>🫂 {Math.abs(diff)}{g.unit} 뒤지는 중</div>
-                      <div style={{ fontSize: 10, color: '#8B6914', marginTop: 2 }}>천천히 따라잡으면 돼</div>
-                    </div>
-                  ) : (
-                    <div style={{ background: 'var(--pl)', padding: '8px 12px', borderRadius: 10, marginBottom: 10, textAlign: 'center', fontSize: 11, color: 'var(--pd)' }}>
-                      🤝 저번 sprint랑 동률 — 한 번만 더
-                    </div>
-                  )}
-
-                  {/* Visual comparison bar */}
-                  <div style={{ marginBottom: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, color: '#888', marginBottom: 4 }}>
-                      <span style={{ width: 32, flexShrink: 0 }}>저번</span>
-                      <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: '#bbb', borderRadius: 4, width: pastBarPct + '%' }} />
-                      </div>
-                      <span style={{ width: 36, textAlign: 'right', flexShrink: 0 }}>{baselineCurrent}{baseline.unit}</span>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 10, color: 'var(--pd)' }}>
-                      <span style={{ width: 32, fontWeight: 700, flexShrink: 0 }}>지금</span>
-                      <div style={{ flex: 1, height: 8, background: '#f0f0f0', borderRadius: 4, overflow: 'hidden' }}>
-                        <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 4, width: nowBarPct + '%', transition: 'width .3s' }} />
-                      </div>
-                      <span style={{ width: 36, textAlign: 'right', fontWeight: 700, flexShrink: 0 }}>{g.current}{g.unit}</span>
-                    </div>
-                  </div>
-
-                  {/* Quick target picker */}
-                  <div style={{ fontSize: 10, color: '#888', marginBottom: 4 }}>👇 다음 sprint 목표 한번에 정하기</div>
-                  <div style={{ display: 'flex', gap: 4 }}>
-                    <button onClick={() => updateGoal(g.id, { target: safe || 1, unit: baseline.unit })}
-                      style={{ flex: 1, padding: '6px 4px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', fontSize: 10, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>안전 {safe}{baseline.unit}</button>
-                    <button onClick={() => updateGoal(g.id, { target: stretch || 1, unit: baseline.unit })}
-                      style={{ flex: 1, padding: '6px 4px', borderRadius: 6, border: '1px solid var(--pink)', background: 'var(--pink)', fontSize: 10, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>도전 {stretch}{baseline.unit}</button>
-                    <button onClick={() => updateGoal(g.id, { target: risk || 1, unit: baseline.unit })}
-                      style={{ flex: 1, padding: '6px 4px', borderRadius: 6, border: '1px solid #E24B4A', background: '#fff', fontSize: 10, color: '#E24B4A', cursor: 'pointer', fontFamily: 'inherit' }}>무리 {risk}{baseline.unit}</button>
-                  </div>
-                </div>
-              )
-            })()}
-          </div>
-        )
-      })}
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 sprint 목표</div>
+      {sprint.goals.map((g) => (
+        <div key={g.id} style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+          <span style={{ color: 'var(--pink)', fontSize: 16 }}>•</span>
+          <input
+            value={g.name}
+            onChange={(e) => updateGoal(g.id, { name: e.target.value })}
+            placeholder="목표 이름 (ex. 운동, 글쓰기)"
+            style={{ flex: 1, minWidth: 0, padding: '8px 12px', border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+          />
+          <button onClick={() => { if (confirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
+            style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 32, height: 32, cursor: 'pointer', fontSize: 14, flexShrink: 0 }}>✕</button>
+        </div>
+      ))}
 
       {sprint.goals.length < 3 && (
         <button onClick={addGoal}
-          style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginTop: 6 }}>
           + 목표 추가 ({sprint.goals.length}/3)
         </button>
       )}
@@ -402,5 +312,6 @@ export function SprintBoard() {
         <div style={{ fontSize: 9, color: '#bbb', marginTop: 4 }}>현재 히스토리: {history.length}개</div>
       </div>
     </div>
+    </>
   )
 }
