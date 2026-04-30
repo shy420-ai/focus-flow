@@ -10,15 +10,15 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
     </svg>
   ) },
   { id: 'week', label: '주간', icon: (
-    // 7 dots in a heart pattern (week)
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
-      <circle cx="3" cy="12" r="2" />
-      <circle cx="8" cy="9" r="2" />
-      <circle cx="13" cy="6" r="2" />
-      <circle cx="18" cy="9" r="2" />
-      <circle cx="21" cy="14" r="2" />
-      <circle cx="16" cy="17" r="2" />
-      <circle cx="11" cy="20" r="2" fillOpacity=".4" />
+    // single highlighted week strip — 7 squares in a row inside a rounded card
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <rect x="2.5" y="6" width="19" height="12" rx="3" />
+      <line x1="6.4" y1="10" x2="6.4" y2="14" />
+      <line x1="9.3" y1="10" x2="9.3" y2="14" />
+      <line x1="12" y1="10" x2="12" y2="14" />
+      <line x1="14.7" y1="10" x2="14.7" y2="14" />
+      <line x1="17.6" y1="10" x2="17.6" y2="14" />
+      <rect x="9.5" y="9" width="5" height="6" rx="1" fill="currentColor" fillOpacity=".25" stroke="none" />
     </svg>
   ) },
   { id: 'cal', label: '월간', icon: (
@@ -30,10 +30,37 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <circle cx="13" cy="15" r="1.5" fill="currentColor" fillOpacity=".4" />
     </svg>
   ) },
-  { id: 'habit', label: '습관' },
-  { id: 'goal', label: '목표' },
-  { id: 'drop', label: '드롭' },
-  { id: 'stats', label: '메디' },
+  { id: 'habit', label: '습관', icon: (
+    // sprout / plant — habit growing
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M12 22V12" />
+      <path d="M12 12c0-3 2-5 5-5 0 3-2 5-5 5z" fill="currentColor" fillOpacity=".3" />
+      <path d="M12 14c0-3-2-5-5-5 0 3 2 5 5 5z" fill="currentColor" fillOpacity=".3" />
+      <path d="M9 22h6" />
+    </svg>
+  ) },
+  { id: 'goal', label: '목표', icon: (
+    // target / bullseye
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.5" fill="currentColor" />
+    </svg>
+  ) },
+  { id: 'drop', label: '드롭', icon: (
+    // water drop with sparkle
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M12 2.5c-3 4-6 7-6 11a6 6 0 0 0 12 0c0-4-3-7-6-11z" fill="currentColor" fillOpacity=".25" />
+      <circle cx="9.5" cy="14" r="1.2" fill="currentColor" />
+    </svg>
+  ) },
+  { id: 'stats', label: '메디', icon: (
+    // capsule / pill
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-30 12 12)" />
+      <path d="M9.5 6.5l8 8" opacity=".7" />
+    </svg>
+  ) },
 ]
 
 const ORDER_KEY = 'ff_tab_order'
