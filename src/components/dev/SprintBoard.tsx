@@ -125,18 +125,30 @@ export function SprintBoard() {
 
   if (!sprint) {
     return (
-      <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12, textAlign: 'center' }}>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>⚡ 2주 스프린트 (실험)</div>
-        <div style={{ fontSize: 11, color: '#888', marginBottom: 12, lineHeight: 1.5 }}>
+      <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 2주 스프린트 (실험)</div>
+        <div style={{ fontSize: 11, color: '#888', marginBottom: 14, lineHeight: 1.6, textAlign: 'center' }}>
           ADHD 뇌가 잡을 수 있는 시간 = 약 2주<br />
           작은 목표 1~3개로 시작해봐
         </div>
+
+        <div style={{ background: 'var(--pl)', borderRadius: 10, padding: 12, marginBottom: 14 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🧠 목표 잘 세우는 법 (ADHD ver.)</div>
+          <div style={{ fontSize: 11, color: '#555', lineHeight: 1.8 }}>
+            <div>✅ <b>아주 구체적으로</b> — '운동' X, '운동 12회' O</div>
+            <div>✅ <b>작게 쪼개기</b> — 한방에 X, 여러번 점진적</div>
+            <div>✅ <b>% 보이게</b> — 끝 안 보이면 ADHD 뇌가 포기함</div>
+            <div>✅ <b>1~3개만</b> — 더 많으면 인지부담 폭증</div>
+            <div>✅ <b>완벽보다 점진</b> — 50%만 해도 OK, 0보다 1점</div>
+          </div>
+        </div>
+
         <button onClick={startSprint}
-          style={{ padding: '8px 18px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
           🚀 스프린트 시작
         </button>
         {history.length > 0 && (
-          <div style={{ marginTop: 12, fontSize: 10, color: '#aaa' }}>
+          <div style={{ marginTop: 10, fontSize: 10, color: '#aaa', textAlign: 'center' }}>
             누적 스프린트 {history.length}개 완료
           </div>
         )}
@@ -164,8 +176,11 @@ export function SprintBoard() {
       <div style={{ height: 6, background: 'var(--pl)', borderRadius: 3, marginBottom: 10, overflow: 'hidden' }}>
         <div style={{ height: '100%', background: 'var(--pink)', width: sprintProgress + '%', transition: 'width .3s' }} />
       </div>
-      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12 }}>
+      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8 }}>
         {sprint.startDate} 시작 · 평균 진행률 {avgGoal}%
+      </div>
+      <div style={{ fontSize: 10, color: '#666', background: 'var(--pl)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, lineHeight: 1.5 }}>
+        💡 행동 1번 = +1 탭. 작게 자주 쪼개서 % 채워가는 게 핵심
       </div>
 
       {sprint.goals.map((g) => {
@@ -183,7 +198,7 @@ export function SprintBoard() {
               <input
                 value={g.name}
                 onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                placeholder="이름 (ex. 운동)"
+                placeholder="이름 (구체적으로! ex. 운동, 글쓰기)"
                 style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
               />
               <input
