@@ -148,10 +148,10 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     <div
       ref={popupRef}
       style={{
-        position: 'absolute', top: 56, right: 12,
+        position: 'fixed', top: 56, left: '50%', transform: 'translateX(-50%)',
         background: '#fff', border: '2px solid var(--pink)', borderRadius: 14,
         padding: 12, zIndex: 300, boxShadow: '0 8px 24px rgba(0,0,0,.15)',
-        minWidth: 210, maxHeight: '80vh', overflowY: 'auto',
+        width: 'calc(100% - 24px)', maxWidth: 360, maxHeight: '80vh', overflowY: 'auto',
       }}
     >
       <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 12, textAlign: 'center' }}>⚙️ 설정</div>
