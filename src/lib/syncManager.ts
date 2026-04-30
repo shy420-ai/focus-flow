@@ -35,6 +35,13 @@ export function queue() {
   _saveTimer = setTimeout(doSave, 1500)
 }
 
+// Bypass the debounce and push everything now. Returns when the write resolves.
+export async function flushSync(): Promise<void> {
+  if (!_uid || _skipRemote) return
+  if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null }
+  await doSave()
+}
+
 async function doSave() {
   if (!_uid) return
   const data: UserDoc = {}

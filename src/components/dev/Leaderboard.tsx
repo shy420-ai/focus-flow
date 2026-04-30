@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/AppStore'
 import { getMonthlyXp } from '../../lib/xp'
 import { getTopXp, getRankSnapshot, type LeaderEntry } from '../../lib/firestore'
 import { useBackClose } from '../../hooks/useBackClose'
+import { flushSync } from '../../lib/syncManager'
 
 
 function daysLeftThisMonth(): number {
@@ -37,6 +38,9 @@ export function LeaderboardModal({ onClose }: Props) {
     setLoading(true)
     setError(null)
     try {
+      // Make sure my own monthlyXp+monthlyXpMonth are pushed to Firestore
+      // before we query, otherwise I'd be filtered out of the leaderboard.
+      await flushSync()
       const [t, r] = await Promise.all([
         getTopXp(10),
         getRankSnapshot(uid, myXp, 5),
