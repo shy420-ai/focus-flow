@@ -12,6 +12,7 @@ interface SprintGoal {
 interface Sprint {
   startDate: string
   goals: SprintGoal[]
+  overall?: number  // optional manual override (0-100). undefined = auto from goals
 }
 
 interface CompletedSprint {
@@ -36,6 +37,7 @@ function loadSprint(): Sprint | null {
       unit: g.unit ?? '회',
       current: typeof g.current === 'number' ? g.current : 0,
     }))
+    if (typeof s.overall !== 'number') delete s.overall
     return s
   } catch {
     return null
@@ -192,6 +194,17 @@ export function SprintBoard() {
   const avgGoal = sprint.goals.length
     ? Math.round(sprint.goals.reduce((s, g) => s + pct(g), 0) / sprint.goals.length)
     : 0
+  const overallManual = typeof sprint.overall === 'number'
+  const overall = overallManual ? sprint.overall! : avgGoal
+
+  function setOverall(n: number) {
+    setSprint({ ...sprint!, overall: Math.max(0, Math.min(100, n)) })
+  }
+  function clearOverall() {
+    if (!sprint) return
+    const { overall: _o, ...rest } = sprint
+    setSprint(rest)
+  }
 
   return (
     <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
@@ -203,11 +216,34 @@ export function SprintBoard() {
         </button>
       </div>
 
-      <div style={{ height: 6, background: 'var(--pl)', borderRadius: 3, marginBottom: 10, overflow: 'hidden' }}>
-        <div style={{ height: '100%', background: 'var(--pink)', width: sprintProgress + '%', transition: 'width .3s' }} />
+      <div style={{ height: 4, background: 'var(--pl)', borderRadius: 2, marginBottom: 4, overflow: 'hidden' }}>
+        <div style={{ height: '100%', background: '#ddd', width: sprintProgress + '%', transition: 'width .3s' }} />
       </div>
-      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8 }}>
-        {sprint.startDate} 시작 · 평균 진행률 {avgGoal}%
+      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12 }}>
+        {sprint.startDate} 시작 · 시간 {Math.round(sprintProgress)}% 경과
+      </div>
+
+      {/* 전체 진행률 (큰 카드 - hero) */}
+      <div style={{ background: 'linear-gradient(135deg, #FFE0EC, #FFF8FA)', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🎯 스프린트 전체 진행률</span>
+          {overallManual ? (
+            <button onClick={clearOverall} style={{ fontSize: 9, color: '#888', background: '#fff', border: '1px solid #ddd', borderRadius: 6, padding: '2px 6px', cursor: 'pointer', fontFamily: 'inherit' }}>자동으로</button>
+          ) : (
+            <span style={{ fontSize: 9, color: '#aaa' }}>자동 계산 (목표 평균)</span>
+          )}
+        </div>
+        <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--pd)', lineHeight: 1, marginBottom: 6 }}>{overall}<span style={{ fontSize: 18, color: 'var(--pink)' }}>%</span></div>
+        <div style={{ height: 12, background: '#fff', borderRadius: 6, marginBottom: 8, overflow: 'hidden' }}>
+          <div style={{ height: '100%', background: 'var(--pink)', width: overall + '%', transition: 'width .3s', borderRadius: 6 }} />
+        </div>
+        <input type="range" min={0} max={100} value={overall}
+          onChange={(e) => setOverall(parseInt(e.target.value))}
+          style={{ width: '100%', accentColor: 'var(--pink)' }}
+        />
+        <div style={{ fontSize: 10, color: '#888', marginTop: 4, textAlign: 'center' }}>
+          드래그해서 직접 조정 가능 · 카운터로도 자동 반영됨
+        </div>
       </div>
       <div style={{ fontSize: 10, color: '#666', background: 'var(--pl)', borderRadius: 8, padding: '6px 10px', marginBottom: 10, lineHeight: 1.5 }}>
         💡 행동 1번 = +1 탭. 작게 자주 쪼개서 % 채워가는 게 핵심
