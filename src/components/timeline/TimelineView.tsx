@@ -179,9 +179,9 @@ export function TimelineView() {
       const nudgeKey = 'ff_plan_nudge_' + today + (isNight ? '_night' : '_today')
       if (localStorage.getItem(nudgeKey)) { setNudgeBar(null); return }
       const msg = isNight
-        ? '🌙 자기 전 5분! 미리 계획을 적어두면 실행률이 올라가요'
-        : isLateNight ? '🦉 아직 안 잤어? 미리 계획을 적어두면 아침 의지력을 아낄 수 있어'
-        : '☀️ 좋은 아침! 3개만 정하면 시작이 쉬워져'
+        ? '🌙 자기 전 5분!<br/>미리 계획을 적어두면<br/>실행률이 올라가요'
+        : isLateNight ? '🦉 아직 안 잤어?<br/>미리 계획을 적어두면<br/>아침 의지력을 아낄 수 있어'
+        : '☀️ 좋은 아침!<br/>3개만 정하면 시작이 쉬워져'
       setNudgeBar({ text: msg, type: isNight ? 'night' : 'today' })
     }
     checkNudge()
