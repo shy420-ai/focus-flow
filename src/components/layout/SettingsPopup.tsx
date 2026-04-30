@@ -3,8 +3,6 @@ import { applyTheme, getTheme } from '../../lib/theme'
 import { THEMES, THEME_LABELS, type ThemeName } from '../../constants/themes'
 import { useAppStore, type CurView } from '../../store/AppStore'
 import { todayStr, pad } from '../../lib/date'
-import { queue } from '../../lib/syncManager'
-import { showMiniToast } from '../../lib/miniToast'
 import { signOutUser } from '../../lib/auth'
 
 interface Props {
@@ -48,7 +46,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [px, setPx] = useState(parseInt(localStorage.getItem(PX_KEY) || '140'))
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
   const [cycleData, setCycleData] = useState(() => loadCycleData())
-  const [syncing, setSyncing] = useState(false)
   const popupRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -128,14 +125,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     localStorage.removeItem('ff_cycle')
     setCycleData(null)
     window.dispatchEvent(new CustomEvent('ff-cycle-changed'))
-  }
-
-  async function syncNow() {
-    if (!uid) return
-    setSyncing(true)
-    queue()
-    showMiniToast('☁️ 동기화 중...')
-    setTimeout(() => setSyncing(false), 2000)
   }
 
   void pad
@@ -243,14 +232,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         <button onClick={clearCycle} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #eee', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: '#aaa' }}>초기화</button>
       </div>
       {cycleInfo && <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>{cycleInfo}</div>}
-
-      {uid && (
-        <button
-          onClick={syncNow}
-          disabled={syncing}
-          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pd)', background: '#fff', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 8 }}
-        >{syncing ? '동기화 중...' : '☁️ 전체 데이터 동기화'}</button>
-      )}
 
       {/* 로그인 / 로그아웃 */}
       <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
