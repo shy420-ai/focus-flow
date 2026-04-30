@@ -7,6 +7,7 @@ import { signOutUser } from '../../lib/auth'
 import { isDevMode, setDevMode } from '../../lib/devMode'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
+import { isLeaderboardOn, setLeaderboardOn } from '../../components/dev/Leaderboard'
 
 interface Props {
   onClose: () => void
@@ -43,6 +44,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
+  const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
   useBackClose(true, onClose)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
@@ -263,6 +265,12 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
           style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
         >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
+        {devOn && (
+          <button
+            onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
+            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+          >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
+        )}
       </div>
 
       {/* 온보딩 */}

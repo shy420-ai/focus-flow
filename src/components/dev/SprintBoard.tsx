@@ -3,6 +3,7 @@ import { todayStr } from '../../lib/date'
 import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
 import { showConfirm } from '../../lib/showConfirm'
+import { Leaderboard, isLeaderboardOn } from './Leaderboard'
 
 interface SprintGoal {
   id: string
@@ -99,6 +100,12 @@ export function SprintBoard() {
   const [sprint, setSprint] = useState<Sprint | null>(loadSprint())
   const [history, setHistory] = useState<CompletedSprint[]>(loadHistory())
   const [xp, setXp] = useState<number>(getXp())
+  const [leaderboardOn, setLeaderboardOnState] = useState<boolean>(isLeaderboardOn())
+  useEffect(() => {
+    function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
+    window.addEventListener('ff-leaderboard-changed', onChange)
+    return () => window.removeEventListener('ff-leaderboard-changed', onChange)
+  }, [])
 
   useEffect(() => { saveSprint(sprint) }, [sprint])
   useEffect(() => { saveHistory(history) }, [history])
@@ -190,6 +197,7 @@ export function SprintBoard() {
     return (
       <>
       {levelHeader}
+      {leaderboardOn && <Leaderboard />}
       <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 1주 챌린지 (실험)</div>
         <div style={{ fontSize: 11, color: '#888', marginBottom: 14, lineHeight: 1.6, textAlign: 'center' }}>
@@ -247,6 +255,7 @@ export function SprintBoard() {
   return (
     <>
     {levelHeader}
+    {leaderboardOn && <Leaderboard />}
     <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>⚡ 챌린지 D-{daysLeft}</div>

@@ -1,3 +1,6 @@
+import { queue, registerCollect, registerHydrate } from './syncManager'
+import type { UserDoc } from './firestore'
+
 const KEY = 'ff_xp'
 const PER_LEVEL = 50  // XP needed per level
 
@@ -13,8 +16,22 @@ export function addXp(n: number): { newXp: number; leveledUp: boolean; newLevel:
   const afterLv = Math.floor(after / PER_LEVEL) + 1
   localStorage.setItem(KEY, String(after))
   window.dispatchEvent(new CustomEvent('ff-xp-changed'))
+  queue()
   return { newXp: after, leveledUp: afterLv > beforeLv, newLevel: afterLv }
 }
+
+registerCollect(() => ({ xp: getXp() }))
+
+registerHydrate((d: UserDoc) => {
+  if (typeof d.xp === 'number') {
+    const local = getXp()
+    // Take whichever is bigger so XP never regresses across devices
+    if (d.xp > local) {
+      localStorage.setItem(KEY, String(d.xp))
+      window.dispatchEvent(new CustomEvent('ff-xp-changed'))
+    }
+  }
+})
 
 export function getLevel(xp?: number): number {
   const v = xp ?? getXp()
