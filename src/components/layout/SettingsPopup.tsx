@@ -130,41 +130,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     window.dispatchEvent(new CustomEvent('ff-cycle-changed'))
   }
 
-  function exportData() {
-    const keys = ['ff_v3', 'ff_recurring', 'ff_drops', 'ff_goals', 'ff_roadmap',
-      'ff_med_config', 'ff_med_logs', 'ff_habits', 'ff_habitLogs',
-      'ff_pomo_v2', 'ff_quickMemo', 'ff_nickname', 'ff_theme', 'ff_cycle',
-      'ff_friends', 'ff_birthday', 'ff_hidden_tabs', 'ff_tl_start', 'ff_tl_hours', 'ff_px']
-    const data: Record<string, string> = {}
-    keys.forEach((k) => { const v = localStorage.getItem(k); if (v) data[k] = v })
-    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'focusflow-backup-' + todayStr() + '.json'
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
-  function importData() {
-    const input = document.createElement('input')
-    input.type = 'file'; input.accept = '.json'
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const reader = new FileReader()
-      reader.onload = (ev) => {
-        try {
-          const data = JSON.parse(ev.target?.result as string) as Record<string, string>
-          Object.entries(data).forEach(([k, v]) => { if (k.startsWith('ff_')) localStorage.setItem(k, v) })
-          window.location.reload()
-        } catch { alert('파일 오류: 올바른 백업 파일이 아니에요') }
-      }
-      reader.readAsText(file)
-    }
-    input.click()
-  }
-
   async function syncNow() {
     if (!uid) return
     setSyncing(true)
@@ -278,14 +243,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         <button onClick={clearCycle} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #eee', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: '#aaa' }}>초기화</button>
       </div>
       {cycleInfo && <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>{cycleInfo}</div>}
-
-      {/* 데이터 */}
-      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginBottom: uid ? 8 : 0 }}>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={exportData} style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>📤 내보내기</button>
-          <button onClick={importData} style={{ flex: 1, padding: 8, borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>📥 가져오기</button>
-        </div>
-      </div>
 
       {uid && (
         <button
