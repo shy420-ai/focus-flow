@@ -42,7 +42,9 @@ export interface UserDoc {
   birthday?: string
   birthyear?: string | number
   nickname?: string
-  xp?: number
+  xp?: number             // lifetime XP (level reflects this)
+  monthlyXp?: number      // current month XP (leaderboard score)
+  monthlyXpMonth?: string // YYYY-MM tag for monthlyXp
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]
@@ -94,41 +96,55 @@ export async function pushGuestbook(friendUid: string, entry: Record<string, str
 
 export interface LeaderEntry { uid: string; nickname: string; xp: number }
 
+function curMonthTag(): string {
+  const d = new Date()
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+}
+
+function entryXpForMonth(data: UserDoc): number {
+  // Only count monthlyXp if it belongs to the current month — otherwise treat as 0
+  if (typeof data.monthlyXp === 'number' && data.monthlyXpMonth === curMonthTag()) {
+    return data.monthlyXp
+  }
+  return 0
+}
+
 export async function getTopXp(n: number = 10): Promise<LeaderEntry[]> {
   const db = getDb()
-  const q = query(collection(db, 'users'), orderBy('xp', 'desc'), limit(n))
+  const month = curMonthTag()
+  const q = query(collection(db, 'users'), where('monthlyXpMonth', '==', month), orderBy('monthlyXp', 'desc'), limit(n))
   const snap = await getDocs(q)
   return snap.docs.map((d) => {
     const data = d.data() as UserDoc
     return {
       uid: d.id,
       nickname: data.nickname || 'ADHD-' + d.id.slice(0, 4),
-      xp: typeof data.xp === 'number' ? data.xp : 0,
+      xp: entryXpForMonth(data),
     }
   })
 }
 
 export async function getRankSnapshot(_myUid: string, myXp: number, ahead: number = 5): Promise<{ rank: number | null; total: number; ahead: LeaderEntry[] }> {
   const db = getDb()
-  const allQ = query(collection(db, 'users'), where('xp', '>', 0))
+  const month = curMonthTag()
+  const allQ = query(collection(db, 'users'), where('monthlyXpMonth', '==', month))
   const all = await getDocs(allQ)
   const total = all.size
   let rank = 0
   all.docs.forEach((d) => {
-    const x = typeof (d.data() as UserDoc).xp === 'number' ? (d.data() as UserDoc).xp! : 0
+    const x = entryXpForMonth(d.data() as UserDoc)
     if (x > myXp) rank++
   })
-  rank += 1  // 1-based rank
-  // Fetch a few people just ahead of me
-  const aheadQ = query(collection(db, 'users'), where('xp', '>', myXp), orderBy('xp', 'asc'), limit(ahead))
+  rank += 1
+  const aheadQ = query(collection(db, 'users'), where('monthlyXpMonth', '==', month), where('monthlyXp', '>', myXp), orderBy('monthlyXp', 'asc'), limit(ahead))
   const aheadSnap = await getDocs(aheadQ)
   const aheadList: LeaderEntry[] = aheadSnap.docs.map((d) => {
     const data = d.data() as UserDoc
     return {
       uid: d.id,
       nickname: data.nickname || 'ADHD-' + d.id.slice(0, 4),
-      xp: typeof data.xp === 'number' ? data.xp : 0,
+      xp: entryXpForMonth(data),
     }
-  }).reverse()  // closest-ahead first → top of list = furthest ahead
+  }).reverse()
   return { rank: total > 0 ? rank : null, total, ahead: aheadList }
 }

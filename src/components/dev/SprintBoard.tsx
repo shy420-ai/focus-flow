@@ -3,7 +3,8 @@ import { todayStr } from '../../lib/date'
 import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
 import { showConfirm } from '../../lib/showConfirm'
-import { Leaderboard, isLeaderboardOn } from './Leaderboard'
+import { LeaderboardModal } from './Leaderboard'
+import { isLeaderboardOn } from '../../lib/leaderboardPref'
 
 interface SprintGoal {
   id: string
@@ -39,7 +40,7 @@ function loadSprint(): Sprint | null {
     const s = JSON.parse(raw) as Sprint
     s.goals = (s.goals || []).map((g: { id?: string; name?: string; target?: number; unit?: string; current?: number; progress?: number }) => {
       // Migrate either shape to current target/unit/current model
-      let target = typeof g.target === 'number' && g.target > 0 ? g.target : 10
+      const target = typeof g.target === 'number' && g.target > 0 ? g.target : 10
       const unit = typeof g.unit === 'string' ? g.unit : '회'
       let current = typeof g.current === 'number' ? g.current : 0
       if (typeof g.current !== 'number' && typeof g.progress === 'number') {
@@ -101,6 +102,7 @@ export function SprintBoard() {
   const [history, setHistory] = useState<CompletedSprint[]>(loadHistory())
   const [xp, setXp] = useState<number>(getXp())
   const [leaderboardOn, setLeaderboardOnState] = useState<boolean>(isLeaderboardOn())
+  const [leaderboardModalOpen, setLeaderboardModalOpen] = useState(false)
   useEffect(() => {
     function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
     window.addEventListener('ff-leaderboard-changed', onChange)
@@ -142,53 +144,28 @@ export function SprintBoard() {
   }
 
 
-  function addDemoHistory() {
-    if (!sprint || sprint.goals.length === 0) {
-      showMiniToast('목표 1개 이상 추가 후 시도')
-      return
-    }
-    const named = sprint.goals.filter((g) => g.name.trim())
-    if (named.length === 0) {
-      showMiniToast('목표 이름 1개 이상 적어줘')
-      return
-    }
-    const fake: CompletedSprint = {
-      startDate: '2026-04-15',
-      endDate: '2026-04-29',
-      goals: named.map((g) => ({
-        id: 'demo-' + g.id,
-        name: g.name.trim(),
-        target: g.target,
-        unit: g.unit,
-        current: Math.max(1, Math.round(g.target * 0.6)),
-      })),
-      overall: 60,
-    }
-    setHistory([...history, fake])
-  }
-
-  async function clearHistory() {
-    const ok = await showConfirm('히스토리 다 지울까? (Past Me 비교 사라짐)')
-    if (!ok) return
-    setHistory([])
-  }
-
   const lv = getLevel(xp)
   const xpProg = xpInLevel(xp)
   const levelHeader = (
     <div style={{ background: 'linear-gradient(135deg, var(--pink), var(--pd))', borderRadius: 14, padding: 14, marginBottom: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,.08)' }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <div>
           <span style={{ fontSize: 11, opacity: 0.85, marginRight: 6 }}>나의 레벨</span>
           <span style={{ fontSize: 24, fontWeight: 800 }}>Lv.{lv}</span>
+          <span style={{ fontSize: 11, opacity: 0.9, marginLeft: 8 }}>{xpProg.current}/{xpProg.needed} XP</span>
         </div>
-        <span style={{ fontSize: 11, opacity: 0.9 }}>{xpProg.current}/{xpProg.needed} XP</span>
+        {leaderboardOn && (
+          <button onClick={() => setLeaderboardModalOpen(true)}
+            style={{ background: 'rgba(255,255,255,.2)', border: '1px solid rgba(255,255,255,.4)', color: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            🏆 순위
+          </button>
+        )}
       </div>
       <div style={{ height: 8, background: 'rgba(255,255,255,.2)', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ height: '100%', background: '#fff', width: xpProg.pct + '%', borderRadius: 4, transition: 'width .3s' }} />
       </div>
       <div style={{ fontSize: 9, marginTop: 6, opacity: 0.85 }}>
-        +5 XP per 행동 · +100 XP per 챌린지 완료
+        +N XP per 행동 · +100 XP per 챌린지 완료
       </div>
     </div>
   )
@@ -197,7 +174,6 @@ export function SprintBoard() {
     return (
       <>
       {levelHeader}
-      {leaderboardOn && <Leaderboard />}
       <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 1주 챌린지 (실험)</div>
         <div style={{ fontSize: 11, color: '#888', marginBottom: 14, lineHeight: 1.6, textAlign: 'center' }}>
@@ -226,6 +202,7 @@ export function SprintBoard() {
           </div>
         )}
       </div>
+      {leaderboardModalOpen && <LeaderboardModal onClose={() => setLeaderboardModalOpen(false)} />}
       </>
     )
   }
@@ -255,7 +232,6 @@ export function SprintBoard() {
   return (
     <>
     {levelHeader}
-    {leaderboardOn && <Leaderboard />}
     <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>⚡ 챌린지 D-{daysLeft}</div>
@@ -371,23 +347,8 @@ export function SprintBoard() {
         </div>
       )}
 
-      {/* Past Me 미리보기 도구 (개발자 전용) */}
-      <div style={{ marginTop: 12, padding: 10, background: '#FAFAFA', borderRadius: 8, fontSize: 10, color: '#888', lineHeight: 1.5 }}>
-        <div style={{ fontWeight: 700, marginBottom: 4 }}>🔮 Past Me 미리보기 도구</div>
-        <div style={{ marginBottom: 6 }}>실제 챌린지 끝내지 않고도 Past Me가 어떻게 보이는지 확인 가능</div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={addDemoHistory}
-            style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px solid #ddd', background: '#fff', color: '#666', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>
-            🎯 가짜 저번 챌린지 추가
-          </button>
-          <button onClick={clearHistory}
-            style={{ padding: '6px 10px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>
-            🗑 히스토리 초기화
-          </button>
-        </div>
-        <div style={{ fontSize: 9, color: '#bbb', marginTop: 4 }}>현재 히스토리: {history.length}개</div>
-      </div>
     </div>
+    {leaderboardModalOpen && <LeaderboardModal onClose={() => setLeaderboardModalOpen(false)} />}
     </>
   )
 }

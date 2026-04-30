@@ -1,37 +1,50 @@
 import { queue, registerCollect, registerHydrate } from './syncManager'
 import type { UserDoc } from './firestore'
 
-const KEY = 'ff_xp'
-const PER_LEVEL = 50  // XP needed per level
+const KEY = 'ff_xp'                 // lifetime XP — never reset
+const MONTH_KEY = 'ff_monthly_xp'   // current month XP — leaderboard score
+const MONTH_TAG = 'ff_xp_month'     // YYYY-MM that monthlyXp belongs to
+const PER_LEVEL = 50                // XP needed per level
+
+function curMonth(): string {
+  const d = new Date()
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0')
+}
 
 export function getXp(): number {
   const n = parseInt(localStorage.getItem(KEY) || '0')
   return Number.isFinite(n) && n > 0 ? n : 0
 }
 
-export function addXp(n: number): { newXp: number; leveledUp: boolean; newLevel: number } {
-  const before = getXp()
-  const after = Math.max(0, before + n)
-  const beforeLv = Math.floor(before / PER_LEVEL) + 1
-  const afterLv = Math.floor(after / PER_LEVEL) + 1
-  localStorage.setItem(KEY, String(after))
-  window.dispatchEvent(new CustomEvent('ff-xp-changed'))
-  queue()
-  return { newXp: after, leveledUp: afterLv > beforeLv, newLevel: afterLv }
+export function getMonthlyXp(): number {
+  // Auto-reset if month changed since last write
+  const tag = localStorage.getItem(MONTH_TAG)
+  if (tag !== curMonth()) {
+    localStorage.setItem(MONTH_TAG, curMonth())
+    localStorage.setItem(MONTH_KEY, '0')
+    return 0
+  }
+  const n = parseInt(localStorage.getItem(MONTH_KEY) || '0')
+  return Number.isFinite(n) && n > 0 ? n : 0
 }
 
-registerCollect(() => ({ xp: getXp() }))
+export function addXp(n: number): { newXp: number; leveledUp: boolean; newLevel: number } {
+  const beforeLifetime = getXp()
+  const afterLifetime = Math.max(0, beforeLifetime + n)
+  const beforeLv = Math.floor(beforeLifetime / PER_LEVEL) + 1
+  const afterLv = Math.floor(afterLifetime / PER_LEVEL) + 1
+  localStorage.setItem(KEY, String(afterLifetime))
 
-registerHydrate((d: UserDoc) => {
-  if (typeof d.xp === 'number') {
-    const local = getXp()
-    // Take whichever is bigger so XP never regresses across devices
-    if (d.xp > local) {
-      localStorage.setItem(KEY, String(d.xp))
-      window.dispatchEvent(new CustomEvent('ff-xp-changed'))
-    }
+  // Monthly XP — only counts positive gains so removing a tap doesn't shrink leaderboard score
+  if (n > 0) {
+    const beforeMonthly = getMonthlyXp()  // also handles auto-reset
+    localStorage.setItem(MONTH_KEY, String(beforeMonthly + n))
   }
-})
+
+  window.dispatchEvent(new CustomEvent('ff-xp-changed'))
+  queue()
+  return { newXp: afterLifetime, leveledUp: afterLv > beforeLv, newLevel: afterLv }
+}
 
 export function getLevel(xp?: number): number {
   const v = xp ?? getXp()
@@ -46,3 +59,27 @@ export function xpInLevel(xp?: number): { current: number; needed: number; pct: 
   const pct = Math.round((current / PER_LEVEL) * 100)
   return { current, needed: PER_LEVEL, pct }
 }
+
+registerCollect(() => ({
+  xp: getXp(),
+  monthlyXp: getMonthlyXp(),
+  monthlyXpMonth: curMonth(),
+}))
+
+registerHydrate((d: UserDoc) => {
+  if (typeof d.xp === 'number') {
+    const local = getXp()
+    if (d.xp > local) {
+      localStorage.setItem(KEY, String(d.xp))
+      window.dispatchEvent(new CustomEvent('ff-xp-changed'))
+    }
+  }
+  // Pull monthly only if it's the same month (otherwise stale data wins on a new month)
+  if (typeof d.monthlyXp === 'number' && d.monthlyXpMonth === curMonth()) {
+    const local = getMonthlyXp()
+    if (d.monthlyXp > local) {
+      localStorage.setItem(MONTH_TAG, curMonth())
+      localStorage.setItem(MONTH_KEY, String(d.monthlyXp))
+    }
+  }
+})

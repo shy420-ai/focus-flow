@@ -7,7 +7,7 @@ import { signOutUser } from '../../lib/auth'
 import { isDevMode, setDevMode } from '../../lib/devMode'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
-import { isLeaderboardOn, setLeaderboardOn } from '../../components/dev/Leaderboard'
+import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
 import { queue } from '../../lib/syncManager'
 
 interface Props {
