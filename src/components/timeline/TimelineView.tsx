@@ -8,8 +8,6 @@ import { EditBlockModal } from './EditBlockModal'
 import { getHoroscopeText } from '../../lib/saju'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
-import { isDevMode } from '../../lib/devMode'
-import { PastMeMirror } from '../dev/PastMeMirror'
 import type { Block } from '../../types/block'
 
 function BirthdayModal({ onClose }: { onClose: () => void }) {
@@ -236,7 +234,6 @@ export function TimelineView() {
           🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
         </div>
       ) : null}
-      {isDevMode() && <PastMeMirror />}
       {/* 사용 팁 — 그리드 위에 표시 (원본 tip-bar 위치) */}
       {!tipHidden && (
         <div style={{ margin: '8px 16px 0' }}>

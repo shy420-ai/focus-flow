@@ -4,9 +4,9 @@ import { todayStr } from '../../lib/date'
 interface SprintGoal {
   id: string
   name: string
-  target: number      // 목표 횟수/시간
-  unit: string        // 회 / 시간 / 페이지 / etc.
-  current: number     // 현재 진척
+  target: number
+  unit: string
+  current: number
 }
 
 interface Sprint {
@@ -14,7 +14,14 @@ interface Sprint {
   goals: SprintGoal[]
 }
 
+interface CompletedSprint {
+  startDate: string
+  endDate: string
+  goals: SprintGoal[]
+}
+
 const KEY = 'ff_sprint'
+const HISTORY_KEY = 'ff_sprint_history'
 const SPRINT_DAYS = 14
 
 function loadSprint(): Sprint | null {
@@ -31,6 +38,19 @@ function saveSprint(s: Sprint | null): void {
   else localStorage.removeItem(KEY)
 }
 
+function loadHistory(): CompletedSprint[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    return raw ? (JSON.parse(raw) as CompletedSprint[]) : []
+  } catch {
+    return []
+  }
+}
+
+function saveHistory(h: CompletedSprint[]): void {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(h))
+}
+
 function daysBetween(a: string, b: string): number {
   const ms = new Date(b).getTime() - new Date(a).getTime()
   return Math.floor(ms / (1000 * 60 * 60 * 24))
@@ -41,17 +61,33 @@ function pct(g: SprintGoal): number {
   return Math.min(Math.round((g.current / g.target) * 100), 100)
 }
 
+// Baseline lookup: most recent completed sprint with same goal name
+function findBaseline(history: CompletedSprint[], goalName: string): SprintGoal | null {
+  const trimmed = goalName.trim()
+  if (!trimmed) return null
+  for (let i = history.length - 1; i >= 0; i--) {
+    const match = history[i].goals.find((g) => g.name.trim() === trimmed)
+    if (match) return match
+  }
+  return null
+}
+
 export function SprintBoard() {
   const [sprint, setSprint] = useState<Sprint | null>(loadSprint())
+  const [history, setHistory] = useState<CompletedSprint[]>(loadHistory())
 
   useEffect(() => { saveSprint(sprint) }, [sprint])
+  useEffect(() => { saveHistory(history) }, [history])
 
   function startSprint() {
     setSprint({ startDate: todayStr(), goals: [{ id: String(Date.now()), name: '', target: 10, unit: '회', current: 0 }] })
   }
 
   function endSprint() {
-    if (!confirm('스프린트를 끝낼까? 다음 스프린트를 새로 시작할 수 있어')) return
+    if (!sprint) return
+    if (!confirm('스프린트를 끝낼까? 결과는 히스토리에 저장됨')) return
+    const completed: CompletedSprint = { startDate: sprint.startDate, endDate: todayStr(), goals: sprint.goals }
+    setHistory([...history, completed])
     setSprint(null)
   }
 
@@ -90,6 +126,11 @@ export function SprintBoard() {
           style={{ padding: '8px 18px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
           🚀 스프린트 시작
         </button>
+        {history.length > 0 && (
+          <div style={{ marginTop: 12, fontSize: 10, color: '#aaa' }}>
+            누적 스프린트 {history.length}개 완료
+          </div>
+        )}
       </div>
     )
   }
@@ -120,6 +161,12 @@ export function SprintBoard() {
 
       {sprint.goals.map((g) => {
         const p = pct(g)
+        const baseline = findBaseline(history, g.name)
+        const baselineCurrent = baseline?.current ?? 0
+        const safe = baselineCurrent
+        const stretch = Math.round(baselineCurrent * 1.22)
+        const risk = Math.round(baselineCurrent * 1.55)
+        const diff = baseline ? g.current - baselineCurrent : 0
         return (
           <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
             {/* Name + delete */}
@@ -133,6 +180,22 @@ export function SprintBoard() {
               <button onClick={() => removeGoal(g.id)}
                 style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11 }}>✕</button>
             </div>
+
+            {/* Baseline (Past Me) */}
+            {baseline && (
+              <div style={{ marginBottom: 8, padding: '6px 10px', background: '#fff', borderRadius: 8, fontSize: 11, color: '#666', lineHeight: 1.5 }}>
+                <div style={{ fontWeight: 700, color: 'var(--pd)', marginBottom: 2 }}>📊 Past Me 베이스라인</div>
+                저번 sprint: <b>{baselineCurrent}{baseline.unit}</b> 달성 (목표 {baseline.target}{baseline.unit})
+                <div style={{ marginTop: 4, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                  <button onClick={() => updateGoal(g.id, { target: safe || 1, unit: baseline.unit })}
+                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #ddd', background: '#fff', fontSize: 10, color: '#888', cursor: 'pointer', fontFamily: 'inherit' }}>안전 {safe}{baseline.unit}</button>
+                  <button onClick={() => updateGoal(g.id, { target: stretch || 1, unit: baseline.unit })}
+                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid var(--pink)', background: 'var(--pink)', fontSize: 10, color: '#fff', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700 }}>도전 {stretch}{baseline.unit}</button>
+                  <button onClick={() => updateGoal(g.id, { target: risk || 1, unit: baseline.unit })}
+                    style={{ padding: '3px 8px', borderRadius: 6, border: '1px solid #E24B4A', background: '#fff', fontSize: 10, color: '#E24B4A', cursor: 'pointer', fontFamily: 'inherit' }}>무리 {risk}{baseline.unit}</button>
+                </div>
+              </div>
+            )}
 
             {/* Target + unit */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 8, alignItems: 'center' }}>
@@ -165,6 +228,15 @@ export function SprintBoard() {
               <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
             </div>
 
+            {/* Past Me running compare */}
+            {baseline && (
+              <div style={{ fontSize: 11, color: diff > 0 ? '#1FA176' : diff < 0 ? '#EF9F27' : '#888', marginBottom: 8, textAlign: 'center' }}>
+                {diff > 0 ? `🪞 저번 sprint보다 +${diff}${g.unit} 앞서있어` :
+                  diff < 0 ? `🪞 저번 sprint 같은 단계 ${diff}${g.unit}, 따라잡아보자` :
+                  '🪞 저번 sprint랑 동률'}
+              </div>
+            )}
+
             {/* Increment buttons */}
             <div style={{ display: 'flex', gap: 6 }}>
               <button onClick={() => increment(g.id, -1)}
@@ -187,7 +259,7 @@ export function SprintBoard() {
 
       {daysLeft === 0 && (
         <div style={{ marginTop: 10, padding: 10, background: '#FFF8E1', borderRadius: 8, fontSize: 11, color: '#8B6914', textAlign: 'center' }}>
-          🏁 스프린트 종료! 회고하고 새 스프린트 시작해볼까?
+          🏁 스프린트 종료! 끝내기 누르면 히스토리 저장 + 다음 sprint 시작 가능
         </div>
       )}
     </div>
