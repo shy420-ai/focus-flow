@@ -259,12 +259,18 @@ export function SprintBoard() {
         <div style={{ height: 12, background: '#fff', borderRadius: 6, marginBottom: 10, overflow: 'hidden' }}>
           <div style={{ height: '100%', background: 'var(--pink)', width: overall + '%', transition: 'width .3s', borderRadius: 6 }} />
         </div>
-        <input type="range" min={0} max={100} value={overall}
-          onChange={(e) => setOverall(parseInt(e.target.value))}
-          style={{ width: '100%', accentColor: 'var(--pink)' }}
-        />
-        <div style={{ fontSize: 10, color: '#888', marginTop: 4, textAlign: 'center' }}>
-          오늘의 진척도 직접 드래그 · 1% = 1 XP
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={() => setOverall(overall - 1)}
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>앗 -1% 🫣</button>
+          <button onClick={() => setOverall(overall + 1)}
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+1%</button>
+          <button onClick={() => setOverall(overall + 5)}
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+5%</button>
+          <button onClick={() => setOverall(overall + 10)}
+            style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'linear-gradient(135deg, var(--pink), var(--pd))', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+10% 🚀</button>
+        </div>
+        <div style={{ fontSize: 10, color: '#888', marginTop: 6, textAlign: 'center' }}>
+          오늘 진척만큼 +% · 1% = 1 XP
         </div>
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 sprint 목표</div>
