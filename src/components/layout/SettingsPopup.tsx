@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { applyTheme, getTheme } from '../../lib/theme'
 import { THEMES, THEME_LABELS, type ThemeName } from '../../constants/themes'
 import { useAppStore, type CurView } from '../../store/AppStore'
@@ -46,6 +46,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
   const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
+  const backdropDownRef = useRef(false)
   useBackClose(true, onClose)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
@@ -133,12 +134,13 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
 
   return (
     <div
-      onPointerDown={(e) => {
-        // Only close if the press STARTED on the backdrop itself.
-        // Without this, mobile taps on the gear icon (which opens the popup)
-        // can bubble a touchend onto the freshly-rendered backdrop and close
-        // the popup instantly.
-        if (e.target === e.currentTarget) onClose()
+      onMouseDown={(e) => { backdropDownRef.current = e.target === e.currentTarget }}
+      onTouchStart={(e) => { backdropDownRef.current = e.target === e.currentTarget }}
+      onClick={(e) => {
+        // Only close when the press STARTED on the backdrop AND ended on the backdrop.
+        // This prevents the gear-tap from bleeding through into a backdrop click.
+        if (e.target === e.currentTarget && backdropDownRef.current) onClose()
+        backdropDownRef.current = false
       }}
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.25)', zIndex: 300, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 56 }}
     >
