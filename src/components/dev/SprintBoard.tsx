@@ -317,16 +317,16 @@ export function SprintBoard() {
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <button onClick={() => bumpGoal(g.id, -step)}
-                    style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>아쉽다 🫣 -{step}</button>
+                    style={{ flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>아쉽다 🫣 -{step}</button>
                   <input
                     type="number"
                     value={step}
                     onChange={(e) => updateGoal(g.id, { smallStep: Math.max(1, parseInt(e.target.value) || 1) })}
                     aria-label="버튼 단위"
-                    style={{ width: 44, padding: '6px 0', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, textAlign: 'center', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#888', flexShrink: 0 }}
+                    style={{ width: 40, padding: '6px 0', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, textAlign: 'center', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#888', flexShrink: 0 }}
                   />
                   <button onClick={() => bumpGoal(g.id, step)}
-                    style={{ flex: 2, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌 +{step}</button>
+                    style={{ flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌 +{step}</button>
                 </div>
               )
             })()}

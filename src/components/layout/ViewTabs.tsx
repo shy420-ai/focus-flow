@@ -1,10 +1,35 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore, type CurView } from '../../store/AppStore'
 
-const ALL_TABS: Array<{ id: CurView; label: string }> = [
-  { id: 'tl', label: '일간' },
-  { id: 'week', label: '주간' },
-  { id: 'cal', label: '월간' },
+const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = [
+  { id: 'tl', label: '일간', icon: (
+    // cute sun/day icon
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="12" r="4" fill="currentColor" fillOpacity=".25" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+    </svg>
+  ) },
+  { id: 'week', label: '주간', icon: (
+    // 7 dots in a heart pattern (week)
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style={{ flexShrink: 0 }}>
+      <circle cx="3" cy="12" r="2" />
+      <circle cx="8" cy="9" r="2" />
+      <circle cx="13" cy="6" r="2" />
+      <circle cx="18" cy="9" r="2" />
+      <circle cx="21" cy="14" r="2" />
+      <circle cx="16" cy="17" r="2" />
+      <circle cx="11" cy="20" r="2" fillOpacity=".4" />
+    </svg>
+  ) },
+  { id: 'cal', label: '월간', icon: (
+    // cute mini calendar
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <rect x="3" y="5" width="18" height="16" rx="3" />
+      <path d="M3 10h18M8 3v4M16 3v4" />
+      <circle cx="8" cy="15" r="1.5" fill="currentColor" />
+      <circle cx="13" cy="15" r="1.5" fill="currentColor" fillOpacity=".4" />
+    </svg>
+  ) },
   { id: 'habit', label: '습관' },
   { id: 'goal', label: '목표' },
   { id: 'drop', label: '드롭' },
@@ -93,7 +118,10 @@ export function ViewTabs() {
           onDragEnd={handleDragEnd}
           onDragLeave={() => setDragOverId(null)}
         >
-          {tab.label}
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            {tab.icon}
+            {tab.label}
+          </span>
         </button>
       ))}
     </div>
