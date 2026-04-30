@@ -8,6 +8,7 @@ import { isDevMode, setDevMode } from '../../lib/devMode'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
 import { isLeaderboardOn, setLeaderboardOn } from '../../components/dev/Leaderboard'
+import { queue } from '../../lib/syncManager'
 
 interface Props {
   onClose: () => void
@@ -72,6 +73,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
 
   function saveNickname() {
     localStorage.setItem('ff_nickname', nickname)
+    queue()  // sync nickname to Firestore so leaderboard reflects the chosen name
   }
 
   function setTlRange(start: number, end: number) {
