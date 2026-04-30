@@ -199,7 +199,7 @@ export function SprintBoard() {
               <input
                 value={g.name}
                 onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                placeholder="이름 (구체적으로! ex. 운동, 글쓰기)"
+                placeholder="이름 (ex.운동)"
                 style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
               />
               <input
