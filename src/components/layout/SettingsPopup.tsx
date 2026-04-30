@@ -14,6 +14,7 @@ import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { resetXp, getXp, getLevel } from '../../lib/xp'
+import { AdhdGuideModal } from '../ui/AdhdGuideModal'
 
 interface Props {
   onClose: () => void
@@ -61,6 +62,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   }, [])
 
   const [userCount, setUserCount] = useState<number | null>(null)
+  const [showGuide, setShowGuide] = useState(false)
   useEffect(() => {
     getUserCount().then(setUserCount).catch(() => setUserCount(null))
   }, [])
@@ -339,8 +341,12 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         >🔄 레벨 초기화</button>
       </div>
 
-      {/* 온보딩 */}
+      {/* 가이드 / 온보딩 */}
       <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
+        <button
+          onClick={() => setShowGuide(true)}
+          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pink)', background: 'var(--pl)', color: 'var(--pd)', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+        >🧠 ADHD 친화 사용법 (과학 근거 포함)</button>
         <button
           onClick={() => {
             onClose()
@@ -356,6 +362,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         >☕ 개발자에게 커피 한 잔 사주기</a>
       </div>
     </div>
+    {showGuide && <AdhdGuideModal onClose={() => setShowGuide(false)} />}
     </div>
   )
 }
