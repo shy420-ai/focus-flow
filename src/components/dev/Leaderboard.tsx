@@ -85,7 +85,7 @@ export function LeaderboardModal({ onClose }: Props) {
         ) : (
           <>
             {/* My rank summary */}
-            <div style={{ background: 'linear-gradient(135deg, #FFE0EC, #FFF8FA)', borderRadius: 12, padding: 12, marginBottom: 10, border: '1.5px solid var(--pink)' }}>
+            <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', borderRadius: 12, padding: 12, marginBottom: 10, border: '1.5px solid var(--pink)' }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
                 <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>나의 위치</span>
                 <button onClick={refresh} disabled={loading} style={{ fontSize: 9, color: '#888', background: '#fff', border: '1px solid #ddd', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit' }}>
