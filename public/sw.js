@@ -1,8 +1,7 @@
-const CACHE = 'ff-react-v2'
+const CACHE = 'ff-react-v3'
 const BASE = new URL(self.registration.scope).pathname
 
 const STATIC = [
-  BASE,
   BASE + 'manifest.json',
   BASE + 'icon-192.png',
   BASE + 'icon-512.png',
@@ -15,6 +14,12 @@ self.addEventListener('install', (e) => {
   )
 })
 
+self.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
+
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
@@ -23,20 +28,38 @@ self.addEventListener('activate', (e) => {
   )
 })
 
+// Network-first for HTML/JS/CSS so deploys land on the next refresh.
+// Cache-first only for the small STATIC asset list (icons/manifest/png).
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return
-  if (e.request.url.includes('firestore') || e.request.url.includes('googleapis')) return
+  const url = e.request.url
+  if (url.includes('firestore') || url.includes('googleapis')) return
 
-  e.respondWith(
-    caches.match(e.request).then((cached) => {
-      const network = fetch(e.request).then((res) => {
-        if (res.ok) {
-          const clone = res.clone()
-          caches.open(CACHE).then((c) => c.put(e.request, clone))
-        }
-        return res
+  const isStatic = STATIC.some((path) => url.endsWith(path))
+
+  if (isStatic) {
+    e.respondWith(
+      caches.match(e.request).then((cached) => {
+        return cached || fetch(e.request).then((res) => {
+          if (res.ok) {
+            const clone = res.clone()
+            caches.open(CACHE).then((c) => c.put(e.request, clone))
+          }
+          return res
+        })
       })
-      return cached || network
-    })
+    )
+    return
+  }
+
+  // Network-first with cache fallback for everything else (HTML/JS/CSS)
+  e.respondWith(
+    fetch(e.request).then((res) => {
+      if (res.ok) {
+        const clone = res.clone()
+        caches.open(CACHE).then((c) => c.put(e.request, clone))
+      }
+      return res
+    }).catch(() => caches.match(e.request).then((cached) => cached || Response.error()))
   )
 })

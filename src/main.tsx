@@ -11,7 +11,29 @@ initTheme()
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').catch(() => {/* ignore */})
+    navigator.serviceWorker.register(import.meta.env.BASE_URL + 'sw.js').then((reg) => {
+      // Check for updates whenever the app gains focus / on each load.
+      reg.update()
+      window.addEventListener('focus', () => reg.update())
+
+      // When a new SW takes over, reload the page so users see the latest build.
+      let refreshing = false
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return
+        refreshing = true
+        window.location.reload()
+      })
+
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing
+        if (!newWorker) return
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' })
+          }
+        })
+      })
+    }).catch(() => {/* ignore */})
   })
 }
 
