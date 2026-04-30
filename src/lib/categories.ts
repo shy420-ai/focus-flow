@@ -28,14 +28,14 @@ export function saveCategories(cats: Category[]): void {
   window.dispatchEvent(new Event('ff-cats-changed'))
 }
 
-export function addCategory(name: string): void {
+export function addCategory(name: string, color?: string): void {
   const trimmed = name.trim()
   if (!trimmed) return
   const cats = getCategories()
   if (cats.find((c) => c.name === trimmed)) return
   const usedColors = cats.map((c) => c.color)
-  const color = CAT_COLORS.find((c) => !usedColors.includes(c)) ?? CAT_COLORS[cats.length % CAT_COLORS.length]
-  saveCategories([...cats, { name: trimmed, color }])
+  const finalColor = color ?? (CAT_COLORS.find((c) => !usedColors.includes(c)) ?? CAT_COLORS[cats.length % CAT_COLORS.length])
+  saveCategories([...cats, { name: trimmed, color: finalColor }])
 }
 
 export function removeCategory(name: string): void {

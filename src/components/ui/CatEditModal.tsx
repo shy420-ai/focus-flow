@@ -11,6 +11,11 @@ interface CatEditModalProps {
 export function CatEditModal({ onClose, onChange }: CatEditModalProps) {
   const [cats, setCats] = useState<Category[]>(getCategories)
   const [newName, setNewName] = useState('')
+  const [newColor, setNewColor] = useState<string>(() => {
+    const used = getCategories().map((c) => c.color)
+    return CAT_COLORS.find((c) => !used.includes(c)) ?? CAT_COLORS[0]
+  })
+  const [pickingNewColor, setPickingNewColor] = useState(false)
   const [editingColor, setEditingColor] = useState<string | null>(null)
 
   function refresh() {
@@ -22,8 +27,11 @@ export function CatEditModal({ onClose, onChange }: CatEditModalProps) {
     const trimmed = newName.trim()
     if (!trimmed) return
     if (cats.find((c) => c.name === trimmed)) { showMiniToast('이미 있는 카테고리야'); return }
-    addCategory(trimmed)
+    addCategory(trimmed, newColor)
     setNewName('')
+    const used = [...cats.map((c) => c.color), newColor]
+    const next = CAT_COLORS.find((c) => !used.includes(c)) ?? CAT_COLORS[0]
+    setNewColor(next)
     refresh()
   }
 
@@ -81,18 +89,46 @@ export function CatEditModal({ onClose, onChange }: CatEditModalProps) {
           </div>
         ))}
 
-        <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-          <input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="새 카테고리 이름"
-            onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleAdd()}
-            style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
-          />
-          <button
-            onClick={handleAdd}
-            style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-          >추가</button>
+        <div style={{ position: 'relative', marginTop: 12 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <button
+              onClick={() => setPickingNewColor((o) => !o)}
+              style={{ width: 36, height: 36, borderRadius: '50%', background: newColor, border: '2px solid rgba(0,0,0,.08)', cursor: 'pointer', flexShrink: 0, padding: 0 }}
+              aria-label="색 고르기"
+            />
+            <input
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              placeholder="새 카테고리 이름"
+              onKeyDown={(e) => e.key === 'Enter' && !e.nativeEvent.isComposing && handleAdd()}
+              style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
+            />
+            <button
+              onClick={handleAdd}
+              style={{ padding: '8px 14px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            >추가</button>
+          </div>
+          {pickingNewColor && (
+            <div style={{ position: 'absolute', left: 0, right: 0, bottom: 'calc(100% + 6px)', background: '#FAFAFA', border: '1px solid #EEE', borderRadius: 16, padding: 18, zIndex: 9200, boxShadow: '0 6px 24px rgba(0,0,0,.1)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14, justifyItems: 'center' }}>
+                {CAT_COLORS.map((c) => {
+                  const selected = c === newColor
+                  return (
+                    <div
+                      key={c}
+                      onClick={() => { setNewColor(c); setPickingNewColor(false) }}
+                      style={{ position: 'relative', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                    >
+                      <div style={{ width: 32, height: 32, borderRadius: '50%', background: c }} />
+                      {selected && (
+                        <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${c}`, pointerEvents: 'none' }} />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         <button
