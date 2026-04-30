@@ -139,7 +139,9 @@ export function PomoFab() {
         onClick={() => setOpen((o) => !o)}
         style={pomo.running ? { background: 'var(--pd)', fontSize: 13, fontWeight: 700, letterSpacing: '-.5px' } : {}}
       >
-        {pomo.running ? timeStr : '🍅'}
+        {pomo.running ? timeStr : (
+          <span style={{ display: 'inline-block', lineHeight: 1, transform: 'translateY(-2px)' }}>🍅</span>
+        )}
       </button>
 
       {/* Panel — 원본 모바일 UI: 텍스트 시간 + 프로그레스바 */}
