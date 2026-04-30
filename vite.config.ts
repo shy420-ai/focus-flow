@@ -5,6 +5,9 @@ import path from 'path'
 
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/focus-flow/' : '/',
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   plugins: [tailwindcss(), react()],
   resolve: {
     alias: {

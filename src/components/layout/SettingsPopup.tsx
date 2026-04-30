@@ -143,9 +143,21 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         pointerEvents: 'auto',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
         <div style={{ flex: 1, fontSize: 14, fontWeight: 700, color: 'var(--pd)', textAlign: 'center', marginLeft: 28 }}>⚙️ 설정</div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
+      </div>
+      <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', marginBottom: 12 }}>
+        🛠 빌드 {(() => {
+          try {
+            const d = new Date(__BUILD_TIME__)
+            const m = (d.getMonth() + 1)
+            const day = d.getDate()
+            const h = String(d.getHours()).padStart(2, '0')
+            const mn = String(d.getMinutes()).padStart(2, '0')
+            return `${m}/${day} ${h}:${mn}`
+          } catch { return '?' }
+        })()}
       </div>
 
       {/* 닉네임 */}
