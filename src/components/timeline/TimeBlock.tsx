@@ -19,6 +19,7 @@ interface TimeBlockProps {
   onMemo: (id: string) => void
   onEdit: (id: string) => void
   index: number
+  dimmed?: boolean
 }
 
 export function TimeBlock({
@@ -30,6 +31,7 @@ export function TimeBlock({
   onMenuToggle,
   onMemo,
   onEdit,
+  dimmed,
 }: TimeBlockProps) {
   const toggleDone = useAppStore((s) => s.toggleDone)
   const updateBlock = useAppStore((s) => s.updateBlock)
@@ -192,7 +194,7 @@ export function TimeBlock({
     <div
       ref={elRef}
       className={className}
-      style={{ top: `${top}px`, height: `${height}px` }}
+      style={{ top: `${top}px`, height: `${height}px`, opacity: dimmed ? 0.35 : 1, transition: 'opacity .25s' }}
       data-id={block.id}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}

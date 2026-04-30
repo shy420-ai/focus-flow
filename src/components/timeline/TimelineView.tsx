@@ -9,7 +9,17 @@ import { getHoroscopeText } from '../../lib/saju'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
 import { useBackClose } from '../../hooks/useBackClose'
+import { isDevMode } from '../../lib/devMode'
 import type { Block } from '../../types/block'
+
+type DayMode = 'low' | 'normal' | 'good'
+function loadDayMode(): DayMode {
+  const v = localStorage.getItem('ff_day_mode')
+  return v === 'low' || v === 'good' ? v : 'normal'
+}
+function saveDayMode(m: DayMode) {
+  localStorage.setItem('ff_day_mode', m)
+}
 
 function BirthdayModal({ onClose }: { onClose: () => void }) {
   const [year, setYear] = useState(localStorage.getItem('ff_birthyear') || '')
@@ -151,6 +161,8 @@ export function TimelineView() {
   const [cycleBar, setCycleBar] = useState<{ bg: string; color: string; text: string } | null>(null)
   const [horoscopeText, setHoroscopeText] = useState<string | null>(null)
   const [horoscopeHint, setHoroscopeHint] = useState<'no-birthday' | 'no-year' | null>(null)
+  const [dayMode, setDayModeState] = useState<DayMode>(loadDayMode)
+  function changeDayMode(m: DayMode) { setDayModeState(m); saveDayMode(m) }
 
 
   useEffect(() => {
@@ -318,6 +330,30 @@ export function TimelineView() {
           {cycleBar.text}
         </div>
       )}
+      {isDevMode() && (() => {
+        const cfg = {
+          low: { bg: '#FFF3E0', color: '#B8720A', label: '🫂 힘들어', desc: '의무만 보임 (자율 일정 흐려짐)' },
+          normal: { bg: 'var(--pl)', color: 'var(--pd)', label: '🌤 평소', desc: '일반 일정 다 보임' },
+          good: { bg: '#E0F4E8', color: '#1FA176', label: '✨ 좋아', desc: '평소 일정 + 도전' },
+        } as const
+        const cur = cfg[dayMode]
+        return (
+          <div style={{ margin: '6px 16px 0', padding: '8px 12px', background: cur.bg, borderRadius: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: cur.color, flexShrink: 0 }}>오늘 어때?</span>
+              <div style={{ display: 'flex', gap: 4, flex: 1, justifyContent: 'flex-end' }}>
+                {(['low', 'normal', 'good'] as DayMode[]).map((m) => (
+                  <button key={m} onClick={() => changeDayMode(m)}
+                    style={{ padding: '4px 10px', borderRadius: 8, border: 'none', fontSize: 11, fontWeight: dayMode === m ? 700 : 500, cursor: 'pointer', fontFamily: 'inherit', background: dayMode === m ? cfg[m].color : '#fff', color: dayMode === m ? '#fff' : '#888' }}>
+                    {cfg[m].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div style={{ fontSize: 10, color: cur.color, opacity: 0.85, marginTop: 4 }}>{cur.desc}</div>
+          </div>
+        )
+      })()}
       <div className="timeline" ref={timelineRef}>
         {/* Time column */}
         <div className="time-col">
@@ -402,20 +438,28 @@ export function TimelineView() {
           )}
 
           {/* Time blocks */}
-          {timelineBlocks.map((block, index) => (
-            <TimeBlock
-              key={block.id}
-              block={block}
-              curDate={curDate}
-              startHour={START}
-              px={PX}
-              isMenuOpen={activeMenu === block.id}
-              onMenuToggle={setActiveMenu}
-              onMemo={handleMemoOpen}
-              onEdit={(id) => setEditId(id)}
-              index={index}
-            />
-          ))}
+          {timelineBlocks.map((block, index) => {
+            // Auto-classify: recurring = obligation (must), single = flexible
+            const isFlex = !block.isRecurring
+            // In '🫂 힘들어' mode, dim flexible (자율) blocks so the user only
+            // visually focuses on the obligations they have to keep.
+            const dimmed = isDevMode() && dayMode === 'low' && isFlex
+            return (
+              <TimeBlock
+                key={block.id}
+                block={block}
+                curDate={curDate}
+                startHour={START}
+                px={PX}
+                isMenuOpen={activeMenu === block.id}
+                onMenuToggle={setActiveMenu}
+                onMemo={handleMemoOpen}
+                onEdit={(id) => setEditId(id)}
+                index={index}
+                dimmed={dimmed}
+              />
+            )
+          })}
         </div>
       </div>
 
