@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { addDays, todayStr, dateLabel } from '../../lib/date'
+import { getHoliday } from '../../lib/holidays'
 
 export function DateNav() {
   const curDate = useAppStore((s) => s.curDate)
@@ -31,18 +32,23 @@ export function DateNav() {
         style={{ background: 'var(--pl)', border: 'none', width: 38, height: 38, borderRadius: '50%', fontSize: 20, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
       >‹</button>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <div
-          style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
-          onClick={() => setShowPicker((o) => !o)}
-        >
-          <span>📅</span>
-          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--pd)' }}>{dateLabel(curDate)}</span>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div
+            style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+            onClick={() => setShowPicker((o) => !o)}
+          >
+            <span>📅</span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--pd)' }}>{dateLabel(curDate)}</span>
+          </div>
+          <button
+            onClick={() => setCurDate(today)}
+            style={{ background: 'var(--pl)', border: '1.5px solid var(--pink)', borderRadius: 8, fontSize: 10, color: 'var(--pd)', padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: curDate === today ? 0.4 : 1 }}
+          >오늘</button>
         </div>
-        <button
-          onClick={() => setCurDate(today)}
-          style={{ background: 'var(--pl)', border: '1.5px solid var(--pink)', borderRadius: 8, fontSize: 10, color: 'var(--pd)', padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: curDate === today ? 0.4 : 1 }}
-        >오늘</button>
+        {getHoliday(curDate) && (
+          <div style={{ fontSize: 10, color: '#E24B4A', fontWeight: 700 }}>🎉 {getHoliday(curDate)}</div>
+        )}
       </div>
 
       <button
