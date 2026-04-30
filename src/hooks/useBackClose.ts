@@ -3,31 +3,35 @@ import { useEffect, useRef } from 'react'
 // Pushes a fresh history entry while `open` is true so that the device's
 // back button closes the modal/sheet instead of exiting the PWA.
 //
-// IMPORTANT: only `open` is in the dep array. The effect captures onClose
-// via a ref, otherwise every parent re-render (which gives a new onClose
-// function reference) would tear down + push another history entry — and
-// the cleanup's history.back() triggers popstate which closes the modal.
+// Robustness notes:
+// - onClose is captured via ref so re-renders don't tear down the effect.
+// - We arm the popstate listener after a short delay so any popstate fired
+//   from a preceding history.back() (e.g. React StrictMode mount→unmount→mount
+//   or a sibling modal) cannot immediately fire onClose on this fresh modal.
+// - Cleanup leaves the pushed state in place. The browser collapses our
+//   pushed state into the next real back navigation, so we don't fight it
+//   with our own history.back() — that's what was firing spurious popstate
+//   into a freshly mounted listener and closing modals on open.
 export function useBackClose(open: boolean, onClose: () => void) {
   const onCloseRef = useRef(onClose)
   onCloseRef.current = onClose
 
   useEffect(() => {
     if (!open) return
-    const tag = { ffModal: Date.now() + Math.random() }
-    history.pushState(tag, '')
+    history.pushState({ ffModal: Date.now() + Math.random() }, '')
+
+    let armed = false
+    const armTimer = setTimeout(() => { armed = true }, 80)
 
     function onPop() {
+      if (!armed) return
       onCloseRef.current()
     }
     window.addEventListener('popstate', onPop)
 
     return () => {
+      clearTimeout(armTimer)
       window.removeEventListener('popstate', onPop)
-      // If our entry is still on top (closed via UI, not back button), pop it.
-      const cur = history.state as { ffModal?: number } | null
-      if (cur && cur.ffModal === tag.ffModal) {
-        history.back()
-      }
     }
   }, [open])
 }
