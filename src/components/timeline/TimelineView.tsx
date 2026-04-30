@@ -157,10 +157,7 @@ export function TimelineView() {
           const daysUntilPeriod = data.avgCycle - cycleDay + 1
           if (daysUntilPeriod <= 7) {
             setCycleBar({ bg: '#FFF3E0', color: '#B8720A', text: `📅 생리 D-${daysUntilPeriod} — 컨디션 변화에 주의해` })
-          } else if (cycleDay >= 12 && cycleDay <= 16) {
-            setCycleBar({ bg: '#E0F4E8', color: '#1FA176', text: `✨ 배란기 (${cycleDay}일차) — 에너지 좋은 날 💪` })
           } else {
-            // Always show something so user knows the tracker is alive
             setCycleBar({ bg: 'var(--pl)', color: 'var(--pd)', text: `🌸 ${cycleDay}일차 / 다음 생리 D-${daysUntilPeriod}` })
           }
         }
