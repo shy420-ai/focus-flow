@@ -178,16 +178,34 @@ export function SprintBoard() {
         const diff = baseline ? g.current - baselineCurrent : 0
         return (
           <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
-            {/* Name + delete */}
+            {/* Name + target + unit + delete (한 줄) */}
             <div style={{ display: 'flex', gap: 6, marginBottom: 10, alignItems: 'center' }}>
               <input
                 value={g.name}
                 onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                placeholder="목표 이름 (ex. 운동)"
-                style={{ flex: 1, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+                placeholder="이름 (ex. 운동)"
+                style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
               />
+              <input
+                type="number"
+                value={g.target}
+                onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
+                style={{ width: 50, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
+              />
+              <select
+                value={g.unit}
+                onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
+                style={{ padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0 }}
+              >
+                <option value="회">회</option>
+                <option value="시간">h</option>
+                <option value="분">m</option>
+                <option value="페이지">p</option>
+                <option value="개">개</option>
+                <option value=""></option>
+              </select>
               <button onClick={() => removeGoal(g.id)}
-                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11 }}>✕</button>
+                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
             </div>
 
             {/* Big progress display */}
@@ -212,32 +230,6 @@ export function SprintBoard() {
               <button onClick={() => increment(g.id, 5)}
                 style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
             </div>
-
-            {/* Target + unit (settings, smaller) */}
-            <details style={{ marginBottom: baseline ? 8 : 0 }}>
-              <summary style={{ fontSize: 11, color: '#888', cursor: 'pointer', userSelect: 'none', padding: '2px 0' }}>⚙ 목표 설정</summary>
-              <div style={{ display: 'flex', gap: 6, marginTop: 6, alignItems: 'center' }}>
-                <span style={{ fontSize: 11, color: '#666' }}>목표</span>
-                <input
-                  type="number"
-                  value={g.target}
-                  onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
-                  style={{ width: 60, padding: '4px 8px', border: '1.5px solid #fff', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center' }}
-                />
-                <select
-                  value={g.unit}
-                  onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
-                  style={{ padding: '4px 6px', border: '1.5px solid #fff', borderRadius: 6, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
-                >
-                  <option value="회">회</option>
-                  <option value="시간">시간</option>
-                  <option value="분">분</option>
-                  <option value="페이지">페이지</option>
-                  <option value="개">개</option>
-                  <option value="">단위 X</option>
-                </select>
-              </div>
-            </details>
 
             {/* Baseline (Past Me) */}
             {baseline && (
