@@ -9,7 +9,7 @@ import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
 import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
-import { queue } from '../../lib/syncManager'
+import { flushSync } from '../../lib/syncManager'
 
 interface Props {
   onClose: () => void
@@ -69,14 +69,14 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     setTheme(name)
   }
 
-  function saveNickname() {
+  async function saveNickname() {
     const trimmed = nickname.trim()
     if (!trimmed) {
       showMiniToast('닉네임을 입력해줘')
       return
     }
     localStorage.setItem('ff_nickname', trimmed)
-    queue()  // sync nickname to Firestore so leaderboard reflects the chosen name
+    await flushSync()  // push immediately so leaderboard reflects the new name
     showMiniToast('✅ 닉네임 저장됨')
   }
 
