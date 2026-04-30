@@ -614,12 +614,21 @@ export function StatsView() {
     setTab(t); localStorage.setItem('ff_medi_tab', t)
   }
 
-  const hasMeds = (config?.meds?.length ?? 0) > 0
-  const TABS = [
-    { id: 'morning' as const, label: '☀️ 아침약' },
-    { id: 'lunch' as const, label: '🥪 점심약' },
-    { id: 'night' as const, label: '🌙 저녁약' },
+  const meds = config?.meds || []
+  const hasMeds = meds.length > 0
+  const hasMorning = meds.some((m) => m.timing === '아침' || m.timing === '수시')
+  const hasLunch = meds.some((m) => m.timing === '점심')
+  const hasNight = meds.some((m) => m.timing === '저녁')
+  const ALL_TABS = [
+    { id: 'morning' as const, label: '☀️ 아침약', visible: hasMorning },
+    { id: 'lunch' as const, label: '🥪 점심약', visible: hasLunch },
+    { id: 'night' as const, label: '🌙 저녁약', visible: hasNight },
   ]
+  // Show only tabs with meds; if none set up, show all so user can pick where to add
+  const TABS = hasMeds ? ALL_TABS.filter((t) => t.visible) : ALL_TABS
+
+  const visibleIds = TABS.map((t) => t.id)
+  const effectiveTab = hasMeds && !visibleIds.includes(tab) ? (TABS[0]?.id ?? tab) : tab
 
   return (
     <div style={{ padding: '16px', paddingBottom: 120 }}>
@@ -629,15 +638,17 @@ export function StatsView() {
           style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4 }}>⚙</button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-        {TABS.map((t) => (
-          <button key={t.id} onClick={() => setTabPersist(t.id)}
-            style={{ flex: 1, padding: 8, borderRadius: 10, border: '1.5px solid ' + (tab === t.id ? 'var(--pink)' : 'var(--pl)'), background: tab === t.id ? 'var(--pink)' : '#fff', color: tab === t.id ? '#fff' : 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Tabs (only show ones with meds) */}
+      {TABS.length > 0 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          {TABS.map((t) => (
+            <button key={t.id} onClick={() => setTabPersist(t.id)}
+              style={{ flex: 1, padding: 8, borderRadius: 10, border: '1.5px solid ' + (effectiveTab === t.id ? 'var(--pink)' : 'var(--pl)'), background: effectiveTab === t.id ? 'var(--pink)' : '#fff', color: effectiveTab === t.id ? '#fff' : 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {!hasMeds ? (
         <div style={{ background: '#fff', borderRadius: 14, padding: 20, marginBottom: 12, border: '1.5px solid var(--pl)', textAlign: 'center' }}>
@@ -649,9 +660,9 @@ export function StatsView() {
         </div>
       ) : (
         <>
-          {tab === 'morning' && <MorningTab />}
-          {tab === 'lunch' && <LunchTab onSetup={() => setShowSetup(true)} />}
-          {tab === 'night' && <EveningTab onSetup={() => setShowSetup(true)} />}
+          {effectiveTab === 'morning' && <MorningTab />}
+          {effectiveTab === 'lunch' && <LunchTab onSetup={() => setShowSetup(true)} />}
+          {effectiveTab === 'night' && <EveningTab onSetup={() => setShowSetup(true)} />}
         </>
       )}
 
