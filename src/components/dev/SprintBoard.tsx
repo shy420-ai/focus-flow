@@ -10,6 +10,8 @@ interface SprintGoal {
   target: number   // 목표 (10회, 10분, ...)
   unit: string     // 회 / 시간 / 분 / 페이지 / 개 / ''
   current: number  // 현재 누적
+  smallStep?: number  // +버튼 작은 단위 (default 1)
+  bigStep?: number    // +버튼 큰 단위 (default 5)
 }
 
 interface Sprint {
@@ -325,14 +327,39 @@ export function SprintBoard() {
             <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
             </div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <button onClick={() => bumpGoal(g.id, -1)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: '#fff', color: '#888', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>앗 -1 🫣</button>
-              <button onClick={() => bumpGoal(g.id, 1)}
-                style={{ flex: 2, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌 +1</button>
-              <button onClick={() => bumpGoal(g.id, 5)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
-            </div>
+            {(() => {
+              const small = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
+              const big = g.bigStep && g.bigStep > 0 ? g.bigStep : 5
+              return (
+                <>
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <button onClick={() => bumpGoal(g.id, -small)}
+                      style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: '#fff', color: '#888', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>앗 -{small} 🫣</button>
+                    <button onClick={() => bumpGoal(g.id, small)}
+                      style={{ flex: 2, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌 +{small}</button>
+                    <button onClick={() => bumpGoal(g.id, big)}
+                      style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+{big}</button>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, fontSize: 10, color: '#888' }}>
+                    <span>버튼 단위:</span>
+                    <span>+</span>
+                    <input
+                      type="number"
+                      value={small}
+                      onChange={(e) => updateGoal(g.id, { smallStep: Math.max(1, parseInt(e.target.value) || 1) })}
+                      style={{ width: 36, padding: '2px 4px', border: '1px solid #ddd', borderRadius: 4, fontSize: 10, textAlign: 'center', fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+                    />
+                    <span>/ +</span>
+                    <input
+                      type="number"
+                      value={big}
+                      onChange={(e) => updateGoal(g.id, { bigStep: Math.max(1, parseInt(e.target.value) || 1) })}
+                      style={{ width: 36, padding: '2px 4px', border: '1px solid #ddd', borderRadius: 4, fontSize: 10, textAlign: 'center', fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+                    />
+                  </div>
+                </>
+              )
+            })()}
           </div>
         )
       })}
