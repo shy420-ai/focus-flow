@@ -2,15 +2,14 @@ import { useState, useEffect } from 'react'
 import { todayStr } from '../../lib/date'
 import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
+import { showConfirm } from '../../lib/showConfirm'
 
 interface SprintGoal {
   id: string
   name: string
-  progress: number  // 0-100
-  // legacy fields kept for migration
-  target?: number
-  unit?: string
-  current?: number
+  target: number   // 목표 (10회, 10분, ...)
+  unit: string     // 회 / 시간 / 분 / 페이지 / 개 / ''
+  current: number  // 현재 누적
 }
 
 interface Sprint {
@@ -35,19 +34,23 @@ function loadSprint(): Sprint | null {
     const raw = localStorage.getItem(KEY)
     if (!raw) return null
     const s = JSON.parse(raw) as Sprint
-    s.goals = (s.goals || []).map((g) => {
-      // Migrate legacy goals (target/current) → progress
-      let progress = typeof g.progress === 'number' ? g.progress : 0
-      if (typeof g.progress !== 'number' && typeof g.current === 'number' && typeof g.target === 'number' && g.target > 0) {
-        progress = Math.min(100, Math.round((g.current / g.target) * 100))
+    s.goals = (s.goals || []).map((g: { id?: string; name?: string; target?: number; unit?: string; current?: number; progress?: number }) => {
+      // Migrate either shape to current target/unit/current model
+      let target = typeof g.target === 'number' && g.target > 0 ? g.target : 10
+      const unit = typeof g.unit === 'string' ? g.unit : '회'
+      let current = typeof g.current === 'number' ? g.current : 0
+      if (typeof g.current !== 'number' && typeof g.progress === 'number') {
+        current = Math.round((g.progress / 100) * target)
       }
       return {
         id: g.id || String(Date.now() + Math.random()),
         name: g.name || '',
-        progress,
+        target,
+        unit,
+        current,
       }
     })
-    if (typeof s.overall !== 'number') delete s.overall
+    delete s.overall  // overall is always auto-computed from goals now
     return s
   } catch {
     return null
@@ -77,10 +80,16 @@ function daysBetween(a: string, b: string): number {
   return Math.floor(ms / (1000 * 60 * 60 * 24))
 }
 
+function goalPct(g: SprintGoal): number {
+  if (!g.target) return 0
+  return Math.min(100, Math.round((g.current / g.target) * 100))
+}
+
 function sprintOverall(s: { overall?: number; goals: SprintGoal[] }): number {
-  if (typeof s.overall === 'number') return s.overall
-  if (!s.goals.length) return 0
-  const avg = s.goals.reduce((sum, g) => sum + (typeof g.progress === 'number' ? g.progress : 0), 0) / s.goals.length
+  // Always compute from goals so per-goal taps stay in sync with the overall %.
+  // For completed sprints (in history), use the stored snapshot if goals are empty.
+  if (!s.goals.length) return typeof s.overall === 'number' ? s.overall : 0
+  const avg = s.goals.reduce((sum, g) => sum + goalPct(g), 0) / s.goals.length
   return Math.round(avg)
 }
 
@@ -93,12 +102,13 @@ export function SprintBoard() {
   useEffect(() => { saveHistory(history) }, [history])
 
   function startSprint() {
-    setSprint({ startDate: todayStr(), goals: [{ id: String(Date.now()), name: '', progress: 0 }] })
+    setSprint({ startDate: todayStr(), goals: [{ id: String(Date.now()), name: '', target: 10, unit: '회', current: 0 }] })
   }
 
-  function endSprint() {
+  async function endSprint() {
     if (!sprint) return
-    if (!confirm('이번 챌린지 끝낼까? 결과는 히스토리에 저장됨')) return
+    const ok = await showConfirm('이번 챌린지 끝낼까? 결과는 히스토리에 저장됨')
+    if (!ok) return
     const completed: CompletedSprint = { startDate: sprint.startDate, endDate: todayStr(), goals: sprint.goals, overall: sprintOverall(sprint) }
     setHistory([...history, completed])
     setSprint(null)
@@ -109,7 +119,7 @@ export function SprintBoard() {
 
   function addGoal() {
     if (!sprint || sprint.goals.length >= 3) return
-    setSprint({ ...sprint, goals: [...sprint.goals, { id: String(Date.now()), name: '', progress: 0 }] })
+    setSprint({ ...sprint, goals: [...sprint.goals, { id: String(Date.now()), name: '', target: 10, unit: '회', current: 0 }] })
   }
 
   function updateGoal(id: string, patch: Partial<SprintGoal>) {
@@ -125,12 +135,12 @@ export function SprintBoard() {
 
   function addDemoHistory() {
     if (!sprint || sprint.goals.length === 0) {
-      alert('먼저 목표를 1개 이상 입력해줘 (이름까지). 그 이름으로 가짜 저번 챌린지 만들어줄게')
+      showMiniToast('목표 1개 이상 추가 후 시도')
       return
     }
     const named = sprint.goals.filter((g) => g.name.trim())
     if (named.length === 0) {
-      alert('목표 이름을 1개 이상 적어줘. Past Me가 같은 이름끼리 매칭함')
+      showMiniToast('목표 이름 1개 이상 적어줘')
       return
     }
     const fake: CompletedSprint = {
@@ -139,15 +149,18 @@ export function SprintBoard() {
       goals: named.map((g) => ({
         id: 'demo-' + g.id,
         name: g.name.trim(),
-        progress: 60,
+        target: g.target,
+        unit: g.unit,
+        current: Math.max(1, Math.round(g.target * 0.6)),
       })),
       overall: 60,
     }
     setHistory([...history, fake])
   }
 
-  function clearHistory() {
-    if (!confirm('히스토리 다 지울까? (Past Me 비교 사라짐)')) return
+  async function clearHistory() {
+    const ok = await showConfirm('히스토리 다 지울까? (Past Me 비교 사라짐)')
+    if (!ok) return
     setHistory([])
   }
 
@@ -219,11 +232,11 @@ export function SprintBoard() {
     if (!sprint) return
     const g = sprint.goals.find((x) => x.id === id)
     if (!g) return
-    const cur = typeof g.progress === 'number' ? g.progress : 0
-    const next = Math.max(0, Math.min(100, cur + delta))
-    updateGoal(id, { progress: next })
+    const cur = typeof g.current === 'number' ? g.current : 0
+    const next = Math.max(0, cur + delta)
+    updateGoal(id, { current: next })
     if (next > cur) {
-      const result = addXp(next - cur)
+      const result = addXp(5 * (next - cur))
       setXp(result.newXp)
       if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
     }
@@ -272,7 +285,7 @@ export function SprintBoard() {
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 챌린지 목표 (최대 3개)</div>
       {sprint.goals.map((g) => {
-        const p = typeof g.progress === 'number' ? g.progress : 0
+        const p = goalPct(g)
         return (
           <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
@@ -282,22 +295,43 @@ export function SprintBoard() {
                 placeholder="이름 (ex.운동)"
                 style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
               />
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', minWidth: 40, textAlign: 'right' }}>{p}%</span>
-              <button onClick={() => { if (confirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
+              <input
+                type="number"
+                value={g.target}
+                onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
+                style={{ width: 46, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
+              />
+              <select
+                value={g.unit}
+                onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
+                style={{ padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0 }}
+              >
+                <option value="회">회</option>
+                <option value="시간">h</option>
+                <option value="분">m</option>
+                <option value="페이지">p</option>
+                <option value="개">개</option>
+                <option value=""></option>
+              </select>
+              <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
                 style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>
+                {g.current}<span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>
+              </span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>
             </div>
             <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
             </div>
             <div style={{ display: 'flex', gap: 4 }}>
               <button onClick={() => bumpGoal(g.id, -1)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: '#fff', color: '#888', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>앗 -1% 🫣</button>
+                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: '#fff', color: '#888', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>앗 -1 🫣</button>
               <button onClick={() => bumpGoal(g.id, 1)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+1%</button>
+                style={{ flex: 2, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌 +1</button>
               <button onClick={() => bumpGoal(g.id, 5)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+5%</button>
-              <button onClick={() => bumpGoal(g.id, 10)}
-                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: 'linear-gradient(135deg, var(--pink), var(--pd))', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+10% 🚀</button>
+                style={{ flex: 1, padding: '8px 0', borderRadius: 6, border: 'none', background: 'var(--pd)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+5</button>
             </div>
           </div>
         )

@@ -6,6 +6,7 @@ import { todayStr, pad } from '../../lib/date'
 import { signOutUser } from '../../lib/auth'
 import { isDevMode, setDevMode } from '../../lib/devMode'
 import { useBackClose } from '../../hooks/useBackClose'
+import { showConfirm } from '../../lib/showConfirm'
 
 interface Props {
   onClose: () => void
@@ -247,7 +248,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         ) : (
           <button
             onClick={async () => {
-              if (!confirm('로그아웃하면 이 기기에서는 로컬 데이터로만 작동해요. 계속할까요?')) return
+              if (!(await showConfirm('로그아웃하면 이 기기에서는 로컬 데이터로만 작동해요. 계속할까요?'))) return
               await signOutUser()
               onClose()
             }}
