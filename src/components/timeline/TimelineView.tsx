@@ -218,6 +218,22 @@ export function TimelineView() {
 
   return (
     <div className="tl-wrap">
+      {/* 호로스코프 바 — 3가지 상태 (날짜 바로 아래로 이동) */}
+      {horoscopeText ? (
+        <div
+          onClick={() => setShowBirthdayModal(true)}
+          style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 16px', lineHeight: 1.45, textAlign: 'center', cursor: 'pointer' }}
+          dangerouslySetInnerHTML={{ __html: horoscopeText }}
+        />
+      ) : horoscopeHint === 'no-birthday' ? (
+        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 16px', lineHeight: 1.45, textAlign: 'center' }}>
+          ⭐ <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>생일 입력하면 오늘의 운세를 볼 수 있어!</span>
+        </div>
+      ) : horoscopeHint === 'no-year' ? (
+        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 16px', lineHeight: 1.45, textAlign: 'center' }}>
+          🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
+        </div>
+      ) : null}
       {/* 사용 팁 — 그리드 위에 표시 (원본 tip-bar 위치) */}
       {!tipHidden && (
         <div style={{ margin: '8px 16px 0' }}>
@@ -234,22 +250,6 @@ export function TimelineView() {
           </div>
         </div>
       )}
-      {/* 호로스코프 바 — 3가지 상태 */}
-      {horoscopeText ? (
-        <div
-          onClick={() => setShowBirthdayModal(true)}
-          style={{ padding: '8px 16px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '8px 16px 0', lineHeight: 1.5, textAlign: 'center', cursor: 'pointer' }}
-          dangerouslySetInnerHTML={{ __html: horoscopeText }}
-        />
-      ) : horoscopeHint === 'no-birthday' ? (
-        <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '8px 16px 0', lineHeight: 1.5, textAlign: 'center' }}>
-          ⭐ <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>생일 입력하면 오늘의 운세를 볼 수 있어!</span>
-        </div>
-      ) : horoscopeHint === 'no-year' ? (
-        <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '8px 16px 0', lineHeight: 1.5, textAlign: 'center' }}>
-          🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
-        </div>
-      ) : null}
       {/* 너지 바 — 인라인, 원본 nudge-bar 위치 */}
       {nudgeBar && (
         <div style={{ padding: '10px 16px', fontSize: 12, color: '#fff', background: 'var(--pd)', borderRadius: 10, margin: '4px 16px 0', textAlign: 'center', lineHeight: 1.5 }}>
