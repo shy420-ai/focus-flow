@@ -58,14 +58,24 @@ export function CatEditModal({ onClose, onChange }: CatEditModalProps) {
               style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 26, height: 26, cursor: 'pointer', fontSize: 13 }}
             >✕</button>
             {editingColor === cat.name && (
-              <div style={{ position: 'absolute', left: 20, right: 20, background: '#fff', border: '2px solid var(--pink)', borderRadius: 12, padding: 10, zIndex: 9200, display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 4, boxShadow: '0 4px 20px rgba(0,0,0,.15)' }}>
-                {CAT_COLORS.map((c) => (
-                  <div
-                    key={c}
-                    onClick={() => handleColorChange(cat.name, c)}
-                    style={{ width: 28, height: 28, borderRadius: '50%', background: c, cursor: 'pointer', border: c === cat.color ? '3px solid #333' : '2px solid transparent' }}
-                  />
-                ))}
+              <div style={{ position: 'absolute', left: 20, right: 20, background: '#FAFAFA', border: '1px solid #EEE', borderRadius: 16, padding: 18, zIndex: 9200, marginTop: 4, boxShadow: '0 6px 24px rgba(0,0,0,.1)' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 14, justifyItems: 'center' }}>
+                  {CAT_COLORS.map((c) => {
+                    const selected = c === cat.color
+                    return (
+                      <div
+                        key={c}
+                        onClick={() => handleColorChange(cat.name, c)}
+                        style={{ position: 'relative', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+                      >
+                        <div style={{ width: 32, height: 32, borderRadius: '50%', background: c }} />
+                        {selected && (
+                          <div style={{ position: 'absolute', inset: 0, borderRadius: '50%', border: `2px solid ${c}`, pointerEvents: 'none' }} />
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
             )}
           </div>

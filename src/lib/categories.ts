@@ -3,8 +3,12 @@ import { DEFAULT_CATEGORIES } from '../constants/categories'
 
 const KEY = 'ff_cats'
 const CAT_COLORS = [
-  '#E8849D', '#5B7FFF', '#1D9E75', '#378ADD', '#C4A6D7',
-  '#F0D264', '#F4A261', '#E76F51', '#8DC8E8', '#7ECDB0',
+  '#F0A0A0', '#F4B8B0', '#F8CCC4', '#F4B098', '#FAD0BC', '#F8C8B0',
+  '#F4D880', '#F8E8A0', '#FCF4C8', '#9CD4B0', '#BCE0BC', '#D0E8C8',
+  '#B8E0CC', '#C8E0C4', '#DCEAEC', '#A0C4E8', '#BCD4F0', '#D0E0F4',
+  '#B0BCE8', '#C8D0E0', '#D8DCE0', '#B098C8', '#CCB8E8', '#DCC8EC',
+  '#C8B0DC', '#DCB8D0', '#E8CCDE', '#F0A0B0', '#F4BCC8', '#F8D0DC',
+  '#F4E8D8', '#E0D0B0', '#C8B0A0', '#B49C90', '#B0BCC8', '#7C8898',
 ]
 
 export function getCategories(): Category[] {
