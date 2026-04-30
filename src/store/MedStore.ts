@@ -150,8 +150,13 @@ registerHydrate((d: UserDoc) => {
   if (d.medConfig !== undefined) patch.config = d.medConfig as MedConfig | null
   if (d.medLogs) patch.logs = d.medLogs
   if (Object.keys(patch).length) useMedStore.setState(patch)
-  // Hydrate localStorage for birthday/nickname
+  // Hydrate birthday only — nickname is a user-controlled local preference,
+  // hydrating it from Firestore can stomp the value the user just typed in
+  // settings before the snapshot listener fires the new value back.
+  // Pull nickname only if local has nothing.
   if (d.birthday) localStorage.setItem('ff_birthday', d.birthday as string)
   if (d.birthyear) localStorage.setItem('ff_birthyear', String(d.birthyear))
-  if (d.nickname) localStorage.setItem('ff_nickname', d.nickname as string)
+  if (d.nickname && !localStorage.getItem('ff_nickname')) {
+    localStorage.setItem('ff_nickname', d.nickname as string)
+  }
 })
