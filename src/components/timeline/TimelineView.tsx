@@ -89,6 +89,7 @@ export function TimelineView() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [memoState, setMemoState] = useState<MemoSheetState | null>(null)
   const [editId, setEditId] = useState<string | null>(null)
+  const [newBlockId, setNewBlockId] = useState<string | null>(null)
   const [nudgeBar, setNudgeBar] = useState<{ text: string; type: string } | null>(null)
   const [tipHidden, setTipHidden] = useState(!!localStorage.getItem('ff_tip_hidden'))
   const [tlSettings, setTlSettings] = useState(loadTlSettings)
@@ -319,6 +320,7 @@ export function TimelineView() {
               deadline: null, priority: null,
             })
             setEditId(newId)
+            setNewBlockId(newId)
           }}
         >
           {/* Hour lines */}
@@ -391,13 +393,27 @@ export function TimelineView() {
       <AddBlockSheet
         isOpen={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        onQuickEmpty={(id) => { setSheetOpen(false); setTimeout(() => setEditId(id), 300) }}
+        onQuickEmpty={(id) => { setSheetOpen(false); setTimeout(() => { setEditId(id); setNewBlockId(id) }, 300) }}
       />
 
       {/* Edit block modal */}
       {editId && (() => {
         const b = blocks.find((x) => x.id === editId)
-        return b ? <EditBlockModal block={b} onClose={() => setEditId(null)} /> : null
+        return b ? (
+          <EditBlockModal
+            block={b}
+            onClose={() => { setEditId(null); setNewBlockId(null) }}
+            onCancel={() => {
+              const cur = useAppStore.getState().blocks.find((x) => x.id === editId)
+              const isUnmodifiedNew =
+                editId === newBlockId &&
+                cur && cur.name === '새 블록' && !cur.category && cur.durHour === 1 && !cur.memo
+              if (isUnmodifiedNew) useAppStore.getState().deleteBlock(editId)
+              setEditId(null)
+              setNewBlockId(null)
+            }}
+          />
+        ) : null
       })()}
 
       {/* Memo sheet */}
