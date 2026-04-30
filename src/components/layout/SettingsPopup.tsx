@@ -11,6 +11,8 @@ import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
 import { flushSync } from '../../lib/syncManager'
 import { getUserCount } from '../../lib/firestore'
+import { showPrompt } from '../../lib/showPrompt'
+import { tabIcon } from '../../lib/tabIcons'
 
 interface Props {
   onClose: () => void
@@ -115,8 +117,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
   }
 
-  function setCycleStart() {
-    const input = prompt('생리 시작일 (YYYY-MM-DD)', todayStr())
+  async function setCycleStart() {
+    const input = await showPrompt({ msg: '생리 시작일 (YYYY-MM-DD)', defaultValue: todayStr() })
     if (!input || !/^\d{4}-\d{2}-\d{2}$/.test(input.trim())) return
     const base = cycleData || { starts: [], avgCycle: 28 }
     const starts = [...base.starts, input.trim()].sort()
@@ -135,8 +137,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     window.dispatchEvent(new CustomEvent('ff-cycle-changed'))
   }
 
-  function setCycleEnd() {
-    const input = prompt('생리 종료일 (YYYY-MM-DD)', todayStr())
+  async function setCycleEnd() {
+    const input = await showPrompt({ msg: '생리 종료일 (YYYY-MM-DD)', defaultValue: todayStr() })
     if (!input || !/^\d{4}-\d{2}-\d{2}$/.test(input.trim())) return
     const base = cycleData || { starts: [], avgCycle: 28 }
     const newData = { ...base, lastEnd: input.trim() }
@@ -254,13 +256,19 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
 
       {/* 탭 관리 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
+      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>
+        💡 탭을 길게 눌러 드래그하면 순서 바꿀 수 있어
+      </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
         {ALL_TABS.map((t) => {
           const on = !hiddenTabs.includes(t.id)
           return (
             <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
-              <span style={{ fontSize: 12, color: '#333' }}>{t.label}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: on ? 'var(--pd)' : '#999' }}>
+                <span style={{ display: 'inline-flex', color: on ? 'var(--pink)' : '#bbb' }}>{tabIcon(t.id)}</span>
+                {t.label}
+              </span>
               <button
                 onClick={() => toggleTab(t.id)}
                 style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: on ? 'var(--pink)' : '#ddd', position: 'relative', transition: 'background .2s', padding: 0 }}

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { showConfirm } from '../../lib/showConfirm'
+import { showPrompt } from '../../lib/showPrompt'
 import { isDevMode } from '../../lib/devMode'
 import { SprintBoard } from '../dev/SprintBoard'
 import {
@@ -94,8 +95,8 @@ function QuarterContent({ goalId, qi, isCur }: QuarterContentProps) {
     setTaskInput('')
   }
 
-  function editTitle() {
-    const v = prompt(Q_LABELS[qi] + ' 목표:', qTitle)
+  async function editTitle() {
+    const v = await showPrompt({ msg: Q_LABELS[qi] + ' 목표', defaultValue: qTitle })
     if (v !== null) editQTitle(goalId, qi, v.trim())
   }
 
@@ -302,8 +303,8 @@ export function GoalsView() {
             {/* Goal header */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span style={{ fontSize: 16 }}>🎯</span>
-              <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => {
-                const v = prompt('올해 목표:', g.text)
+              <div style={{ flex: 1, cursor: 'pointer' }} onClick={async () => {
+                const v = await showPrompt({ msg: '올해 목표', defaultValue: g.text })
                 if (v !== null && v.trim()) editYearGoalText(g.id, v.trim())
               }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', ...(allDone ? { textDecoration: 'line-through', opacity: .5 } : {}) }}>{g.text}</div>

@@ -25,29 +25,30 @@ export function DateNav() {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '4px 16px 2px', position: 'relative' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '4px 16px 2px', position: 'relative' }}>
       <button
         onClick={() => nav(-1)}
-        style={{ background: 'var(--pl)', border: 'none', width: 38, height: 38, borderRadius: '50%', fontSize: 20, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{ background: 'var(--pl)', border: 'none', width: 38, height: 38, borderRadius: '50%', fontSize: 20, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
       >‹</button>
 
-      <div
-        style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', flex: 1, justifyContent: 'center' }}
-        onClick={() => setShowPicker((o) => !o)}
-      >
-        <span>📅</span>
-        <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--pd)' }}>{dateLabel(curDate)}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div
+          style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
+          onClick={() => setShowPicker((o) => !o)}
+        >
+          <span>📅</span>
+          <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--pd)' }}>{dateLabel(curDate)}</span>
+        </div>
+        <button
+          onClick={() => setCurDate(today)}
+          style={{ background: 'var(--pl)', border: '1.5px solid var(--pink)', borderRadius: 8, fontSize: 10, color: 'var(--pd)', padding: '3px 8px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, opacity: curDate === today ? 0.4 : 1 }}
+        >오늘</button>
       </div>
 
       <button
         onClick={() => nav(1)}
-        style={{ background: 'var(--pl)', border: 'none', width: 38, height: 38, borderRadius: '50%', fontSize: 20, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{ background: 'var(--pl)', border: 'none', width: 38, height: 38, borderRadius: '50%', fontSize: 20, cursor: 'pointer', color: 'var(--pd)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
       >›</button>
-
-      <button
-        onClick={() => setCurDate(today)}
-        style={{ background: 'var(--pl)', border: '1.5px solid var(--pink)', borderRadius: 8, fontSize: 10, color: 'var(--pd)', padding: '4px 10px', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}
-      >오늘</button>
 
       {showPicker && (
         <div

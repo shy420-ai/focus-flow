@@ -3,6 +3,7 @@ import { useAppStore } from '../../store/AppStore'
 import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
+import { showPrompt } from '../../lib/showPrompt'
 import type { UserDoc } from '../../lib/firestore'
 
 interface Friend {
@@ -167,7 +168,7 @@ export function FriendsPanel({ onClose }: Props) {
   const myName = localStorage.getItem('ff_nickname') || displayName || '익명'
 
   async function addFriend() {
-    const code = prompt('친구의 공유 코드를 입력해:')
+    const code = await showPrompt('친구의 공유 코드를 입력해:')
     if (!code?.trim()) return
     const trimmed = code.trim().toUpperCase()
     if (!uid) { alert('로그인이 필요해요!'); return }

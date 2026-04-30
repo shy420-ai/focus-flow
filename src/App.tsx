@@ -14,6 +14,7 @@ import { StatsView } from './components/stats/StatsView'
 import { Onboarding } from './components/onboarding/Onboarding'
 import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
+import { PromptModal } from './components/ui/PromptModal'
 import { DoneToast } from './components/timeline/DoneToast'
 import { Confetti } from './components/ui/Confetti'
 import { useAppStore } from './store/AppStore'
@@ -93,6 +94,7 @@ function AppContent() {
       {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
       <MiniToast />
       <ConfirmModal />
+      <PromptModal />
       {doneToast !== null && <DoneToast blockId={doneToast} onClose={() => setDoneToast(null)} />}
       {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
     </>

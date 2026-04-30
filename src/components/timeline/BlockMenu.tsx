@@ -1,6 +1,7 @@
 import type { Block } from '../../types/block'
 import { useAppStore } from '../../store/AppStore'
 import { showConfirm } from '../../lib/showConfirm'
+import { showPrompt } from '../../lib/showPrompt'
 
 interface BlockMenuProps {
   block: Block
@@ -32,7 +33,7 @@ export function BlockMenu({ block, onClose, onMemo, onEdit }: BlockMenuProps) {
             ✓ 완료
           </button>
         )}
-        <button className="bmb" onClick={(e) => { stop(e); const n = prompt('이름 수정:', recurTask?.name || block.name); if (n?.trim()) updateRecurringName(block.recurId!, n.trim()); onClose() }}>
+        <button className="bmb" onClick={async (e) => { stop(e); const n = await showPrompt({ msg: '이름 수정', defaultValue: recurTask?.name || block.name }); if (n?.trim()) updateRecurringName(block.recurId!, n.trim()); onClose() }}>
           수정
         </button>
         <button className="bmb bmb-del" onClick={(e) => { stop(e); skipRecurring(block.recurId!, block.date); onClose() }}>
