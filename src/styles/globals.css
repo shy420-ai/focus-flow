@@ -351,8 +351,8 @@ body {
 .drop-input { flex: 1; border: 1.5px solid var(--pink); border-radius: 12px; padding: 12px 14px; font-size: 14px; color: #333; font-family: inherit; outline: none; background: #fff; line-height: 1.2; box-sizing: border-box; }
 .drop-input::placeholder { color: #ccc; }
 .drop-add-btn { width: 44px; height: 44px; border-radius: 12px; background: var(--pink); border: none; color: #fff; font-size: 22px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
-.drop-actions { display: flex; gap: 8px; margin-bottom: 16px; align-items: center; }
-.drop-action-btn { padding: 8px 14px; border-radius: 10px; border: 1.5px solid var(--pink); background: #fff; color: var(--pd); font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; }
+.drop-actions { display: flex; gap: 6px; margin-bottom: 16px; align-items: center; flex-wrap: wrap; }
+.drop-action-btn { padding: 6px 10px; border-radius: 10px; border: 1.5px solid var(--pink); background: #fff; color: var(--pd); font-size: 11px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
 .drop-item { display: flex; align-items: center; gap: 10px; padding: 12px; background: #fff; border-radius: 12px; margin-bottom: 8px; border-left: 4px solid var(--pink); transition: all .2s; }
 .drop-item.done { opacity: .4; border-left-color: #ccc; }
 .drop-item .drop-check { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--pink); background: none; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--pink); font-family: inherit; }
