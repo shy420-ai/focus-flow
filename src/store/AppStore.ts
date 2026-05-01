@@ -274,14 +274,20 @@ export const useAppStore = create<AppStore>()(
 // ── Firestore sync registration ──────────────────────────────────────────────
 
 registerCollect(() => {
-  const friends = localStorage.getItem('ff_friends')
+  // Only include friends when this device actually has some, so a fresh
+  // device with an empty list can't push '[]' and erase the other
+  // device's saved friends.
+  const friendsRaw = localStorage.getItem('ff_friends')
+  let friendsParsed: Array<{ uid: string; code: string; name: string }>
+  try { friendsParsed = friendsRaw ? JSON.parse(friendsRaw) : [] } catch { friendsParsed = [] }
+  const friendsOk = Array.isArray(friendsParsed) && friendsParsed.length > 0
   const metrics = localStorage.getItem('ff_metrics')
   const metricLogs = localStorage.getItem('ff_metricLogs')
   const mandala = localStorage.getItem('ff_mandala')
   return {
     tasks: useAppStore.getState().blocks,
     recurring: useAppStore.getState().recurring,
-    ...(friends ? { friends: JSON.parse(friends) } : {}),
+    ...(friendsOk ? { friends: friendsParsed } : {}),
     ...(metrics ? { metrics: JSON.parse(metrics) } : {}),
     ...(metricLogs ? { metricLogs: JSON.parse(metricLogs) } : {}),
     ...(mandala ? { mandala: JSON.parse(mandala) } : {}),

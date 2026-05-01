@@ -111,7 +111,7 @@ function applyRemote(d: UserDoc) {
   if (d.quickMemo !== undefined) {
     try { localStorage.setItem('ff_quickMemo', d.quickMemo as string) } catch { /* ignore */ }
   }
-  if (d.friends) {
+  if (Array.isArray(d.friends) && d.friends.length > 0) {
     try { localStorage.setItem('ff_friends', JSON.stringify(d.friends)) } catch { /* ignore */ }
   }
   if (d.medConfig !== undefined) {

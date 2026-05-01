@@ -4,6 +4,7 @@ import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc } from '.
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showPrompt } from '../../lib/showPrompt'
+import { flushSync } from '../../lib/syncManager'
 import { computeStreak } from '../../lib/habitStreak'
 import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
 import { showMiniToast } from '../../lib/miniToast'
@@ -379,6 +380,9 @@ export function FriendsPanel({ onClose }: Props) {
       saveFriendsLocal(newFriends)
       setFriends(newFriends)
       await setShareCode(uid, myCode!)
+      // Push the new friend to Firestore immediately so a refresh (or the
+      // other device) can't roll us back to the old empty list.
+      await flushSync()
     } catch (e) {
       alert('에러: ' + String(e))
     }
@@ -388,6 +392,7 @@ export function FriendsPanel({ onClose }: Props) {
     const updated = friends.filter((f) => f.uid !== friendUid)
     saveFriendsLocal(updated)
     setFriends(updated)
+    flushSync().catch(() => { /* offline ok */ })
   }
 
   return (
