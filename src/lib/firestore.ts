@@ -24,7 +24,7 @@ import type { DropItem } from '../types/drop'
 import type { Roadmap, GoalEntries } from '../types/goal'
 import type { MedLog } from '../types/med'
 
-function getDb() {
+export function getDb() {
   return getFirestore(getFirebaseApp())
 }
 
