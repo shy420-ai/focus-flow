@@ -398,6 +398,111 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
     flushSync().catch(() => { /* offline ok */ })
   }
 
+  // Embedded (tab) view: horizontal avatar bar at top, friend detail below.
+  // No "보기" button — tapping an avatar switches the panel directly.
+  if (embedded && uid) {
+    const myAvatarLocal = (typeof window !== 'undefined' && localStorage.getItem('ff_avatar')) || '🧸'
+    const selectedFriend = viewingFriend && friends.find((f) => f.uid === viewingFriend.uid) ? viewingFriend : null
+    return (
+      <div style={{ padding: '12px 12px 120px', maxWidth: 480, margin: '0 auto' }}>
+        {/* Horizontal friend bar */}
+        <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '4px 4px 12px', marginBottom: 8 }}>
+          {/* My profile tab */}
+          <button
+            onClick={() => setViewingFriend(null)}
+            style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          >
+            <div style={{ width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: selectedFriend === null ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
+              <Avatar value={myAvatarLocal} size={52} />
+            </div>
+            <div style={{ fontSize: 9, color: selectedFriend === null ? 'var(--pink)' : '#888', fontWeight: 700, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>나</div>
+          </button>
+          {/* Friend tabs */}
+          {friends.map((f) => {
+            const fStatus = friendStatuses[f.uid]
+            const isSel = selectedFriend?.uid === f.uid
+            const status = activeStatus(fStatus?.lastActiveAt)
+            const av = fStatus?.avatar || '🧸'
+            const nm = fStatus?.nickname || f.name
+            return (
+              <button
+                key={f.uid}
+                onClick={() => setViewingFriend(f)}
+                style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+              >
+                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: isSel ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
+                  <Avatar value={av} size={52} />
+                  {status.live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
+                </div>
+                <div style={{ fontSize: 9, color: isSel ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nm}</div>
+              </button>
+            )
+          })}
+          {/* Add button */}
+          <button
+            onClick={addFriend}
+            style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          >
+            <div style={{ width: 52, height: 52, borderRadius: 26, background: '#fff', border: '2px dashed #ddd', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, color: '#bbb' }}>+</div>
+            <div style={{ fontSize: 9, color: '#888', fontWeight: 600 }}>추가</div>
+          </button>
+        </div>
+
+        {/* Detail area */}
+        {selectedFriend ? (
+          <FriendDetail
+            key={selectedFriend.uid}
+            uid={selectedFriend.uid}
+            name={selectedFriend.name}
+            myUid={uid}
+            onBack={() => setViewingFriend(null)}
+          />
+        ) : (
+          <div>
+            {/* My profile / received guestbook / share code */}
+            {myGuestbook.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💌 받은 응원 ({myGuestbook.length})</div>
+                <div style={{ maxHeight: 220, overflowY: 'auto' }}>
+                  {[...myGuestbook].reverse().slice(0, 20).map((g, i) => {
+                    const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
+                    return (
+                      <div key={i} style={{ background: unread ? '#FFF6F8' : '#fff', borderRadius: 10, padding: '8px 10px', marginBottom: 6, border: '1px solid ' + (unread ? 'var(--pink)' : '#f0f0f0') }}>
+                        <div style={{ fontSize: 10, color: '#aaa' }}>
+                          {unread && <span style={{ color: 'var(--pink)', fontWeight: 700, marginRight: 4 }}>● NEW</span>}
+                          {g.from} · {g.date} {g.time}
+                        </div>
+                        <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>{g.text}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+            <div style={{ background: 'var(--pl)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
+              <div style={{ fontSize: 11, color: '#aaa', marginBottom: 4 }}>내 공유 코드</div>
+              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--pd)', letterSpacing: 4 }}>{myCode}</div>
+              <button
+                onClick={async () => {
+                  if (!myCode) return
+                  const ok = await copyToClipboard(myCode)
+                  showMiniToast(ok ? '📋 코드 복사 완료' : '😢 복사 실패')
+                }}
+                style={{ marginTop: 10, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--pink)', background: '#fff', color: 'var(--pink)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+              >📋 코드 복사하기</button>
+              <div style={{ fontSize: 10, color: '#bbb', marginTop: 8 }}>친구에게 이 코드 알려주면 친구가 추가할 수 있어</div>
+            </div>
+            {friends.length > 0 && (
+              <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginTop: 14 }}>
+                💡 위 아바타 눌러서 친구 화면 바로 볼 수 있어
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
+  }
+
   const inner = (
       <div style={embedded
         ? { padding: '16px 16px 120px', maxWidth: 480, margin: '0 auto' }
