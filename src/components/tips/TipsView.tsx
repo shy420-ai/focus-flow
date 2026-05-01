@@ -7,6 +7,7 @@ import { ArchiveSection } from './ArchiveSection'
 import { TipsLockScreen } from './TipsLockScreen'
 import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsViewLimit'
 import { loadBookmarks, toggleBookmark } from '../../lib/tipBookmarks'
+import { tipCategoryIcon } from './tipCategoryIcons'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
 const CATS: TipCategory[] = ['bookmarks', 'start', 'study', 'mood', 'record', 'social', 'body', 'sleep', 'archive']
@@ -89,28 +90,33 @@ export function TipsView() {
               onClick={() => setActive(c)}
               style={{
                 flexShrink: 0,
-                padding: '8px 14px',
+                padding: '7px 14px',
                 borderRadius: 99,
                 border: '1.5px solid ' + (on ? m.color : '#eee'),
                 background: on ? `color-mix(in srgb, ${m.color} 18%, #fff)` : '#fff',
-                color: on ? 'var(--pd)' : '#666',
+                color: on ? m.color : '#888',
                 fontSize: 12,
                 fontWeight: on ? 700 : 600,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
                 whiteSpace: 'nowrap',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
               }}
             >
-              <span style={{ marginRight: 4 }}>{m.emoji}</span>
-              {m.label}
+              <span style={{ display: 'inline-flex', color: on ? m.color : '#bbb' }}>
+                {tipCategoryIcon(c)}
+              </span>
+              <span style={{ color: on ? 'var(--pd)' : '#666' }}>{m.label}</span>
             </button>
           )
         })}
       </div>
 
       {/* Active category header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '0 2px' }}>
-        <span style={{ fontSize: 13 }}>{meta.emoji}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '0 2px' }}>
+        <span style={{ display: 'inline-flex', color: meta.color }}>{tipCategoryIcon(active)}</span>
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)' }}>{meta.label}</span>
         {active !== 'archive' && (
           <span style={{ background: `color-mix(in srgb, ${meta.color} 25%, #fff)`, color: 'var(--pd)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>

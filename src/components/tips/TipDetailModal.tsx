@@ -5,6 +5,7 @@ import { CATEGORY_META } from '../../data/adhdTips'
 import { listenTipFeedback, setLike, addComment, deleteComment, setCommentReaction, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
 import { recordTipView } from '../../lib/tipsViewLimit'
 import { isBookmarked, toggleBookmark } from '../../lib/tipBookmarks'
+import { tipCategoryIcon } from './tipCategoryIcons'
 import type { AdhdTip } from '../../types/adhdTip'
 
 interface Props {
@@ -96,8 +97,8 @@ export function TipDetailModal({ tip, onClose }: Props) {
     >
       <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 -8px 32px rgba(0,0,0,.18)' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14 }}>{meta.emoji}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ display: 'inline-flex', color: meta.color }}>{tipCategoryIcon(tip.category)}</span>
             <span style={{ fontSize: 11, color: meta.color, fontWeight: 700 }}>{meta.label}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>

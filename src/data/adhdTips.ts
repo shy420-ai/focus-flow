@@ -997,6 +997,208 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Kredlow et al. (2015) Exercise on sleep meta-analysis; Sleep Foundation',
     tags: ['수면', '운동', '저녁'],
   },
+
+  // ── 📝 기록 ────────────────────────────────────────────
+  {
+    id: 'mistake-memo',
+    title: '실수 자주 반복할 때 1줄 메모',
+    category: 'record',
+    summary: '날짜 / 실수 / 상황 / 예방 — 3줄 넘기지 마.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '같은 실수 반복인데 패턴 안 보임 → "왜 또 이러지" 자책만.\n길게 쓰면 다음엔 안 씀 → 데이터 0.\n자책 모드로 적으면 수치심 일기장 됨 → 우울 가속.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '1줄만. 3줄 넘기지 마.\n"날짜 / 실수 / 상황 / 예방" 4칸 템플릿.\n자책 X → 패턴 찾기 ⭕.\n2주 쌓이면 너의 핫스팟 발견.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 5/1 카드 분실 / 카페 결제 후 / 페이만 쓰자\n• 5/1 환승역 지나침 / 폰 영상 보다가 / 알람 ON\n• 4/30 약속 까먹음 / 회의 후 바로 잊음 / 캘린더 의존\n• 태그 4개 분류: #시간 #물건 #감정 #공간\n• 일요일 5분 리뷰 → 반복 패턴 1개만 시스템화\n• 1회성 사고는 무시 (ADHD는 가끔 사고 침)\n• 덤프 탭에 "실수 메모" 카테고리 활용',
+      },
+    ],
+    source: 'CBT thought record (Beck); pattern log methodology',
+    tags: ['기록', '실수', '패턴'],
+  },
+  {
+    id: 'time-log',
+    title: '시간 왜곡 보정 타임 로그',
+    category: 'record',
+    summary: '"샤워 30분 걸렸음" 한 가지만 1주일 → 계획 현실적으로.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD = "시간에 대한 근시" (Barkley).\n샤워 10분이면 될 줄 알고 → 실제 30분.\n약속 항상 늦음, 마감 항상 못 맞춤.\n예측이 계속 빗나가는데 데이터 없으니 학습 X.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '한 가지 활동만 골라 1주일 실측.\n"예상 시간 vs 실제 시간" 두 칸만.\n쌓이면 본인 시간 감각 ↔ 현실 차이 명확히 보임.\n다음 계획 시 그 데이터로 현실 보정.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 1주일: 출근 준비 시간 → "예상 30분, 실제 50분"\n• 다음 주: 다른 활동 → 이메일 답장 시간\n• 일주일 평균 = 너의 진짜 시간\n• 계획 세울 때 "내 예상 + 1.5배" 룰 적용\n• 메모장·시계 앱·스톱워치 다 OK\n• 일기 탭 메모에 "샤워 30분 걸림" 한 줄도 충분\n• 2주 후 → "내가 30분 일찍 시작해야겠다" 자연스러운 보정',
+      },
+    ],
+    source: 'Russell Barkley (2014) ADHD and time blindness',
+    tags: ['기록', '시간', '계획'],
+  },
+  {
+    id: 'i-did-list',
+    title: 'To-Do 압박될 때 I DID 리스트',
+    category: 'record',
+    summary: '못한 거 ❌ → 한 거 ⭕. 도파민 보상 회로 자극.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 뇌는 못한 거에 100% 집중하는 디폴트.\nTo-Do 리스트 = 끝나지 않은 게 부담.\n매일 자려고 누워도 "오늘 아무것도 못했어" 자책.\n실제론 많이 했는데 인식 ↓.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: 'To-Do 말고 Done 리스트 (I DID).\n끝낸 거만 적어. 작은 것도 다.\n도파민 보상 회로 활성화 — 행동 치료 / 긍정 심리학 입증.\n자존감 회복 + 다음날 동기 부여.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 오후 5시 알람 → 1분 동안 "오늘 한 거" 적기\n• 작은 것도 카운트: 점심 챙김·약 먹음·답장 1개·5분 산책\n• 7개 적으면 "오늘 아무것도 안 했다" 환상 깨짐\n• 일기 탭 메모에 "오늘 한 거" 한 줄\n• 친구한테 매일 1개씩 공유 (소셜 강화)\n• 한 주 끝에 모아보면 → 진짜 많이 했음 보임\n• 우울 시즌 = 더 자주 (작은 거라도 카운트)',
+      },
+    ],
+    source: 'Behavioral Activation Therapy; Positive Psychology (Seligman)',
+    tags: ['기록', '자존감', '도파민'],
+  },
+  {
+    id: 'weekly-review',
+    title: '매일 똑같이 살 것 같을 때 1주 회고',
+    category: 'record',
+    summary: '5분만 — 잘된 거 1개 / 패턴 1개 / 다음주 시도 1개.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '주중 정신없이 흘러감 → 한 달이 한 주 같음.\n"이번주 뭐 했지?" 기억 X → 성장 인식 0 → 무기력.\n매일 일기는 부담 → 거의 안 쓰게 됨.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '주 1회만 5분 회고.\n3가지: 잘된 거 1개 / 패턴 1개 / 다음주 시도 1개.\n매일 X — 일요일 밤 / 월요일 아침 정해진 시간.\n6주 쌓이면 너의 진짜 패턴 보임.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 일요일 밤 9시 알람 → 5분 회고\n• Q1: 잘된 거 1개 → "수요일 발표 잘함"\n• Q2: 패턴 1개 → "오후 4시 + 카페인 = 짜증 폭발"\n• Q3: 다음주 시도 1개 → "오후 카페인 줄이기"\n• 일기 탭에 "주간 회고" 메모 카테고리\n• 친구·파트너랑 같이 회고 (서로 들어주기)\n• Bullet Journal "Weekly Review" 페이지\n• 6주 후 → 패턴 보고 본인 변화 인식',
+      },
+    ],
+    source: 'David Allen (2001) Getting Things Done; Bullet Journal weekly review',
+    tags: ['기록', '회고', '주간'],
+  },
+  {
+    id: 'one-line-journal',
+    title: '일기 부담될 때 1줄 일기',
+    category: 'record',
+    summary: '"오늘 어땠어?" 한 줄. 매일 → 6주 후 패턴 보임.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '일기 쓰겠다 결심 → 첫날 1페이지 → 둘째날 X → 안 씀.\n매일 길게 쓰는 건 ADHD에 거의 불가능.\n근데 안 쓰면 본인 패턴·기분·성장 데이터 0.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '1줄만. 진짜 1줄.\n"오늘 어땠어?" 한 줄 답.\n맞춤법·문장 X. 키워드만이라도.\n매일 같은 시간 30초 → 6주 후 패턴 폭발적으로 보임.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 잠 자기 전 30초 알람 → 1줄 적기\n• 예: "발표 잘했음, 그래도 피곤" / "감기 걸림" / "친구랑 다툼"\n• 일기 탭 슬라이더 + 한 줄 메모로 자동\n• 5분짜리 일기 X — 30초가 핵심\n• 빈 칸 며칠 OK — 다음 날 다시 시작\n• 한 달 모아보면 패턴 (수요일 항상 우울 등) 발견\n• 한 줄 + 슬라이더 = 자동 그래프로 시각화',
+      },
+    ],
+    source: 'Pennebaker expressive writing; minimum viable journal',
+    tags: ['기록', '일기', '습관'],
+  },
+  {
+    id: 'capture-system',
+    title: '아이디어 자주 잊을 때 30초 캡처',
+    category: 'record',
+    summary: '떠오르는 거 30초 안에 적기. 잊기 전에.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 뇌는 통찰·아이디어·중요한 생각이 자주 떠오름.\n근데 작업기억 짧아서 30초 만에 사라짐.\n"이 아이디어 좋았는데..." 후회 → 다시 안 떠올라서 좌절.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '떠오르는 즉시 30초 안에 적기.\n어떤 형식이든 OK — 메모·음성·사진 다.\n뇌가 "저장됐다" 인식하면 다음 생각으로 넘어감.\n나중에 정리는 별개 — 일단 캡처.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 폰 메모장 단축 — 잠금화면에서 한 번에 열리게\n• 시리/구글: "메모 — [내용]" 음성 캡처\n• 카카오톡 "나에게 보내기" 가장 빠름\n• 운전 중 → 음성 메모만\n• 덤프 탭에 즉시 (앱 안에서 캡처)\n• 화장실에 작은 메모지 (떠오르는 곳)\n• 잠 들기 전 침대 옆 종이 (잠 직전 통찰 많음)\n• 1주일에 한 번 캡처한 거 정리 (별개 활동)',
+      },
+    ],
+    source: 'David Allen (2001) GTD capture habit; Barkley externalization',
+    tags: ['기록', '아이디어', '캡처'],
+  },
+  {
+    id: 'visual-tracker',
+    title: '진척 안 보일 때 시각 트래커',
+    category: 'record',
+    summary: '습관 매일 ✓ → 30일 후 줄 보면서 자존감 회복.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '습관 만들고 싶은데 진척이 안 보임 → 동기 ↓.\n"내가 며칠 했지?" 기억 X.\n며칠 빠지면 "다 망쳤어" 모드 → 그만둠.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '시각 트래커 — 매일 ✓ 또는 X.\n선이 길어지는 거 시각으로 보면 강력한 도파민.\n며칠 빠져도 OK — 그래프 끊지 않고 다시 시작.\nSeinfeld의 "Don\'t break the chain" 기법.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• A4 용지에 30칸 그리고 매일 ✓\n• 습관 탭 활용 (스트릭 자동 계산)\n• 30일 후 → 빨간 줄 모아보고 자존감 회복\n• 며칠 빠져도 다음날 다시 — 0 만들지 마\n• 색깔 다르게 (월화 파랑·수목 초록 등) → 패턴 더 잘 보임\n• 친구한테 매일 사진 공유 (소셜 강화)\n• 너무 많은 습관 X → 1~2개만 (ADHD엔 한 번에 많은 거 부담)',
+      },
+      ],
+    source: 'Seinfeld "Don\'t break the chain"; Habit Loop (Duhigg)',
+    tags: ['기록', '습관', '시각'],
+  },
+  {
+    id: 'visual-journal',
+    title: '글로 못 적을 때 사진·낙서 일기',
+    category: 'record',
+    summary: 'ADHD 시각형엔 글보다 이미지가 잘 남음.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '글로 일기 쓰는 게 너무 부담 → 매번 포기.\nADHD인 70%가 시각·공간 우세형 — 글보다 이미지에 강함.\n근데 일기 = 글이라는 고정관념 때문에 시도 자체 X.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '글로 안 적어도 OK.\n사진·낙서·만화·다이어그램 다 일기.\nDual Coding Theory: 시각 + 의미 결합이 글만보다 기억 정착 ↑.\n자기에게 맞는 형식이 가장 좋은 일기.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 매일 1장 사진 (인스타 X 본인 폴더) — 그날의 한 장면\n• 낙서·만화로 그날 기분 표현 (스틱맨도 OK)\n• 마인드맵 일기 — 가운데 오늘 / 가지 뻗기\n• 색깔로 기분 표현 (빨강 = 짜증, 파랑 = 평온)\n• 이모티콘 일기 — 5개 이모지로 하루 요약\n• 일기 탭 imageUrl 활용 — 사진 + 한 줄 메모\n• 일주일 모아보면 시각으로 한 주 패턴 보임',
+      },
+    ],
+    source: 'Paivio Dual Coding Theory; visual journaling research',
+    tags: ['기록', '시각', '일기'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
