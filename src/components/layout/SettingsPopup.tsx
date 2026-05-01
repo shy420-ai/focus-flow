@@ -14,9 +14,9 @@ import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { AVATAR_OPTIONS, getAvatar, setAvatar } from '../../lib/avatar'
-import { fileToAvatarDataUrl } from '../../lib/avatarUpload'
 import { getBio, setBio } from '../../lib/bio'
 import { Avatar } from '../ui/Avatar'
+import { AvatarCropModal } from '../ui/AvatarCropModal'
 import { resetXp, getXp, getLevel } from '../../lib/xp'
 import { AdhdGuideModal } from '../ui/AdhdGuideModal'
 
@@ -80,6 +80,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [cycleData, setCycleData] = useState(() => loadCycleData())
   const [avatar, setAvatarState] = useState<string>(getAvatar())
   const [bio, setBioState] = useState<string>(getBio())
+  const [emojiOpen, setEmojiOpen] = useState(false)
+  const [cropFile, setCropFile] = useState<File | null>(null)
 
   function handleTheme(name: ThemeName) {
     applyTheme(name)
@@ -217,17 +219,9 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
               type="file"
               accept="image/*"
               style={{ display: 'none' }}
-              onChange={async (e) => {
+              onChange={(e) => {
                 const file = e.target.files?.[0]
-                if (!file) return
-                try {
-                  const dataUrl = await fileToAvatarDataUrl(file)
-                  setAvatar(dataUrl)
-                  setAvatarState(dataUrl)
-                  showMiniToast('✅ 사진 변경 완료')
-                } catch (err) {
-                  showMiniToast('❌ ' + (err instanceof Error ? err.message : '실패'))
-                }
+                if (file) setCropFile(file)
                 e.target.value = ''
               }}
             />
@@ -260,17 +254,25 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
       <div style={{ fontSize: 9, color: '#bbb', marginBottom: 4, textAlign: 'right' }}>{bio.length}/80</div>
 
-      {/* 아바타 이모지 (사진 안 쓸 때 옵션) */}
-      <div style={{ fontSize: 10, color: '#888', marginBottom: 4, marginTop: 8 }}>또는 이모지 선택</div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4, marginBottom: 8 }}>
-        {AVATAR_OPTIONS.map((emo) => (
-          <button
-            key={emo}
-            onClick={() => { setAvatar(emo); setAvatarState(emo); showMiniToast('✅ 아바타 변경') }}
-            style={{ aspectRatio: '1', border: '1.5px solid ' + (avatar === emo ? 'var(--pink)' : '#eee'), background: avatar === emo ? 'var(--pl)' : '#fff', borderRadius: 8, fontSize: 18, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-          >{emo}</button>
-        ))}
-      </div>
+      {/* 아바타 이모지 (사진 안 쓸 때 옵션 — 접힘) */}
+      <button
+        onClick={() => setEmojiOpen((o) => !o)}
+        style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: '1px dashed #ddd', background: '#fff', color: '#888', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginTop: 8, marginBottom: emojiOpen ? 6 : 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+      >
+        <span>또는 이모지 선택</span>
+        <span>{emojiOpen ? '▲' : '▼'}</span>
+      </button>
+      {emojiOpen && (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4, marginBottom: 8 }}>
+          {AVATAR_OPTIONS.map((emo) => (
+            <button
+              key={emo}
+              onClick={() => { setAvatar(emo); setAvatarState(emo); showMiniToast('✅ 아바타 변경') }}
+              style={{ aspectRatio: '1', border: '1.5px solid ' + (avatar === emo ? 'var(--pink)' : '#eee'), background: avatar === emo ? 'var(--pl)' : '#fff', borderRadius: 8, fontSize: 18, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >{emo}</button>
+          ))}
+        </div>
+      )}
 
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12, lineHeight: 1.5 }}>
         💡 닉네임·프사는 🏆 순위와 친구 화면에 표시돼
@@ -429,6 +431,18 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
     </div>
     {showGuide && <AdhdGuideModal onClose={() => setShowGuide(false)} />}
+    {cropFile && (
+      <AvatarCropModal
+        file={cropFile}
+        onCancel={() => setCropFile(null)}
+        onConfirm={(dataUrl) => {
+          setAvatar(dataUrl)
+          setAvatarState(dataUrl)
+          setCropFile(null)
+          showMiniToast('✅ 사진 변경 완료')
+        }}
+      />
+    )}
     </div>
   )
 }
