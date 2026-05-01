@@ -179,7 +179,7 @@ export function SprintBoard() {
     const completed: CompletedSprint = { startDate: sprint.startDate, endDate: todayStr(), goals: sprint.goals, overall: sprintOverall(sprint) }
     setHistory([...history, completed])
     setSprint(null)
-    const result = addXp(100)
+    const result = addXp(50)
     setXp(result.newXp)
     if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
   }
@@ -330,15 +330,16 @@ export function SprintBoard() {
     if (delta > 0) {
       window.dispatchEvent(new CustomEvent('ff-block-done', { detail: 'sprint:' + id }))
     }
-    // Lifetime XP: 5 per unit (positive or negative)
-    let xpDelta = 5 * (next - cur)
+    // Lifetime XP: 1 per unit (positive or negative). Was 5; way too
+    // generous when % goals racked up 50+ clicks per session.
+    let xpDelta = 1 * (next - cur)
     // Milestone bonus when crossing target (only the actual crossing earns/refunds)
     if (g.target > 0) {
       if (cur < g.target && next >= g.target) {
-        xpDelta += 50
-        showMiniToast('🏆 목표 달성! +50 XP 보너스')
+        xpDelta += 30
+        showMiniToast('🏆 목표 달성! +30 XP 보너스')
       } else if (cur >= g.target && next < g.target) {
-        xpDelta -= 50  // refund the bonus when undoing past the target line
+        xpDelta -= 30  // refund the bonus when undoing past the target line
       }
     }
     if (xpDelta === 0) return
