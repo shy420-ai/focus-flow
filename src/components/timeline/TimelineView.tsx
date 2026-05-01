@@ -9,6 +9,7 @@ import { getHoroscopeText } from '../../lib/saju'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
 import { CopyDayModal } from './CopyDayModal'
+import { useDraggableFab } from '../../hooks/useDraggableFab'
 import { useBackClose } from '../../hooks/useBackClose'
 import { isDevMode } from '../../lib/devMode'
 import { queue } from '../../lib/syncManager'
@@ -104,6 +105,7 @@ export function TimelineView() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [memoState, setMemoState] = useState<MemoSheetState | null>(null)
   const [copyModalOpen, setCopyModalOpen] = useState(false)
+  const { bind: bindAddFab, fabStyle: addFabStyle, isDragging: addFabDragging } = useDraggableFab('ff_add_fab_pos', { x: window.innerWidth - 80, y: window.innerHeight - 90 })
   const [editId, setEditId] = useState<string | null>(null)
   const [newBlockId, setNewBlockId] = useState<string | null>(null)
   const [nudgeBar, setNudgeBar] = useState<{ text: string; type: string } | null>(null)
@@ -533,8 +535,13 @@ export function TimelineView() {
         </div>
       </div>
 
-      {/* FAB */}
-      <button className="fab" onClick={() => setSheetOpen(true)}>
+      {/* FAB — draggable on long press */}
+      <button
+        ref={bindAddFab as React.RefCallback<HTMLButtonElement>}
+        className="fab"
+        onClick={() => { if (!addFabDragging) setSheetOpen(true) }}
+        style={addFabStyle}
+      >
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round">
           <line x1="11" y1="2" x2="11" y2="20" />
           <line x1="2" y1="11" x2="20" y2="11" />

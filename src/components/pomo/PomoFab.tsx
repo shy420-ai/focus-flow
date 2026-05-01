@@ -3,6 +3,7 @@ import { todayStr } from '../../lib/date'
 import { addXp } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
 import { registerCollect, registerHydrate, queue } from '../../lib/syncManager'
+import { useDraggableFab } from '../../hooks/useDraggableFab'
 import type { UserDoc } from '../../lib/firestore'
 
 
@@ -269,6 +270,7 @@ export function PomoFab() {
   const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0')
 
   const lockActive = pomo.running && lockMode
+  const { bind: bindFab, fabStyle: pomoFabStyle, isDragging: pomoFabDragging } = useDraggableFab('ff_pomo_fab_pos', { x: window.innerWidth - 80, y: window.innerHeight - 160 })
 
   return (
     <>
@@ -363,11 +365,15 @@ export function PomoFab() {
         </div>
       )}
 
-      {/* FAB */}
+      {/* FAB — draggable on long press */}
       <button
+        ref={bindFab as React.RefCallback<HTMLButtonElement>}
         className="pomo-fab"
-        onClick={() => setOpen((o) => !o)}
-        style={pomo.running ? { background: 'var(--pd)', fontSize: 13, fontWeight: 700, letterSpacing: '-.5px' } : {}}
+        onClick={() => { if (!pomoFabDragging) setOpen((o) => !o) }}
+        style={{
+          ...(pomo.running ? { background: 'var(--pd)', fontSize: 13, fontWeight: 700, letterSpacing: '-.5px' } : {}),
+          ...pomoFabStyle,
+        }}
       >
         {pomo.running ? timeStr : (
           <span style={{ display: 'inline-block', lineHeight: 1, transform: 'translateY(-2px)' }}>🍅</span>
