@@ -6,7 +6,8 @@ export const CATEGORY_META: Record<TipCategory, { label: string; emoji: string; 
   mood: { label: '감정', emoji: '🧠', color: 'var(--pink)' },
   record: { label: '기록', emoji: '📝', color: '#B6A8E8' },
   social: { label: '관계', emoji: '👥', color: '#7DD8C7' },
-  body: { label: '약·수면', emoji: '💊', color: '#F2A6C6' },
+  body: { label: '약', emoji: '💊', color: '#F2A6C6' },
+  sleep: { label: '수면', emoji: '😴', color: '#7B9BFF' },
   archive: { label: '아카이브', emoji: '📎', color: '#A0A0A0' },
 }
 

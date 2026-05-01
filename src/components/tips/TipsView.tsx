@@ -8,7 +8,7 @@ import { TipsLockScreen } from './TipsLockScreen'
 import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsViewLimit'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
-const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body', 'archive']
+const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body', 'sleep', 'archive']
 const ACTIVE_KEY = 'ff_tips_active_cat'
 
 function loadActive(): TipCategory {

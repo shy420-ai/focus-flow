@@ -4,7 +4,8 @@ export type TipCategory =
   | 'mood'     // 🧠 감정
   | 'record'   // 📝 기록
   | 'social'   // 👥 관계
-  | 'body'     // 💊 약·수면
+  | 'body'     // 💊 약
+  | 'sleep'    // 😴 수면
   | 'archive'  // 📎 아카이브 (user-added links)
 
 export interface TipSection {
