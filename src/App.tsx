@@ -12,7 +12,7 @@ import { WeekView } from './components/week/WeekView'
 import { PomoFab } from './components/pomo/PomoFab'
 import { StatsView } from './components/stats/StatsView'
 import { FriendsPanel } from './components/friends/FriendsPanel'
-import { Onboarding } from './components/onboarding/Onboarding'
+import { SurveyWizard } from './components/onboarding/SurveyWizard'
 import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import { PromptModal } from './components/ui/PromptModal'
@@ -53,7 +53,11 @@ function useTimelineHidden(): boolean {
 function AppContent() {
   const curView = useAppStore((s) => s.curView)
   const isDesktop = useIsDesktop()
-  const [showOnboarding, setShowOnboarding] = useState(!localStorage.getItem('ff_onboarded'))
+  // Wizard runs once. ff_survey_done covers new flow; ff_onboarded covers
+  // legacy users who finished the old tour and shouldn't see the wizard.
+  const [showOnboarding, setShowOnboarding] = useState(
+    !localStorage.getItem('ff_survey_done') && !localStorage.getItem('ff_onboarded')
+  )
   const [doneToast, setDoneToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
 
@@ -131,7 +135,7 @@ function AppContent() {
         </>
       )}
       <PomoFab />
-      {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
+      {showOnboarding && <SurveyWizard onDone={() => { localStorage.setItem('ff_onboarded', '1'); setShowOnboarding(false) }} />}
       <MiniToast />
       <ConfirmModal />
       <PromptModal />
