@@ -98,12 +98,13 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
   },
   {
     label: '시간 거리 두기',
-    desc: '미래 시점에서 지금을 보기 (Self-Distancing)',
-    example: '1년 후에 이 일을 떠올리면 거의 기억도 안 날 정도일 것',
+    desc: '지금 vs 미래 무게 비교 (Self-Distancing)',
+    example: '지금: 머리 90% 잡고 있음 / 1년 후: 거의 안 떠오를 듯',
     slots: [
-      { label: '1년 후 무게 표현', placeholder: '예: 거의 기억도 안 날 / 추억 정도' },
+      { label: '지금 이 일의 무게 (머리에 얼마나 차지해?)', placeholder: '예: 머리 90% 잡고 있음 / 잠도 못 잘 정도' },
+      { label: '1년 후 이 일의 무게 (그때 시점에서 보면?)', placeholder: '예: 거의 안 떠오를 듯 / 가끔 생각나는 추억 정도' },
     ],
-    assemble: ([a]) => `1년 후에 이 일을 떠올리면 ${a} 정도일 것`,
+    assemble: ([a, b]) => `지금: ${a} / 1년 후: ${b}`,
   },
   {
     label: '본질적 가치로 돌아가기',
