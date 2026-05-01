@@ -80,6 +80,13 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" fill="currentColor" fillOpacity=".25" />
     </svg>
   ) },
+  { id: 'tips', label: '노하우', icon: (
+    // open book — wiki/tips
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M2 4h7a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H2z" fill="currentColor" fillOpacity=".2" />
+      <path d="M22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z" fill="currentColor" fillOpacity=".2" />
+    </svg>
+  ) },
 ]
 
 const ORDER_KEY = 'ff_tab_order'
@@ -95,9 +102,8 @@ function loadHidden(): CurView[] {
 }
 
 // Tabs that only appear when dev mode is enabled. Keeps unfinished
-// experiments out of regular users' navigation. (currently empty —
-// 일기 graduated to general release.)
-const DEV_ONLY: CurView[] = []
+// experiments out of regular users' navigation.
+const DEV_ONLY: CurView[] = ['tips']
 
 function getOrderedTabs(order: CurView[], hidden: CurView[]) {
   const dev = isDevMode()
