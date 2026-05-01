@@ -16,6 +16,7 @@ interface DropActions {
   editItem: (id: number, name: string) => void
   reorder: (fromIdx: number, toIdx: number) => void
   clearDone: () => void
+  clearAll: () => void
   shuffle: () => void
 }
 
@@ -75,6 +76,13 @@ export const useDropStore = create<DropStore>()(
     clearDone: () => {
       set((state) => {
         state.items = state.items.filter((i) => !i.done)
+      })
+      persist(get().items)
+    },
+
+    clearAll: () => {
+      set((state) => {
+        state.items = []
       })
       persist(get().items)
     },
