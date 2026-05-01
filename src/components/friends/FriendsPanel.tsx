@@ -354,6 +354,39 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </div>
       )}
 
+      {/* Today encouragement card — promoted to the top so the user sees
+          praise before the rest of the page. Shown only when there are
+          tasks to talk about and timeline visibility is on. */}
+      {showTimeline && tasks.length > 0 && (() => {
+        const pct = Math.round((doneCount / tasks.length) * 100)
+        const isMe = uid === myUid
+        const subject = isMe ? '오늘 너' : `오늘 ${name}`
+        let emoji: string
+        let msg: string
+        if (pct >= 100) { emoji = '🌟'; msg = `${subject}, 오늘 다 해냈어!` }
+        else if (pct >= 75) { emoji = '🔥'; msg = `${subject}, 거의 다 왔어` }
+        else if (pct >= 50) { emoji = '💪'; msg = `${subject}, 절반 넘겼어` }
+        else if (pct >= 25) { emoji = '☀️'; msg = `${subject}, 출발 좋아` }
+        else if (doneCount > 0) { emoji = '✨'; msg = `${subject}, 시작이 제일 어려운 거였어` }
+        else { emoji = '🫶'; msg = `${subject}, 오늘은 쉬어가도 괜찮아` }
+        return (
+          <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+              <span style={{ fontSize: 36, lineHeight: 1 }}>{emoji}</span>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 2 }}>{msg}</div>
+                <div style={{ fontSize: 11, color: '#888' }}>
+                  {doneCount}/{tasks.length} 완료 · ⏱ {totalH.toFixed(1)}h · {pct}%
+                </div>
+              </div>
+            </div>
+            <div style={{ height: 8, background: '#fff', borderRadius: 4, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 4, width: pct + '%', transition: 'width .3s' }} />
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Pomodoro lifetime stats — small card; hide when nothing yet */}
       {pomoCount > 0 && (
         <div style={{ background: '#FFF6F8', border: '1px solid var(--pl)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -408,21 +441,10 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </div>
       )}
 
-      {/* Timeline section (chips, progress bar, task list) */}
+      {/* Timeline section (task list only — summary moved to the
+          encouragement card above) */}
       {showTimeline && (
         <>
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
-            {[`📋 ${tasks.length}개`, `✅ ${doneCount}/${tasks.length}`, `⏱ ${totalH.toFixed(1)}h`].map((t) => (
-              <div key={t} style={{ background: 'var(--pl)', borderRadius: 99, padding: '4px 12px', fontSize: 11, color: 'var(--pd)', fontWeight: 500 }}>{t}</div>
-            ))}
-          </div>
-
-          {tasks.length > 0 && (
-            <div style={{ height: 6, background: 'var(--pl)', borderRadius: 3, marginBottom: 14 }}>
-              <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 3, width: Math.round(doneCount / tasks.length * 100) + '%' }} />
-            </div>
-          )}
-
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 6 }}>📅 타임라인</div>
           {tasks.length === 0 ? (
             <div style={{ color: '#aaa', fontSize: 12, textAlign: 'center', padding: '12px 0', marginBottom: 12 }}>오늘 일정 없음</div>
