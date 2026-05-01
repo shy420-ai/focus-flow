@@ -87,6 +87,9 @@ export function LeaderboardModal({ onClose }: Props) {
         <div style={{ fontSize: 10, color: '#888', marginBottom: 8 }}>
           매월 1일 자동 리셋 · 마감까지 D-{dleft}
         </div>
+        <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8 }}>
+          💡 닉네임은 설정(⚙️)에서 바꿀 수 있어
+        </div>
         <div style={{ background: 'linear-gradient(135deg, #00704A, #1E3932)', color: '#fff', borderRadius: 12, padding: '10px 12px', marginBottom: 12, fontSize: 11, lineHeight: 1.5, textAlign: 'center', boxShadow: '0 2px 8px rgba(0,112,74,.25)' }}>
           🏆 <b>5월 이벤트</b> ☕<br />
           5월 1위에게 <b>스타벅스 쿠폰</b> 쏜다 — 끝까지 가보자고 🔥
