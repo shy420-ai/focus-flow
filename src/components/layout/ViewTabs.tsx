@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore, type CurView } from '../../store/AppStore'
-import { queue, registerCollect, registerHydrate } from '../../lib/syncManager'
+import { flushSync, registerCollect, registerHydrate } from '../../lib/syncManager'
 import type { UserDoc } from '../../lib/firestore'
 
 const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = [
@@ -86,7 +86,7 @@ function loadHidden(): CurView[] {
 }
 
 function getOrderedTabs(order: CurView[], hidden: CurView[]) {
-  const visible = ALL_TABS.filter((t) => t.id === 'tl' || !hidden.includes(t.id))
+  const visible = ALL_TABS.filter((t) => !hidden.includes(t.id))
   if (!order.length) return visible
   const ordered = order
     .map((id) => visible.find((t) => t.id === id))
@@ -157,7 +157,9 @@ export function ViewTabs() {
     const newOrder = newTabs.map((t) => t.id)
     localStorage.setItem(ORDER_KEY, JSON.stringify(newOrder))
     setOrder(newOrder)
-    queue()
+    // Push immediately so a refresh between drag-end and the debounce
+    // window can't roll us back to the old order.
+    flushSync().catch(() => { /* offline ok */ })
   }
 
   function handleDragEnd() {
@@ -176,7 +178,7 @@ export function ViewTabs() {
             (dragOverId === tab.id ? ' drag-over-tab' : '')
           }
           onClick={() => setCurView(tab.id)}
-          draggable={tab.id !== 'tl'}
+          draggable
           onDragStart={(e) => handleDragStart(e, tab.id)}
           onDragOver={(e) => handleDragOver(e, tab.id)}
           onDragEnd={handleDragEnd}

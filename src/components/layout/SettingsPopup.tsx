@@ -9,7 +9,7 @@ import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
 import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
-import { flushSync, queue } from '../../lib/syncManager'
+import { flushSync } from '../../lib/syncManager'
 import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
@@ -31,12 +31,14 @@ const TL_HOURS_KEY = 'ff_tl_hours'
 const PX_KEY = 'ff_px'
 
 const ALL_TABS: Array<{ id: CurView; label: string }> = [
+  { id: 'tl', label: '일간' },
   { id: 'week', label: '주간' },
   { id: 'cal', label: '월간' },
   { id: 'habit', label: '습관' },
   { id: 'goal', label: '목표' },
   { id: 'drop', label: '드롭' },
   { id: 'stats', label: '메디' },
+  { id: 'friends', label: '친구' },
 ]
 
 function loadHiddenTabs(): CurView[] {
@@ -125,10 +127,22 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     const updated = hiddenTabs.includes(id)
       ? hiddenTabs.filter((t) => t !== id)
       : [...hiddenTabs, id]
+    // Don't let the user hide every tab — keep at least one visible.
+    const visibleCount = ALL_TABS.length - updated.length
+    if (visibleCount < 1) {
+      showMiniToast('최소 한 개의 탭은 보여야 해')
+      return
+    }
     localStorage.setItem('ff_hidden_tabs', JSON.stringify(updated))
     setHiddenTabs(updated)
     window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
-    queue()
+    // If the user just hid the tab they're currently on, jump to the first
+    // remaining visible tab so they don't get stuck on a hidden view.
+    if (updated.includes(useAppStore.getState().curView)) {
+      const firstVisible = ALL_TABS.find((t) => !updated.includes(t.id))
+      if (firstVisible) useAppStore.getState().setCurView(firstVisible.id)
+    }
+    flushSync().catch(() => { /* offline ok */ })
   }
 
   async function setCycleStart() {
