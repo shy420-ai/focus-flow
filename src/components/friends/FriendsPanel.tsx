@@ -56,6 +56,28 @@ function xpInLevel(xp: number): { current: number; needed: number; pct: number }
   return { current, needed: PER_LEVEL, pct: Math.round((current / PER_LEVEL) * 100) }
 }
 
+// Lightweight digest of the structural fields we want to flag a NEW badge
+// on. Excludes XP/monthly counters and lastActiveAt — those advance on
+// every app open and would cause every friend to show NEW constantly.
+function computeScheduleHash(d: UserDoc): string {
+  const sprint = d.sprint as { goals?: Array<{ id: string; name: string; target: number; current: number; unit: string }> } | undefined
+  const slim = {
+    sprintIds: sprint?.goals?.map((g) => `${g.id}:${g.name}:${g.target}:${g.unit}`).join('|') || '',
+    sprintHistory: Array.isArray(d.sprintHistory) ? d.sprintHistory.length : 0,
+    tasks: Array.isArray(d.tasks) ? d.tasks.length : 0,
+    habits: Array.isArray(d.habits) ? d.habits.map((h) => `${h.id}:${h.name}`).join('|') : '',
+    drops: Array.isArray(d.drops) ? d.drops.filter((x) => !x.done).length : 0,
+    bio: d.bio || '',
+    nickname: d.nickname || '',
+    avatar: typeof d.avatar === 'string' ? d.avatar.slice(0, 32) : '',
+  }
+  // djb2-style hash so the value fits in localStorage cheaply.
+  const s = JSON.stringify(slim)
+  let h = 5381
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0
+  return Math.abs(h).toString(36)
+}
+
 const DAY_MODE_LABEL: Record<string, { emoji: string; text: string; color: string }> = {
   low: { emoji: '🌧', text: '오늘 컨디션 낮음', color: '#A7B3CC' },
   normal: { emoji: '☁️', text: '평소 컨디션', color: '#B0B0B0' },
@@ -254,6 +276,17 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const status = activeStatus(data.lastActiveAt as string | undefined)
   const friendAvatar = (data.avatar as string | undefined) || '🧸'
   const friendBio = (data.bio as string | undefined) || ''
+  // Pomodoro lifetime stats. Self-view reads from localStorage to show the
+  // freshest number; friend-view reads from the synced UserDoc.
+  let pomoCount = typeof data.pomoTotalCount === 'number' ? data.pomoTotalCount : 0
+  let pomoMinutes = typeof data.pomoTotalMinutes === 'number' ? data.pomoTotalMinutes : 0
+  if (uid === myUid) {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ff_pomo_v2') || '{}')
+      if (typeof saved.totalCount === 'number') pomoCount = saved.totalCount
+      if (typeof saved.totalMinutes === 'number') pomoMinutes = saved.totalMinutes
+    } catch { /* fall through */ }
+  }
   // For self-view, evaluate visibility against the local prefs (instant
   // reflection of toggle changes). For friend-view, use what's on the
   // friend's UserDoc.
@@ -318,6 +351,16 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
           <div style={{ height: 5, background: 'rgba(255,255,255,.25)', borderRadius: 3, overflow: 'hidden' }}>
             <div style={{ height: '100%', background: '#fff', borderRadius: 3, width: friendLvProg.pct + '%' }} />
           </div>
+        </div>
+      )}
+
+      {/* Pomodoro lifetime stats — small card; hide when nothing yet */}
+      {pomoCount > 0 && (
+        <div style={{ background: '#FFF6F8', border: '1px solid var(--pl)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🍅 뽀모도로 누적</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pink)' }}>
+            {pomoCount}회 · {(pomoMinutes / 60).toFixed(1)}h
+          </span>
         </div>
       )}
 
@@ -506,7 +549,7 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
       window.removeEventListener('ff-sprint-local-changed', onLocalChange)
     }
   }, [uid])
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string; scheduleHash?: string }>>({})
   // Per-friend "last seen by me" timestamps. Stored as ISO; entries get
   // updated when the user opens that friend's tab.
   const [seenMap, setSeenMap] = useState<Record<string, string>>(() => {
@@ -538,6 +581,7 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
             lastActiveAt: d.lastActiveAt as string | undefined,
             nickname: d.nickname as string | undefined,
             avatar: d.avatar as string | undefined,
+            scheduleHash: computeScheduleHash(d),
           },
         }))
       }),
@@ -546,15 +590,15 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
   }, [friends])
 
   // While a friend's tab is open, mark new updates as seen so the NEW
-  // badge doesn't keep flashing back as their lastActiveAt advances.
+  // badge doesn't keep flashing back as their schedule hash advances.
   useEffect(() => {
     if (!viewingFriend) return
     const fStatus = friendStatuses[viewingFriend.uid]
-    if (!fStatus?.lastActiveAt) return
+    if (!fStatus?.scheduleHash) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSeenMap((prev) => {
-      if (prev[viewingFriend.uid] === fStatus.lastActiveAt) return prev
-      const next = { ...prev, [viewingFriend.uid]: fStatus.lastActiveAt as string }
+      if (prev[viewingFriend.uid] === fStatus.scheduleHash) return prev
+      const next = { ...prev, [viewingFriend.uid]: fStatus.scheduleHash as string }
       try { localStorage.setItem('ff_friend_seen', JSON.stringify(next)) } catch { /* ignore */ }
       return next
     })
@@ -632,9 +676,12 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
             const status = activeStatus(fStatus?.lastActiveAt)
             const av = fStatus?.avatar || '🧸'
             const nm = fStatus?.nickname || f.name
-            const friendActive = fStatus?.lastActiveAt
-            const seenAt = seenMap[f.uid]
-            const hasUpdate = !!friendActive && (!seenAt || friendActive > seenAt)
+            const curHash = fStatus?.scheduleHash
+            const seenHash = seenMap[f.uid]
+            // Only flag NEW when the structural hash changed since last view.
+            // XP/lastActiveAt-only updates don't move the hash so they no
+            // longer trigger the badge.
+            const hasUpdate = !!curHash && curHash !== seenHash
             return (
               <FriendAvatarTab
                 key={f.uid}
@@ -646,9 +693,9 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                 hasUpdate={hasUpdate && !isSel}
                 onSelect={() => {
                   setViewingFriend(f)
-                  if (friendActive) {
+                  if (curHash) {
                     setSeenMap((prev) => {
-                      const next = { ...prev, [f.uid]: friendActive }
+                      const next = { ...prev, [f.uid]: curHash }
                       try { localStorage.setItem('ff_friend_seen', JSON.stringify(next)) } catch { /* ignore */ }
                       return next
                     })
