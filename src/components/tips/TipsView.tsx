@@ -9,9 +9,19 @@ import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsV
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
 const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body', 'archive']
+const ACTIVE_KEY = 'ff_tips_active_cat'
+
+function loadActive(): TipCategory {
+  const v = localStorage.getItem(ACTIVE_KEY)
+  return CATS.includes(v as TipCategory) ? (v as TipCategory) : 'start'
+}
 
 export function TipsView() {
-  const [active, setActive] = useState<TipCategory>('start')
+  const [active, setActiveState] = useState<TipCategory>(loadActive)
+  const setActive = (c: TipCategory) => {
+    setActiveState(c)
+    localStorage.setItem(ACTIVE_KEY, c)
+  }
   const [selected, setSelected] = useState<AdhdTip | null>(null)
   const [locked, setLocked] = useState<boolean>(() => isLocked())
   const [viewed, setViewed] = useState<number>(() => getTipsViewedToday())

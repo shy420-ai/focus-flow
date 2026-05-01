@@ -38,7 +38,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'sleep-on-it',
-    title: '결정·대화는 자고 나서',
+    title: '큰 결정 앞에서 흔들릴 때 자고 결정',
     category: 'mood',
     summary: '잠 부족 = 편도체 60% ↑ + 전전두엽 ↓. 후회할 결정의 공식.',
     sections: [
@@ -63,7 +63,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'active-recall',
-    title: '책 덮고 떠올리기',
+    title: '읽어도 안 남을 때 책 덮고 떠올리기',
     category: 'study',
     summary: '읽기 ❌ → 머리에서 꺼내기 ⭕. 같은 시간 50% 더 남음.',
     sections: [
@@ -88,7 +88,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'spaced-repetition',
-    title: '시간 분산 학습',
+    title: '벼락치기로 안 남을 때 며칠 분산해서',
     category: 'study',
     summary: '한 번에 4시간 ❌ → 30분 × 8번 (며칠 분산) ⭕.',
     sections: [
@@ -113,7 +113,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'study-moving',
-    title: '움직이면서 학습',
+    title: '가만히 못 앉을 때 움직이며 공부',
     category: 'study',
     summary: '의자 고정 ❌ → 걸으면서 / 서서 / 손 만지작 ⭕.',
     sections: [
@@ -138,7 +138,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'feynman-technique',
-    title: '가르치듯 설명하기',
+    title: '외워도 못 풀 때 가르치듯 설명',
     category: 'study',
     summary: '외운 거 그대로 ❌ → 친구한테 설명하듯 ⭕.',
     sections: [
@@ -163,7 +163,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'eighty-twenty',
-    title: '핵심 20%만 잡기',
+    title: '다 외워야 할 것 같을 때 핵심 20%만',
     category: 'study',
     summary: '100% 외워야 ❌ → 핵심 20%로 80점 ⭕. 완벽주의가 적.',
     sections: [
@@ -188,7 +188,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'interleaved-practice',
-    title: '단원 섞어가며',
+    title: '한 유형만 풀고 시험에서 막힐 때 섞어 풀기',
     category: 'study',
     summary: '한 단원 끝까지 ❌ → 단원 섞어가며 ⭕. 패턴 인식 ↑.',
     sections: [
@@ -213,7 +213,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'sound-calibration',
-    title: '환경 소리 조정',
+    title: '조용해서 집중 안 될 때 lofi 깔기',
     category: 'study',
     summary: '무음 ❌ → 백색소음 / lofi / 빗소리 ⭕. ADHD엔 정적 = 자극 부족.',
     sections: [
@@ -238,7 +238,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'dual-coding',
-    title: '글 + 그림 동시에',
+    title: '텍스트만 안 들어올 때 그림이랑 같이',
     category: 'study',
     summary: '텍스트만 ❌ → 글 + 도식 / 그림 ⭕. 시각형 ADHD 뇌에 강력.',
     sections: [
@@ -265,7 +265,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   // ── 🧠 감정 (추가) ────────────────────────────────────
   {
     id: 'ninety-sec-wave',
-    title: '90초 감정 파도',
+    title: '감정 폭풍 한가운데서 90초만 견디기',
     category: 'mood',
     summary: '모든 격한 감정은 90초 안에 자연 가라앉아.',
     sections: [
@@ -290,7 +290,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'trigger-log',
-    title: '트리거 일지',
+    title: '같은 일에 매번 폭발할 때 패턴 적기',
     category: 'mood',
     summary: '폭풍 패턴은 적어야 보여. 2주면 너의 핫스팟 발견.',
     sections: [
@@ -315,7 +315,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'coping-card',
-    title: '코핑 카드',
+    title: 'RSD 발작 시 미리 적은 카드 꺼내기',
     category: 'mood',
     summary: '폭풍 시엔 의지 X. 평소에 미리 적어둔 카드만 꺼냄.',
     sections: [
@@ -340,7 +340,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'comfort-kit',
-    title: '컴포트 키트',
+    title: '폭풍에 의지가 0일 때 진정 도구 미리',
     category: 'mood',
     summary: '폭풍 올 때 의지 X. 손 닿는 곳에 진정 도구 미리.',
     sections: [
@@ -365,7 +365,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'cold-shock',
-    title: '차가운 자극',
+    title: '격앙 8/10 넘을 때 찬물 세수',
     category: 'mood',
     summary: '얼음물·찬물 세수 30초 → 자율신경 즉각 진정.',
     sections: [
@@ -390,7 +390,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'aerobic-prescription',
-    title: '유산소 처방',
+    title: '감정 조절 안 될 때 빠른 걷기 20분',
     category: 'mood',
     summary: '20분 운동 = 약 다음으로 강력한 감정 조절.',
     sections: [
@@ -415,7 +415,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'body-warning-signs',
-    title: '신체 신호 알아차리기',
+    title: '폭풍 직전 몸 신호 알아채기',
     category: 'mood',
     summary: '폭풍 직전 몸이 먼저 신호. 그 신호가 "멈춤" 자동 트리거.',
     sections: [
@@ -440,7 +440,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'physical-time-out',
-    title: '즉시 자리 떠나기',
+    title: '격앙됐을 때 5초 안에 자리 떠나기',
     category: 'mood',
     summary: '격앙 5초 안에 자리 떠나. 진정 후 복귀.',
     sections: [
