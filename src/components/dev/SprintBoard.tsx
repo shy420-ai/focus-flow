@@ -3,6 +3,7 @@ import { todayStr } from '../../lib/date'
 import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
 import { showConfirm } from '../../lib/showConfirm'
+import { showPrompt } from '../../lib/showPrompt'
 import { LeaderboardModal } from './Leaderboard'
 import { UnitPickerModal } from './UnitPickerModal'
 import { isLeaderboardOn } from '../../lib/leaderboardPref'
@@ -435,17 +436,28 @@ export function SprintBoard() {
               const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
               return (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <button onClick={() => bumpGoal(g.id, -step)}
-                    style={{ flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 8, border: 'none', background: '#fff', color: '#888', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>아쉽다 🫣 -{step}</button>
+                  <button onClick={() => bumpGoal(g.id, step)}
+                    style={{ flex: 1, minWidth: 0, padding: '12px 0', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 35%, transparent)' }}>내가 해냄 🙌 +{step}</button>
                   <input
                     type="number"
                     value={step}
                     onChange={(e) => updateGoal(g.id, { smallStep: Math.max(1, parseInt(e.target.value) || 1) })}
                     aria-label="버튼 단위"
-                    style={{ width: 40, padding: '6px 0', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, textAlign: 'center', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#888', flexShrink: 0 }}
+                    style={{ width: 40, padding: '8px 0', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, textAlign: 'center', fontFamily: 'inherit', outline: 'none', background: '#fff', color: '#888', flexShrink: 0 }}
                   />
-                  <button onClick={() => bumpGoal(g.id, step)}
-                    style={{ flex: 1, minWidth: 0, padding: '10px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>내가 해냄 🙌 +{step}</button>
+                  <button
+                    onClick={async () => {
+                      const cur = typeof g.current === 'number' ? g.current : 0
+                      const input = await showPrompt({ msg: `현재 값 수정 (목표 ${g.target}${g.unit})`, defaultValue: String(cur) })
+                      if (input == null) return
+                      const v = Math.max(0, parseInt(input.trim()) || 0)
+                      // Direct update — no XP reward/refund. Manual edits are
+                      // corrections, not achievements.
+                      updateGoal(g.id, { current: v })
+                    }}
+                    aria-label="현재 값 수정"
+                    style={{ flexShrink: 0, padding: '8px 10px', borderRadius: 8, border: '1.5px solid #fff', background: '#fff', color: '#888', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >✏️</button>
                 </div>
               )
             })()}
