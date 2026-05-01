@@ -115,7 +115,13 @@ function getMyShareCode(uid: string): string {
 }
 
 function loadFriends(): Friend[] {
-  try { return JSON.parse(localStorage.getItem('ff_friends') || '[]') } catch { return [] }
+  let list: Friend[]
+  try { list = JSON.parse(localStorage.getItem('ff_friends') || '[]') } catch { list = [] }
+  // Belt-and-suspenders: filter out any uid in the tombstone set even if a
+  // sync path re-added them to ff_friends. Display path stays consistent.
+  let tombstones: Set<string>
+  try { tombstones = new Set(JSON.parse(localStorage.getItem('ff_friend_tombstones') || '[]')) } catch { tombstones = new Set() }
+  return list.filter((f) => f && f.uid && !tombstones.has(f.uid))
 }
 
 function saveFriendsLocal(friends: Friend[]) {
