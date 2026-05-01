@@ -100,12 +100,11 @@ function saveFriendsLocal(friends: Friend[]) {
 interface FriendDetailProps {
   uid: string
   name: string
-  myName: string
   myUid: string
   onBack: () => void
 }
 
-function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
+function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const [data, setData] = useState<UserDoc | null>(null)
   const [guestInput, setGuestInput] = useState('')
   const [loading, setLoading] = useState(true)
@@ -118,9 +117,12 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
     if (!guestInput.trim()) return
     const text = guestInput.trim()
     setGuestInput('')
+    // Always pull the nickname fresh at post time — never the OAuth real
+    // name. Falls back to '익명' if user hasn't set one yet.
+    const freshName = localStorage.getItem('ff_nickname')?.trim() || '익명'
     const now = new Date()
     const entry = {
-      from: myName,
+      from: freshName,
       text,
       date: todayStr(),
       time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
@@ -310,14 +312,12 @@ interface Props {
 
 export function FriendsPanel({ onClose }: Props) {
   const uid = useAppStore((s) => s.uid)
-  const displayName = useAppStore((s) => s.displayName)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
   const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
   useBackClose(true, onClose)
 
   const myCode = uid ? getMyShareCode(uid) : null
-  const myName = localStorage.getItem('ff_nickname') || displayName || '익명'
 
   useEffect(() => {
     let cancelled = false
@@ -366,7 +366,7 @@ export function FriendsPanel({ onClose }: Props) {
       if (result.uid === uid) { alert('자기 자신은 추가할 수 없어!'); return }
       const current = loadFriends()
       if (current.find((f) => f.uid === result.uid)) { alert('이미 추가된 친구야!'); return }
-      const name = (result.data.displayName as string) || '친구'
+      const name = (result.data.nickname as string) || (result.data.displayName as string) || '친구'
       const newFriends = [...current, { uid: result.uid, code: trimmed, name }]
       saveFriendsLocal(newFriends)
       setFriends(newFriends)
@@ -394,7 +394,6 @@ export function FriendsPanel({ onClose }: Props) {
           <FriendDetail
             uid={viewingFriend.uid}
             name={viewingFriend.name}
-            myName={myName}
             myUid={uid || ''}
             onBack={() => setViewingFriend(null)}
           />
