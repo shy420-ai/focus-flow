@@ -86,12 +86,35 @@ export function listenUserDoc(uid: string, callback: (data: UserDoc) => void): U
   })
 }
 
+function shareCodeFromUid(uid: string): string {
+  let h = 0
+  for (let i = 0; i < uid.length; i++) {
+    h = ((h << 5) - h) + uid.charCodeAt(i)
+    h |= 0
+  }
+  return Math.abs(h).toString(36).toUpperCase().slice(0, 6)
+}
+
 export async function findUserByShareCode(shareCode: string): Promise<{ uid: string; data: UserDoc } | null> {
   const db = getDb()
-  const q = query(collection(db, 'users'), where('shareCode', '==', shareCode))
+  const target = shareCode.toUpperCase()
+  // Fast path: indexed lookup on stored shareCode field.
+  const q = query(collection(db, 'users'), where('shareCode', '==', target))
   const snap = await getDocs(q)
-  if (snap.empty) return null
-  return { uid: snap.docs[0].id, data: snap.docs[0].data() as UserDoc }
+  if (!snap.empty) {
+    return { uid: snap.docs[0].id, data: snap.docs[0].data() as UserDoc }
+  }
+  // Fallback: full scan + recompute the deterministic hash. Catches users
+  // whose app hasn't pushed shareCode yet but whose uid still hashes to
+  // the requested code. The code is purely a function of uid, so this is
+  // guaranteed to find them as long as they exist in /users at all.
+  const all = await getDocs(collection(db, 'users'))
+  for (const d of all.docs) {
+    if (shareCodeFromUid(d.id) === target) {
+      return { uid: d.id, data: d.data() as UserDoc }
+    }
+  }
+  return null
 }
 
 export async function setShareCode(uid: string, shareCode: string): Promise<void> {
