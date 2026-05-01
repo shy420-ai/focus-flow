@@ -14,16 +14,28 @@ const EMOTION_GROUPS: Array<{ label: string; chips: string[] }> = [
   { label: '☀️ 편안한 감정', chips: ['뿌듯', '평온', '감사', '설렘', '안도', '홀가분', '기대', '기쁨', '따뜻함', '사랑', '자랑스러움', '신남', '활기', '만족', '자신감', '희망', '여유', '즐거움', '든든함', '반가움', '차분함', '충만'] },
 ]
 
-const DISTORTIONS: Array<{ id: string; label: string; hint: string }> = [
-  { id: 'allornone', label: '흑백사고', hint: '다 망함 / 완벽 X면 실패' },
-  { id: 'mindread', label: '마인드리딩', hint: '남이 비웃을 거야' },
-  { id: 'catastrophize', label: '파국화', hint: '커리어 끝남 / 인생 망함' },
-  { id: 'selfblame', label: '자기비난', hint: '다 내 탓' },
-  { id: 'overgeneralize', label: '과잉일반화', hint: '나는 항상 이래' },
-  { id: 'emoreason', label: '감정적 추론', hint: '이렇게 느끼니까 사실일 거야' },
-  { id: 'should', label: '당위적 사고', hint: '꼭 ~해야만 해 / ~여야 돼' },
-  { id: 'labeling', label: '라벨링', hint: '나는 실패자 / 멍청이' },
+// Each distortion has a *mechanism* (the cognitive move) and a *hint*
+// (a real example). Showing both side-by-side keeps cards distinct —
+// the content is similar but the moves are different.
+type Distortion = { id: string; label: string; mechanism: string; hint: string; group: 'guess' | 'overgen' | 'rule' }
+const DISTORTIONS: Distortion[] = [
+  // 🔮 추측류 — 증거 없이 머릿속에서 결론
+  { id: 'mindread', label: '마인드리딩', mechanism: '남의 마음 추측', hint: '"남이 비웃을 거야"', group: 'guess' },
+  { id: 'catastrophize', label: '파국화', mechanism: '미래 최악 상상', hint: '"인생 끝났어"', group: 'guess' },
+  { id: 'emoreason', label: '감정적 추론', mechanism: '느낌 = 사실', hint: '"불안하니까 위험할 거야"', group: 'guess' },
+  // 🌀 일반화류 — 한 부분을 전체로
+  { id: 'allornone', label: '흑백사고', mechanism: '이분법 (둘 중 하나)', hint: '"완벽 X면 실패"', group: 'overgen' },
+  { id: 'overgeneralize', label: '과잉일반화', mechanism: '한 번 → 매번', hint: '"나는 항상 이래"', group: 'overgen' },
+  { id: 'labeling', label: '라벨링', mechanism: '행동 → 정체성', hint: '"나는 실패자"', group: 'overgen' },
+  // ⚖️ 규칙·책임류 — 짊어지지 말아야 할 짐
+  { id: 'selfblame', label: '자기비난', mechanism: '내 탓 과대화', hint: '"다 내 탓"', group: 'rule' },
+  { id: 'should', label: '당위적 사고', mechanism: '"꼭 ~해야" 강박', hint: '"절대 화내면 안 돼"', group: 'rule' },
 ]
+const DISTORTION_GROUP_LABEL: Record<Distortion['group'], { label: string; color: string }> = {
+  guess: { label: '🔮 추측 함정 — 증거 없이 결론', color: '#B6A8E8' },
+  overgen: { label: '🌀 일반화 함정 — 한 부분을 전체로', color: 'var(--pink)' },
+  rule: { label: '⚖️ 규칙·책임 함정 — 짊어진 짐', color: '#FFB677' },
+}
 
 // CBT/ACT 검증된 기법만 선별. 카드 라벨/설명 + 구체 예시(이해용) +
 // 빈칸 폼(slots) — 카드 탭하면 빈칸만 채우는 폼이 떠서, 너 상황에
@@ -330,33 +342,43 @@ export function MoodEntryModal({ entry, onClose }: Props) {
           </Section>
 
           {/* 5. 사고 함정 */}
-          <Section title="5. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지. 예시 보고 골라.">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
-              {DISTORTIONS.map((d) => {
-                const on = distortions.includes(d.id)
-                return (
-                  <button
-                    key={d.id}
-                    onClick={() => toggleChip(distortions, d.id, setDistortions)}
-                    style={{
-                      padding: '8px 10px',
-                      borderRadius: 10,
-                      border: '1.5px solid ' + (on ? 'var(--pink)' : '#eee'),
-                      background: on ? 'var(--pl)' : '#fff',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textAlign: 'left',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: 2,
-                    }}
-                  >
-                    <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--pd)' : '#444' }}>{d.label}</span>
-                    <span style={{ fontSize: 9, color: '#999', lineHeight: 1.4 }}>"{d.hint}"</span>
-                  </button>
-                )
-              })}
-            </div>
+          <Section title="5. 사고 함정 체크" hint="(선택) 비슷해 보여도 함정마다 '왜곡 방식'이 달라. 그룹별로 정리.">
+            {(['guess', 'overgen', 'rule'] as const).map((g) => {
+              const items = DISTORTIONS.filter((d) => d.group === g)
+              const meta = DISTORTION_GROUP_LABEL[g]
+              return (
+                <div key={g} style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: meta.color, marginBottom: 6 }}>{meta.label}</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+                    {items.map((d) => {
+                      const on = distortions.includes(d.id)
+                      return (
+                        <button
+                          key={d.id}
+                          onClick={() => toggleChip(distortions, d.id, setDistortions)}
+                          style={{
+                            padding: '9px 10px',
+                            borderRadius: 10,
+                            border: '1.5px solid ' + (on ? meta.color : '#eee'),
+                            background: on ? `color-mix(in srgb, ${meta.color} 18%, #fff)` : '#fff',
+                            cursor: 'pointer',
+                            fontFamily: 'inherit',
+                            textAlign: 'left',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2,
+                          }}
+                        >
+                          <span style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--pd)' }}>{d.label}</span>
+                          <span style={{ fontSize: 9.5, color: meta.color, fontWeight: 600 }}>{d.mechanism}</span>
+                          <span style={{ fontSize: 9.5, color: '#999', lineHeight: 1.4, marginTop: 1 }}>{d.hint}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )
+            })}
           </Section>
 
           {/* 6. 다음 선택 */}
@@ -650,6 +672,9 @@ function ytEmbed(url: string, autoplay = false): string | null {
     url.match(/[?&]v=([\w-]{6,})/) ||
     url.match(/youtube\.com\/embed\/([\w-]{6,})/)
   if (!m) return null
+  // youtube-nocookie.com is the privacy-enhanced embed domain. It still
+  // shows ads (only YouTube Premium suppresses them) but blocks unrelated
+  // tracking cookies, which sometimes reduces ad targeting and frequency.
   const params = autoplay ? '?autoplay=1' : ''
-  return `https://www.youtube.com/embed/${m[1]}${params}`
+  return `https://www.youtube-nocookie.com/embed/${m[1]}${params}`
 }
