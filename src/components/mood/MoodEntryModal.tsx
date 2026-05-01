@@ -10,9 +10,8 @@ import type { MoodEntry } from '../../types/mood'
 const SOFT_LIMIT_SEC = 300  // 5 minutes — gentle nudge, not enforced
 
 const EMOTION_GROUPS: Array<{ label: string; chips: string[] }> = [
-  { label: '🌧 부정', chips: ['짜증', '분노', '억울함', '서운함', '불안', '걱정', '두려움', '긴장', '슬픔', '외로움', '공허함', '우울', '부끄러움', '죄책감', '자기혐오', '실망', '좌절', '답답함', '무기력'] },
-  { label: '🌤 중립', chips: ['멍함', '지침', '피곤함', '혼란', '복잡함'] },
-  { label: '☀️ 긍정', chips: ['뿌듯', '평온', '감사', '설렘', '안도', '홀가분', '기대', '기쁨', '따뜻함'] },
+  { label: '🌧 힘든 감정', chips: ['짜증', '분노', '억울함', '서운함', '불안', '걱정', '두려움', '긴장', '슬픔', '외로움', '공허함', '우울', '부끄러움', '죄책감', '자기혐오', '실망', '좌절', '답답함', '무기력', '지침', '피곤함', '멍함', '혼란', '복잡함'] },
+  { label: '☀️ 편안한 감정', chips: ['뿌듯', '평온', '감사', '설렘', '안도', '홀가분', '기대', '기쁨', '따뜻함'] },
 ]
 
 const DISTORTIONS: Array<{ id: string; label: string; hint: string }> = [
@@ -28,9 +27,7 @@ const DISTORTIONS: Array<{ id: string; label: string; hint: string }> = [
 
 const REFRAME_TEMPLATES: Array<{ label: string; text: string }> = [
   { label: '사실 vs 해석', text: '내가 받아들인 건 [____]였지만, 사실 일어난 건 [____]일 수도 있어' },
-  { label: '친구라면', text: '친구가 같은 일을 겪었다면 나는 "____" 라고 말해줬을 것 같아' },
   { label: '부분 인정', text: '확실히 [____]은 있었어. 근데 [____]도 있었어' },
-  { label: '시간 거리', text: '1년 후에 이걸 떠올리면 [____] 정도일 거야' },
   { label: '환경 원인', text: '내가 부족해서가 아니라, [수면/식사/스트레스]이 영향 줬어' },
 ]
 
@@ -47,12 +44,12 @@ const ACTION_TEMPLATES: Array<{ label: string; text: string }> = [
   { label: '작게 부딪히기', text: '피하던 [____]에 5분만 다가가본다' },
   // 활동 스케줄링 — 우울·무기력 1차 개입 (Behavioral Activation)
   { label: '활동 1개 박기', text: '내일 [____]를 [언제]에 일정으로 박아둔다' },
-  // Self-compassion — Kristin Neff 연구, 자기비난 대안
-  { label: '자기연민 한 줄', text: '친한 친구한테 하듯 나한테 "[____]" 해준다' },
+  // Self-Compassion Break (Neff RCT) — 자기비난 대안
+  { label: '친구라면', text: '친한 친구가 같은 일을 겪었다면, 나는 친구한테 "[____]" 라고 말해줄 거야' },
+  // Self-Distancing / Time Perspective Taking (Kross & Ayduk) — distress reduction
+  { label: '시간 거리 두기', text: '1년 후에 이걸 떠올리면 [____] 정도 무게일 거야' },
   // ACT — 가치 기반 행동 (감정에 끌려가지 말고 가치로 돌아가기)
   { label: '가치로 돌아가기', text: '내가 중요하게 여기는 [____]에 맞게 [____] 한다' },
-  // 인지적 리허설 — 다음에 같은 상황 올 때 새 반응 미리 연습
-  { label: '예행 연습', text: '비슷한 상황 또 오면 "[____]" 라고 생각/말한다' },
 ]
 
 interface Props {
@@ -94,6 +91,10 @@ export function MoodEntryModal({ entry, onClose }: Props) {
     return () => clearInterval(t)
   }, [entry])
   const overLimit = elapsed >= SOFT_LIMIT_SEC
+  // 다른 시각 (cognitive restructuring) is valuable but cognitively heavy.
+  // Keep it collapsible so ADHD users can skip without feeling guilty —
+  // 다음 선택 alone (Behavioral Activation) is also evidence-based.
+  const [reframeOpen, setReframeOpen] = useState(!!entry?.reframe)
 
   function toggleChip(arr: string[], v: string, setter: (next: string[]) => void) {
     setter(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
@@ -265,28 +266,42 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             </div>
           </Section>
 
-          {/* 6. 다른 시각 (재해석) */}
-          <Section title="6. 다른 시각" hint="(선택) 카드 탭하면 템플릿이 자동으로 들어가. 빈칸만 채워.">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
-              {REFRAME_TEMPLATES.map((t) => (
-                <TemplateCard key={t.label} label={t.label} preview={t.text} onClick={() => setReframe(t.text)} />
-              ))}
-              <button
-                onClick={() => setReframe('지금은 답이 안 보임. 시간 두고 보자.')}
-                style={passCardStyle}
-              >
-                <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>지금은 못 쓰겠어</span>
-                <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>"답 안 보임. 시간 두고 보자."</span>
-              </button>
+          {/* 6. 다른 시각 (재해석) — collapsible, default closed */}
+          <div>
+            <button
+              onClick={() => setReframeOpen((o) => !o)}
+              style={{ width: '100%', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >
+              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)' }}>6. 다른 시각 {reframe ? '✓' : ''}</span>
+              <span style={{ fontSize: 10, color: '#aaa' }}>{reframeOpen ? '접기' : '열기 (선택)'}</span>
+            </button>
+            <div style={{ fontSize: 10, color: '#999', marginTop: 4, lineHeight: 1.5 }}>
+              생각을 바꾸는 단계. 부담되면 건너뛰고 다음 선택만 해도 OK.
             </div>
-            <textarea
-              value={reframe}
-              onChange={(e) => setReframe(e.target.value)}
-              placeholder="템플릿 탭하거나 직접 써도 OK"
-              rows={3}
-              style={textareaStyle}
-            />
-          </Section>
+            {reframeOpen && (
+              <div style={{ marginTop: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
+                  {REFRAME_TEMPLATES.map((t) => (
+                    <TemplateCard key={t.label} label={t.label} preview={t.text} onClick={() => setReframe(t.text)} />
+                  ))}
+                  <button
+                    onClick={() => setReframe('지금은 답이 안 보임. 시간 두고 보자.')}
+                    style={passCardStyle}
+                  >
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>지금은 못 쓰겠어</span>
+                    <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>"답 안 보임. 시간 두고 보자."</span>
+                  </button>
+                </div>
+                <textarea
+                  value={reframe}
+                  onChange={(e) => setReframe(e.target.value)}
+                  placeholder="템플릿 탭하거나 직접 써도 OK"
+                  rows={3}
+                  style={textareaStyle}
+                />
+              </div>
+            )}
+          </div>
 
           {/* 7. 다음 선택 */}
           <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 작게 1개만.">
