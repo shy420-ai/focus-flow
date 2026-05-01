@@ -261,6 +261,208 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Paivio (1986) Dual Coding Theory; Mayer (2009) Multimedia Learning',
     tags: ['공부', '시각', '암기'],
   },
+
+  // ── 🧠 감정 (추가) ────────────────────────────────────
+  {
+    id: 'ninety-sec-wave',
+    title: '90초 감정 파도',
+    category: 'mood',
+    summary: '모든 격한 감정은 90초 안에 자연 가라앉아.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '분노·불안·수치심이 영원할 것 같음.\n그 안에서 결정·말·행동을 해서 사고를 침.\n진짜 영원하면 평생 못 살았겠지만, 사실은 짧음.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '신경과학자 Jill Bolte Taylor: 모든 강한 감정의 화학 물질은 90초 안에 몸에서 빠짐.\n그 후에도 남는 건 "내가 그 감정을 계속 끌고 있을 때"뿐.\n핵심: 90초만 가만히 흘려보내기. 그 동안 결정·반응 X.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 분노 폭발 → 시계 보고 90초 카운트, 그 동안 답장 X\n• 카톡 보고 화남 → "90초만 기다려봐" 자기말\n• 회의에서 무시당함 → 손목 시계 한 번 보고 침묵\n• 일기 탭 강도 슬라이더 → 90초 후 다시 매겨보기 (진짜 떨어지는지 확인)\n• 부부싸움 → "잠깐 90초만" 외우고 화장실로\n• 친구한테 RSD 폭발 직전 → 답장 보류 90초',
+      },
+    ],
+    source: 'Jill Bolte Taylor (2008) My Stroke of Insight',
+    tags: ['감정', '분노', 'RSD'],
+  },
+  {
+    id: 'trigger-log',
+    title: '트리거 일지',
+    category: 'mood',
+    summary: '폭풍 패턴은 적어야 보여. 2주면 너의 핫스팟 발견.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '같은 상황에 매번 폭발하는데 왜 그런지 모름.\n사후엔 "또 그랬네" 후회만 — 분석 X.\nADHD 작업기억 짧아서 어제 트리거를 오늘 잊음.\n패턴 모르면 예방도 X.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '발작 직후 짧게 적어두기 (1~2분).\n네 가지: 무슨 일 / 머리에 든 생각 / 몸 어디 / 강도 0~10.\n2주 쌓이면 너의 핫스팟 명확히 보임.\nCBT 표준 도구 — 패턴 인식이 변화의 시작.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 발작 직후 폰 메모: "팀장 코멘트 / 또 망했다 / 가슴 답답 / 9"\n• 일기 탭 활용: 사고 함정 칩 + 강도 슬라이더 자동 누적\n• 주말 5분: 한 주 일지 훑어보기\n• 패턴 발견 예: "오후 4시 + 카페인 + 회의 = 항상 폭발"\n• 그 패턴 1개에만 시스템 만들기 (예: 회의 전 카페인 X)\n• 의사한테 보여주면 약 조정에 도움',
+      },
+    ],
+    source: 'Beck CBT thought record; Linehan DBT diary card',
+    tags: ['감정', '기록', 'CBT'],
+  },
+  {
+    id: 'coping-card',
+    title: '코핑 카드',
+    category: 'mood',
+    summary: '폭풍 시엔 의지 X. 평소에 미리 적어둔 카드만 꺼냄.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'RSD·분노 폭발 한가운데서는 합리적 사고 거의 불가능.\n전전두엽 일시 셧다운 → 평소에 알던 대처법도 안 떠오름.\n"숨 깊게 쉬어야지" 자체를 까먹음.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '평소(맑은 정신 상태)에 자기에게 할 말을 카드로 미리 적어두기.\n폭풍 시엔 그냥 카드만 꺼내 읽음. 의지·기억 X.\nCBT 표준 도구 — 미래의 나를 위한 처방전.\n폰 메모·잠금화면·지갑 카드·일기 탭 즐겨찾기 등.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• "이건 RSD 폭풍이야. 진짜 거절 X. 90초 기다려"\n• "지금 이 결정 24시간 보류. 자고 일어나서 다시 봐"\n• "이메일 답장 임시저장. 내일 아침에 다시 읽기"\n• "가슴 답답할 땐 4-7-8 호흡 4번"\n• "친구가 같은 일 겪었으면 뭐라 말해줄까? 그 말 나한테"\n• "이 일이 1년 후엔 어떨 무게? 0.5/10"\n• 잠금화면 위젯에 즐겨쓰는 카드 1개 고정',
+      },
+    ],
+    source: 'Beck (1976) Cognitive Therapy; DBT skill cards (Linehan)',
+    tags: ['감정', 'CBT', 'RSD'],
+  },
+  {
+    id: 'comfort-kit',
+    title: '컴포트 키트',
+    category: 'mood',
+    summary: '폭풍 올 때 의지 X. 손 닿는 곳에 진정 도구 미리.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '감정 폭풍 한가운데서 "산책 가야지" 결정 못 내림.\n진정 도구 (음악·향·스트레스볼) 어디 있는지 찾는 동안 더 폭발.\n격앙 시 의지력은 0 — 환경이 자동으로 도와줘야.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '평소에 폭풍용 도구 키트 만들어 손 닿는 곳에 두기.\n결정 X, 그냥 손 뻗어 사용.\n환경 디자인 + 즉각 진정 — 가장 빠른 회복.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 노이즈 캔슬링 헤드폰 + 진정 플레이리스트 (한 곡 무한반복)\n• 무거운 담요 / 베개 (deep pressure → 부교감 활성)\n• 차가운 음료 (얼음물 한 모금 → 미주신경 자극)\n• 향기 (라벤더·페퍼민트 오일)\n• 스트레스볼 / 슬라임 / fidget cube\n• 따뜻한 차 한 봉지 (찻주전자 옆 상시 비치)\n• 일기 탭 BGM에 진정 곡 mp3 하나 깔아두기\n• 친구·상담사 단축번호 잠금화면',
+      },
+    ],
+    source: 'DBT Self-Soothing Skills (Linehan)',
+    tags: ['감정', '환경디자인', '실전'],
+  },
+  {
+    id: 'cold-shock',
+    title: '차가운 자극',
+    category: 'mood',
+    summary: '얼음물·찬물 세수 30초 → 자율신경 즉각 진정.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '격앙 8/10 이상 — 호흡법도 머리에 안 들어옴.\n생각으로 진정시키려는 건 거의 불가능.\n몸을 직접 건드려야 하는 임계점.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: 'DBT TIPP 기법 중 Temperature.\n차가운 자극이 "잠수 반사 (mammalian dive reflex)" 트리거 → 미주신경 활성 → 심박수·혈압 즉각 ↓.\n호흡법보다 빠름 (격앙 시 가장 강력한 도구).',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 차가운 물 세수 30초 (가장 쉬움)\n• 얼음 한 줌 손에 쥐기 30초\n• 얼음 팩을 눈·이마에 30초\n• 찬물 한 모금 → 입에 머금고 5초\n• 찬 샤워 1분 (집이면)\n• 손목·목 흐르는 찬물 30초\n• 냉장고에서 차가운 음료 꺼내 양손에 쥐기\n⚠️ 심장질환·당뇨 있으면 의사 상담',
+      },
+    ],
+    source: 'Linehan (2014) DBT Skills Training Manual; Wittling et al. (1998) facial cold-water stimulation',
+    tags: ['감정', '분노', '응급'],
+  },
+  {
+    id: 'aerobic-prescription',
+    title: '유산소 처방',
+    category: 'mood',
+    summary: '20분 운동 = 약 다음으로 강력한 감정 조절.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 감정 조절은 도파민 시스템 문제.\n약 외엔 효과 보장 도구 거의 없음.\n근데 운동은 RCT 다수에서 약물에 가까운 효과 보고.\n그런데도 "운동해라" 잔소리로만 듣고 안 함.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: 'Aerobic 운동 20~30분이 ADHD 감정·집중 조절에 강력.\n도파민·세로토닌·BDNF 모두 증가.\nRatey (Spark): "운동은 ADHD에 약 처방과 같다".\n하루 한 번 처방받았다 생각하고 실행.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 매일 빠른 걷기 20분 (헬스장 X, 동네 산책)\n• 출근/등교를 한 정거장 일찍 내려서 걷기\n• 점심 후 10분 빠른 걷기 = 오후 집중 ↑\n• 운동 직후 30분 = 학습 효율 골든타임\n• 격앙 후 5분 점프·푸시업으로 "에너지 방출"\n• 좋아하는 운동 우선 (러닝 싫으면 댄스·복싱·등산)\n• 일기 탭 컨디션 슬라이더 + 운동 패턴 같이 보면 효과 명확\n💊 약 + 운동 = 약 단독보다 효과 ↑ (Hoza 2015)',
+      },
+    ],
+    source: 'Ratey (2008) Spark; Hoza et al. (2015) Aerobic exercise + ADHD meta-analysis',
+    tags: ['감정', '운동', '약물'],
+  },
+  {
+    id: 'body-warning-signs',
+    title: '신체 신호 알아차리기',
+    category: 'mood',
+    summary: '폭풍 직전 몸이 먼저 신호. 그 신호가 "멈춤" 자동 트리거.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '감정 폭발은 갑작스럽지 않음 — 몸이 먼저 신호.\n근데 ADHD는 신체 감각 인식 (interoception) 약해서 신호 놓침.\n그러다 "갑자기" 분노 7/10에 도달 → 이미 늦음.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '본인의 폭풍 직전 신체 신호 1~2개 알아두기.\n그 신호 = 자동으로 "멈춤·이동" 트리거 만들기.\nInteroception 훈련 자체가 감정 조절 ↑ (Critchley 2004).\n신호 → 휴식 자동화가 RSD/분노 예방의 핵심.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 흔한 신호: 가슴 답답 / 손 떨림 / 어깨 긴장 / 얼굴 화끈 / 위장 조임 / 턱 악물기\n• 트리거 일지로 본인 신호 패턴 찾기 (2주)\n• 신호 → 30초 화장실 (자리 떠나기)\n• 신호 → 일기 탭 강도 슬라이더 한 번 끌기 (인식만으로도 ↓)\n• 신호 → 4-7-8 호흡 / 차가운 물 세수\n• 잠금화면에 자기 신호 카드: "가슴 답답 = 멈춰"\n• 명상·바디스캔 = interoception 훈련 도구',
+      },
+    ],
+    source: 'Critchley et al. (2004) Neural systems supporting interoceptive awareness',
+    tags: ['감정', '몸', 'RSD'],
+  },
+  {
+    id: 'physical-time-out',
+    title: '즉시 자리 떠나기',
+    category: 'mood',
+    summary: '격앙 5초 안에 자리 떠나. 진정 후 복귀.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '폭발 직전인데 그 자리에서 대화·결정 계속하면 100% 사고침.\n현장에서 진정시키려는 건 거의 불가능 (전전두엽 셧다운).\n주변 사람·내용·소리 다 자극이라 더 격앙됨.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '5초 안에 물리적으로 자리 떠나기 (Time-out).\n공간 분리만으로 자극 ↓ → 부교감 활성.\n이상한 게 아니라 신경학적으로 가장 빠른 진정 방법.\n진정 후 복귀 — 사과·재대화는 그 후.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• "잠깐 화장실" 한 마디 → 5초 안에 일어남\n• 회의 중이면 "메모 좀" 하고 복도\n• 가족 다툼 → "산책 다녀올게" 5분~30분\n• 카페·공공장소 → 밖으로 나가서 한 바퀴\n• 줌 미팅 → 카메라 끄고 키보드 마이크 mute\n• 자기에게 사전 약속: "신호 뜨면 무조건 자리 떠나"\n• 친구한테 미리 양해: "내가 갑자기 사라지면 진정 후 다시 와"\n⚠️ 책임 회피 X — 진정 후 꼭 복귀해서 마무리',
+      },
+    ],
+    source: 'Linehan DBT Crisis Skills; Gottman (1993) Flooding research',
+    tags: ['감정', '관계', '응급'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
