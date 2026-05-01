@@ -393,23 +393,34 @@ export function SprintBoard() {
 
 // ── Firestore sync registration ──────────────────────────────────────────────
 
-registerCollect(() => ({
-  sprint: loadSprint(),
-  sprintHistory: loadHistory(),
-}))
+// Only push fields when this device has actual data. Otherwise a fresh device
+// would silently overwrite the other device's saved sprint/history with
+// null/empty on the next queue() — that's the data-loss path users hit.
+// Trade-off: explicit deletion (sprint ended) won't propagate via this path,
+// since we omit the field. Acceptable until we add tombstones.
+registerCollect(() => {
+  const out: Partial<UserDoc> = {}
+  const sprint = loadSprint()
+  const history = loadHistory()
+  if (sprint) out.sprint = sprint as unknown
+  if (history.length > 0) out.sprintHistory = history as unknown[]
+  return out
+})
 
 registerHydrate((d: UserDoc) => {
   let changed = false
-  if ('sprint' in d) {
-    const remote = JSON.stringify(d.sprint ?? null)
+  // Only adopt remote sprint if remote actually has data. A null/missing
+  // sprint on Firestore could be a stale write from another device that
+  // never actually had a sprint — don't let it erase local data.
+  if (d.sprint) {
+    const remote = JSON.stringify(d.sprint)
     const local = localStorage.getItem(KEY) || 'null'
     if (remote !== local) {
-      if (d.sprint) localStorage.setItem(KEY, remote)
-      else localStorage.removeItem(KEY)
+      localStorage.setItem(KEY, remote)
       changed = true
     }
   }
-  if (Array.isArray(d.sprintHistory)) {
+  if (Array.isArray(d.sprintHistory) && d.sprintHistory.length > 0) {
     const remote = JSON.stringify(d.sprintHistory)
     const local = localStorage.getItem(HISTORY_KEY) || '[]'
     if (remote !== local) {
