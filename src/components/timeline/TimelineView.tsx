@@ -458,7 +458,7 @@ export function TimelineView() {
             const startHour = hour + subH
             const newId = String(Date.now())
             useAppStore.getState().addBlock({
-              id: newId, type: 'timeline', name: '새 블록',
+              id: newId, type: 'timeline', name: '',
               date: curDate, startHour, durHour: 1,
               color: 'pink', done: false, memo: '', category: '',
               deadline: null, priority: null,
@@ -566,7 +566,7 @@ export function TimelineView() {
               const cur = useAppStore.getState().blocks.find((x) => x.id === editId)
               const isUnmodifiedNew =
                 editId === newBlockId &&
-                cur && cur.name === '새 블록' && !cur.category && cur.durHour === 1 && !cur.memo
+                cur && (cur.name === '' || cur.name === '새 블록') && !cur.category && cur.durHour === 1 && !cur.memo
               if (isUnmodifiedNew) useAppStore.getState().deleteBlock(editId)
               setEditId(null)
               setNewBlockId(null)

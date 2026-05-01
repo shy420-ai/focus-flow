@@ -177,7 +177,7 @@ export function AddBlockSheet({ isOpen, onClose, onQuickEmpty }: AddBlockSheetPr
     addBlock({
       id,
       type: 'timeline',
-      name: '새 블록',
+      name: '',
       date: curDate,
       startHour,
       durHour: 1,

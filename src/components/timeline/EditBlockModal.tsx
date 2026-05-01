@@ -65,6 +65,7 @@ export function EditBlockModal({ block, onClose, onCancel }: Props) {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="할 일 / 일정 이름"
             autoFocus
             style={{ width: '100%', padding: 10, border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 14, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
           />
