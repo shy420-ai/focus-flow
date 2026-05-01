@@ -647,6 +647,15 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
     const updated = friends.filter((f) => f.uid !== friendUid)
     saveFriendsLocal(updated)
     setFriends(updated)
+    // Tombstone so the next hydrate doesn't re-add this uid from the
+    // server snapshot. Same pattern as drops.
+    try {
+      const ts: string[] = JSON.parse(localStorage.getItem('ff_friend_tombstones') || '[]')
+      if (!ts.includes(friendUid)) {
+        ts.push(friendUid)
+        localStorage.setItem('ff_friend_tombstones', JSON.stringify(ts))
+      }
+    } catch { /* ignore */ }
     flushSync().catch(() => { /* offline ok */ })
   }
 

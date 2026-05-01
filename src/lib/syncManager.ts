@@ -113,24 +113,28 @@ function applyRemote(d: UserDoc) {
   if (d.quickMemo !== undefined) {
     try { localStorage.setItem('ff_quickMemo', d.quickMemo as string) } catch { /* ignore */ }
   }
-  // Friends are append-only on hydrate: merge remote into local instead of
-  // overwriting. A friend that's ever existed locally stays put unless the
-  // user explicitly removes them — even if the remote doc came back without
-  // them. Side effect: removals don't propagate across devices, but losing
-  // a friend silently is the worse failure mode for this app.
+  // Friends: append-only on hydrate but tombstone-aware so removals stick.
+  // Without tombstones, the first hydrate after a remove resurrected the
+  // friend because the snapshot still contained them.
   if (Array.isArray(d.friends) && d.friends.length > 0) {
     try {
       const localRaw = localStorage.getItem('ff_friends')
       const localList: Array<{ uid: string; code?: string; name?: string }> = (() => {
         try { return localRaw ? JSON.parse(localRaw) : [] } catch { return [] }
       })()
+      const tombstones: Set<string> = (() => {
+        try { return new Set(JSON.parse(localStorage.getItem('ff_friend_tombstones') || '[]')) }
+        catch { return new Set<string>() }
+      })()
       const seen = new Set(localList.map((f) => f.uid))
       const merged = [...localList]
       for (const f of d.friends) {
-        if (f && typeof f === 'object' && 'uid' in f && !seen.has((f as { uid: string }).uid)) {
-          merged.push(f)
-          seen.add((f as { uid: string }).uid)
-        }
+        if (!f || typeof f !== 'object' || !('uid' in f)) continue
+        const uid = (f as { uid: string }).uid
+        if (seen.has(uid)) continue
+        if (tombstones.has(uid)) continue
+        merged.push(f)
+        seen.add(uid)
       }
       localStorage.setItem('ff_friends', JSON.stringify(merged))
     } catch { /* ignore */ }
