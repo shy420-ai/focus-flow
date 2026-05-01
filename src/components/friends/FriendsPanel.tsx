@@ -106,11 +106,12 @@ interface FriendAvatarTabProps {
   nickname: string
   live: boolean
   selected: boolean
+  hasUpdate: boolean
   onSelect: () => void
   onRequestRemove: () => void
 }
 
-function FriendAvatarTab({ avatar, nickname, live, selected, onSelect, onRequestRemove }: FriendAvatarTabProps) {
+function FriendAvatarTab({ avatar, nickname, live, selected, hasUpdate, onSelect, onRequestRemove }: FriendAvatarTabProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressedRef = useRef(false)
   const [pressed, setPressed] = useState(false)
@@ -153,6 +154,14 @@ function FriendAvatarTab({ avatar, nickname, live, selected, onSelect, onRequest
       <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: selected ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
         <Avatar value={avatar} size={52} />
         {live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
+        {hasUpdate && (
+          <span style={{
+            position: 'absolute', top: -2, right: -2,
+            background: 'var(--pink)', color: '#fff', fontSize: 9, fontWeight: 800,
+            padding: '1px 5px', borderRadius: 99, border: '2px solid #fff',
+            lineHeight: 1.3, letterSpacing: 0.3,
+          }}>NEW</span>
+        )}
       </div>
       <div style={{ fontSize: 9, color: selected ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nickname}</div>
     </button>
@@ -498,6 +507,11 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
     }
   }, [uid])
   const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
+  // Per-friend "last seen by me" timestamps. Stored as ISO; entries get
+  // updated when the user opens that friend's tab.
+  const [seenMap, setSeenMap] = useState<Record<string, string>>(() => {
+    try { return JSON.parse(localStorage.getItem('ff_friend_seen') || '{}') } catch { return {} }
+  })
   // Only intercept the back button when rendered as a modal — the tab
   // version stays put while the user navigates between tabs.
   useBackClose(!embedded && !!onClose, onClose || (() => {}))
@@ -530,6 +544,21 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
     )
     return () => { unsubs.forEach((u) => u()) }
   }, [friends])
+
+  // While a friend's tab is open, mark new updates as seen so the NEW
+  // badge doesn't keep flashing back as their lastActiveAt advances.
+  useEffect(() => {
+    if (!viewingFriend) return
+    const fStatus = friendStatuses[viewingFriend.uid]
+    if (!fStatus?.lastActiveAt) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSeenMap((prev) => {
+      if (prev[viewingFriend.uid] === fStatus.lastActiveAt) return prev
+      const next = { ...prev, [viewingFriend.uid]: fStatus.lastActiveAt as string }
+      try { localStorage.setItem('ff_friend_seen', JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }, [viewingFriend, friendStatuses])
 
   // Subscribe to my own guestbook so new messages from friends show up
   // without manual refresh.
@@ -603,6 +632,9 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
             const status = activeStatus(fStatus?.lastActiveAt)
             const av = fStatus?.avatar || '🧸'
             const nm = fStatus?.nickname || f.name
+            const friendActive = fStatus?.lastActiveAt
+            const seenAt = seenMap[f.uid]
+            const hasUpdate = !!friendActive && (!seenAt || friendActive > seenAt)
             return (
               <FriendAvatarTab
                 key={f.uid}
@@ -611,7 +643,17 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                 nickname={nm}
                 live={status.live}
                 selected={isSel}
-                onSelect={() => setViewingFriend(f)}
+                hasUpdate={hasUpdate && !isSel}
+                onSelect={() => {
+                  setViewingFriend(f)
+                  if (friendActive) {
+                    setSeenMap((prev) => {
+                      const next = { ...prev, [f.uid]: friendActive }
+                      try { localStorage.setItem('ff_friend_seen', JSON.stringify(next)) } catch { /* ignore */ }
+                      return next
+                    })
+                  }
+                }}
                 onRequestRemove={async () => {
                   const ok = await showConfirm(`${nm} 친구 삭제할까?`)
                   if (ok) {
