@@ -39,6 +39,181 @@ export const ADHD_TIPS: AdhdTip[] = [
     tags: ['시작', '환경디자인', '실전'],
   },
   {
+    id: 'pomodoro-short',
+    title: '25분도 못 앉을 때 뽀모도로 짧게',
+    category: 'start',
+    summary: '25분 길면 ❌ → 10분부터 시작 → 점점 늘리기 ⭕.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '"뽀모도로 = 25분 집중 + 5분 휴식" 표준은 ADHD엔 첫날부터 너무 김.\n5분도 안 가서 멍 → "내가 이런 것도 못해" 좌절 → 포기.\n뽀모도로 자체에 거부감 생김.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '본인에게 맞는 시간으로 시작 — 5분이든 10분이든.\n"내가 끝까지 갈 수 있는" 시간만 잡고 → 끝나면 다시.\n점점 늘리기 (1주 단위로 +5분).\nADHD엔 25분 표준보다 본인 페이스가 핵심.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 첫 주: 10분 집중 + 3분 휴식 (반복)\n• 둘째 주: 15분 + 5분\n• 셋째 주: 20분 + 5분 (서서히 25분으로)\n• 한 라운드 끝나면 점수 적기 (게임화)\n• 일기 탭 슬라이더로 라운드 후 집중도 기록\n• 휴식 시간엔 폰 X — 스트레칭·물 마시기 (자극 도파민 X)\n• 못 앉으면 → 더 짧게 (3분 + 1분도 OK)\n• 일주일에 6라운드 = 나쁘지 않은 출발',
+      },
+    ],
+    source: 'Cirillo (1980s) Pomodoro Technique; ADHD timer adaptation research',
+    tags: ['집중', '뽀모도로', '시간'],
+  },
+  {
+    id: 'block-distractions',
+    title: '알림에 자꾸 끊길 때 환경 차단',
+    category: 'start',
+    summary: '의지로 안 봄 ❌ → 폰 다른 방 + 앱 차단 ⭕.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '카톡 띵 한 번 = ADHD 집중 5분 후퇴.\n알림 보고 "10초만" → 30분 SNS 스크롤.\n"의지로 안 봄" 매번 실패 — 도파민 회로가 자동으로 끌어당김.\n이미 끌렸을 때 멈추는 건 거의 불가능.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '의지 X, 환경 차단.\n폰을 손에 닿지 않는 곳에.\n앱 잠금·집중 모드·에이프리코트 같은 차단 앱.\n자극 자체가 안 들어오면 → 의지 안 써도 집중 유지.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 폰 → 다른 방 / 가방 안 / 자물쇠 박스\n• 폰 집중 모드 (iOS Focus / Android Do Not Disturb)\n• Forest·Cold Turkey·OneSec 같은 앱 차단 도구\n• 노트북: 풀스크린 + 알림 OFF + 다른 탭 닫기\n• 메신저 데스크톱 앱 종료\n• 스마트워치 알림 OFF (시계 진동도 끊김)\n• "급한 일 있으면 전화하라" 가족·동료에게 양해\n• 25~50분 단위로 차단 후 → 휴식 시간만 알림 확인',
+      },
+    ],
+    source: 'Mark et al. (2008) Disruption recovery research; ADHD distraction studies',
+    tags: ['집중', '알림', '환경'],
+  },
+  {
+    id: 'single-tasking',
+    title: '할 일 너무 많을 때 1번에 1개만',
+    category: 'start',
+    summary: '멀티태스킹 ❌ → 한 가지만 끝낼 때까지 ⭕.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '할 일 10개 → 모두 시작했다 모두 어중간하게 멈춤.\n뇌가 한꺼번에 다 처리하려다 어느 것도 안 끝남.\nADHD는 멀티태스킹 능력 가장 떨어지는 그룹 — 작업 전환 비용 ↑.\n"바쁘게 했는데 한 거 없음" 모드.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '한 번에 1개만 — 끝낼 때까지 다른 거 X.\n다른 할 일 떠오르면 → 종이에 적고 다시 본 일로.\n하나라도 끝내는 게 5개 시작하는 것보다 강력.\n작업 전환 비용 ↓ → 효율 ↑ + 자존감 ↑.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 책상에 1개 작업만 띄우기 (다른 탭·서류 닫기)\n• "지금은 이것만" 한 줄 메모 책상 위에\n• 새 아이디어 떠오르면 → 따로 메모 (외부화) → 본 일 복귀\n• 카톡·이메일 같은 multitask trap → 정해진 시간에 한 번에\n• "끝낸 후 다음" 룰 — Done 라인 명확히\n• 큰 일은 소단위로 쪼개고 그 1개씩 single-task\n• 5개 어중간보다 1개 완료가 훨씬 도파민 ↑',
+      },
+    ],
+    source: 'Rubinstein et al. (2001) Task switching cost; Barkley executive function',
+    tags: ['집중', '멀티태스킹', '실행'],
+  },
+  {
+    id: 'body-doubling',
+    title: '혼자 못 집중할 때 Body Doubling',
+    category: 'start',
+    summary: '옆에 누가 있으면 집중 2배. 줌 / 라이브 / 카페 다 OK.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '혼자 책상 앞 = 5분 만에 멍.\n근데 도서관·카페에 가면 갑자기 집중 잘됨.\nADHD 뇌는 사회적 시선이 self-monitoring 회로를 대체해줌.\n혼자 의지로 self-monitoring하는 건 거의 불가능.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: 'Body doubling — 누구랑 같이 작업.\n실제 옆에 있어도 OK, 줌·디코·라이브 시청도 OK.\n친구한테 "나 지금 공부 시작" 톡 한 줄도 효과.\nADHD 코칭 임상에서 가장 강력한 도구 중 하나.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 도서관·스터디카페 (실시간 옆 사람 ↑)\n• 줌·디코로 친구랑 화면 공유 (서로 영상 켜고 작업)\n• YouTube "study with me" 라이브 (시청자 만 명이 같이 공부 효과)\n• Focusmate 같은 1:1 매칭 앱\n• 친구한테 "1시간 후 진행 상황 알려줄게" 약속 (소셜 압박)\n• 카페에서 시간 정해두고 (사람 보이는 자리)\n• 룸메이트·가족 옆에 (조용히 작업하는 척만 해도)\n• 줌 미팅 = 카메라 ON → 집중도 ↑',
+      },
+    ],
+    source: 'ADHD coaching practice; CHADD body doubling guides',
+    tags: ['집중', '소셜', '환경'],
+  },
+  {
+    id: 'gamification',
+    title: '단순 작업 지루할 때 게임화',
+    category: 'start',
+    summary: '"공부 6시간" 안 보임 ❌ → "6라운드 클리어" 보임 ⭕.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 뇌는 추상적 시간(6시간) 보다 점수형 진척도가 강력.\n같은 작업도 "지루함" 모드 들어가면 도파민 끊김 → 못 함.\n"오늘 6시간 했어"는 기억 X, 동기 부여 약함.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '작업을 게임으로 변환 — 점수·라운드·보상 시스템.\n뇌가 "이건 게임" 인식하면 도파민 자동 분비.\n눈에 보이는 진척도 (그래프·체크 등) 가 핵심.\nADHD는 게임 디자인이 가장 잘 먹히는 그룹.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 25분 = 1라운드 → 점수 누적 (10라운드 = 보상)\n• 페이지 50쪽 = 50점 / 문제 100개 = 100점\n• 매일 클리어 → 캘린더에 ✓ 줄 길게\n• 친구랑 경쟁 (오늘 누가 더 많이 했나)\n• 보상 미리 정하기: "30라운드 = 새 책 / 50라운드 = 영화"\n• 일기 탭 슬라이더 → 매일 평균 점수 그래프\n• Habitica·Forest 같은 게임화 앱\n• "지루해" 신호 = "라운드 시작" 신호로 재정의',
+      },
+    ],
+    source: 'Self-Determination Theory (Deci & Ryan); Habitica research',
+    tags: ['집중', '게임화', '동기'],
+  },
+  {
+    id: 'fake-deadline',
+    title: '마감 멀게 느껴질 때 가짜 마감',
+    category: 'start',
+    summary: '마감 멀면 안 함 ❌ → 친구한테 보낼 약속 ⭕.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 뇌는 "now vs not now" 만 인식.\n마감 1주일 = "나중" → 뇌가 작업 안 시작.\n마감 전날에야 도파민·아드레날린 폭발해서 시작.\n매번 벼락치기 → 퀄리티 ↓ + 번아웃.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '본 마감보다 빠른 가짜 마감 만들기.\n친구·동료·가족에게 "X일까지 보낼게" 외부 약속.\n외부 시선 = 작업 트리거 (ADHD 동기 회로).\n실제 마감 X 가짜 마감으로 동기 부여.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 마감 1주 전 → "친구한테 초안 보내기" 약속\n• 학회 발표 → 친구한테 "리허설 봐줘" 일주일 전\n• 책 다 읽기 → 독서 모임에서 발표 약속\n• 보고서 → 동료한테 "검토 부탁" 1주일 전\n• 친구한테 "내일 진행 상황 알려줄게" → 작은 마감\n• 트위터·인스타에 "이번주 X 완성" 공개 약속\n• 일주일 마감 → 매일 25% 단위로 쪼개고 매일 인증\n• Body doubling + 가짜 마감 콤보 = 강력',
+      },
+    ],
+    source: 'Ariely (2002) Procrastination research; ADHD time perception',
+    tags: ['집중', '마감', '동기'],
+  },
+  {
+    id: 'reentry-after-break',
+    title: '인터럽션 후 다시 못 들어갈 때 5분 룰',
+    category: 'start',
+    summary: '한 번 끊기면 30분 → 5분 룰 + 신호 → 빠른 복귀.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '집중 들어갔다가 카톡 한 번에 → 다시 못 돌아옴.\n연구: 인터럽션 후 평균 23분 후에야 원래 작업 재진입.\nADHD엔 더 길게 (30분~) — 한 번 끊기면 그날 끝.\n"잠깐만" 들었다가 1시간 SNS 스크롤.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '복귀 의식 (re-entry ritual) 으로 빠르게 다시 들어가기.\n인터럽트 직전 상태 메모로 남기기 → 다시 보고 시작.\n5분 룰 — 끊겼으면 5분 안에 책상 복귀.\n환경 차단 + 휴식은 정해진 시간에만.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 작업 멈출 때 메모: "여기까지 함, 다음은 X" → 복귀 시 그 메모 보고 시작\n• 5분 알람 — 휴식하면 5분 후 책상 복귀 강제\n• 휴식 = 폰 X — 물 / 스트레칭 / 창밖 (자극 없는 휴식)\n• "1시간 집중 → 10분 휴식" 강제 박스\n• 복귀 시 "지난 1분 했던 거 다시 읽기" 의식\n• 카톡 답장 = "이번 라운드 끝나고" 룰\n• 자기에게 사전 약속: "한 번 끊기면 무조건 5분 안에 복귀"',
+      },
+    ],
+    source: 'Mark et al. (2008) The Cost of Interrupted Work; ADHD attention recovery research',
+    tags: ['집중', '복귀', '인터럽션'],
+  },
+  {
     id: 'sleep-on-it',
     title: '큰 결정 앞에서 흔들릴 때 자고 결정',
     category: 'mood',
