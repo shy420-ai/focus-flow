@@ -49,12 +49,11 @@ export function MoodAnnouncement() {
         <div style={{ fontSize: 44, marginBottom: 10 }}>💝</div>
         <div style={{ fontSize: 17, fontWeight: 800, color: 'var(--pd)', marginBottom: 8 }}>새 탭이 생겼어 — 일기</div>
         <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7, marginBottom: 22 }}>
-          CBT/ACT 기반 감정 일기야.<br />
-          매 순간 집중·기분·에너지 슬라이더로 체크하고,<br />
-          단계별 빈칸만 채우면 부담 없이 정리돼.<br /><br />
-          🎵 BGM 깔고 쓸 수 있어 (mp3 업로드도)<br />
-          📊 누적 패턴이랑 단골 함정도 자동 분석<br />
-          ⏱ 부드러운 5분 타이머로 짧게 OK
+          그날 기분이 어땠는지 가볍게 적는 곳.<br />
+          빈칸만 채우면 되니까 부담 없어.<br /><br />
+          🎵 음악 틀어놓고 쓸 수 있어 (내 mp3도 OK)<br />
+          📊 자주 느끼는 감정이랑 생각 패턴 자동 정리<br />
+          ⏱ 5분이면 끝, 길게 쓰라고 안 함
         </div>
         <button
           onClick={openTab}
