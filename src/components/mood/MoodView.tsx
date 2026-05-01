@@ -1,13 +1,26 @@
 // Mood / 마음 tab — CBT-style emotion journal entries with per-entry
 // slider snapshots (집중·기분·에너지). Dev-mode only for now. Local-only
 // persistence (no Firestore sync yet).
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { todayStr } from '../../lib/date'
 import { useMoodStore } from '../../store/MoodStore'
 import { MoodEntryModal } from './MoodEntryModal'
 import type { MoodEntry } from '../../types/mood'
 
 const DEFAULT_BGM_KEY = 'ff_mood_default_bgm'
+const DEFAULT_BGM_TITLE_KEY = 'ff_mood_default_bgm_title'
+
+// YouTube oEmbed endpoint — public, no API key, CORS friendly.
+async function fetchYoutubeTitle(url: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`)
+    if (!res.ok) return null
+    const data = await res.json()
+    return typeof data.title === 'string' ? data.title : null
+  } catch {
+    return null
+  }
+}
 
 // Mirror of DISTORTIONS labels in MoodEntryModal — kept short so the
 // trend panel can show readable names without importing the modal file.
@@ -29,13 +42,36 @@ export function MoodView() {
   const [editing, setEditing] = useState<MoodEntry | null>(null)
   const [showNew, setShowNew] = useState(false)
   const [defaultBgm, setDefaultBgm] = useState(() => localStorage.getItem(DEFAULT_BGM_KEY) ?? '')
+  const [bgmTitle, setBgmTitle] = useState(() => localStorage.getItem(DEFAULT_BGM_TITLE_KEY) ?? '')
   const [bgmOpen, setBgmOpen] = useState(false)
 
   function saveBgm(v: string) {
     setDefaultBgm(v)
     if (v.trim()) localStorage.setItem(DEFAULT_BGM_KEY, v.trim())
-    else localStorage.removeItem(DEFAULT_BGM_KEY)
+    else {
+      localStorage.removeItem(DEFAULT_BGM_KEY)
+      localStorage.removeItem(DEFAULT_BGM_TITLE_KEY)
+      setBgmTitle('')
+    }
   }
+
+  // Resolve the video title via YouTube oEmbed — no API key needed.
+  // Cached in localStorage so refresh doesn't refetch. We only kick off a
+  // fetch when the URL changed and we don't yet have a title for it.
+  useEffect(() => {
+    const url = defaultBgm.trim()
+    if (!url) return
+    const cachedFor = localStorage.getItem(DEFAULT_BGM_KEY)
+    const cachedTitle = localStorage.getItem(DEFAULT_BGM_TITLE_KEY)
+    if (cachedFor === url && cachedTitle) return  // already resolved
+    let cancelled = false
+    fetchYoutubeTitle(url).then((title) => {
+      if (cancelled || !title) return
+      setBgmTitle(title)
+      localStorage.setItem(DEFAULT_BGM_TITLE_KEY, title)
+    })
+    return () => { cancelled = true }
+  }, [defaultBgm])
 
   const todayEntries = entries.filter((e) => e.date === today)
   const pastEntries = entries.filter((e) => e.date !== today).slice(0, 20)
@@ -72,14 +108,18 @@ export function MoodView() {
       }}>
         <button
           onClick={() => setBgmOpen((o) => !o)}
-          style={{ width: '100%', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          style={{ width: '100%', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0, fontFamily: 'inherit', gap: 8 }}
         >
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, flex: 1 }}>
             <span style={{ fontSize: 14 }}>🎵</span>
-            <span style={{ fontSize: 12, color: '#555', fontWeight: 600 }}>기본 BGM</span>
-            {defaultBgm && <span style={{ background: 'var(--pl)', color: 'var(--pink)', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>설정됨</span>}
+            <span style={{ fontSize: 12, color: '#555', fontWeight: 600, flexShrink: 0 }}>기본 BGM</span>
+            {defaultBgm && bgmTitle ? (
+              <span style={{ fontSize: 11, color: 'var(--pd)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0, fontWeight: 500 }} title={bgmTitle}>· {bgmTitle}</span>
+            ) : defaultBgm ? (
+              <span style={{ background: 'var(--pl)', color: 'var(--pink)', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>설정됨</span>
+            ) : null}
           </span>
-          <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 600 }}>{bgmOpen ? '접기' : '설정'}</span>
+          <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 600, flexShrink: 0 }}>{bgmOpen ? '접기' : '설정'}</span>
         </button>
         {bgmOpen && (
           <div style={{ marginTop: 10, animation: 'mood-float-in .2s ease' }}>
