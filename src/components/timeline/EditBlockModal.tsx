@@ -22,6 +22,7 @@ export function EditBlockModal({ block, onClose, onCancel }: Props) {
 
   const [name, setName] = useState(block.name)
   const [category, setCategory] = useState(block.category || '')
+  const [date, setDate] = useState(block.date)
   const [startHour, setStartHour] = useState(startH)
   const [startMin, setStartMin] = useState(startM)
   const [durationH, setDurationH] = useState(durH)
@@ -42,6 +43,7 @@ export function EditBlockModal({ block, onClose, onCancel }: Props) {
     updateBlock(block.id, {
       name: name.trim() || block.name,
       category,
+      date: date || block.date,
       startHour: newStart,
       durHour: newDur > 0 ? newDur : 0.5,
     })
@@ -94,6 +96,17 @@ export function EditBlockModal({ block, onClose, onCancel }: Props) {
               >{c.name}</button>
             ))}
           </div>
+        </div>
+
+        {/* Date */}
+        <div style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>📅 날짜</div>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            style={{ width: '100%', padding: 10, border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 13, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+          />
         </div>
 
         {/* Time + Duration */}
