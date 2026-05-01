@@ -22,7 +22,7 @@ export const VISIBILITY_LABELS: Record<VisibilitySection, string> = {
   habits: '습관',
   sprint: '목표',
   xp: '레벨',
-  drop: '드롭',
+  drop: '덤프',
 }
 
 export function getVisibility(): Record<VisibilitySection, boolean> {

@@ -92,7 +92,7 @@ export function SurveyWizard({ onDone }: Props) {
   if (a.calendar === 'both' || a.calendar === 'month') visibleSummary.push('📅 월간')
   if (a.habit !== 'none') visibleSummary.push('🌱 습관')
   if (a.style === 'goal' || a.style === 'all') visibleSummary.push('🎯 목표')
-  if (a.style === 'drop' || a.style === 'all') visibleSummary.push('💧 드롭')
+  if (a.style === 'drop' || a.style === 'all') visibleSummary.push('📦 덤프')
   if (a.med === 'yes' || a.cycle === 'yes') visibleSummary.push('💊 메디')
   if (a.friend === 'yes') visibleSummary.push('👥 친구')
 
@@ -201,9 +201,9 @@ function Q1({ value, onPick }: { value?: Style; onPick: (v: Style) => void }) {
       <OptCard active={value === 'goal'} onClick={() => onPick('goal')} emoji="📋" label="결과만 정해두는 게 편해" tag="ADHD 추천"
         sub={'"이번주 책 1권, 운동 3번"\n언제 할지는 그날 컨디션 따라\n→ 1주 챌린지 (목표 탭)'} />
       <OptCard active={value === 'drop'} onClick={() => onPick('drop')} emoji="💧" label="즉흥파, 하고 싶은 거부터"
-        sub={'"오늘 뭐할지 5분 전에 정함"\n머릿속 떠도는 거 일단 적어두고 손가는 거부터\n→ 드롭 탭 (브레인덤프)'} />
+        sub={'"오늘 뭐할지 5분 전에 정함"\n머릿속 떠도는 거 일단 적어두고 손가는 거부터\n→ 덤프 탭 (브레인덤프)'} />
       <OptCard active={value === 'all'} onClick={() => onPick('all')} emoji="🎲" label="모르겠어 / 그날그날 다름"
-        sub={'직접 써보고 너 스타일 찾을게\n→ 일간 + 목표 + 드롭 다 켜줌'} />
+        sub={'직접 써보고 너 스타일 찾을게\n→ 일간 + 목표 + 덤프 다 켜줌'} />
     </QShell>
   )
 }
@@ -240,7 +240,7 @@ function Q4({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
     <QShell title="친구 기능 쓸래?" sub="공유 코드로 친구 추가하고 서로 페이지 보는 기능">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="👯" label="응 — 같이 응원하고 싶어"
-        sub={'친구한테 보일 수 있는 것 (각각 토글로 ON/OFF):\n• 1주 챌린지 진행률 / 레벨·XP\n• 오늘 타임라인 / 습관 + 스트릭\n• 드롭 / 컨디션 / 방명록\n• 프사 + 닉네임 + 한줄 소개\n→ 친구 탭 ON'} />
+        sub={'친구한테 보일 수 있는 것 (각각 토글로 ON/OFF):\n• 1주 챌린지 진행률 / 레벨·XP\n• 오늘 타임라인 / 습관 + 스트릭\n• 덤프 / 컨디션 / 방명록\n• 프사 + 닉네임 + 한줄 소개\n→ 친구 탭 ON'} />
       <OptCard active={value === 'no'} onClick={() => onPick('no')} emoji="🦦" label="혼자가 편해"
         sub={'언제든 설정에서 다시 켤 수 있어\n→ 친구 탭 OFF, 모든 항목 비공개'} />
     </QShell>
@@ -284,7 +284,7 @@ function ResultCard({ summary, onStart, answers }: { summary: string[]; onStart:
   const recommendation =
     answers.style === 'goal' ? '"이번주 챌린지 1개"부터 가볍게 시작해봐.\n완벽 노력 ❌ → 1번이라도 +1 누르는 거 ⭕'
     : answers.style === 'time' ? '오늘의 큰 일 1개만 시간 블록으로 등록해봐.\n작게 시작해야 안 부서져.'
-    : answers.style === 'drop' ? '머릿속 떠도는 거 5개만 드롭에 던져봐.\n다 끝낼 필요 없어 — 외부에 적는 게 핵심.'
+    : answers.style === 'drop' ? '머릿속 떠도는 거 5개만 덤프에 던져봐.\n다 끝낼 필요 없어 — 외부에 적는 게 핵심.'
     : '일단 일간 탭에서 오늘 1개 등록해보자.\n뭐든 너 페이스로 ㄱㄱ.'
 
   return (

@@ -507,7 +507,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         return (
           <>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', margin: '14px 0 6px' }}>
-              💧 드롭 ({doneCount}/{drops.length} 완료)
+              📦 덤프 ({doneCount}/{drops.length} 완료)
             </div>
             {undone.length === 0 ? (
               <div style={{ color: '#aaa', fontSize: 11, textAlign: 'center', padding: '8px 0' }}>전부 완료했어!</div>

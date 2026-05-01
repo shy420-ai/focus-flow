@@ -143,7 +143,7 @@ export function DropsView() {
             <button className="drop-action-btn" onClick={clearDone}>🗑 완료 지우기</button>
           )}
           <button className="drop-action-btn" onClick={async () => {
-            if (await showConfirm('드롭 전체 초기화? 모든 항목이 사라져')) clearAll()
+            if (await showConfirm('덤프 전체 초기화? 모든 항목이 사라져')) clearAll()
           }}>🔄 전체 초기화</button>
           <span style={{ flex: 1 }} />
           <span style={{ fontSize: 11, color: '#aaa' }}>{todo.length}개 남음</span>

@@ -89,7 +89,7 @@ const STEPS: OnboardingStep[] = [
   },
   {
     title: '👥 친구 탭',
-    desc: '코드로 친구 추가 → 위쪽 동그란 아바타 줄 → 탭마다 친구 화면 확인.\n친구의 챌린지/XP/습관/드롭/타임라인 다 보여 (공개 설정에 따라).\n\n💡 친구 아바타 길게 누르면 삭제\n💡 "나" 탭에서 내 화면을 친구 시점으로 미리보기\n\n📚 Body Doubling\n친구가 보이면 ADHD 뇌가 외로움 덜 느끼고 시작 쉬워짐.',
+    desc: '코드로 친구 추가 → 위쪽 동그란 아바타 줄 → 탭마다 친구 화면 확인.\n친구의 챌린지/XP/습관/덤프/타임라인 다 보여 (공개 설정에 따라).\n\n💡 친구 아바타 길게 누르면 삭제\n💡 "나" 탭에서 내 화면을 친구 시점으로 미리보기\n\n📚 Body Doubling\n친구가 보이면 ADHD 뇌가 외로움 덜 느끼고 시작 쉬워짐.',
     sel: '.view-tabs',
     tab: 'friends',
     requires: 'friends-tab',
@@ -102,7 +102,7 @@ const STEPS: OnboardingStep[] = [
     requires: 'friends-tab',
   },
   {
-    title: '💧 드롭 (언젠가 할 것)',
+    title: '📦 덤프 (언젠가 할 것)',
     desc: '지금 당장 안 할 거지만 머릿속에서 떠다니는 것들 — 여기 던져둬.\n\n📚 Cognitive Offloading (Risko & Gilbert, 2016)\n머릿속 → 외부로 옮기면 작업기억 부담 즉시 줄어. ADHD엔 약물 다음으로 효과 큰 도구.',
     sel: '.drop-wrap',
     tab: 'drop',

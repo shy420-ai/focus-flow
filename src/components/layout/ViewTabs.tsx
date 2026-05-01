@@ -49,11 +49,12 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <circle cx="12" cy="12" r="1.5" fill="currentColor" />
     </svg>
   ) },
-  { id: 'drop', label: '드롭', icon: (
-    // water drop with sparkle
+  { id: 'drop', label: '덤프', icon: (
+    // 3D box (brain dump container)
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-      <path d="M12 2.5c-3 4-6 7-6 11a6 6 0 0 0 12 0c0-4-3-7-6-11z" fill="currentColor" fillOpacity=".25" />
-      <circle cx="9.5" cy="14" r="1.2" fill="currentColor" />
+      <path d="M3 7l9-4 9 4-9 4-9-4z" fill="currentColor" fillOpacity=".25" />
+      <path d="M3 7v10l9 4 9-4V7" />
+      <path d="M12 11v10" />
     </svg>
   ) },
   { id: 'stats', label: '메디', icon: (
