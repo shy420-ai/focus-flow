@@ -196,6 +196,17 @@ export function SprintBoard() {
     setSprint({ ...sprint, goals: sprint.goals.filter((g) => g.id !== id) })
   }
 
+  function moveGoal(id: string, direction: -1 | 1) {
+    if (!sprint) return
+    const idx = sprint.goals.findIndex((g) => g.id === id)
+    if (idx < 0) return
+    const next = idx + direction
+    if (next < 0 || next >= sprint.goals.length) return
+    const newGoals = [...sprint.goals]
+    ;[newGoals[idx], newGoals[next]] = [newGoals[next], newGoals[idx]]
+    setSprint({ ...sprint, goals: newGoals })
+  }
+
 
   const lv = getLevel(xp)
   const xpProg = xpInLevel(xp)
@@ -329,11 +340,27 @@ export function SprintBoard() {
         </div>
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 챌린지 목표 (최대 3개)</div>
-      {sprint.goals.map((g) => {
+      {sprint.goals.map((g, idx) => {
         const p = goalPct(g)
+        const isFirst = idx === 0
+        const isLast = idx === sprint.goals.length - 1
         return (
           <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+                <button
+                  onClick={() => moveGoal(g.id, -1)}
+                  disabled={isFirst}
+                  style={{ background: isFirst ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isFirst ? 'default' : 'pointer', fontSize: 9, color: isFirst ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
+                  aria-label="위로 이동"
+                >▲</button>
+                <button
+                  onClick={() => moveGoal(g.id, 1)}
+                  disabled={isLast}
+                  style={{ background: isLast ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isLast ? 'default' : 'pointer', fontSize: 9, color: isLast ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
+                  aria-label="아래로 이동"
+                >▼</button>
+              </div>
               <input
                 value={g.name}
                 onChange={(e) => updateGoal(g.id, { name: e.target.value })}
