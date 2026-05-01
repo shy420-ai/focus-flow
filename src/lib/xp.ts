@@ -35,11 +35,10 @@ export function addXp(n: number): { newXp: number; leveledUp: boolean; newLevel:
   const afterLv = Math.floor(afterLifetime / PER_LEVEL) + 1
   localStorage.setItem(KEY, String(afterLifetime))
 
-  // Monthly XP — only counts positive gains so removing a tap doesn't shrink leaderboard score
-  if (n > 0) {
-    const beforeMonthly = getMonthlyXp()  // also handles auto-reset
-    localStorage.setItem(MONTH_KEY, String(beforeMonthly + n))
-  }
+  // Monthly XP — mirrors lifetime so '아쉽다 -1' also rewinds leaderboard score.
+  // Floored at 0 (no negative monthly).
+  const beforeMonthly = getMonthlyXp()  // also handles auto-reset
+  localStorage.setItem(MONTH_KEY, String(Math.max(0, beforeMonthly + n)))
 
   window.dispatchEvent(new CustomEvent('ff-xp-changed'))
   queue()

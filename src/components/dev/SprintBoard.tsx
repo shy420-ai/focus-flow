@@ -221,19 +221,23 @@ export function SprintBoard() {
     if (!g) return
     const cur = typeof g.current === 'number' ? g.current : 0
     const next = Math.max(0, cur + delta)
+    if (next === cur) return
     updateGoal(id, { current: next })
-    if (next > cur) {
-      // Per-tap XP: 5 per delta unit
-      let xpDelta = 5 * (next - cur)
-      // Milestone bonus when crossing target (only counts the first time per goal in this sprint)
-      if (g.target > 0 && cur < g.target && next >= g.target) {
+    // Lifetime XP: 5 per unit (positive or negative)
+    let xpDelta = 5 * (next - cur)
+    // Milestone bonus when crossing target (only the actual crossing earns/refunds)
+    if (g.target > 0) {
+      if (cur < g.target && next >= g.target) {
         xpDelta += 50
         showMiniToast('🏆 목표 달성! +50 XP 보너스')
+      } else if (cur >= g.target && next < g.target) {
+        xpDelta -= 50  // refund the bonus when undoing past the target line
       }
-      const result = addXp(xpDelta)
-      setXp(result.newXp)
-      if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
     }
+    if (xpDelta === 0) return
+    const result = addXp(xpDelta)
+    setXp(result.newXp)
+    if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
   }
 
   return (
