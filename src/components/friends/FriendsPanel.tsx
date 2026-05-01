@@ -263,7 +263,13 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </div>
       )}
 
-      {/* Sprint progress (1주 챌린지) */}
+      {/* Sprint progress (1주 챌린지) — when self-viewing and the card is
+          hidden, surface a one-line reason so it's not a mystery. */}
+      {uid === myUid && (!showSprint || !sprint || spct == null) && (
+        <div style={{ background: '#FFF6F8', border: '1px dashed var(--pink)', borderRadius: 10, padding: 10, marginBottom: 12, fontSize: 11, color: '#888' }}>
+          🎯 이번주 챌린지 안 보이는 이유 — {!showSprint ? '설정에서 "목표" 비공개로 꺼져있어' : !sprint ? '아직 Firestore에 동기화 안 됨 (목표탭 한 번 들어갔다 와봐)' : '챌린지에 목표가 없음'}
+        </div>
+      )}
       {showSprint && sprint && spct != null && (
         <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', borderRadius: 12, padding: 12, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
