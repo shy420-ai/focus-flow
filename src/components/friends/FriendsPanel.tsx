@@ -187,10 +187,12 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
     window.addEventListener('ff-sprint-local-changed', bump)
     window.addEventListener('ff-xp-changed', bump)
     window.addEventListener('ff-drops-local-changed', bump)
+    window.addEventListener('ff-friend-visibility-changed', bump)
     return () => {
       window.removeEventListener('ff-sprint-local-changed', bump)
       window.removeEventListener('ff-xp-changed', bump)
       window.removeEventListener('ff-drops-local-changed', bump)
+      window.removeEventListener('ff-friend-visibility-changed', bump)
     }
   }, [uid, myUid])
 
@@ -243,11 +245,19 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const status = activeStatus(data.lastActiveAt as string | undefined)
   const friendAvatar = (data.avatar as string | undefined) || '🧸'
   const friendBio = (data.bio as string | undefined) || ''
-  const showXp = isSectionVisible(data, 'xp')
-  const showSprint = isSectionVisible(data, 'sprint')
-  const showTimeline = isSectionVisible(data, 'timeline')
-  const showHabits = isSectionVisible(data, 'habits')
-  const showDrop = isSectionVisible(data, 'drop')
+  // For self-view, evaluate visibility against the local prefs (instant
+  // reflection of toggle changes). For friend-view, use what's on the
+  // friend's UserDoc.
+  const visDoc: UserDoc = uid === myUid
+    ? { friendVisibility: (() => {
+        try { return JSON.parse(localStorage.getItem('ff_friend_visibility') || '{}') } catch { return {} }
+      })() }
+    : data
+  const showXp = isSectionVisible(visDoc, 'xp')
+  const showSprint = isSectionVisible(visDoc, 'sprint')
+  const showTimeline = isSectionVisible(visDoc, 'timeline')
+  const showHabits = isSectionVisible(visDoc, 'habits')
+  const showDrop = isSectionVisible(visDoc, 'drop')
   let drops = (data.drops as Array<{ id: number; name: string; done: boolean }> | undefined) || []
   if (uid === myUid) {
     try {
