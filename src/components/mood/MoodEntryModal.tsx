@@ -25,31 +25,49 @@ const DISTORTIONS: Array<{ id: string; label: string; hint: string }> = [
   { id: 'labeling', label: '라벨링', hint: '나는 실패자 / 멍청이' },
 ]
 
-const REFRAME_TEMPLATES: Array<{ label: string; text: string }> = [
-  { label: '사실 vs 해석', text: '내가 받아들인 건 [____]였지만, 사실 일어난 건 [____]일 수도 있어' },
-  { label: '부분 인정', text: '확실히 [____]은 있었어. 근데 [____]도 있었어' },
-  { label: '환경 원인', text: '내가 부족해서가 아니라, [수면/식사/스트레스]이 영향 줬어' },
-]
-
-// CBT/ACT 기반 검증된 기법으로만 선별. 일반적 "운동해라/잠 자라" 같은
-// 막연한 조언은 빼고, 각 기법이 무슨 결과를 노리는지 분명한 것만.
-const ACTION_TEMPLATES: Array<{ label: string; text: string }> = [
-  // STOP technique + 4-7-8 호흡 — 격앙·충동 즉각 차단
-  { label: '4-7-8 호흡', text: '4초 들이쉬고 → 7초 멈추고 → 8초 내쉬기를 4번 반복' },
-  // 5-4-3-2-1 그라운딩 — 불안·패닉 발작 즉시 감각으로 끌어내리기
-  { label: '5-4-3-2-1', text: '보이는 것 5개 / 들리는 것 4개 / 만지는 것 3개 / 냄새 2개 / 맛 1개 찾기' },
-  // 행동 실험 — 자동 사고가 진짜 맞는지 데이터로 검증 (Beck CBT 핵심)
-  { label: '행동 실험', text: '"[자동 사고]"가 사실인지 [어떻게] 시험해본다' },
-  // 노출 (Exposure) — 회피 패턴 깨기, 불안장애 1차 치료
-  { label: '작게 부딪히기', text: '피하던 [____]에 5분만 다가가본다' },
-  // 활동 스케줄링 — 우울·무기력 1차 개입 (Behavioral Activation)
-  { label: '활동 1개 박기', text: '내일 [____]를 [언제]에 일정으로 박아둔다' },
-  // Self-Compassion Break (Neff RCT) — 자기비난 대안
-  { label: '친구라면', text: '친한 친구가 같은 일을 겪었다면, 나는 친구한테 "[____]" 라고 말해줄 거야' },
-  // Self-Distancing / Time Perspective Taking (Kross & Ayduk) — distress reduction
-  { label: '시간 거리 두기', text: '1년 후에 이걸 떠올리면 [____] 정도 무게일 거야' },
-  // ACT — 가치 기반 행동 (감정에 끌려가지 말고 가치로 돌아가기)
-  { label: '가치로 돌아가기', text: '내가 중요하게 여기는 [____]에 맞게 [____] 한다' },
+// CBT/ACT 검증된 기법만 선별. 카드는 라벨 + 한 줄 설명 + 구체 예시
+// 구조 — 빈칸([____])보다 실제 적힌 예시가 이해하기 훨씬 쉬워.
+const ACTION_TEMPLATES: Array<{ label: string; desc: string; example: string }> = [
+  {
+    label: '4-7-8 호흡',
+    desc: '격앙·충동 즉각 차단 (자율신경 진정)',
+    example: '4초 들이쉬고 → 7초 멈추고 → 8초 내쉬기, 4번 반복',
+  },
+  {
+    label: '5-4-3-2-1 감각',
+    desc: '불안·패닉을 감각으로 끌어내리기',
+    example: '지금 보이는 것 5개 / 들리는 것 4개 / 만져지는 것 3개 / 냄새 2개 / 맛 1개 찾기',
+  },
+  {
+    label: '행동 실험',
+    desc: '자동 사고가 진짜 맞는지 검증 (Beck CBT 핵심)',
+    example: '"사람들이 비웃었을 거야" 진짜인지, 동료한테 "오늘 발표 어땠어" 직접 물어본다',
+  },
+  {
+    label: '작게 부딪히기',
+    desc: '피하던 거에 짧게 노출 (불안장애 1차 치료)',
+    example: '회의 발언이 무서워 회피 중 → 다음 회의에서 한 마디만 해본다',
+  },
+  {
+    label: '활동 1개 박기',
+    desc: '의욕 없을 때 작은 활동을 일정에 박기 (BA)',
+    example: '내일 점심 직후 12:30에 산책 20분을 캘린더에 박아둔다',
+  },
+  {
+    label: '친구라면',
+    desc: '자기비난 대신 친구한테 하듯 (Neff Self-Compassion)',
+    example: '친구가 발표 더듬었으면 "한 번 그런 거지, 다음엔 잘 해" 라고 말해줬을 거야',
+  },
+  {
+    label: '시간 거리 두기',
+    desc: '미래 시점에서 지금을 보기 (Self-Distancing)',
+    example: '1년 후에 이 일을 떠올리면 거의 기억도 안 날 정도일 것',
+  },
+  {
+    label: '가치로 돌아가기',
+    desc: '감정 말고 내 가치에 맞춰 행동 (ACT)',
+    example: '내가 중요하게 여기는 "솔직한 관계" 따라서, 친구한테 미안하다고 말한다',
+  },
 ]
 
 interface Props {
@@ -62,13 +80,18 @@ export function MoodEntryModal({ entry, onClose }: Props) {
   const editEntry = useMoodStore((s) => s.editEntry)
   useBackClose(true, onClose)
 
+  // Per-entry sliders (Section 1 — moved from the daily summary so each
+  // entry has its own snapshot of how I'm doing in this moment).
+  const [focus, setFocus] = useState<number>(entry?.focus ?? 5)
+  const [mood, setMood] = useState<number>(entry?.mood ?? 5)
+  const [energy, setEnergy] = useState<number>(entry?.energy ?? 5)
+  const [quickNote, setQuickNote] = useState(entry?.quickNote ?? '')
   const [situation, setSituation] = useState(entry?.situation ?? '')
   const [autoThought, setAutoThought] = useState(entry?.autoThought ?? '')
   const [emotions, setEmotions] = useState<string[]>(entry?.emotions ?? [])
   const [intensity, setIntensity] = useState<number>(entry?.intensity ?? 5)
   const [bodyFelt, setBodyFelt] = useState(entry?.bodyFelt ?? '')
   const [distortions, setDistortions] = useState<string[]>(entry?.distortions ?? [])
-  const [reframe, setReframe] = useState(entry?.reframe ?? '')
   const [nextAction, setNextAction] = useState(entry?.nextAction ?? '')
   const [distressBefore] = useState<number | undefined>(entry?.distressBefore ?? entry?.intensity ?? undefined)
   const [distressAfter, setDistressAfter] = useState<number | undefined>(entry?.distressAfter)
@@ -91,17 +114,14 @@ export function MoodEntryModal({ entry, onClose }: Props) {
     return () => clearInterval(t)
   }, [entry])
   const overLimit = elapsed >= SOFT_LIMIT_SEC
-  // 다른 시각 (cognitive restructuring) is valuable but cognitively heavy.
-  // Keep it collapsible so ADHD users can skip without feeling guilty —
-  // 다음 선택 alone (Behavioral Activation) is also evidence-based.
-  const [reframeOpen, setReframeOpen] = useState(!!entry?.reframe)
 
   function toggleChip(arr: string[], v: string, setter: (next: string[]) => void) {
     setter(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
   }
 
   function save() {
-    if (!situation.trim() && emotions.length === 0) {
+    // Allow saving with just the sliders too — they're a valid quick check-in.
+    if (!situation.trim() && emotions.length === 0 && !quickNote.trim()) {
       onClose()
       return
     }
@@ -109,13 +129,17 @@ export function MoodEntryModal({ entry, onClose }: Props) {
     const payload = {
       date: entry?.date ?? todayStr(),
       time: entry?.time ?? `${pad(now.getHours())}:${pad(now.getMinutes())}`,
+      focus,
+      mood,
+      energy,
+      quickNote: quickNote.trim() || undefined,
       situation: situation.trim() || undefined,
       autoThought: autoThought.trim() || undefined,
       emotions: emotions.length ? emotions : undefined,
       intensity,
       bodyFelt: bodyFelt.trim() || undefined,
       distortions: distortions.length ? distortions : undefined,
-      reframe: reframe.trim() || undefined,
+      reframe: entry?.reframe,  // preserved if existing entry already had one
       nextAction: nextAction.trim() || undefined,
       distressBefore: distressBefore ?? intensity,
       distressAfter,
@@ -164,8 +188,22 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             />
           )}
 
-          {/* 1. 상황 */}
-          <Section title="1. 상황" hint="사실 한 줄. 평가·해석 X.">
+          {/* 1. 지금 상태 (per-entry slider snapshot) */}
+          <Section title="1. 지금 상태" hint="이 순간 컨디션 — 슬라이더만 끌어도 OK.">
+            <ModalSliderRow icon="🎯" label="집중" value={focus} onChange={setFocus} />
+            <ModalSliderRow icon="😊" label="기분" value={mood} onChange={setMood} />
+            <ModalSliderRow icon="⚡" label="에너지" value={energy} onChange={setEnergy} />
+            <input
+              type="text"
+              value={quickNote}
+              onChange={(e) => setQuickNote(e.target.value)}
+              placeholder="한 줄 메모 (선택)"
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid #eee', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', marginTop: 6 }}
+            />
+          </Section>
+
+          {/* 2. 상황 */}
+          <Section title="2. 상황" hint="사실 한 줄. 평가·해석 X.">
             <textarea
               value={situation}
               onChange={(e) => setSituation(e.target.value)}
@@ -175,8 +213,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             />
           </Section>
 
-          {/* 2. 자동 생각 */}
-          <Section title="2. 자동 생각" hint="그 순간 머리에 든 한 줄.">
+          {/* 3. 자동 생각 */}
+          <Section title="3. 자동 생각" hint="그 순간 머리에 든 한 줄.">
             <textarea
               value={autoThought}
               onChange={(e) => setAutoThought(e.target.value)}
@@ -186,8 +224,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             />
           </Section>
 
-          {/* 3. 감정 + 강도 */}
-          <Section title="3. 감정" hint="구체적인 단어로 — 이름 붙이기만 해도 진정돼.">
+          {/* 4. 감정 + 강도 */}
+          <Section title="4. 감정" hint="구체적인 단어로 — 이름 붙이기만 해도 진정돼.">
             {EMOTION_GROUPS.map((g) => (
               <div key={g.label} style={{ marginBottom: 6 }}>
                 <div style={{ fontSize: 10, color: '#888', fontWeight: 600, marginBottom: 4 }}>{g.label}</div>
@@ -225,8 +263,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             </div>
           </Section>
 
-          {/* 4. 신체 감각 */}
-          <Section title="4. 신체 감각" hint="(선택) 감정이 몸 어디에 느껴졌는지.">
+          {/* 5. 신체 감각 */}
+          <Section title="5. 신체 감각" hint="(선택) 감정이 몸 어디에 느껴졌는지.">
             <textarea
               value={bodyFelt}
               onChange={(e) => setBodyFelt(e.target.value)}
@@ -236,8 +274,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             />
           </Section>
 
-          {/* 5. 사고 함정 */}
-          <Section title="5. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지. 예시 보고 골라.">
+          {/* 6. 사고 함정 */}
+          <Section title="6. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지. 예시 보고 골라.">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {DISTORTIONS.map((d) => {
                 const on = distortions.includes(d.id)
@@ -266,52 +304,21 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             </div>
           </Section>
 
-          {/* 6. 다른 시각 (재해석) — collapsible, default closed */}
-          <div>
-            <button
-              onClick={() => setReframeOpen((o) => !o)}
-              style={{ width: '100%', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-            >
-              <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)' }}>6. 다른 시각 {reframe ? '✓' : ''}</span>
-              <span style={{ fontSize: 10, color: '#aaa' }}>{reframeOpen ? '접기' : '열기 (선택)'}</span>
-            </button>
-            <div style={{ fontSize: 10, color: '#999', marginTop: 4, lineHeight: 1.5 }}>
-              생각을 바꾸는 단계. 부담되면 건너뛰고 다음 선택만 해도 OK.
-            </div>
-            {reframeOpen && (
-              <div style={{ marginTop: 8 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
-                  {REFRAME_TEMPLATES.map((t) => (
-                    <TemplateCard key={t.label} label={t.label} preview={t.text} onClick={() => setReframe(t.text)} />
-                  ))}
-                  <button
-                    onClick={() => setReframe('지금은 답이 안 보임. 시간 두고 보자.')}
-                    style={passCardStyle}
-                  >
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>지금은 못 쓰겠어</span>
-                    <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>"답 안 보임. 시간 두고 보자."</span>
-                  </button>
-                </div>
-                <textarea
-                  value={reframe}
-                  onChange={(e) => setReframe(e.target.value)}
-                  placeholder="템플릿 탭하거나 직접 써도 OK"
-                  rows={3}
-                  style={textareaStyle}
-                />
-              </div>
-            )}
-          </div>
-
           {/* 7. 다음 선택 */}
-          <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 작게 1개만.">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
+          <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 카드 탭하면 예시가 들어가.">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6, marginBottom: 8 }}>
               {ACTION_TEMPLATES.map((t) => (
-                <TemplateCard key={t.label} label={t.label} preview={t.text} onClick={() => setNextAction(t.text)} />
+                <ActionCard
+                  key={t.label}
+                  label={t.label}
+                  desc={t.desc}
+                  example={t.example}
+                  onClick={() => setNextAction(t.example)}
+                />
               ))}
               <button
                 onClick={() => setNextAction('오늘은 패스')}
-                style={passCardStyle}
+                style={{ ...passCardStyle, marginTop: 4 }}
               >
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>오늘은 패스</span>
                 <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>비워두고 넘어가기</span>
@@ -320,8 +327,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             <textarea
               value={nextAction}
               onChange={(e) => setNextAction(e.target.value)}
-              placeholder="예: 발표 전날 일찍 자기"
-              rows={2}
+              placeholder="카드 탭하거나 직접 써도 OK"
+              rows={3}
               style={textareaStyle}
             />
           </Section>
@@ -391,13 +398,31 @@ const textareaStyle: React.CSSProperties = {
   lineHeight: 1.6,
 }
 
-function TemplateCard({ label, preview, onClick }: { label: string; preview: string; onClick: () => void }) {
+function ModalSliderRow({ icon, label, value, onChange }: { icon: string; label: string; value: number; onChange: (v: number) => void }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+      <span style={{ fontSize: 14, width: 18, textAlign: 'center' }}>{icon}</span>
+      <span style={{ fontSize: 11, color: '#666', width: 32 }}>{label}</span>
+      <input
+        type="range"
+        min={0}
+        max={10}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ flex: 1, accentColor: 'var(--pink)' }}
+      />
+      <span style={{ fontSize: 12, color: 'var(--pd)', fontWeight: 700, width: 22, textAlign: 'right' }}>{value}</span>
+    </div>
+  )
+}
+
+function ActionCard({ label, desc, example, onClick }: { label: string; desc: string; example: string; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       style={{
-        padding: '8px 10px',
-        borderRadius: 10,
+        padding: '10px 12px',
+        borderRadius: 12,
         border: '1.5px solid #eee',
         background: '#fafafa',
         cursor: 'pointer',
@@ -405,11 +430,12 @@ function TemplateCard({ label, preview, onClick }: { label: string; preview: str
         textAlign: 'left',
         display: 'flex',
         flexDirection: 'column',
-        gap: 3,
+        gap: 4,
       }}
     >
-      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>{label}</span>
-      <span style={{ fontSize: 9, color: '#888', lineHeight: 1.45 }}>{preview}</span>
+      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>{label}</span>
+      <span style={{ fontSize: 10, color: 'var(--pink)', fontWeight: 600 }}>{desc}</span>
+      <span style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{example}</span>
     </button>
   )
 }
