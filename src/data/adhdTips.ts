@@ -769,6 +769,81 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'AuDHD Psychiatry Starting ADHD Medication; FDA medication guidelines',
     tags: ['약', '시작', '추적'],
   },
+  {
+    id: 'concerta-titration',
+    title: '콘서타 시작했을 때 적응기간',
+    category: 'body',
+    summary: '18 → 36 → 54 단계 올라가는 게 표준. 첫 1~2주 부작용 흔함.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '콘서타 처음 받으면 효과·부작용 둘 다 강하게 느껴짐.\n첫 1주 두통·식욕 저하·잠 안 옴 → "이거 안 맞나?" 충동 중단 위험.\n반대로 첫 1주 효과가 약하면 "안 듣나?" → 용량 자가 조정 위험.\n적응 패턴 모르면 평가가 잘못됨.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '표준 titration: 18mg → (1~2주) → 36mg → (1~2주) → 54mg.\n각 단계별 1~2주 적응 후 다음 용량 의사가 조정.\n첫 1~2주 부작용은 대부분 일시적 (몸이 자극제에 적응).\n효과는 36~54mg에서 명확히 나타나는 사람 많음.\n자가 조정 X, 의사와 매주 확인.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 1주차 (18mg): 두통·식욕↓·약간 멍함이 흔함 → 일시적\n• 2주차 (18mg): 부작용 ↓ 시작, 효과 첫 신호 (집중 ↑)\n• 3주차부터 36mg → 효과 명확해짐, 부작용 다시 살짝 ↑ → 일주일 후 안정화\n• 5주차 54mg → 본격 효과, 부작용은 1주 안에 안정\n• 매일 체크: 효과·식욕·수면·기분·심박 (메디 탭 + 일기 탭)\n• 응급 신호 (가슴 통증·환각·자살사고) → 즉시 의사·응급실\n• 심한 부작용 1주 넘게 지속 → 의사한테 데이터로 알리기 (자가 중단 X)\n• 36mg에서 효과 충분하면 54mg 안 가도 됨 (사람마다 다름)',
+      },
+    ],
+    source: 'Concerta® prescribing info; Cleveland Clinic ADHD medication',
+    tags: ['약', '콘서타', '적응'],
+  },
+  {
+    id: 'med-not-fitting',
+    title: '약이 안 맞는 것 같을 때 다른 계열 시도',
+    category: 'body',
+    summary: '메틸페니데이트 ↔ 암페타민 — 50%는 한쪽이 더 잘 맞아.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '콘서타·메디키넷 (메틸페니데이트) 먹어도 효과 약하거나 부작용 큼.\n"내가 약이 안 듣는 사람인가?" 좌절 → 치료 포기 위험.\n실제론 ADHD 약 80%+ 환자가 약물 반응 — 다만 사람마다 맞는 약 다름.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: 'ADHD 자극제 = 두 계열: 메틸페니데이트 (콘서타·메디키넷·페니드) vs 암페타민 (Adderall·Vyvanse·엘반세).\n50% 환자는 한 계열에 더 잘 반응.\n현재 약 6~8주 충분히 시도 후 효과 약하면 → 의사한테 다른 계열 의논.\n비자극제 (스트라테라·인튜니브) 도 옵션.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 콘서타 6~8주 적정 용량까지 올려도 효과 약함 → 다른 계열 의논\n• 메틸페니데이트 부작용 강함 (불안·심박) → 암페타민 더 잘 맞을 수 있음\n• 엘반세 (Vyvanse) — 한국 처방 가능, prodrug라 약 효과 부드러움\n• 비자극제 옵션: 스트라테라 (atomoxetine), 인튜니브 (guanfacine)\n• 약 바꿀 때도 첫 2주 적응 일지 기록 (앞 팁 참고)\n• 한 계열 안 맞아도 다른 계열은 잘 맞을 가능성 50%\n• 자가 판단 X — 의사와 데이터 보고 결정\n• 한국에선 콘서타·메디키넷이 1차, 엘반세는 처방 받기 비교적 쉬움',
+      },
+    ],
+    source: 'Cortese et al. (2018) Comparative efficacy ADHD meds Lancet Psychiatry; Child Mind Institute',
+    tags: ['약', '계열', '의사'],
+  },
+  {
+    id: 'med-rebound',
+    title: '약 효과 끝날 때 리바운드 견디기',
+    category: 'body',
+    summary: '오후 효과 떨어질 때 짜증·우울 일시적. 견뎌도 OK.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '약 효과 떨어지는 시간 (오후 3~5시쯤) 짜증·우울·피로 폭발.\n"약 끊으니 더 나빠지나?" 걱정.\n도파민 일시적 ↓ → 감정 dysregulation 일시적 ↑ — Rebound effect.\n파트너·자녀·동료한테 짜증 폭발해서 후회.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '리바운드는 일시적 (1~2시간) 자연 현상.\n그 시간 알아두고 큰 결정·민감한 대화 X.\n간단한 대처: 단백질 간식 + 물 + 짧은 산책.\n매일 같은 시간이면 → 의사한테 약 종류·시간 조정 의논 (서방형 등).',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 매일 효과 끝나는 시간 메디 탭·일기 탭에 기록 (보통 오후 3~5시)\n• 그 시간엔 회의·대화·의사결정 피하기\n• 단백질 간식 (견과류·치즈·요거트) + 물 1잔\n• 5분 산책 → 도파민 자연 보충\n• 그 시간 알람 박기: "리바운드 시간이야 — 견디면 1시간 후 안정"\n• 가족한테 미리 양해: "나 오후 4시쯤 짜증 폭발해, 그 시간엔 큰 얘기 X"\n• 매일 같은 시간 강한 리바운드 → 의사한테 → 12hr 서방형·소량 추가 복용 등 의논\n• 기록 데이터로 의사 진료 → 약 조정 빨라짐',
+      },
+    ],
+    source: 'Concerta® prescribing info; Cleveland Clinic; Faraone (2019) ADHD pharmacotherapy',
+    tags: ['약', '리바운드', '오후'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
