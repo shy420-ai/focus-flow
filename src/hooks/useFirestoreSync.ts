@@ -13,6 +13,7 @@ import '../components/layout/ViewTabs'
 import '../lib/profileSync'
 import '../lib/avatar'
 import '../lib/bio'
+import '../lib/friendVisibility'
 
 export function useFirestoreSync(): void {
   const uid = useAppStore((s) => s.uid)

@@ -8,6 +8,7 @@ import { flushSync } from '../../lib/syncManager'
 import { computeStreak } from '../../lib/habitStreak'
 import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
 import { showMiniToast } from '../../lib/miniToast'
+import { isSectionVisible } from '../../lib/friendVisibility'
 import { Avatar } from '../ui/Avatar'
 import type { UserDoc } from '../../lib/firestore'
 
@@ -152,6 +153,11 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const status = activeStatus(data.lastActiveAt as string | undefined)
   const friendAvatar = (data.avatar as string | undefined) || '🧸'
   const friendBio = (data.bio as string | undefined) || ''
+  const showCondition = isSectionVisible(data, 'condition')
+  const showXp = isSectionVisible(data, 'xp')
+  const showSprint = isSectionVisible(data, 'sprint')
+  const showTimeline = isSectionVisible(data, 'timeline')
+  const showHabits = isSectionVisible(data, 'habits')
   const friendXp = typeof data.xp === 'number' ? data.xp : 0
   const friendLv = levelFromXp(friendXp)
   const friendLvProg = xpInLevel(friendXp)
@@ -174,14 +180,14 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       </div>
 
       {/* Day mode banner */}
-      {dmInfo && (
+      {showCondition && dmInfo && (
         <div style={{ background: dmInfo.color + '22', borderLeft: `3px solid ${dmInfo.color}`, padding: '6px 10px', borderRadius: 8, marginBottom: 12, fontSize: 11, color: '#555' }}>
           {dmInfo.emoji} {dmInfo.text}
         </div>
       )}
 
       {/* Level / XP header */}
-      {friendXp > 0 && (
+      {showXp && friendXp > 0 && (
         <div style={{ background: 'linear-gradient(135deg, var(--pd), var(--pink))', color: '#fff', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: 13, fontWeight: 700 }}>🎮 Lv.{friendLv}</span>
@@ -194,7 +200,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       )}
 
       {/* Sprint progress (1주 챌린지) */}
-      {sprint && spct != null && (
+      {showSprint && sprint && spct != null && (
         <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', borderRadius: 12, padding: 12, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🎯 이번주 챌린지</div>
@@ -213,7 +219,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       )}
 
       {/* Past sprint history (recent 3) */}
-      {sprintHistory.length > 0 && (
+      {showSprint && sprintHistory.length > 0 && (
         <div style={{ background: '#FAFAFA', borderRadius: 10, padding: 10, marginBottom: 12, border: '1px solid #eee' }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: '#666', marginBottom: 6 }}>📚 지난 챌린지 ({sprintHistory.length})</div>
           {[...sprintHistory].reverse().slice(0, 3).map((h, i) => {
@@ -231,34 +237,37 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </div>
       )}
 
-      {/* Summary chips */}
-      <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
-        {[`📋 ${tasks.length}개`, `✅ ${doneCount}/${tasks.length}`, `⏱ ${totalH.toFixed(1)}h`].map((t) => (
-          <div key={t} style={{ background: 'var(--pl)', borderRadius: 99, padding: '4px 12px', fontSize: 11, color: 'var(--pd)', fontWeight: 500 }}>{t}</div>
-        ))}
-      </div>
-
-      {tasks.length > 0 && (
-        <div style={{ height: 6, background: 'var(--pl)', borderRadius: 3, marginBottom: 14 }}>
-          <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 3, width: Math.round(doneCount / tasks.length * 100) + '%' }} />
-        </div>
-      )}
-
-      {/* Tasks */}
-      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 6 }}>📅 타임라인</div>
-      {tasks.length === 0 ? (
-        <div style={{ color: '#aaa', fontSize: 12, textAlign: 'center', padding: '12px 0', marginBottom: 12 }}>오늘 일정 없음</div>
-      ) : (
-        [...tasks].sort((a, b) => a.startHour - b.startHour).map((b) => (
-          <div key={b.id} style={{ padding: 10, background: b.done ? '#f5f5f5' : 'var(--pl)', borderRadius: 10, marginBottom: 6, borderLeft: '3px solid ' + (b.done ? '#ccc' : 'var(--pink)'), opacity: b.done ? .6 : 1 }}>
-            <div style={{ color: b.done ? '#aaa' : 'var(--pd)', fontWeight: 600, fontSize: 11 }}>{fmtH(b.startHour)} - {fmtH(b.startHour + b.durHour)}</div>
-            <div style={{ color: b.done ? '#aaa' : '#333', marginTop: 2, textDecoration: b.done ? 'line-through' : 'none', fontSize: 12 }}>{b.done ? '✓ ' : ''}{b.name}</div>
+      {/* Timeline section (chips, progress bar, task list) */}
+      {showTimeline && (
+        <>
+          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
+            {[`📋 ${tasks.length}개`, `✅ ${doneCount}/${tasks.length}`, `⏱ ${totalH.toFixed(1)}h`].map((t) => (
+              <div key={t} style={{ background: 'var(--pl)', borderRadius: 99, padding: '4px 12px', fontSize: 11, color: 'var(--pd)', fontWeight: 500 }}>{t}</div>
+            ))}
           </div>
-        ))
+
+          {tasks.length > 0 && (
+            <div style={{ height: 6, background: 'var(--pl)', borderRadius: 3, marginBottom: 14 }}>
+              <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 3, width: Math.round(doneCount / tasks.length * 100) + '%' }} />
+            </div>
+          )}
+
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 6 }}>📅 타임라인</div>
+          {tasks.length === 0 ? (
+            <div style={{ color: '#aaa', fontSize: 12, textAlign: 'center', padding: '12px 0', marginBottom: 12 }}>오늘 일정 없음</div>
+          ) : (
+            [...tasks].sort((a, b) => a.startHour - b.startHour).map((b) => (
+              <div key={b.id} style={{ padding: 10, background: b.done ? '#f5f5f5' : 'var(--pl)', borderRadius: 10, marginBottom: 6, borderLeft: '3px solid ' + (b.done ? '#ccc' : 'var(--pink)'), opacity: b.done ? .6 : 1 }}>
+                <div style={{ color: b.done ? '#aaa' : 'var(--pd)', fontWeight: 600, fontSize: 11 }}>{fmtH(b.startHour)} - {fmtH(b.startHour + b.durHour)}</div>
+                <div style={{ color: b.done ? '#aaa' : '#333', marginTop: 2, textDecoration: b.done ? 'line-through' : 'none', fontSize: 12 }}>{b.done ? '✓ ' : ''}{b.name}</div>
+              </div>
+            ))
+          )}
+        </>
       )}
 
       {/* Habits */}
-      {habits.length > 0 && (
+      {showHabits && habits.length > 0 && (
         <>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', margin: '14px 0 6px' }}>
             🌱 습관 ({habits.filter((h) => habitLogs[today]?.[String(h.id)]).length}/{habits.length})
