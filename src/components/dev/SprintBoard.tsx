@@ -112,6 +112,16 @@ export function SprintBoard() {
     window.addEventListener('ff-leaderboard-changed', onChange)
     return () => window.removeEventListener('ff-leaderboard-changed', onChange)
   }, [])
+  // Keep XP in sync with local edits, remote sync, and periodic re-read.
+  useEffect(() => {
+    function refreshXp() { setXp(getXp()) }
+    window.addEventListener('ff-xp-changed', refreshXp)
+    const id = setInterval(refreshXp, 60_000)
+    return () => {
+      window.removeEventListener('ff-xp-changed', refreshXp)
+      clearInterval(id)
+    }
+  }, [])
   useEffect(() => {
     function onSprintChanged() {
       setSprint(loadSprint())
