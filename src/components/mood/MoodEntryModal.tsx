@@ -34,11 +34,6 @@ const ACTION_TEMPLATES: Array<{ label: string; desc: string; example: string }> 
     example: '4초 들이쉬고 → 7초 멈추고 → 8초 내쉬기, 4번 반복',
   },
   {
-    label: '5-4-3-2-1 감각',
-    desc: '불안·패닉을 감각으로 끌어내리기',
-    example: '지금 보이는 것 5개 / 들리는 것 4개 / 만져지는 것 3개 / 냄새 2개 / 맛 1개 찾기',
-  },
-  {
     label: '행동 실험',
     desc: '자동 사고가 진짜 맞는지 검증 (Beck CBT 핵심)',
     example: '"사람들이 비웃었을 거야" 진짜인지, 동료한테 "오늘 발표 어땠어" 직접 물어본다',
