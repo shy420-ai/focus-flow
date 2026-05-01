@@ -61,6 +61,81 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Walker (2017) Why We Sleep; Yoo et al. (2007) The human emotional brain without sleep, Current Biology',
     tags: ['수면', '결정', '감정조절'],
   },
+  {
+    id: 'active-recall',
+    title: '책 덮고 떠올리기',
+    category: 'study',
+    summary: '읽기 ❌ → 머리에서 꺼내기 ⭕. 같은 시간 50% 더 남음.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '같은 페이지 5번 읽어도 머리에 안 남음.\nADHD는 passive 모드 (그냥 읽기) 들어가면 5초 만에 멍.\n눈은 글자 따라가도 뇌는 다른 데 가있음.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '책 덮고 방금 본 거 머리에서 꺼내기 (active recall).\n맞든 틀리든 일단 떠올려 → 그 다음 책 보고 확인.\nRoediger & Karpicke 연구: 같은 시간 passive review보다 약 50% 더 기억 정착.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 한 챕터 읽고 → 책 덮고 핵심 3개 말하기\n• 강의 끝나고 → 5분 동안 노트 보지 말고 떠오르는 거 적기\n• 30초도 OK — "방금 뭐 읽었더라?" 한 번 멈추기\n• Anki 카드 / 자기 자신한테 퀴즈\n• 시험 전날 → 다시 읽기 ❌, 백지 시험지 ⭕',
+      },
+    ],
+    source: 'Roediger & Karpicke (2006) Test-Enhanced Learning, Psychological Science',
+    tags: ['공부', '암기', '시험'],
+  },
+  {
+    id: 'eighty-twenty',
+    title: '핵심 20%만 잡기',
+    category: 'study',
+    summary: '100% 외워야 ❌ → 핵심 20%로 80점 ⭕. 완벽주의가 적.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 완벽주의 함정: "다 외워야 시험 봄" 모드.\n앞부분만 빈틈없이 보다 시간 끝남, 뒤는 못 봄.\n결과: 부분만 알아 점수 더 떨어짐.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '시험·과제의 핵심 20%만 먼저 잡으면 80% 점수.\nPareto 원칙 — 출제율·중요도 높은 것부터 코어 다지기.\n남은 시간에 디테일 채우기.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 시험: 기출 5개년 → 반복되는 주제 = 핵심 20%\n• 과제: 채점 기준표 먼저 → 점수 큰 항목부터\n• 책: 목차 + 결론 + 굵은 글씨 = 80% 메시지\n• 강의: 교수가 두 번 이상 말한 거 = 시험에 나옴\n• 발표: 한 페이지 요약 → 그 위에 살 붙이기',
+      },
+    ],
+    source: 'Pareto principle applied to learning; Ericsson (2008) deliberate practice',
+    tags: ['공부', '시험', '완벽주의'],
+  },
+  {
+    id: 'study-moving',
+    title: '움직이면서 학습',
+    category: 'study',
+    summary: '의자 고정 ❌ → 걸으면서 / 서서 / 손 만지작 ⭕.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: 'ADHD 뇌는 "가만히 앉아 집중" 자세에서 도파민이 떨어짐.\n5분 안에 다리 떨고, 의자에서 비비적 → 책 못 읽음.\n비ADHD 뇌엔 잡음, ADHD엔 신호.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '몸 움직이면서 학습하면 집중력 ↑.\nSarver et al. (2015): ADHD 아동의 fidgeting은 집중도와 양의 상관관계.\n운동 직후 학습 효율도 ↑ (BDNF 분비, 뇌 가소성 ↑).',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 강의 들을 때 → 산책하면서 (오디오 학습)\n• 외울 때 → 방 안 왔다갔다하며 소리내서 읽기\n• 의자 ❌ → 스탠딩 데스크 / 발 받침대\n• 손에 fidget toy / 펜 돌리기 (시끄러우면 슬라임)\n• 30분 공부 → 5분 점프·푸시업 → 다시 30분',
+      },
+    ],
+    source: 'Sarver et al. (2015) Hyperactivity in ADHD; Ratey (2008) Spark',
+    tags: ['공부', '운동', '집중'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
