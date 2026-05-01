@@ -115,6 +115,7 @@ export function SprintBoard() {
   const [leaderboardOn, setLeaderboardOnState] = useState<boolean>(isLeaderboardOn())
   const [leaderboardModalOpen, setLeaderboardModalOpen] = useState(() => sessionStorage.getItem('ff_modal_leaderboard') === '1')
   const [unitPickerForId, setUnitPickerForId] = useState<string | null>(null)
+  const [introDismissed, setIntroDismissed] = useState(() => localStorage.getItem('ff_sprint_intro_dismissed') === '1')
   useEffect(() => {
     function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
     window.addEventListener('ff-leaderboard-changed', onChange)
@@ -210,6 +211,40 @@ export function SprintBoard() {
 
   const lv = getLevel(xp)
   const xpProg = xpInLevel(xp)
+
+  const introBanner = !introDismissed && (
+    <div style={{
+      position: 'relative',
+      background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))',
+      border: '1.5px solid var(--pink)',
+      borderRadius: 14, padding: '14px 38px 14px 14px',
+      marginBottom: 12, fontSize: 12, lineHeight: 1.6, color: 'var(--pd)',
+    }}>
+      <div style={{ fontWeight: 700, marginBottom: 4 }}>🎯 1주 챌린지 안내</div>
+      <div style={{ color: '#666' }}>
+        여기는 <b style={{ color: 'var(--pd)' }}>일주일 단위 목표</b>를 정해두는 곳이야.
+        한 번에 1~3개. 매일 +1 누르면서 채워가면 돼.
+        <br />
+        예: "운동 10회", "책 3권", "인스타 7개"
+      </div>
+      <button
+        onClick={() => {
+          localStorage.setItem('ff_sprint_intro_dismissed', '1')
+          setIntroDismissed(true)
+        }}
+        aria-label="공지 닫기"
+        style={{
+          position: 'absolute', top: 10, right: 10,
+          width: 24, height: 24, borderRadius: 12,
+          border: 'none', background: 'rgba(0,0,0,.05)',
+          color: '#888', fontSize: 12, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: 'inherit',
+        }}
+      >✕</button>
+    </div>
+  )
+
   const levelHeader = (
     <div style={{ background: 'linear-gradient(135deg, var(--pink), var(--pd))', borderRadius: 14, padding: 14, marginBottom: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,.08)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -237,6 +272,7 @@ export function SprintBoard() {
   if (!sprint) {
     return (
       <>
+      {introBanner}
       {levelHeader}
       <div style={{ background: '#fff', border: '1.5px dashed var(--pink)', borderRadius: 14, padding: 18, marginBottom: 12 }}>
         <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, textAlign: 'center' }}>⚡ 1주 챌린지 (실험)</div>
