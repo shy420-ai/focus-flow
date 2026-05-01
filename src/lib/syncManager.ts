@@ -95,9 +95,9 @@ function applyRemote(d: UserDoc) {
   if (d.recurring) {
     try { localStorage.setItem('ff_recurring', JSON.stringify(d.recurring)) } catch { /* ignore */ }
   }
-  if (d.drops) {
-    try { localStorage.setItem('ff_drops', JSON.stringify(d.drops)) } catch { /* ignore */ }
-  }
+  // drops localStorage write is handled by DropStore's registerHydrate so
+  // tombstones are honored. Mirroring d.drops blindly here would resurrect
+  // deleted ids on refresh.
   if (d.goals) {
     try { localStorage.setItem('ff_goals', JSON.stringify(d.goals)) } catch { /* ignore */ }
   }
