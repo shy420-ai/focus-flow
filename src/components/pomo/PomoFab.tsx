@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { todayStr } from '../../lib/date'
+import { addXp } from '../../lib/xp'
+import { showMiniToast } from '../../lib/miniToast'
 
 
 interface PomoState {
@@ -58,6 +60,72 @@ export function PomoFab() {
   const [pomo, setPomo] = useState<PomoState>(loadState)
   const [customMin, setCustomMin] = useState('')
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Lock mode: fullscreen overlay + leave-detection penalty.
+  const [lockMode, setLockMode] = useState<boolean>(() => localStorage.getItem('ff_pomo_lock') === '1')
+  const [exitedFlash, setExitedFlash] = useState(false)
+  const unlockHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [unlockProgress, setUnlockProgress] = useState(0)
+
+  // Detect tab/app exit while running in lock mode → penalty + alert
+  useEffect(() => {
+    if (!pomo.running || !lockMode) return
+    function onVisibility() {
+      if (document.hidden) {
+        // user left — record so we punish on return
+        ;(window as unknown as { __pomoLeftAt?: number }).__pomoLeftAt = Date.now()
+      } else {
+        const w = window as unknown as { __pomoLeftAt?: number }
+        if (w.__pomoLeftAt) {
+          const gone = Date.now() - w.__pomoLeftAt
+          w.__pomoLeftAt = undefined
+          if (gone > 2000) {
+            // Punish: -10 XP, flash red banner
+            addXp(-10)
+            setExitedFlash(true)
+            showMiniToast('❌ 이탈 감지! XP -10')
+            playChime()
+            setTimeout(() => setExitedFlash(false), 4000)
+          }
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [pomo.running, lockMode])
+
+  function toggleLockMode() {
+    setLockMode((prev) => {
+      const next = !prev
+      localStorage.setItem('ff_pomo_lock', next ? '1' : '0')
+      return next
+    })
+  }
+
+  function startUnlockHold() {
+    setUnlockProgress(0)
+    const start = Date.now()
+    const tick = () => {
+      const pct = Math.min(1, (Date.now() - start) / 3000)
+      setUnlockProgress(pct)
+      if (pct >= 1) {
+        // Unlock — pause the timer and exit lock view
+        setPomo((prev) => {
+          const n: PomoState = { ...prev, running: false }
+          saveState(n)
+          return n
+        })
+        setUnlockProgress(0)
+        return
+      }
+      unlockHoldRef.current = setTimeout(tick, 50)
+    }
+    unlockHoldRef.current = setTimeout(tick, 50)
+  }
+  function cancelUnlockHold() {
+    if (unlockHoldRef.current) clearTimeout(unlockHoldRef.current)
+    unlockHoldRef.current = null
+    setUnlockProgress(0)
+  }
 
   const tick = useCallback(() => {
     setPomo((prev) => {
@@ -134,8 +202,70 @@ export function PomoFab() {
   const secs = pomo.seconds % 60
   const timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0')
 
+  const lockActive = pomo.running && lockMode
+
   return (
     <>
+      {/* Fullscreen lock overlay */}
+      {lockActive && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: exitedFlash
+            ? 'linear-gradient(135deg, #E24B4A, #B22222)'
+            : pomo.phase === 'work'
+              ? 'linear-gradient(135deg, var(--pd), var(--pink))'
+              : 'linear-gradient(135deg, #56C6A0, #4DA688)',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', userSelect: 'none', transition: 'background .3s',
+        }}>
+          {exitedFlash && (
+            <div style={{ position: 'absolute', top: 40, fontSize: 14, fontWeight: 800, letterSpacing: 2 }}>
+              ❌ 이탈 감지 · XP -10
+            </div>
+          )}
+          <div style={{ fontSize: 14, fontWeight: 600, opacity: .8, marginBottom: 8 }}>
+            {pomo.phase === 'work' ? '🎯 집중 시간' : '☕ 쉬는 시간'}
+          </div>
+          <div style={{ fontSize: 96, fontWeight: 800, letterSpacing: -4, lineHeight: 1, fontFeatureSettings: '"tnum"' }}>
+            {timeStr}
+          </div>
+          <div style={{ marginTop: 16, fontSize: 12, opacity: .9, padding: '0 32px', textAlign: 'center', lineHeight: 1.7 }}>
+            📵 다른 앱/탭으로 가면 XP -10<br />
+            🔒 해제하려면 아래 버튼 3초 길게 눌러
+          </div>
+          <button
+            onPointerDown={startUnlockHold}
+            onPointerUp={cancelUnlockHold}
+            onPointerCancel={cancelUnlockHold}
+            onPointerLeave={cancelUnlockHold}
+            style={{
+              marginTop: 32, position: 'relative',
+              padding: '14px 32px', borderRadius: 16,
+              border: '2px solid rgba(255,255,255,.5)',
+              background: 'rgba(255,255,255,.1)',
+              color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'inherit', overflow: 'hidden',
+              touchAction: 'manipulation',
+            }}
+          >
+            <span style={{ position: 'relative', zIndex: 1 }}>
+              {unlockProgress > 0 ? `잠금 해제 ${Math.round(unlockProgress * 100)}%` : '🔓 잠금 해제 (3초 길게 누르기)'}
+            </span>
+            {unlockProgress > 0 && (
+              <div style={{
+                position: 'absolute', left: 0, top: 0, bottom: 0,
+                width: `${unlockProgress * 100}%`,
+                background: 'rgba(255,255,255,.3)',
+                transition: 'width 50ms linear',
+              }} />
+            )}
+          </button>
+          <div style={{ marginTop: 24, fontSize: 10, opacity: .7 }}>
+            💡 잠금 해제하면 타이머 일시정지돼
+          </div>
+        </div>
+      )}
+
       {/* FAB */}
       <button
         className="pomo-fab"
@@ -198,6 +328,24 @@ export function PomoFab() {
             </button>
             <button className="pomo-btn" onClick={reset}>리셋</button>
           </div>
+
+          {/* Lock mode toggle */}
+          <button
+            onClick={toggleLockMode}
+            style={{
+              width: '100%', padding: '8px 10px', marginTop: 8, borderRadius: 10,
+              border: '1.5px dashed ' + (lockMode ? 'var(--pink)' : '#ddd'),
+              background: lockMode ? 'var(--pl)' : '#fff',
+              color: lockMode ? 'var(--pd)' : '#888',
+              fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            }}
+          >
+            <span>🔒 집중 잠금 모드 {lockMode ? 'ON' : 'OFF'}</span>
+            <span style={{ fontSize: 9, opacity: .7 }}>
+              {lockMode ? '시작하면 풀스크린 + 이탈 감지' : '시작 전에 켜야 작동'}
+            </span>
+          </button>
 
           {/* Today count */}
           <div className="pomo-count">

@@ -358,18 +358,36 @@ export function TimelineView() {
       {isToday && hiddenPastHours > 0 && (
         <button
           onClick={() => setPastCollapsed(false)}
-          style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px dashed #ddd', background: '#FAFAFA', color: '#888', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          style={{
+            width: '100%', padding: '12px 16px', borderRadius: 14,
+            border: 'none',
+            background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))',
+            color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'inherit', marginBottom: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            boxShadow: '0 2px 8px rgba(0,0,0,.04)',
+          }}
         >
-          <span>▲ 지난 {hiddenPastHours}시간 ({START}:00 ~ {displayStart}:00) 펼치기</span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ width: 28, height: 28, borderRadius: 14, background: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 13 }}>↑</span>
+            <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 12, fontWeight: 700 }}>지난 {hiddenPastHours}시간</span>
+              <span style={{ fontSize: 10, color: '#888', fontWeight: 500 }}>{START}:00 ~ {displayStart}:00</span>
+            </span>
+          </span>
+          <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 700 }}>펼치기</span>
         </button>
       )}
       {isToday && !pastCollapsed && (
         <button
           onClick={() => setPastCollapsed(true)}
-          style={{ width: '100%', padding: '6px 12px', borderRadius: 8, border: '1px dashed #ddd', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-        >
-          ▼ 지난 시간 다시 접기
-        </button>
+          style={{
+            width: '100%', padding: '8px 12px', borderRadius: 12,
+            border: 'none', background: '#FAFAFA',
+            color: '#888', fontSize: 11, fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8,
+          }}
+        >↓ 지난 시간 접기</button>
       )}
       <div className="timeline" ref={timelineRef}>
         {/* Time column */}
