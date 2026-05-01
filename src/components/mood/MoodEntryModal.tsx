@@ -178,42 +178,48 @@ export function MoodEntryModal({ entry, onClose }: Props) {
           </Section>
 
           {/* 5. 사고 함정 */}
-          <Section title="5. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지.">
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          <Section title="5. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지. 예시 보고 골라.">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {DISTORTIONS.map((d) => {
                 const on = distortions.includes(d.id)
                 return (
                   <button
                     key={d.id}
                     onClick={() => toggleChip(distortions, d.id, setDistortions)}
-                    title={d.hint}
                     style={{
-                      padding: '6px 12px', borderRadius: 10,
+                      padding: '8px 10px',
+                      borderRadius: 10,
                       border: '1.5px solid ' + (on ? 'var(--pink)' : '#eee'),
                       background: on ? 'var(--pl)' : '#fff',
-                      color: on ? 'var(--pd)' : '#666',
-                      fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      textAlign: 'left',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 2,
                     }}
-                  >{d.label}</button>
+                  >
+                    <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--pd)' : '#444' }}>{d.label}</span>
+                    <span style={{ fontSize: 9, color: '#999', lineHeight: 1.4 }}>"{d.hint}"</span>
+                  </button>
                 )
               })}
             </div>
           </Section>
 
           {/* 6. 다른 시각 (재해석) */}
-          <Section title="6. 다른 시각" hint="(선택) 템플릿 골라서 빈칸만 채워.">
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+          <Section title="6. 다른 시각" hint="(선택) 카드 탭하면 템플릿이 자동으로 들어가. 빈칸만 채워.">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
               {REFRAME_TEMPLATES.map((t) => (
-                <button
-                  key={t.label}
-                  onClick={() => setReframe(t.text)}
-                  style={templateChipStyle}
-                >{t.label}</button>
+                <TemplateCard key={t.label} label={t.label} preview={t.text} onClick={() => setReframe(t.text)} />
               ))}
               <button
                 onClick={() => setReframe('지금은 답이 안 보임. 시간 두고 보자.')}
-                style={{ ...templateChipStyle, color: '#aaa' }}
-              >지금은 못 쓰겠어</button>
+                style={passCardStyle}
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>지금은 못 쓰겠어</span>
+                <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>"답 안 보임. 시간 두고 보자."</span>
+              </button>
             </div>
             <textarea
               value={reframe}
@@ -226,18 +232,17 @@ export function MoodEntryModal({ entry, onClose }: Props) {
 
           {/* 7. 다음 선택 */}
           <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 작게 1개만.">
-            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 8 }}>
               {ACTION_TEMPLATES.map((t) => (
-                <button
-                  key={t.label}
-                  onClick={() => setNextAction(t.text)}
-                  style={templateChipStyle}
-                >{t.label}</button>
+                <TemplateCard key={t.label} label={t.label} preview={t.text} onClick={() => setNextAction(t.text)} />
               ))}
               <button
                 onClick={() => setNextAction('오늘은 패스')}
-                style={{ ...templateChipStyle, color: '#aaa' }}
-              >오늘은 패스</button>
+                style={passCardStyle}
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>오늘은 패스</span>
+                <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>비워두고 넘어가기</span>
+              </button>
             </div>
             <textarea
               value={nextAction}
@@ -315,16 +320,40 @@ const textareaStyle: React.CSSProperties = {
   lineHeight: 1.6,
 }
 
-const templateChipStyle: React.CSSProperties = {
-  padding: '4px 10px',
-  borderRadius: 8,
-  border: '1px solid #eee',
-  background: '#fafafa',
-  color: 'var(--pd)',
-  fontSize: 10,
-  fontWeight: 600,
+function TemplateCard({ label, preview, onClick }: { label: string; preview: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '8px 10px',
+        borderRadius: 10,
+        border: '1.5px solid #eee',
+        background: '#fafafa',
+        cursor: 'pointer',
+        fontFamily: 'inherit',
+        textAlign: 'left',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 3,
+      }}
+    >
+      <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>{label}</span>
+      <span style={{ fontSize: 9, color: '#888', lineHeight: 1.45 }}>{preview}</span>
+    </button>
+  )
+}
+
+const passCardStyle: React.CSSProperties = {
+  padding: '8px 10px',
+  borderRadius: 10,
+  border: '1.5px dashed #ddd',
+  background: '#fff',
   cursor: 'pointer',
   fontFamily: 'inherit',
+  textAlign: 'left',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 3,
 }
 
 function ytEmbed(url: string): string | null {
