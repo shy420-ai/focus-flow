@@ -3,9 +3,10 @@
 import { useState } from 'react'
 import { CATEGORY_META, getCategoryTips } from '../../data/adhdTips'
 import { TipDetailModal } from './TipDetailModal'
+import { ArchiveSection } from './ArchiveSection'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
-const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body']
+const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body', 'archive']
 
 export function TipsView() {
   const [active, setActive] = useState<TipCategory>('start')
@@ -59,14 +60,18 @@ export function TipsView() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: '0 2px' }}>
         <span style={{ fontSize: 13 }}>{meta.emoji}</span>
         <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)' }}>{meta.label}</span>
-        <span style={{ background: `color-mix(in srgb, ${meta.color} 25%, #fff)`, color: 'var(--pd)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>
-          {tips.length}개
-        </span>
+        {active !== 'archive' && (
+          <span style={{ background: `color-mix(in srgb, ${meta.color} 25%, #fff)`, color: 'var(--pd)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>
+            {tips.length}개
+          </span>
+        )}
         <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, color-mix(in srgb, var(--pl) 80%, #fff), transparent)' }} />
       </div>
 
-      {/* Tip cards (empty placeholder for now) */}
-      {tips.length === 0 ? (
+      {/* Archive is user-content; tips are hardcoded curation */}
+      {active === 'archive' ? (
+        <ArchiveSection />
+      ) : tips.length === 0 ? (
         <div style={{ background: 'color-mix(in srgb, var(--pl) 25%, #fff)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
           아직 이 카테고리엔 팁이 없어<br />
           <span style={{ fontSize: 10, color: '#bbb' }}>
