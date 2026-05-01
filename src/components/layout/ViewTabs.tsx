@@ -84,12 +84,7 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
 
 const ORDER_KEY = 'ff_tab_order'
 const HIDDEN_KEY = 'ff_hidden_tabs'
-// Timestamps record the last local edit so a stale Firestore snapshot
-// can't roll back a recent local change (e.g. user toggled then refreshed
-// before the write committed).
-const ORDER_TS_KEY = 'ff_tab_order_ts'
-const HIDDEN_TS_KEY = 'ff_hidden_tabs_ts'
-const RECENT_EDIT_MS = 60_000  // hydrate ignores remote within this window
+const ORDER_TS_KEY = 'ff_tab_order_ts'  // legacy — still written for forward compat
 
 function loadOrder(): CurView[] {
   try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '[]') } catch { return [] }
@@ -135,28 +130,19 @@ registerCollect(() => {
 })
 
 registerHydrate((d: UserDoc) => {
+  // Adopt remote ONLY when local has never been set — i.e., first install
+  // on a new device. After that, local always wins so flushSync race
+  // conditions can't roll back the user's edits. Cross-device "sync" of
+  // tab settings then happens only on first install (good enough for a
+  // pure UI preference).
   let changed = false
-  const now = Date.now()
-  const orderTs = parseInt(localStorage.getItem(ORDER_TS_KEY) || '0')
-  const hiddenTs = parseInt(localStorage.getItem(HIDDEN_TS_KEY) || '0')
-  // Skip remote adoption if local was edited very recently — the in-flight
-  // flushSync may not have committed yet, and we don't want a stale
-  // snapshot to roll us back.
-  const orderRecent = now - orderTs < RECENT_EDIT_MS
-  const hiddenRecent = now - hiddenTs < RECENT_EDIT_MS
-  if (!orderRecent && Array.isArray(d.tabOrder)) {
-    const remote = JSON.stringify(d.tabOrder)
-    if (remote !== (localStorage.getItem(ORDER_KEY) || '[]')) {
-      localStorage.setItem(ORDER_KEY, remote)
-      changed = true
-    }
+  if (Array.isArray(d.tabOrder) && localStorage.getItem(ORDER_KEY) === null) {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(d.tabOrder))
+    changed = true
   }
-  if (!hiddenRecent && Array.isArray(d.tabHidden)) {
-    const remote = JSON.stringify(d.tabHidden)
-    if (remote !== (localStorage.getItem(HIDDEN_KEY) || '[]')) {
-      localStorage.setItem(HIDDEN_KEY, remote)
-      changed = true
-    }
+  if (Array.isArray(d.tabHidden) && localStorage.getItem(HIDDEN_KEY) === null) {
+    localStorage.setItem(HIDDEN_KEY, JSON.stringify(d.tabHidden))
+    changed = true
   }
   if (changed) window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
 })
