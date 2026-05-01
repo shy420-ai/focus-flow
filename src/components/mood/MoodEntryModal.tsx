@@ -98,13 +98,13 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
   },
   {
     label: '시간 거리 두기',
-    desc: '지금 vs 1년 후 무게 비교 (Self-Distancing)',
-    example: '지금 9/10 → 1년 후 1/10',
+    desc: '지금 vs 10년 후 무게 비교 (Self-Distancing)',
+    example: '지금 9/10 → 10년 후 1/10',
     slots: [
       { label: '지금 이 일의 무게 (0=신경 X, 10=잠도 못 잠)', kind: 'slider', min: 0, max: 10 },
-      { label: '1년 후 이 일의 무게 (0=완전히 잊음, 10=평생 가는 일)', kind: 'slider', min: 0, max: 10 },
+      { label: '10년 후 이 일의 무게 (0=완전히 잊음, 10=평생 가는 일)', kind: 'slider', min: 0, max: 10 },
     ],
-    assemble: ([a, b]) => `지금 ${a}/10 → 1년 후 ${b}/10`,
+    assemble: ([a, b]) => `지금 ${a}/10 → 10년 후 ${b}/10`,
   },
   {
     label: '본질적 가치로 돌아가기',
