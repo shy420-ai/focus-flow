@@ -402,6 +402,17 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
     window.addEventListener('ff-remote-sync', onRemoteSync)
     return () => window.removeEventListener('ff-remote-sync', onRemoteSync)
   }, [])
+
+  // Whenever the panel mounts or another XP change lands, push my latest
+  // local state to Firestore so self-preview / friend views read fresh
+  // values instead of whatever was last debounced.
+  useEffect(() => {
+    if (!uid) return
+    flushSync().catch(() => { /* offline ok */ })
+    function onXp() { flushSync().catch(() => { /* offline ok */ }) }
+    window.addEventListener('ff-xp-changed', onXp)
+    return () => window.removeEventListener('ff-xp-changed', onXp)
+  }, [uid])
   const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
   // Only intercept the back button when rendered as a modal — the tab
   // version stays put while the user navigates between tabs.
