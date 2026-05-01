@@ -70,6 +70,10 @@ function saveSprint(s: Sprint | null): void {
   if (s) localStorage.setItem(KEY, JSON.stringify(s))
   else localStorage.removeItem(KEY)
   queue()
+  // Notify other surfaces (FriendsPanel) so they can flushSync immediately
+  // — without this, a freshly-edited sprint takes up to 1.5s to land in
+  // Firestore and won't show in the self-preview that fast.
+  window.dispatchEvent(new CustomEvent('ff-sprint-local-changed'))
 }
 
 function loadHistory(): CompletedSprint[] {
