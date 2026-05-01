@@ -32,6 +32,7 @@ export function LeaderboardModal({ onClose }: Props) {
   const [error, setError] = useState<string | null>(null)
 
   const myXp = getMonthlyXp()
+  const myNickname = localStorage.getItem('ff_nickname') || '나'
 
   async function refresh() {
     if (!uid) return
@@ -138,7 +139,7 @@ export function LeaderboardModal({ onClose }: Props) {
                     return (
                       <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '4px 6px', borderRadius: 6, background: isMe ? 'var(--pl)' : 'transparent' }}>
                         <span style={{ minWidth: 24, fontSize: i < 3 ? 14 : 11, color: '#666' }}>{medal}</span>
-                        <span style={{ flex: 1, color: '#333', fontWeight: isMe ? 700 : 400 }}>{u.nickname}{isMe ? ' (나)' : ''}</span>
+                        <span style={{ flex: 1, color: '#333', fontWeight: isMe ? 700 : 400 }}>{isMe ? `${myNickname} (나)` : u.nickname}</span>
                         <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 60, textAlign: 'right' }}>{u.xp} XP</span>
                       </div>
                     )
@@ -149,7 +150,7 @@ export function LeaderboardModal({ onClose }: Props) {
                       <div style={{ textAlign: 'center', color: '#ccc', fontSize: 11, padding: '2px 0' }}>···</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '4px 6px', borderRadius: 6, background: 'var(--pl)' }}>
                         <span style={{ minWidth: 24, fontSize: 11, color: '#666' }}>{rank}</span>
-                        <span style={{ flex: 1, color: '#333', fontWeight: 700 }}>나</span>
+                        <span style={{ flex: 1, color: '#333', fontWeight: 700 }}>{myNickname} (나)</span>
                         <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 60, textAlign: 'right' }}>{myXp} XP</span>
                       </div>
                     </>
