@@ -21,97 +21,91 @@ export function AdhdGuideModal({ onClose }: Props) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
         </div>
 
-        <Section title="🧠 왜 ADHD엔 평범한 계획앱이 안 맞나">
-          <Bullet>시간맹 (Barkley 1997) — 시간 추정 정확도 ~50% 이하. 계획 짜도 어차피 빗나감</Bullet>
-          <Bullet>미래자기 괴리 (Hershfield 2011) — 미래의 나를 타인처럼 인식. 1주일 뒤 일정이 안 와닿음</Bullet>
-          <Bullet>결정 피로 — 블록 하나에 시간/길이/카테고리 결정 N개 → 시작도 전에 지침</Bullet>
-          <Bullet>양극 컨디션 — 같은 일이 어떤 날 10분, 어떤 날 4시간. 고정 시간 자체가 거짓말 같음</Bullet>
-        </Section>
+        {/* Quick start — 한 눈에 보는 흐름 */}
+        <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', borderRadius: 12, padding: 14, marginBottom: 16, border: '1.5px solid var(--pink)' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>⚡ 5초 가이드</div>
+          <div style={{ fontSize: 12, color: '#444', lineHeight: 1.7 }}>
+            <div>📅 <b>일간</b>: 회의·약속 같은 <b>고정된 시간</b>만</div>
+            <div>🎯 <b>목표</b>: "운동 12회 / 1주" 같은 <b>양</b></div>
+            <div>🪣 <b>드롭</b>: <b>단발</b> 할 일</div>
+            <div>🌱 <b>습관</b>: <b>매일 반복</b> 작은 거</div>
+          </div>
+        </div>
 
-        <Section title="📅 일간 (타임라인) — 외부에서 강제된 시간만">
-          <Hint>회의, 강의, 약속, 출퇴근, 약 먹는 시간만 등록</Hint>
-          <Bullet>"오후에 운동" 같은 자율 시간은 X — 어차피 그 시간에 시작 안 함</Bullet>
-          <Bullet>비어있어도 OK. 비어있는 게 정상</Bullet>
-          <Note>근거: Implementation Intentions (Gollwitzer 1999) — "X 시간에 Y" 구조는 외부 트리거(회의 등)에서만 효과 있음</Note>
-        </Section>
+        {/* Mini cards — 핵심만 */}
+        <Card emoji="🧠" title="ADHD 뇌는 평범한 계획앱이 안 맞아">
+          시간맹 + 결정 피로 + 미래자기 괴리 → 일정 짜는 것 자체가 부담.
+          그래서 이 앱은 <b>안 짜도 되게</b> 만들어졌어
+        </Card>
 
-        <Section title="🎯 목표 챌린지 — 시간 X, 양만 추적">
-          <Hint>"운동 12회 / 1주", "독서 140p / 1주" 같은 양/횟수 목표</Hint>
-          <Bullet>시간 안 정해도 됨 — 행동했을 때 [내가 해냄 +N] 한 번 누르면 끝</Bullet>
-          <Bullet>1주 단위 (Barkley의 ADHD 시간 horizon에 맞춤)</Bullet>
-          <Bullet>망한 날 있어도 streak 유지 (자기 비교)</Bullet>
-          <Note>근거: Goal Setting Theory (Locke) — 구체적·근접한 목표 + 진척 시각화 효과 입증</Note>
-        </Section>
+        <Card emoji="📅" title="일간 — 외부 강제만">
+          회의·강의·약속·약 시간만. <b>비어있어도 정상</b>이야
+        </Card>
 
-        <Section title={'🪣 드롭 — 시간 없이 "오늘/이번주 할 일"'}>
-          <Hint>답장 보내기, 영수증 정리, 청소 같은 단발 todo</Hint>
-          <Bullet>완료 체크만 — 시간 X, 양 추적 X</Bullet>
-          <Bullet>잡생각 메모도 OK (later 처리)</Bullet>
-        </Section>
+        <Card emoji="🎯" title="목표 챌린지 — 양만 추적">
+          "운동 12회"처럼 양/횟수 정해두고 행동할 때 +N 누르기.
+          시간 안 정해도 되고, 망한 날에도 streak 안 깨짐
+        </Card>
 
-        <Section title="🌱 습관 — 매일 반복할 작은 행동">
-          <Hint>약 먹기, 물 1L, 명상 5분 같은 anchor</Hint>
-          <Bullet>매일 같은 일이라 결정 부담 X</Bullet>
-          <Bullet>이미 하는 일 (양치, 점심 등)에 끼워 넣기 = 정착 잘 됨</Bullet>
-          <Note>근거: Habit Stacking (Wood &amp; Neal 2007) — 기존 행동에 anchor한 습관이 retention 3배</Note>
-        </Section>
+        <Card emoji="🪣" title="드롭 — 시간 없는 잡일">
+          답장, 정리, 청소같이 시간 안 정하는 단발 todo
+        </Card>
 
-        <Section title="💊 메디 — 약 + 컨디션 트래킹">
-          <Hint>아침/점심/저녁 약 시간 + 복용 후 효과 추적</Hint>
-          <Bullet>약 효과 패턴 학습 → 자기 약발 시간 인지</Bullet>
-          <Bullet>수면시간 + PMS도 같이 → 컨디션 변동 원인 추적</Bullet>
-        </Section>
+        <Card emoji="🌱" title="습관 — 매일 작은 anchor">
+          약·물·명상 같은 거. 이미 하는 일에 끼워 넣기 = 잘 정착됨
+        </Card>
 
-        <Section title="🎁 시도해볼 만한 흐름">
-          <Bullet><b>1.</b> 타임라인엔 "내일 회의 3시" 같은 고정 약속만 등록</Bullet>
-          <Bullet><b>2.</b> "내일 책 140p" → 챌린지 보드에 등록</Bullet>
-          <Bullet><b>3.</b> "친구 답장" → 드롭에 등록</Bullet>
-          <Bullet><b>4.</b> "약 먹기" → 메디 또는 습관에</Bullet>
-          <Bullet><b>5.</b> 그 외 일정 짜는 시도 → 안 함. 비어있어도 OK</Bullet>
-        </Section>
+        <Card emoji="💊" title="메디 — 약 + 컨디션">
+          약 효과 시간 + 수면 + PMS 다 같이 추적. 자기 패턴 인지 도움
+        </Card>
 
-        <Section title="🛡 자기 비난 차단">
-          <Bullet>망한 날에도 streak 유지 — 자기 비교만 (Tesser 1988)</Bullet>
-          <Bullet>완벽 X, 1점이라도 진전 (Self-compassion, Neff &amp; Vonk 2009)</Bullet>
-          <Bullet>"오늘 망함" 인정 → 내일 다시 시작 (학습된 무력감 차단)</Bullet>
-        </Section>
+        {/* Concrete try */}
+        <div style={{ background: 'var(--pl)', borderRadius: 12, padding: 14, marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🎁 오늘 한번 시도해봐</div>
+          <div style={{ fontSize: 12, color: '#444', lineHeight: 1.8 }}>
+            <div>1. 일간엔 <b>고정 약속만</b> 등록</div>
+            <div>2. "내일 책 140p" → <b>챌린지</b></div>
+            <div>3. "친구 답장" → <b>드롭</b></div>
+            <div>4. "약 먹기" → <b>메디</b></div>
+            <div>5. 그 외엔 <b>안 짜도 OK</b></div>
+          </div>
+        </div>
 
-        <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', padding: '12px 0 4px', borderTop: '1px solid var(--pl)', marginTop: 12 }}>
-          이 가이드는 의료 조언이 아니야. 일반화된 ADHD 신경학 + 행동심리 연구 기반의 사용 권장사항이지 모든 사람한테 맞는 건 아님 ❤️
+        <Card emoji="🛡" title="망한 날에도 self-compassion">
+          미루는 거에 자기비난 더하면 더 미룸.
+          "미뤘네" → "다음 5분만 해보자" 로 전환 (Sirois 2014: 자기친절 = 미루기 50%↓)
+        </Card>
+
+        {/* Optional details */}
+        <details style={{ marginBottom: 12, background: '#FAFAFA', borderRadius: 10, padding: 10 }}>
+          <summary style={{ fontSize: 11, fontWeight: 700, color: '#666', cursor: 'pointer', userSelect: 'none' }}>📚 과학 근거 (펼치기)</summary>
+          <div style={{ fontSize: 11, color: '#666', lineHeight: 1.8, marginTop: 8 }}>
+            <div>• 시간맹 — Barkley 1997: ADHD 시간 추정 정확도 ~50%</div>
+            <div>• 미래자기 괴리 — Hershfield 2011: 미래자기를 타인 영역으로 처리</div>
+            <div>• 짧은 사이클 — Schultz 도파민 연구: ADHD에 long-delay 보상 효과 ↓</div>
+            <div>• 정체성 기반 — Wood &amp; Neal 2007: 정체성 변화가 행동 변화보다 retention 3배</div>
+            <div>• Implementation Intentions — Gollwitzer 1999: 외부 트리거 + if-then 효과크기 d=0.65</div>
+            <div>• 자기비교 — Tesser 1988: 과거 자기 비교는 자존감↑, 타인 비교는 ↓</div>
+            <div>• 자기친절 — Neff &amp; Vonk 2009 / Sirois 2014: 정신건강·미루기 둘 다 개선</div>
+            <div>• Habit Stacking — Wood &amp; Neal: 기존 행동 anchor가 새 습관 정착 3배 빠름</div>
+          </div>
+        </details>
+
+        <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', padding: '8px 0 4px' }}>
+          의료 조언 X · 일반화된 ADHD 신경학 + 행동심리 연구 기반 ❤️
         </div>
       </div>
     </div>
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Card({ emoji, title, children }: { emoji: string; title: string; children: React.ReactNode }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>{title}</div>
-      <div style={{ fontSize: 12, color: '#555', lineHeight: 1.7 }}>{children}</div>
+    <div style={{ background: '#fff', border: '1px solid #eee', borderRadius: 10, padding: 12, marginBottom: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>
+        {emoji} {title}
+      </div>
+      <div style={{ fontSize: 12, color: '#555', lineHeight: 1.6 }}>{children}</div>
     </div>
-  )
-}
-
-function Bullet({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ paddingLeft: 14, position: 'relative', marginBottom: 4 }}>
-      <span style={{ position: 'absolute', left: 0, color: 'var(--pink)' }}>•</span>
-      {children}
-    </div>
-  )
-}
-
-function Hint({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ background: 'var(--pl)', borderRadius: 8, padding: '6px 10px', marginBottom: 6, fontSize: 12, color: 'var(--pd)', fontWeight: 600 }}>
-      💡 {children}
-    </div>
-  )
-}
-
-function Note({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontSize: 10, color: '#888', fontStyle: 'italic', marginTop: 4 }}>{children}</div>
   )
 }
