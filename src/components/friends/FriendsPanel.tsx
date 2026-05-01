@@ -33,13 +33,23 @@ async function copyToClipboard(text: string): Promise<boolean> {
 
 interface SprintGoalShape { id: string; name: string; target: number; unit: string; current: number }
 interface SprintShape { startDate: string; goals: SprintGoalShape[] }
-function sprintPct(s: SprintShape | null | undefined): number | null {
+interface CompletedSprintShape { startDate: string; endDate: string; goals: SprintGoalShape[]; overall?: number }
+function sprintPct(s: SprintShape | CompletedSprintShape | null | undefined): number | null {
   if (!s || !s.goals?.length) return null
   const avg = s.goals.reduce((sum, g) => {
     const t = g.target || 1
     return sum + Math.min(100, Math.round((g.current / t) * 100))
   }, 0) / s.goals.length
   return Math.round(avg)
+}
+
+const PER_LEVEL = 50
+function levelFromXp(xp: number): number { return Math.floor(xp / PER_LEVEL) + 1 }
+function xpInLevel(xp: number): { current: number; needed: number; pct: number } {
+  const lv = levelFromXp(xp)
+  const base = (lv - 1) * PER_LEVEL
+  const current = xp - base
+  return { current, needed: PER_LEVEL, pct: Math.round((current / PER_LEVEL) * 100) }
 }
 
 const DAY_MODE_LABEL: Record<string, { emoji: string; text: string; color: string }> = {
@@ -142,9 +152,14 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
   const guestbook = (data.guestbook as Array<{ from: string; text: string; date?: string; time?: string }>) || []
   const sprint = data.sprint as SprintShape | null | undefined
   const spct = sprintPct(sprint)
+  const sprintHistory = (data.sprintHistory as CompletedSprintShape[] | undefined) || []
   const dayMode = data.dayMode as string | undefined
   const dmInfo = dayMode ? DAY_MODE_LABEL[dayMode] : null
   const status = activeStatus(data.lastActiveAt as string | undefined)
+  const friendXp = typeof data.xp === 'number' ? data.xp : 0
+  const friendLv = levelFromXp(friendXp)
+  const friendLvProg = xpInLevel(friendXp)
+  const friendMonthlyXp = typeof data.monthlyXp === 'number' ? data.monthlyXp : 0
 
   return (
     <div>
@@ -160,6 +175,19 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
       {dmInfo && (
         <div style={{ background: dmInfo.color + '22', borderLeft: `3px solid ${dmInfo.color}`, padding: '6px 10px', borderRadius: 8, marginBottom: 12, fontSize: 11, color: '#555' }}>
           {dmInfo.emoji} {dmInfo.text}
+        </div>
+      )}
+
+      {/* Level / XP header */}
+      {friendXp > 0 && (
+        <div style={{ background: 'linear-gradient(135deg, var(--pd), var(--pink))', color: '#fff', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 700 }}>🎮 Lv.{friendLv}</span>
+            <span style={{ fontSize: 10, opacity: .9 }}>{friendLvProg.current}/{friendLvProg.needed} XP · 이번달 {friendMonthlyXp}</span>
+          </div>
+          <div style={{ height: 5, background: 'rgba(255,255,255,.25)', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ height: '100%', background: '#fff', borderRadius: 3, width: friendLvProg.pct + '%' }} />
+          </div>
         </div>
       )}
 
@@ -179,6 +207,25 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
               <span style={{ color: 'var(--pd)', fontWeight: 600 }}>{g.current}/{g.target} {g.unit}</span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Past sprint history (recent 3) */}
+      {sprintHistory.length > 0 && (
+        <div style={{ background: '#FAFAFA', borderRadius: 10, padding: 10, marginBottom: 12, border: '1px solid #eee' }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#666', marginBottom: 6 }}>📚 지난 챌린지 ({sprintHistory.length})</div>
+          {[...sprintHistory].reverse().slice(0, 3).map((h, i) => {
+            const pct = sprintPct(h) ?? 0
+            return (
+              <div key={i} style={{ fontSize: 10, color: '#888', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ minWidth: 75, fontSize: 9, color: '#aaa' }}>{h.startDate}~{h.endDate?.slice(5) || '?'}</span>
+                <div style={{ flex: 1, height: 4, background: '#eee', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ height: '100%', background: pct >= 100 ? '#2BA84A' : 'var(--pink)', width: Math.min(pct, 100) + '%' }} />
+                </div>
+                <span style={{ minWidth: 32, textAlign: 'right', fontWeight: 600, color: pct >= 100 ? '#2BA84A' : 'var(--pd)' }}>{pct}%</span>
+              </div>
+            )
+          })}
         </div>
       )}
 
