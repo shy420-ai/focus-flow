@@ -2,7 +2,7 @@
 // open my profile. Stored as flat fields on the user doc so each section
 // can be toggled independently and the friend's read just checks the
 // corresponding flag.
-import { queue, registerCollect, registerHydrate } from './syncManager'
+import { flushSync, registerCollect, registerHydrate } from './syncManager'
 import type { UserDoc } from './firestore'
 
 export type VisibilitySection = 'timeline' | 'habits' | 'sprint' | 'xp' | 'condition'
@@ -39,7 +39,9 @@ export function getVisibility(): Record<VisibilitySection, boolean> {
 export function setVisibility(next: Record<VisibilitySection, boolean>): void {
   localStorage.setItem(KEY, JSON.stringify(next))
   window.dispatchEvent(new CustomEvent('ff-friend-visibility-changed'))
-  queue()
+  // Push immediately so the self-preview / friend view reflects the toggle
+  // without a 1.5s debounce window where the change wouldn't be visible.
+  flushSync().catch(() => { /* offline ok */ })
 }
 
 // Read a friend's UserDoc and decide if a given section is visible to me.

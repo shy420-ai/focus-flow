@@ -189,8 +189,8 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </div>
       )}
 
-      {/* Level / XP header */}
-      {showXp && friendXp > 0 && (
+      {/* Level / XP header — render whenever visibility is on, even at 0 XP */}
+      {showXp && (
         <div style={{ background: 'linear-gradient(135deg, var(--pd), var(--pink))', color: '#fff', borderRadius: 12, padding: '10px 12px', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
             <span style={{ fontSize: 13, fontWeight: 700 }}>🎮 Lv.{friendLv}</span>
