@@ -97,30 +97,34 @@ function getOrderedTabs(order: CurView[], hidden: CurView[]) {
 }
 
 // Sync tab order + hidden list across devices via Firestore.
-// Only push when this device has an actual customization. A fresh device
-// with empty order/hidden defaults must not blindly overwrite the other
-// device's saved order — same defensive pattern as the friends sync.
+// Push when the localStorage key exists — including when it's empty —
+// so "I unhid every tab" is a syncable state. A device that has never
+// touched settings has no key and stays out of the sync.
 registerCollect(() => {
   const out: Partial<UserDoc> = {}
-  const order = loadOrder()
-  const hidden = loadHidden()
-  if (order.length > 0) out.tabOrder = order
-  if (hidden.length > 0) out.tabHidden = hidden
+  const orderRaw = localStorage.getItem(ORDER_KEY)
+  const hiddenRaw = localStorage.getItem(HIDDEN_KEY)
+  if (orderRaw !== null) {
+    try { out.tabOrder = JSON.parse(orderRaw) } catch { /* ignore */ }
+  }
+  if (hiddenRaw !== null) {
+    try { out.tabHidden = JSON.parse(hiddenRaw) } catch { /* ignore */ }
+  }
   return out
 })
 
 registerHydrate((d: UserDoc) => {
   let changed = false
-  // Only adopt remote when it has data; never let an empty-from-elsewhere
-  // value clobber my saved customization.
-  if (Array.isArray(d.tabOrder) && d.tabOrder.length > 0) {
+  // Adopt remote whenever it's a valid array — including empty, since
+  // empty means "user explicitly unhid everything" on the other device.
+  if (Array.isArray(d.tabOrder)) {
     const remote = JSON.stringify(d.tabOrder)
     if (remote !== (localStorage.getItem(ORDER_KEY) || '[]')) {
       localStorage.setItem(ORDER_KEY, remote)
       changed = true
     }
   }
-  if (Array.isArray(d.tabHidden) && d.tabHidden.length > 0) {
+  if (Array.isArray(d.tabHidden)) {
     const remote = JSON.stringify(d.tabHidden)
     if (remote !== (localStorage.getItem(HIDDEN_KEY) || '[]')) {
       localStorage.setItem(HIDDEN_KEY, remote)
