@@ -300,6 +300,42 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
       >👥 친구 관리</button>
 
+      {/* 내 공유 코드 */}
+      {uid && (() => {
+        let h = 0
+        for (let i = 0; i < uid.length; i++) { h = ((h << 5) - h) + uid.charCodeAt(i); h |= 0 }
+        const myCode = Math.abs(h).toString(36).toUpperCase().slice(0, 6)
+        return (
+          <div style={{ background: 'var(--pl)', borderRadius: 10, padding: 12, marginBottom: 8, textAlign: 'center' }}>
+            <div style={{ fontSize: 10, color: '#aaa', marginBottom: 4 }}>내 공유 코드</div>
+            <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--pd)', letterSpacing: 4 }}>{myCode}</div>
+            <button
+              onClick={async () => {
+                try {
+                  if (navigator.clipboard?.writeText) {
+                    await navigator.clipboard.writeText(myCode)
+                    showMiniToast('📋 코드 복사 완료')
+                  } else {
+                    const ta = document.createElement('textarea')
+                    ta.value = myCode
+                    ta.style.position = 'fixed'; ta.style.opacity = '0'
+                    document.body.appendChild(ta)
+                    ta.select()
+                    document.execCommand('copy')
+                    document.body.removeChild(ta)
+                    showMiniToast('📋 코드 복사 완료')
+                  }
+                } catch {
+                  showMiniToast('😢 복사 실패')
+                }
+              }}
+              style={{ marginTop: 6, padding: '5px 12px', borderRadius: 8, border: '1px solid var(--pink)', background: '#fff', color: 'var(--pink)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+            >📋 복사</button>
+            <div style={{ fontSize: 9, color: '#bbb', marginTop: 4 }}>친구한테 알려주면 친구가 너 추가할 수 있어</div>
+          </div>
+        )
+      })()}
+
       {/* 친구에게 보일 항목 — privacy toggles */}
       <div style={{ background: '#FAFAFA', borderRadius: 10, padding: 10, marginBottom: 12, border: '1px solid #eee' }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>👁 친구에게 공개할 항목</div>

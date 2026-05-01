@@ -497,35 +497,15 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                 </div>
               )}
             </div>
-            <div style={{ background: 'var(--pl)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
-              <div style={{ fontSize: 11, color: '#aaa', marginBottom: 4 }}>내 공유 코드</div>
-              <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--pd)', letterSpacing: 4 }}>{myCode}</div>
-              <button
-                onClick={async () => {
-                  if (!myCode) return
-                  const ok = await copyToClipboard(myCode)
-                  showMiniToast(ok ? '📋 코드 복사 완료' : '😢 복사 실패')
-                }}
-                style={{ marginTop: 10, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--pink)', background: '#fff', color: 'var(--pink)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-              >📋 코드 복사하기</button>
-              <div style={{ fontSize: 10, color: '#bbb', marginTop: 8 }}>친구에게 이 코드 알려주면 친구가 추가할 수 있어</div>
-            </div>
-
             {/* My profile rendered just like a friend tab (with privacy
-                toggles applied). Sits below the code/guestbook so the
-                me-tab looks symmetrical with the rest. */}
-            <div style={{ marginTop: 18 }}>
-              <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 8 }}>
-                ↓ 내 화면 (친구가 보는 모습이랑 같음)
-              </div>
-              <FriendDetail
-                key="self-profile"
-                uid={uid}
-                name={(localStorage.getItem('ff_nickname') || '').trim() || '나'}
-                myUid={uid}
-                onBack={() => { /* no-op for self view */ }}
-              />
-            </div>
+                toggles applied). Share code lives in settings now. */}
+            <FriendDetail
+              key="self-profile"
+              uid={uid}
+              name={(localStorage.getItem('ff_nickname') || '').trim() || '나'}
+              myUid={uid}
+              onBack={() => { /* no-op for self view */ }}
+            />
           </div>
         )}
       </div>
