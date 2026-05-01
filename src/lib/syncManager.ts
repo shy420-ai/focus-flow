@@ -36,8 +36,11 @@ export function queue() {
 }
 
 // Bypass the debounce and push everything now. Returns when the write resolves.
+// Intentionally ignores _skipRemote — that flag exists to prevent queue() echo
+// during hydrate, but flushSync is user-initiated (e.g. opening the leaderboard)
+// and should always succeed in pushing local state.
 export async function flushSync(): Promise<void> {
-  if (!_uid || _skipRemote) return
+  if (!_uid) return
   if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null }
   await doSave()
 }
