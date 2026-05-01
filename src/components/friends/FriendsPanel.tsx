@@ -6,7 +6,30 @@ import { useBackClose } from '../../hooks/useBackClose'
 import { showPrompt } from '../../lib/showPrompt'
 import { computeStreak } from '../../lib/habitStreak'
 import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
+import { showMiniToast } from '../../lib/miniToast'
 import type { UserDoc } from '../../lib/firestore'
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch { /* fall through */ }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
 
 interface SprintGoalShape { id: string; name: string; target: number; unit: string; current: number }
 interface SprintShape { startDate: string; goals: SprintGoalShape[] }
@@ -366,7 +389,15 @@ export function FriendsPanel({ onClose }: Props) {
                 <div style={{ background: 'var(--pl)', borderRadius: 10, padding: 12, marginBottom: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 11, color: '#aaa', marginBottom: 4 }}>내 공유 코드</div>
                   <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--pd)', letterSpacing: 4 }}>{myCode}</div>
-                  <div style={{ fontSize: 10, color: '#bbb', marginTop: 4 }}>친구에게 이 코드를 알려줘!</div>
+                  <button
+                    onClick={async () => {
+                      if (!myCode) return
+                      const ok = await copyToClipboard(myCode)
+                      showMiniToast(ok ? '📋 코드 복사 완료' : '😢 복사 실패')
+                    }}
+                    style={{ marginTop: 8, padding: '6px 14px', borderRadius: 8, border: '1px solid var(--pink)', background: '#fff', color: 'var(--pink)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >📋 코드 복사하기</button>
+                  <div style={{ fontSize: 10, color: '#bbb', marginTop: 6 }}>친구에게 이 코드를 알려줘!</div>
                 </div>
 
                 {/* Friend list */}
