@@ -94,17 +94,40 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [px, setPx] = useState(parseInt(localStorage.getItem(PX_KEY) || '140'))
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
   const [orderedTabs, setOrderedTabs] = useState(loadOrderedTabs)
+  // Pointer-events drag — works on touch and desktop. Captured on the
+  // ≡ handle so taps elsewhere on the row don't start a drag.
+  const [dragId, setDragId] = useState<CurView | null>(null)
+  const [dragOverId, setDragOverId] = useState<CurView | null>(null)
 
-  function moveTab(idx: number, direction: -1 | 1) {
-    const target = idx + direction
-    if (target < 0 || target >= orderedTabs.length) return
-    const next = [...orderedTabs]
-    const [m] = next.splice(idx, 1)
-    next.splice(target, 0, m)
-    setOrderedTabs(next)
-    localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(next.map((t) => t.id)))
-    window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
-    flushSync().catch(() => { /* offline ok */ })
+  function onHandleDown(e: React.PointerEvent, id: CurView) {
+    setDragId(id)
+    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+  }
+  function onHandleMove(e: React.PointerEvent) {
+    if (!dragId) return
+    // elementFromPoint finds the row under the finger/pointer — pointer
+    // capture would otherwise force events back to the handle's element.
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-tab-id]') as HTMLElement | null
+    const tid = el?.dataset.tabId as CurView | undefined
+    if (tid && tid !== dragOverId) setDragOverId(tid)
+  }
+  function onHandleUp(e: React.PointerEvent) {
+    try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+    if (dragId && dragOverId && dragId !== dragOverId) {
+      const next = [...orderedTabs]
+      const fromIdx = next.findIndex((t) => t.id === dragId)
+      const toIdx = next.findIndex((t) => t.id === dragOverId)
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [m] = next.splice(fromIdx, 1)
+        next.splice(toIdx, 0, m)
+        setOrderedTabs(next)
+        localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(next.map((t) => t.id)))
+        window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
+        flushSync().catch(() => { /* offline ok */ })
+      }
+    }
+    setDragId(null)
+    setDragOverId(null)
   }
   const [cycleData, setCycleData] = useState(() => loadCycleData())
   const [avatar, setAvatarState] = useState<string>(getAvatar())
@@ -429,33 +452,50 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       {/* 탭 관리 */}
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>
-        💡 ↑↓ 화살표로 순서 바꾸고, 토글로 켜고 끌 수 있어
+        💡 ≡ 핸들 잡고 드래그해서 순서 바꿔
       </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
-        {orderedTabs.map((t, idx) => {
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 12 }}>
+        {orderedTabs.map((t) => {
           const on = !hiddenTabs.includes(t.id)
-          const isFirst = idx === 0
-          const isLast = idx === orderedTabs.length - 1
+          const isDragging = dragId === t.id
+          const isOver = dragOverId === t.id && dragId && dragId !== t.id
           return (
-            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', gap: 8 }}>
+            <div
+              key={t.id}
+              data-tab-id={t.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 8px',
+                borderRadius: 8,
+                background: isOver ? 'var(--pl)' : 'transparent',
+                opacity: isDragging ? .4 : 1,
+                transition: 'background .15s, opacity .15s',
+              }}
+            >
+              <span
+                onPointerDown={(e) => onHandleDown(e, t.id)}
+                onPointerMove={onHandleMove}
+                onPointerUp={onHandleUp}
+                onPointerCancel={onHandleUp}
+                style={{
+                  cursor: 'grab',
+                  color: '#bbb',
+                  fontSize: 14,
+                  padding: '4px 6px',
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                aria-label="순서 변경"
+              >☰</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: on ? 'var(--pd)' : '#999', flex: 1 }}>
                 <span style={{ display: 'inline-flex', color: on ? 'var(--pink)' : '#bbb' }}>{tabIcon(t.id)}</span>
                 {t.label}
               </span>
-              <div style={{ display: 'inline-flex', gap: 2 }}>
-                <button
-                  onClick={() => moveTab(idx, -1)}
-                  disabled={isFirst}
-                  style={{ width: 24, height: 24, padding: 0, border: '1px solid #eee', borderRadius: 6, background: '#fff', cursor: isFirst ? 'default' : 'pointer', color: isFirst ? '#ddd' : '#888', fontSize: 11, fontFamily: 'inherit' }}
-                  aria-label="위로"
-                >▲</button>
-                <button
-                  onClick={() => moveTab(idx, 1)}
-                  disabled={isLast}
-                  style={{ width: 24, height: 24, padding: 0, border: '1px solid #eee', borderRadius: 6, background: '#fff', cursor: isLast ? 'default' : 'pointer', color: isLast ? '#ddd' : '#888', fontSize: 11, fontFamily: 'inherit' }}
-                  aria-label="아래로"
-                >▼</button>
-              </div>
               <button
                 onClick={() => toggleTab(t.id)}
                 style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: on ? 'var(--pink)' : '#ddd', position: 'relative', transition: 'background .2s', padding: 0, flexShrink: 0 }}
