@@ -20,6 +20,9 @@ export function TipDetailModal({ tip, onClose }: Props) {
 
   const [fb, setFb] = useState<TipFeedback>({ likes: [], comments: [] })
   const [commentText, setCommentText] = useState('')
+  // Which top-level comment is currently being replied to (id or null).
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
+  const [replyText, setReplyText] = useState('')
 
   useEffect(() => {
     if (!uid) return
@@ -55,8 +58,29 @@ export function TipDetailModal({ tip, onClose }: Props) {
     setCommentText('')
   }
 
-  // Sort comments oldest → newest
-  const sortedComments = [...fb.comments].sort((a, b) => a.ts - b.ts)
+  function postReply(parentId: string) {
+    if (!uid) return
+    const text = replyText.trim().slice(0, COMMENT_MAX)
+    if (!text) return
+    const nickname = (localStorage.getItem('ff_nickname') || '').trim() || '익명'
+    const comment: TipComment = {
+      id: String(Date.now()),
+      fromUid: uid,
+      fromNickname: nickname,
+      text,
+      ts: Date.now(),
+      parentId,
+    }
+    addComment(tip.id, comment).catch(console.error)
+    setReplyText('')
+    setReplyingTo(null)
+  }
+
+  // Top-level comments (no parent) sorted oldest → newest. Replies are
+  // looked up per-parent inline.
+  const topLevel = [...fb.comments].filter((c) => !c.parentId).sort((a, b) => a.ts - b.ts)
+  const repliesOf = (parentId: string) =>
+    fb.comments.filter((c) => c.parentId === parentId).sort((a, b) => a.ts - b.ts)
 
   return (
     <div
@@ -143,25 +167,70 @@ export function TipDetailModal({ tip, onClose }: Props) {
               </div>
 
               {/* Comment list */}
-              {sortedComments.length === 0 ? (
+              {topLevel.length === 0 ? (
                 <div style={{ fontSize: 11, color: '#bbb', textAlign: 'center', padding: '16px 0' }}>
                   아직 댓글 없어 — 첫 댓글 남겨봐
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-                  {sortedComments.map((c) => {
+                  {topLevel.map((c) => {
                     const reactors = fb.commentReactions?.[c.id] ?? []
                     const reacted = reactors.includes(uid)
+                    const replies = repliesOf(c.id)
                     return (
-                      <CommentRow
-                        key={c.id}
-                        comment={c}
-                        mine={c.fromUid === uid}
-                        reactedCount={reactors.length}
-                        reacted={reacted}
-                        onReact={() => setCommentReaction(tip.id, c.id, uid, !reacted).catch(console.error)}
-                        onDelete={() => deleteComment(tip.id, c).catch(console.error)}
-                      />
+                      <div key={c.id}>
+                        <CommentRow
+                          comment={c}
+                          mine={c.fromUid === uid}
+                          reactedCount={reactors.length}
+                          reacted={reacted}
+                          onReact={() => setCommentReaction(tip.id, c.id, uid, !reacted).catch(console.error)}
+                          onReply={() => { setReplyingTo(replyingTo === c.id ? null : c.id); setReplyText('') }}
+                          onDelete={() => deleteComment(tip.id, c).catch(console.error)}
+                        />
+
+                        {/* Replies (1-level deep) */}
+                        {replies.length > 0 && (
+                          <div style={{ marginTop: 6, marginLeft: 18, paddingLeft: 10, borderLeft: '2px solid var(--pl)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {replies.map((r) => {
+                              const rReactors = fb.commentReactions?.[r.id] ?? []
+                              const rReacted = rReactors.includes(uid)
+                              return (
+                                <CommentRow
+                                  key={r.id}
+                                  comment={r}
+                                  mine={r.fromUid === uid}
+                                  reactedCount={rReactors.length}
+                                  reacted={rReacted}
+                                  onReact={() => setCommentReaction(tip.id, r.id, uid, !rReacted).catch(console.error)}
+                                  onDelete={() => deleteComment(tip.id, r).catch(console.error)}
+                                  isReply
+                                />
+                              )
+                            })}
+                          </div>
+                        )}
+
+                        {/* Inline reply input */}
+                        {replyingTo === c.id && (
+                          <div style={{ marginTop: 6, marginLeft: 18, paddingLeft: 10, borderLeft: '2px solid var(--pl)', display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                            <textarea
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value.slice(0, COMMENT_MAX))}
+                              placeholder={`@${c.fromNickname} 에게 답글`}
+                              rows={1}
+                              autoFocus
+                              style={{ flex: 1, padding: '8px 10px', border: '1.5px solid #e8e8e8', borderRadius: 8, fontSize: 11, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', resize: 'none', lineHeight: 1.5 }}
+                            />
+                            <button
+                              onClick={() => postReply(c.id)}
+                              disabled={!replyText.trim()}
+                              style={{ width: 32, height: 32, borderRadius: 99, background: replyText.trim() ? 'var(--pink)' : '#ddd', border: 'none', color: '#fff', fontSize: 12, cursor: replyText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                              aria-label="답글 보내기"
+                            >➤</button>
+                          </div>
+                        )}
+                      </div>
                     )
                   })}
                 </div>
@@ -198,13 +267,15 @@ interface CommentRowProps {
   reactedCount: number
   reacted: boolean
   onReact: () => void
+  onReply?: () => void  // not provided for replies (no reply-to-reply)
   onDelete: () => void
+  isReply?: boolean
 }
 
-function CommentRow({ comment, mine, reactedCount, reacted, onReact, onDelete }: CommentRowProps) {
+function CommentRow({ comment, mine, reactedCount, reacted, onReact, onReply, onDelete, isReply }: CommentRowProps) {
   const rel = relativeTime(comment.ts)
   return (
-    <div style={{ background: '#fafafa', borderRadius: 12, padding: '8px 12px', border: '1px solid #f0f0f0' }}>
+    <div style={{ background: isReply ? '#fff' : '#fafafa', borderRadius: 10, padding: '8px 12px', border: '1px solid #f0f0f0' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>{comment.fromNickname}</span>
         <span style={{ fontSize: 9, color: '#bbb' }}>{rel}</span>
@@ -217,26 +288,34 @@ function CommentRow({ comment, mine, reactedCount, reacted, onReact, onDelete }:
         )}
       </div>
       <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 6 }}>{comment.text}</div>
-      <button
-        onClick={onReact}
-        style={{
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: 4,
-          padding: '3px 9px',
-          borderRadius: 99,
-          border: '1px solid ' + (reacted ? 'var(--pink)' : '#eee'),
-          background: reacted ? 'color-mix(in srgb, var(--pink) 15%, #fff)' : '#fff',
-          color: reacted ? 'var(--pink)' : '#888',
-          fontSize: 10,
-          fontWeight: 700,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-        }}
-      >
-        <span style={{ fontSize: 11 }}>{reacted ? '❤️' : '🤍'}</span>
-        공감 {reactedCount > 0 && reactedCount}
-      </button>
+      <div style={{ display: 'flex', gap: 4 }}>
+        <button
+          onClick={onReact}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 4,
+            padding: '3px 9px',
+            borderRadius: 99,
+            border: '1px solid ' + (reacted ? 'var(--pink)' : '#eee'),
+            background: reacted ? 'color-mix(in srgb, var(--pink) 15%, #fff)' : '#fff',
+            color: reacted ? 'var(--pink)' : '#888',
+            fontSize: 10,
+            fontWeight: 700,
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          <span style={{ fontSize: 11 }}>{reacted ? '❤️' : '🤍'}</span>
+          공감 {reactedCount > 0 && reactedCount}
+        </button>
+        {onReply && (
+          <button
+            onClick={onReply}
+            style={{ padding: '3px 9px', borderRadius: 99, border: '1px solid #eee', background: '#fff', color: '#888', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+          >💬 답글</button>
+        )}
+      </div>
     </div>
   )
 }

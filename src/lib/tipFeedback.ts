@@ -11,6 +11,7 @@ export interface TipComment {
   fromNickname: string
   text: string
   ts: number
+  parentId?: string  // if set, this is a 1-level reply
 }
 
 export interface TipFeedback {
