@@ -328,6 +328,15 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
   const uid = useAppStore((s) => s.uid)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
+
+  // Refresh local friends list when applyRemote merges in additions from
+  // another device. Without this the panel shows stale state until a manual
+  // remount.
+  useEffect(() => {
+    function onRemoteSync() { setFriends(loadFriends()) }
+    window.addEventListener('ff-remote-sync', onRemoteSync)
+    return () => window.removeEventListener('ff-remote-sync', onRemoteSync)
+  }, [])
   const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
   // Only intercept the back button when rendered as a modal — the tab
   // version stays put while the user navigates between tabs.

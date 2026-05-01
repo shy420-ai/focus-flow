@@ -18,11 +18,11 @@ const DEFAULT: Record<VisibilitySection, boolean> = {
 }
 
 export const VISIBILITY_LABELS: Record<VisibilitySection, string> = {
-  timeline: '오늘 타임라인',
-  habits: '습관 + 스트릭',
-  sprint: '1주 챌린지 + 히스토리',
-  xp: '레벨 / XP',
-  condition: '오늘 컨디션',
+  timeline: '일간',
+  habits: '습관',
+  sprint: '목표',
+  xp: '레벨',
+  condition: '컨디션',
 }
 
 export function getVisibility(): Record<VisibilitySection, boolean> {
