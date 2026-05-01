@@ -61,31 +61,34 @@ export function PomoFab() {
 
   const tick = useCallback(() => {
     setPomo((prev) => {
-      if (prev.seconds <= 0) return prev // handled in effect
-      const next: PomoState = { ...prev, seconds: prev.seconds - 1 }
+      if (prev.seconds <= 0) return prev
+      const newSec = prev.seconds - 1
+      // Handle completion atomically inside the same state update so the
+      // count can't be missed by a re-render race against a separate effect.
+      if (newSec === 0) {
+        playChime()
+        const today = todayStr()
+        const newCount = prev.phase === 'work'
+          ? (prev.countDate === today ? prev.todayCount + 1 : 1)
+          : prev.todayCount
+        const newPhase: 'work' | 'break' = prev.phase === 'work' ? 'break' : 'work'
+        const nextSeconds = newPhase === 'work' ? prev.workMin * 60 : prev.breakMin * 60
+        const next: PomoState = {
+          ...prev,
+          running: false,
+          phase: newPhase,
+          seconds: nextSeconds,
+          todayCount: newCount,
+          countDate: today,
+        }
+        saveState(next)
+        return next
+      }
+      const next: PomoState = { ...prev, seconds: newSec }
       saveState(next)
       return next
     })
   }, [])
-
-  // Handle completion
-  useEffect(() => {
-    if (!pomo.running) return
-    if (pomo.seconds <= 0) {
-      playChime()
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPomo((prev) => {
-        const today = todayStr()
-        const newCount = prev.phase === 'work' ? (prev.countDate === today ? prev.todayCount + 1 : 1) : prev.todayCount
-        const newPhase = prev.phase === 'work' ? 'break' : 'work'
-        const newSec = newPhase === 'work' ? prev.workMin * 60 : prev.breakMin * 60
-        const next: PomoState = { ...prev, running: false, phase: newPhase as 'work' | 'break', seconds: newSec, todayCount: newCount, countDate: today }
-        saveState(next)
-        return next
-      })
-    }
-  }, [pomo.seconds, pomo.running])
 
   // Interval management
   useEffect(() => {
