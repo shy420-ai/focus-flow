@@ -138,19 +138,19 @@ function IntroCard({ onStart, onSkip }: { onStart: () => void; onSkip: () => voi
       <div style={{ fontSize: 38 }}>🧠</div>
       <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--pd)' }}>너에게 맞는 Focus Flow</div>
       <div style={{ fontSize: 13, color: '#555', lineHeight: 1.7 }}>
-        ADHD는 사람마다 너무 달라.<br />
-        어떤 사람은 시간 단위로 짜야 살고<br />
-        어떤 사람은 그게 더 막막해.
+        ADHD는 사람마다 다 달라.<br />
+        누구는 시간표가 있어야 편하고<br />
+        누구는 시간표가 오히려 답답해.
       </div>
       <div style={{ background: '#fff', padding: 16, borderRadius: 14, fontSize: 12, color: '#666', lineHeight: 1.7 }}>
-        ✓ 6개 질문으로 너 상태 파악<br />
-        ✓ 탭 / 기능 자동 셋업<br />
-        ✓ 끈 기능도 언제든 설정에서 켤 수 있어<br />
-        <span style={{ color: 'var(--pink)', fontWeight: 700 }}>⏱ 약 60초</span>
+        ✓ 짧은 질문 7개<br />
+        ✓ 너에게 맞는 탭만 자동으로 켜줌<br />
+        ✓ 안 켠 기능도 나중에 다시 켤 수 있어<br />
+        <span style={{ color: 'var(--pink)', fontWeight: 700 }}>⏱ 1분이면 끝나</span>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
         <button onClick={onStart} style={{ padding: 14, borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px color-mix(in srgb, var(--pink) 40%, transparent)' }}>시작하기 →</button>
-        <button onClick={onSkip} style={{ padding: 10, background: 'none', border: 'none', color: '#aaa', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>건너뛰고 전체 기능 다 보기</button>
+        <button onClick={onSkip} style={{ padding: 10, background: 'none', border: 'none', color: '#aaa', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}>건너뛰고 전부 켜기</button>
       </div>
     </div>
   )
@@ -195,102 +195,102 @@ function OptCard({ active, onClick, emoji, label, sub, tag }: OptProps) {
 
 function Q1({ value, onPick }: { value?: Style; onPick: (v: Style) => void }) {
   return (
-    <QShell title="하루를 어떻게 보내?" sub="가장 가까운 거 골라. 정답 없어 — 지금 너의 스타일대로.">
-      <OptCard active={value === 'time'} onClick={() => onPick('time')} emoji="🕐" label="시간표대로 가는 게 안정감 있어"
-        sub={'"9시 회의 → 10시 산책 → 11시 공부"\n매일 짠 시간대로 따라갈 수 있어\n→ 일간 탭 (시간 블록 시각화)'} />
+    <QShell title="하루를 어떻게 보내?" sub="비슷한 거 하나만 골라. 정답 없어.">
+      <OptCard active={value === 'time'} onClick={() => onPick('time')} emoji="🕐" label="시간표대로 하면 마음 편해"
+        sub={'"9시 회의 → 10시 산책 → 11시 공부"\n시간대로 척척 가는 게 좋아\n→ 일간 탭 켜줌'} />
       <OptCard active={value === 'goal'} onClick={() => onPick('goal')} emoji="📋" label="결과만 정해두는 게 편해" tag="ADHD 추천"
-        sub={'"이번주 책 1권, 운동 3번"\n언제 할지는 그날 컨디션 따라\n→ 1주 챌린지 (목표 탭)'} />
-      <OptCard active={value === 'drop'} onClick={() => onPick('drop')} emoji="💧" label="즉흥파, 하고 싶은 거부터"
-        sub={'"오늘 뭐할지 5분 전에 정함"\n머릿속 떠도는 거 일단 적어두고 손가는 거부터\n→ 덤프 탭 (브레인덤프)'} />
-      <OptCard active={value === 'all'} onClick={() => onPick('all')} emoji="🎲" label="모르겠어 / 그날그날 다름"
-        sub={'직접 써보고 너 스타일 찾을게\n→ 일간 + 목표 + 덤프 다 켜줌'} />
+        sub={'"이번주 책 1권, 운동 3번"\n언제 할지는 그날 봐서 정함\n→ 목표 탭 켜줌'} />
+      <OptCard active={value === 'drop'} onClick={() => onPick('drop')} emoji="💧" label="그때그때 하고 싶은 거 해"
+        sub={'"오늘 뭐할지 그때 정해"\n머리에 떠다니는 거 일단 적어두고 손가는 거부터\n→ 덤프 탭 켜줌'} />
+      <OptCard active={value === 'all'} onClick={() => onPick('all')} emoji="🎲" label="모르겠어 / 그날그날 달라"
+        sub={'써보면서 천천히 찾아볼래\n→ 일간 + 목표 + 덤프 다 켜줌'} />
     </QShell>
   )
 }
 
 function Q2({ value, onPick }: { value?: Calendar; onPick: (v: Calendar) => void }) {
   return (
-    <QShell title="주간 / 월간 캘린더 보고 싶어?" sub="얼마나 멀리 보고 계획하는 편인지에 따라 골라.">
-      <OptCard active={value === 'both'} onClick={() => onPick('both')} emoji="📆" label="둘 다 — 주별 + 월별"
-        sub={'주간: 7일 한눈에 (이번주 진행)\n월간: 한 달 색깔로 카테고리 분포\n→ 주간 + 월간 탭 둘 다 ON'} />
+    <QShell title="달력 보고 싶어?" sub="며칠치를 한꺼번에 보는 게 편한지 골라.">
+      <OptCard active={value === 'both'} onClick={() => onPick('both')} emoji="📆" label="주간 + 월간 둘 다"
+        sub={'주간: 이번주 7일 한눈에\n월간: 이번달 일정 한눈에\n→ 주간 + 월간 탭 둘 다 켜줌'} />
       <OptCard active={value === 'month'} onClick={() => onPick('month')} emoji="📅" label="월간만"
-        sub={'한 달 단위로만 봐도 충분해\n→ 월간 탭 ON / 주간 탭 OFF'} />
+        sub={'한 달씩만 봐도 돼\n→ 월간 탭만 켜줌'} />
       <OptCard active={value === 'week'} onClick={() => onPick('week')} emoji="📈" label="주간만"
-        sub={'이번주 단위로 짜는 게 편해\n→ 주간 탭 ON / 월간 탭 OFF'} />
+        sub={'한 주씩 짜는 게 편해\n→ 주간 탭만 켜줌'} />
       <OptCard active={value === 'none'} onClick={() => onPick('none')} emoji="✋" label="둘 다 안 봐"
-        sub={'일간만으로 충분 / 캘린더 부담\n→ 주간 + 월간 탭 둘 다 OFF'} />
+        sub={'오늘 할 거만 보면 돼\n→ 주간 + 월간 다 끔'} />
     </QShell>
   )
 }
 
 function Q3({ value, onPick }: { value?: Habit; onPick: (v: Habit) => void }) {
   return (
-    <QShell title="매일 같은 시간에 반복하는 거 있어?" sub="예: 아침 약, 스트레칭, 일기, 비타민">
+    <QShell title="매일 챙겨서 하는 거 있어?" sub="예: 아침 약, 스트레칭, 일기, 비타민">
       <OptCard active={value === 'few'} onClick={() => onPick('few')} emoji="🌿" label="1~3개 정도"
-        sub={'간단히 추적하고 🔥 스트릭만 보고 싶어\n→ 습관 탭 ON (가벼운 모드)'} />
+        sub={'체크만 하고 며칠 연속 했는지 보고 싶어\n→ 습관 탭 켜줌'} />
       <OptCard active={value === 'many'} onClick={() => onPick('many')} emoji="🌳" label="4개 이상"
-        sub={'꼼꼼하게 다 챙기고 싶어\n→ 습관 탭 ON (풀 모드)'} />
+        sub={'여러 개 다 챙기고 싶어\n→ 습관 탭 켜줌'} />
       <OptCard active={value === 'none'} onClick={() => onPick('none')} emoji="✋" label="아예 없어"
-        sub={'매번 다른 게 좋아 / 매일 반복은 부담\n→ 습관 탭 OFF'} />
+        sub={'매일 똑같이 하기 부담스러워\n→ 습관 탭 끔'} />
     </QShell>
   )
 }
 
 function Q4({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
-    <QShell title="친구 기능 쓸래?" sub="공유 코드로 친구 추가하고 서로 페이지 보는 기능">
+    <QShell title="친구 기능 쓸래?" sub="친구 코드로 추가해서 서로 응원하는 기능이야.">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="👯" label="응 — 같이 응원하고 싶어"
-        sub={'친구한테 보일 수 있는 것 (각각 토글로 ON/OFF):\n• 1주 챌린지 진행률 / 레벨·XP\n• 오늘 타임라인 / 습관 + 스트릭\n• 덤프 / 컨디션 / 방명록\n• 프사 + 닉네임 + 한줄 소개\n→ 친구 탭 ON'} />
+        sub={'친구한테 보여줄 수 있는 거 (하나씩 켜고 끄기 가능):\n• 이번주 목표 / 레벨·XP\n• 오늘 일정 / 습관 + 연속 일수\n• 덤프 / 컨디션 / 방명록\n• 프사 + 닉네임 + 한줄 소개\n→ 친구 탭 켜줌'} />
       <OptCard active={value === 'no'} onClick={() => onPick('no')} emoji="🦦" label="혼자가 편해"
-        sub={'언제든 설정에서 다시 켤 수 있어\n→ 친구 탭 OFF, 모든 항목 비공개'} />
+        sub={'나중에 설정에서 다시 켤 수 있어\n→ 친구 탭 끄고, 다 안 보이게 함'} />
     </QShell>
   )
 }
 
 function Q5({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
-    <QShell title="순위 / 랭킹 보고 싶어?" sub="다른 ADHD인이랑 이번달 XP 비교하는 거">
+    <QShell title="다른 사람이랑 순위 보고 싶어?" sub="이번달 XP로 1~10등 보여주는 명예의 전당 같은 거.">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="🏆" label="응 — 명예의 전당 보고 싶어"
-        sub={'• 이번달 Top 10 표시\n• 내 랭크 + 상위 N% 보여줌\n• 5월 1위에게 스타벅스 쿠폰 ☕\n→ 순위 보기 ON'} />
-      <OptCard active={value === 'no'} onClick={() => onPick('no')} emoji="🙈" label="아니 — 비교 스트레스"
-        sub={'레벨 / XP는 그대로 유지 (혼자 게임)\n→ 순위 OFF'} />
+        sub={'• 이번달 1~10등 보여줌\n• 내 등수 + 상위 몇 % 보여줌\n• 5월 1등 스타벅스 쿠폰 ☕\n→ 순위 켜줌'} />
+      <OptCard active={value === 'no'} onClick={() => onPick('no')} emoji="🙈" label="아니 — 비교는 부담"
+        sub={'내 레벨 / XP는 그대로 (혼자만 봄)\n→ 순위 끔'} />
     </QShell>
   )
 }
 
 function Q6({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
-    <QShell title="매일 챙겨야 할 약 있어?" sub="정신과 약 / 한약 / 영양제 등 뭐든">
+    <QShell title="매일 챙겨야 할 약 있어?" sub="정신과 약 / 한약 / 영양제 뭐든.">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="💊" label="응 — 약 챙겨"
-        sub={'메디 탭 기능:\n✓ 매일 복용 체크 (까먹음 방지)\n✓ 효과 지속 시간 시각화\n✓ 컨디션이랑 같이 추적해서 약 효과 분석\n✓ 부작용 / 주의사항 카드 내장'} />
+        sub={'메디 탭에서 할 수 있는 거:\n✓ 매일 먹었는지 체크 (까먹기 방지)\n✓ 약 효과 시간 그래프로 보기\n✓ 컨디션 같이 적어서 약이 잘 듣는지 보기\n✓ 부작용 / 주의사항 정리'} />
       <OptCard active={value === 'no'} onClick={() => onPick('no')} emoji="🚫" label="아니 — 안 먹어 / 가끔만"
-        sub={'언제든 설정에서 켤 수 있어'} />
+        sub={'나중에 설정에서 다시 켤 수 있어'} />
     </QShell>
   )
 }
 
 function Q7({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
-    <QShell title="생리주기 트래킹할래?" sub="예측·기록용. 메디 탭에 같이 들어가.">
-      <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="🌙" label="응 — 주기 예측 받고 싶어"
-        sub={'✓ 시작/종료일 등록 → 다음 주기 자동 예측\n✓ 생리 / PMS / 평소 단계 표시\n✓ 마감까지 D-N 카운트\n💡 호르몬-주의력 패턴 분석 가능'} />
+    <QShell title="생리주기 기록할래?" sub="다음 주기 예측해줘. 메디 탭에 같이 들어가.">
+      <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="🌙" label="응 — 주기 예측받고 싶어"
+        sub={'✓ 시작/종료일 적으면 다음 주기 자동 예측\n✓ 지금 생리 / PMS / 평소 어느 단계인지 표시\n✓ 다음까지 며칠 남았는지 카운트\n💡 컨디션이랑 같이 보면 패턴 보임'} />
       <OptCard active={value === 'no'} onClick={() => onPick('no')} emoji="🚫" label="아니 — 필요 없어"
-        sub={'언제든 설정에서 켤 수 있어'} />
+        sub={'나중에 설정에서 다시 켤 수 있어'} />
     </QShell>
   )
 }
 
 function ResultCard({ summary, onStart, answers }: { summary: string[]; onStart: () => void; answers: Answers }) {
   const recommendation =
-    answers.style === 'goal' ? '"이번주 챌린지 1개"부터 가볍게 시작해봐.\n완벽 노력 ❌ → 1번이라도 +1 누르는 거 ⭕'
-    : answers.style === 'time' ? '오늘의 큰 일 1개만 시간 블록으로 등록해봐.\n작게 시작해야 안 부서져.'
-    : answers.style === 'drop' ? '머릿속 떠도는 거 5개만 덤프에 던져봐.\n다 끝낼 필요 없어 — 외부에 적는 게 핵심.'
-    : '일단 일간 탭에서 오늘 1개 등록해보자.\n뭐든 너 페이스로 ㄱㄱ.'
+    answers.style === 'goal' ? '"이번주 목표 1개"만 정해서 가볍게 시작해.\n완벽하게 ❌ → 한 번이라도 한 게 ⭕'
+    : answers.style === 'time' ? '오늘 큰 일 1개만 시간 정해서 적어봐.\n작게 시작하는 게 끝까지 가는 길.'
+    : answers.style === 'drop' ? '머리에 떠다니는 거 5개만 덤프에 적어봐.\n다 안 해도 돼 — 머리에서 꺼내는 게 핵심.'
+    : '일단 일간 탭에서 오늘 할 일 1개만 적어봐.\n천천히 너 속도로.'
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
       <div style={{ fontSize: 30, textAlign: 'center' }}>🎯</div>
-      <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--pd)', textAlign: 'center' }}>너만의 셋업 완료</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--pd)', textAlign: 'center' }}>맞춤 설정 끝!</div>
       <div style={{ background: '#fff', borderRadius: 14, padding: 16 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: '#888', marginBottom: 8 }}>너에게 켜진 탭</div>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -300,11 +300,11 @@ function ResultCard({ summary, onStart, answers }: { summary: string[]; onStart:
         </div>
       </div>
       <div style={{ background: '#fff', borderRadius: 14, padding: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: '#888', marginBottom: 6 }}>추천 시작</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: '#888', marginBottom: 6 }}>이렇게 시작해봐</div>
         <div style={{ fontSize: 13, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{recommendation}</div>
       </div>
       <div style={{ fontSize: 11, color: '#888', textAlign: 'center', lineHeight: 1.6 }}>
-        💡 끈 기능은 설정 ⚙️ 탭 관리에서 언제든 켤 수 있어
+        💡 안 켠 기능은 설정 ⚙️ 탭 관리에서 다시 켤 수 있어
       </div>
       <button onClick={onStart} style={{ padding: 14, borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px color-mix(in srgb, var(--pink) 40%, transparent)' }}>
         시작하기 🚀
