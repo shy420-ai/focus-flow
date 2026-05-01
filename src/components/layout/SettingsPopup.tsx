@@ -37,7 +37,6 @@ const ALL_TABS: Array<{ id: CurView; label: string }> = [
   { id: 'goal', label: '목표' },
   { id: 'drop', label: '덤프' },
   { id: 'mood', label: '일기' },
-  { id: 'tips', label: '정보' },
   { id: 'stats', label: '메디' },
   { id: 'friends', label: '친구' },
 ]
