@@ -21,6 +21,7 @@ import { Confetti } from './components/ui/Confetti'
 import { useAppStore } from './store/AppStore'
 import { useAuthState } from './hooks/useAuthState'
 import { useFirestoreSync } from './hooks/useFirestoreSync'
+import { installFriendCodeDebug } from './lib/debugFriendCodes'
 
 function useIsDesktop() {
   const [isDesktop, setIsDesktop] = useState(window.innerWidth >= 768)
@@ -41,6 +42,7 @@ function AppContent() {
 
   useEffect(() => {
     window.__ffShowOnboarding = () => setShowOnboarding(true)
+    installFriendCodeDebug()
   }, [setShowOnboarding])
 
   useEffect(() => {
