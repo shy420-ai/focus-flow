@@ -13,7 +13,6 @@ import { PomoFab } from './components/pomo/PomoFab'
 import { StatsView } from './components/stats/StatsView'
 import { FriendsPanel } from './components/friends/FriendsPanel'
 import { Onboarding } from './components/onboarding/Onboarding'
-import { SurveyWizard } from './components/onboarding/SurveyWizard'
 import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import { PromptModal } from './components/ui/PromptModal'
@@ -54,7 +53,6 @@ function useTimelineHidden(): boolean {
 function AppContent() {
   const curView = useAppStore((s) => s.curView)
   const isDesktop = useIsDesktop()
-  const [showSurvey, setShowSurvey] = useState(!localStorage.getItem('ff_survey_done') && !localStorage.getItem('ff_onboarded'))
   const [showOnboarding, setShowOnboarding] = useState(!localStorage.getItem('ff_onboarded'))
   const [doneToast, setDoneToast] = useState<string | null>(null)
   const [showConfetti, setShowConfetti] = useState(false)
@@ -133,8 +131,7 @@ function AppContent() {
         </>
       )}
       <PomoFab />
-      {showSurvey && <SurveyWizard onDone={() => setShowSurvey(false)} />}
-      {!showSurvey && showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
+      {showOnboarding && <Onboarding onDone={() => setShowOnboarding(false)} />}
       <MiniToast />
       <ConfirmModal />
       <PromptModal />

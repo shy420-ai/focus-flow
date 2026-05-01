@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import type { CurView } from '../../store/AppStore'
 import { isLeaderboardOn } from '../../lib/leaderboardPref'
+import { SurveyWizard } from './SurveyWizard'
 
 interface OnboardingStep {
   title: string
@@ -134,10 +135,14 @@ export function Onboarding({ onDone }: Props) {
   const setCurView = useAppStore((s) => s.setCurView)
   const [idx, setIdx] = useState(0)
   const [targetRect, setTargetRect] = useState<DOMRect | null>(null)
+  // Phase: 'survey' for first-run users, 'tour' after answers applied.
+  // Existing users (ff_survey_done already set) skip straight to the tour.
+  const [phase, setPhase] = useState<'survey' | 'tour'>(
+    () => localStorage.getItem('ff_survey_done') ? 'tour' : 'survey'
+  )
 
   // Filter steps based on what the user enabled in the survey wizard.
-  // Steps tied to a hidden tab or to a disabled feature get dropped, so
-  // the tour stays focused on what's actually visible.
+  // Recomputed when phase flips so just-applied answers take effect.
   const steps = useMemo(() => {
     const hidden = loadHiddenTabs()
     const lbOn = isLeaderboardOn()
@@ -149,7 +154,7 @@ export function Onboarding({ onDone }: Props) {
       if (s.requires === 'med-tab') return !hidden.has('stats')
       return true
     })
-  }, [])
+  }, [phase])
 
   const step = steps[idx]
   const isLast = idx === steps.length - 1
@@ -195,6 +200,14 @@ export function Onboarding({ onDone }: Props) {
   } : null
 
   const tipOnTop = targetRect && targetRect.top > window.innerHeight / 2
+
+  // Phase 1 — survey wizard. When the user finishes (or skips), flip to
+  // the tour phase so the highlighted walk-through picks up immediately.
+  if (phase === 'survey') {
+    return (
+      <SurveyWizard onDone={() => setPhase('tour')} />
+    )
+  }
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 9001 }}>
