@@ -127,9 +127,9 @@ export function MoodEntryModal({ entry, onClose }: Props) {
   const [nextAction, setNextAction] = useState(entry?.nextAction ?? '')
   const [distressBefore] = useState<number | undefined>(entry?.distressBefore ?? entry?.intensity ?? undefined)
   const [distressAfter, setDistressAfter] = useState<number | undefined>(entry?.distressAfter)
-  const [youtubeUrl, setYoutubeUrl] = useState(
-    entry?.youtubeUrl ?? localStorage.getItem('ff_mood_default_bgm') ?? ''
-  )
+  // BGM resolves at modal-open time: either the entry's saved URL or the
+  // user's default. No per-entry override UI right now, so this is read-only.
+  const youtubeUrl = entry?.youtubeUrl ?? localStorage.getItem('ff_mood_default_bgm') ?? ''
   // Soft 5-min timer — counts up from 0, nudges at 5:00 but never forces save.
   const [elapsed, setElapsed] = useState(0)
   useEffect(() => {
@@ -435,17 +435,6 @@ export function MoodEntryModal({ entry, onClose }: Props) {
                 {distressBefore} → {distressAfter} (-{distressBefore - distressAfter}) 잘했어 🌱
               </div>
             )}
-          </Section>
-
-          {/* BGM URL (already playing at top — this is just the input) */}
-          <Section title="🎵 BGM 변경" hint="(선택) 다른 곡으로 바꾸려면 여기에 링크.">
-            <input
-              type="text"
-              value={youtubeUrl}
-              onChange={(e) => setYoutubeUrl(e.target.value)}
-              placeholder="https://youtu.be/..."
-              style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #e8e8e8', borderRadius: 10, fontSize: 12, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
-            />
           </Section>
 
           {/* Bottom save — easier than scrolling back to top */}
