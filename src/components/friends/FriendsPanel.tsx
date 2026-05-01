@@ -468,13 +468,17 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         )
       })()}
 
-      {/* Pomodoro lifetime stats — small card; hide when nothing yet */}
+      {/* Pomodoro lifetime stats — count is the headline (more
+          motivating than raw hours), hours shown as small secondary. */}
       {pomoCount > 0 && (
-        <div style={{ background: '#FFF6F8', border: '1px solid var(--pl)', borderRadius: 10, padding: '8px 12px', marginBottom: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🍅 뽀모도로 누적</span>
-          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pink)' }}>
-            {pomoCount}회 · {(pomoMinutes / 60).toFixed(1)}h
-          </span>
+        <div style={{ background: 'linear-gradient(135deg, #FFF6F8, #fff)', border: '1.5px solid var(--pl)', borderRadius: 14, padding: '12px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 28 }}>🍅</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--pd)', lineHeight: 1.2 }}>
+              <span style={{ color: 'var(--pink)' }}>{pomoCount}</span> 뽀모도로 완료
+            </div>
+            <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>누적 {(pomoMinutes / 60).toFixed(1)}시간 집중</div>
+          </div>
         </div>
       )}
 
