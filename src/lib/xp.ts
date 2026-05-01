@@ -22,6 +22,10 @@ export function getMonthlyXp(): number {
   if (tag !== curMonth()) {
     localStorage.setItem(MONTH_TAG, curMonth())
     localStorage.setItem(MONTH_KEY, '0')
+    // Push the fresh month tag to Firestore so the leaderboard sees us
+    // immediately after the auto-reset (otherwise our doc still carries
+    // last month's tag and we'd get filtered out).
+    queue()
     return 0
   }
   const n = parseInt(localStorage.getItem(MONTH_KEY) || '0')

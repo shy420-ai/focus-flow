@@ -110,17 +110,15 @@ function entryXpForMonth(data: UserDoc): number {
   return 0
 }
 
-// Fetch a generous slice ordered by monthlyXp (single-field — no composite index needed),
-// then filter client-side to the current month tag. Avoids requiring the user to set
-// up a Firestore composite index before the leaderboard works.
-async function fetchMonthlyEntries(maxFetch: number = 100): Promise<Array<{ uid: string; data: UserDoc }>> {
+// Fetch a generous slice ordered by monthlyXp (single-field — no composite index needed).
+// Returns ALL fetched docs without filtering by month — the caller decides whether to
+// strict-filter or include stale-month docs (so users with stale tags still appear once
+// flushSync has had a chance to update them).
+async function fetchMonthlyEntries(maxFetch: number = 200): Promise<Array<{ uid: string; data: UserDoc }>> {
   const db = getDb()
   const q = query(collection(db, 'users'), orderBy('monthlyXp', 'desc'), limit(maxFetch))
   const snap = await getDocs(q)
-  const month = curMonthTag()
-  return snap.docs
-    .map((d) => ({ uid: d.id, data: d.data() as UserDoc }))
-    .filter(({ data }) => data.monthlyXpMonth === month && typeof data.monthlyXp === 'number')
+  return snap.docs.map((d) => ({ uid: d.id, data: d.data() as UserDoc }))
 }
 
 function toLeaderEntry({ uid, data }: { uid: string; data: UserDoc }): LeaderEntry {
@@ -132,25 +130,35 @@ function toLeaderEntry({ uid, data }: { uid: string; data: UserDoc }): LeaderEnt
 }
 
 export async function getTopXp(n: number = 10): Promise<LeaderEntry[]> {
-  const entries = await fetchMonthlyEntries(50)
-  return entries.slice(0, n).map(toLeaderEntry)
+  const all = await fetchMonthlyEntries(100)
+  const month = curMonthTag()
+  // Prefer entries already on the current month, but fall back to others (stale tag)
+  // sorted by their raw monthlyXp so brand-new accounts and not-yet-synced users still
+  // show somewhere instead of being silently dropped.
+  const cur = all.filter((e) => e.data.monthlyXpMonth === month)
+  if (cur.length >= n) return cur.slice(0, n).map(toLeaderEntry)
+  const stale = all.filter((e) => e.data.monthlyXpMonth !== month)
+  return [...cur, ...stale.map((e) => ({ uid: e.uid, data: { ...e.data, monthlyXp: 0 } as UserDoc }))]
+    .slice(0, n)
+    .map(toLeaderEntry)
 }
 
 export async function getRankSnapshot(myUid: string, myXp: number, ahead: number = 5): Promise<{ rank: number | null; total: number; ahead: LeaderEntry[] }> {
-  const entries = await fetchMonthlyEntries(200)
-  // Make sure my own row is represented even if I'm beyond the fetch slice (rare).
-  const total = entries.length || 1
+  const all = await fetchMonthlyEntries(200)
+  const month = curMonthTag()
+  const monthEntries = all.filter((e) => e.data.monthlyXpMonth === month)
+  // total counts both fresh and stale-tag rows (everyone the leaderboard could show this month)
+  const total = Math.max(monthEntries.length, all.length, 1)
   let rank = 1
-  for (const e of entries) {
+  for (const e of monthEntries) {
     const x = entryXpForMonth(e.data)
     if (x > myXp) rank++
   }
-  // Top N people just ahead of me (smallest gap first)
-  const aheadList = entries
+  const aheadList = monthEntries
     .filter((e) => e.uid !== myUid && entryXpForMonth(e.data) > myXp)
     .sort((a, b) => entryXpForMonth(a.data) - entryXpForMonth(b.data))
     .slice(0, ahead)
-    .reverse() // top of UI = furthest ahead
+    .reverse()
     .map(toLeaderEntry)
   return { rank, total, ahead: aheadList }
 }
