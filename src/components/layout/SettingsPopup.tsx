@@ -199,7 +199,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
 
       {/* 닉네임 */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
         <input
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
@@ -208,6 +208,9 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           onKeyDown={(e) => e.key === 'Enter' && saveNickname()}
         />
         <button onClick={saveNickname} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>저장</button>
+      </div>
+      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12, lineHeight: 1.5 }}>
+        💡 저장하면 🏆 순위와 친구 화면에서 이 닉네임으로 표시돼
       </div>
 
       {/* 친구 관리 */}
