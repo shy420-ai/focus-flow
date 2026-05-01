@@ -212,20 +212,28 @@ function DropRow({ item, onTap, onToggleDone, onToggleStar, onDelete, highlight 
         style={isDone ? { background: 'var(--pink)', color: '#fff' } : {}}
       >{isDone ? '✓' : ''}</button>
 
-      <div onClick={onTap} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          {tEmoji && <span style={{ fontSize: 12 }}>{tEmoji}</span>}
-          <div className="drop-name" style={{ flex: 1, minWidth: 0, textDecoration: isDone ? 'line-through' : 'none' }}>{item.name}</div>
-        </div>
-        {(hasNote || hasImage || (item.tags && item.tags.length > 0)) && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#999' }}>
-            {hasImage && <span>📷</span>}
-            {hasNote && <span>📝</span>}
-            {item.tags?.slice(0, 3).map((t) => (
-              <span key={t} style={{ background: '#FFE4EC', color: 'var(--pink)', padding: '1px 6px', borderRadius: 99, fontSize: 9, fontWeight: 600 }}>#{t}</span>
-            ))}
-          </div>
+      <div onClick={onTap} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {hasImage && (
+          <img
+            src={item.imageUrl}
+            alt=""
+            style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0, display: 'block' }}
+          />
         )}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            {tEmoji && <span style={{ fontSize: 12 }}>{tEmoji}</span>}
+            <div className="drop-name" style={{ flex: 1, minWidth: 0, textDecoration: isDone ? 'line-through' : 'none' }}>{item.name}</div>
+          </div>
+          {(hasNote || (item.tags && item.tags.length > 0)) && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 10, color: '#999' }}>
+              {hasNote && <span>📝</span>}
+              {item.tags?.slice(0, 3).map((t) => (
+                <span key={t} style={{ background: '#FFE4EC', color: 'var(--pink)', padding: '1px 6px', borderRadius: 99, fontSize: 9, fontWeight: 600 }}>#{t}</span>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <button

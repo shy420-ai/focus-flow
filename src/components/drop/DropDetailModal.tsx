@@ -4,6 +4,8 @@
 import { useState, useEffect } from 'react'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
+import { TemplateEditModal } from './TemplateEditModal'
+import { loadTemplates, type DropTemplate } from './dropTemplates'
 import type { DropItem } from '../../types/drop'
 
 interface Props {
@@ -12,15 +14,6 @@ interface Props {
   onDelete: () => void
   onClose: () => void
 }
-
-const TEMPLATES: Array<{ id: string; emoji: string; label: string }> = [
-  { id: '', emoji: '📝', label: '없음' },
-  { id: 'idea', emoji: '💡', label: '아이디어' },
-  { id: 'quote', emoji: '📚', label: '인용' },
-  { id: 'link', emoji: '🔗', label: '링크' },
-  { id: 'task', emoji: '✅', label: '할 일' },
-  { id: 'memo', emoji: '🧠', label: '메모' },
-]
 
 const MAX_IMG_SIDE = 480
 const IMG_QUALITY = 0.7
@@ -59,7 +52,15 @@ export function DropDetailModal({ item, onSave, onDelete, onClose }: Props) {
   const [imageUrl, setImageUrl] = useState(item.imageUrl || '')
   const [template, setTemplate] = useState(item.template || '')
   const [imgError, setImgError] = useState<string | null>(null)
+  const [templates, setTemplates] = useState<DropTemplate[]>(() => loadTemplates())
+  const [showTemplateEdit, setShowTemplateEdit] = useState(false)
   useBackClose(true, onClose)
+
+  useEffect(() => {
+    function refresh() { setTemplates(loadTemplates()) }
+    window.addEventListener('ff-drop-templates-changed', refresh)
+    return () => window.removeEventListener('ff-drop-templates-changed', refresh)
+  }, [])
 
   // Auto-save on close — drops are casual, no separate save button needed.
   useEffect(() => {
@@ -100,13 +101,19 @@ export function DropDetailModal({ item, onSave, onDelete, onClose }: Props) {
         <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Template picker */}
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#666', marginBottom: 6 }}>템플릿</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#666' }}>템플릿</div>
+              <button
+                onClick={() => setShowTemplateEdit(true)}
+                style={{ fontSize: 10, color: '#aaa', background: 'none', border: '1px solid #eee', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontFamily: 'inherit' }}
+              >편집</button>
+            </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              {TEMPLATES.map((t) => {
+              {templates.map((t) => {
                 const active = template === t.id
                 return (
                   <button
-                    key={t.id}
+                    key={t.id || 'none'}
                     onClick={() => setTemplate(t.id)}
                     style={{ padding: '6px 12px', borderRadius: 99, border: '1.5px solid ' + (active ? 'var(--pink)' : '#eee'), background: active ? 'var(--pl)' : '#fff', color: active ? 'var(--pd)' : '#888', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
                   >{t.emoji} {t.label}</button>
@@ -176,6 +183,8 @@ export function DropDetailModal({ item, onSave, onDelete, onClose }: Props) {
           >🗑 메모 삭제</button>
         </div>
       </div>
+
+      {showTemplateEdit && <TemplateEditModal onClose={() => setShowTemplateEdit(false)} />}
     </div>
   )
 }
