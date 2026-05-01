@@ -287,6 +287,11 @@ export function SprintBoard() {
     const next = Math.max(0, cur + delta)
     if (next === cur) return
     updateGoal(id, { current: next })
+    // Trigger the timeline-style celebration (random message + confetti)
+    // for positive bumps. Negative undo doesn't celebrate.
+    if (delta > 0) {
+      window.dispatchEvent(new CustomEvent('ff-block-done', { detail: 'sprint:' + id }))
+    }
     // Lifetime XP: 5 per unit (positive or negative)
     let xpDelta = 5 * (next - cur)
     // Milestone bonus when crossing target (only the actual crossing earns/refunds)
