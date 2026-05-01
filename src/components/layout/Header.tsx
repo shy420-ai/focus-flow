@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNow } from '../../hooks/useNow'
 import { pad } from '../../lib/date'
 import { useAppStore } from '../../store/AppStore'
@@ -9,8 +9,18 @@ import { FriendsPanel } from '../friends/FriendsPanel'
 export function Header() {
   const now = useNow()
   const curDate = useAppStore((s) => s.curDate)
-  const [settingsOpen, setSettingsOpen] = useState(false)
-  const [friendsOpen, setFriendsOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(() => sessionStorage.getItem('ff_modal_settings') === '1')
+  const [friendsOpen, setFriendsOpen] = useState(() => sessionStorage.getItem('ff_modal_friends') === '1')
+
+  useEffect(() => {
+    if (settingsOpen) sessionStorage.setItem('ff_modal_settings', '1')
+    else sessionStorage.removeItem('ff_modal_settings')
+  }, [settingsOpen])
+
+  useEffect(() => {
+    if (friendsOpen) sessionStorage.setItem('ff_modal_friends', '1')
+    else sessionStorage.removeItem('ff_modal_friends')
+  }, [friendsOpen])
 
   const hours = pad(now.getHours())
   const minutes = pad(now.getMinutes())

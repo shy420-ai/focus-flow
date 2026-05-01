@@ -102,12 +102,16 @@ export function SprintBoard() {
   const [history, setHistory] = useState<CompletedSprint[]>(loadHistory())
   const [xp, setXp] = useState<number>(getXp())
   const [leaderboardOn, setLeaderboardOnState] = useState<boolean>(isLeaderboardOn())
-  const [leaderboardModalOpen, setLeaderboardModalOpen] = useState(false)
+  const [leaderboardModalOpen, setLeaderboardModalOpen] = useState(() => sessionStorage.getItem('ff_modal_leaderboard') === '1')
   useEffect(() => {
     function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
     window.addEventListener('ff-leaderboard-changed', onChange)
     return () => window.removeEventListener('ff-leaderboard-changed', onChange)
   }, [])
+  useEffect(() => {
+    if (leaderboardModalOpen) sessionStorage.setItem('ff_modal_leaderboard', '1')
+    else sessionStorage.removeItem('ff_modal_leaderboard')
+  }, [leaderboardModalOpen])
 
   useEffect(() => { saveSprint(sprint) }, [sprint])
   useEffect(() => { saveHistory(history) }, [history])
