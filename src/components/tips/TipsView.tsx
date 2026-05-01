@@ -1,9 +1,11 @@
 // ADHD wiki tab — dev-mode only for now. Categories + tip cards;
 // tap a card to see the full body in a modal.
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { CATEGORY_META, getCategoryTips } from '../../data/adhdTips'
 import { TipDetailModal } from './TipDetailModal'
 import { ArchiveSection } from './ArchiveSection'
+import { TipsLockScreen } from './TipsLockScreen'
+import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsViewLimit'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
 const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body', 'archive']
@@ -11,8 +13,21 @@ const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body
 export function TipsView() {
   const [active, setActive] = useState<TipCategory>('start')
   const [selected, setSelected] = useState<AdhdTip | null>(null)
+  const [locked, setLocked] = useState<boolean>(() => isLocked())
+  const [viewed, setViewed] = useState<number>(() => getTipsViewedToday())
+  const [limit, setLimit] = useState<number>(() => getEffectiveLimit())
   const tips = getCategoryTips(active)
   const meta = CATEGORY_META[active]
+
+  useEffect(() => {
+    function refresh() {
+      setLocked(isLocked())
+      setViewed(getTipsViewedToday())
+      setLimit(getEffectiveLimit())
+    }
+    window.addEventListener('ff-tips-view-changed', refresh)
+    return () => window.removeEventListener('ff-tips-view-changed', refresh)
+  }, [])
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px' }}>
@@ -21,10 +36,28 @@ export function TipsView() {
         borderRadius: 18,
         padding: '14px 18px',
         marginBottom: 12,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
       }}>
-        <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>📚 ADHD 정보</div>
-        <div style={{ fontSize: 11, color: '#888' }}>카테고리별로 정리된 팁 모음</div>
+        <div>
+          <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>📚 ADHD 정보</div>
+          <div style={{ fontSize: 11, color: '#888' }}>카테고리별로 정리된 팁 모음</div>
+        </div>
+        {viewed > 0 && (
+          <span style={{
+            fontSize: 10,
+            fontWeight: 700,
+            padding: '4px 10px',
+            borderRadius: 99,
+            color: viewed >= limit ? '#fff' : viewed >= limit * 0.7 ? '#B8860B' : '#7DA87C',
+            background: viewed >= limit ? 'var(--pink)' : viewed >= limit * 0.7 ? '#FFF6D8' : '#E8F4E5',
+          }}>
+            🌱 {viewed}/{limit}
+          </span>
+        )}
       </div>
+
 
       {/* Category chips — horizontal scroll */}
       <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 14, paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
@@ -68,9 +101,12 @@ export function TipsView() {
         <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, color-mix(in srgb, var(--pl) 80%, #fff), transparent)' }} />
       </div>
 
-      {/* Archive is user-content; tips are hardcoded curation */}
+      {/* Archive is user-content; tips are hardcoded curation. Lock only
+          gates the curated tips, not the user's own archive. */}
       {active === 'archive' ? (
         <ArchiveSection />
+      ) : locked ? (
+        <TipsLockScreen onUnlock={() => setLocked(false)} />
       ) : tips.length === 0 ? (
         <div style={{ background: 'color-mix(in srgb, var(--pl) 25%, #fff)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
           아직 이 카테고리엔 팁이 없어<br />

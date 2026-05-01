@@ -3,6 +3,7 @@ import { useBackClose } from '../../hooks/useBackClose'
 import { useAppStore } from '../../store/AppStore'
 import { CATEGORY_META } from '../../data/adhdTips'
 import { listenTipFeedback, setLike, addComment, deleteComment, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
+import { recordTipView } from '../../lib/tipsViewLimit'
 import type { AdhdTip } from '../../types/adhdTip'
 
 interface Props {
@@ -24,6 +25,12 @@ export function TipDetailModal({ tip, onClose }: Props) {
     if (!uid) return
     return listenTipFeedback(tip.id, setFb)
   }, [tip.id, uid])
+
+  // Count this view toward today's soft limit (only once on mount).
+  useEffect(() => {
+    recordTipView()
+     
+  }, [])
 
   const liked = !!uid && fb.likes.includes(uid)
 
