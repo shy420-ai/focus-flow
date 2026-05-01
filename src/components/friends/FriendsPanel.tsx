@@ -4,7 +4,46 @@ import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc } from '.
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showPrompt } from '../../lib/showPrompt'
+import { computeStreak } from '../../lib/habitStreak'
+import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
 import type { UserDoc } from '../../lib/firestore'
+
+interface SprintGoalShape { id: string; name: string; target: number; unit: string; current: number }
+interface SprintShape { startDate: string; goals: SprintGoalShape[] }
+function sprintPct(s: SprintShape | null | undefined): number | null {
+  if (!s || !s.goals?.length) return null
+  const avg = s.goals.reduce((sum, g) => {
+    const t = g.target || 1
+    return sum + Math.min(100, Math.round((g.current / t) * 100))
+  }, 0) / s.goals.length
+  return Math.round(avg)
+}
+
+const DAY_MODE_LABEL: Record<string, { emoji: string; text: string; color: string }> = {
+  low: { emoji: '🌧', text: '오늘 컨디션 낮음', color: '#A7B3CC' },
+  normal: { emoji: '☁️', text: '평소 컨디션', color: '#B0B0B0' },
+  good: { emoji: '☀️', text: '컨디션 좋음!', color: '#F5A623' },
+}
+
+function activeStatus(lastActiveAt: string | undefined): { label: string; live: boolean } {
+  if (!lastActiveAt) return { label: '기록 없음', live: false }
+  const last = new Date(lastActiveAt)
+  const now = new Date()
+  const diffMin = Math.round((now.getTime() - last.getTime()) / 60000)
+  if (diffMin < 30) return { label: '지금 활동중', live: true }
+  if (diffMin < 60 * 6) return { label: `${Math.round(diffMin / 60) || 1}시간 전`, live: false }
+  if (last.toDateString() === now.toDateString()) return { label: '오늘 활동', live: false }
+  const yest = new Date(now); yest.setDate(now.getDate() - 1)
+  if (last.toDateString() === yest.toDateString()) return { label: '어제 활동', live: false }
+  const days = Math.floor((now.getTime() - last.getTime()) / 86400000)
+  return { label: `${days}일 전`, live: false }
+}
+
+const CHEERS = [
+  { emoji: '🔥', text: '화이팅 화이팅!' },
+  { emoji: '👏', text: '잘하고 있어!' },
+  { emoji: '🫂', text: '같이 가자!' },
+]
 
 interface Friend {
   uid: string
@@ -46,21 +85,26 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
     loadUserDoc(uid).then((d) => { setData(d); setLoading(false) }).catch(() => setLoading(false))
   }, [uid])
 
-  async function postGuestbook() {
-    if (!guestInput.trim()) return
+  async function sendGuestEntry(text: string) {
+    if (!text.trim()) return
     const now = new Date()
     const entry = {
       from: myName,
-      text: guestInput.trim(),
+      text: text.trim(),
       date: todayStr(),
       time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
       ts: Date.now(),
       fromUid: myUid,
     }
     await pushGuestbook(uid, entry)
-    setGuestInput('')
-    // reload
     loadUserDoc(uid).then((d) => setData(d)).catch(() => {})
+  }
+
+  async function postGuestbook() {
+    if (!guestInput.trim()) return
+    const text = guestInput.trim()
+    setGuestInput('')
+    await sendGuestEntry(text)
   }
 
   if (loading) return <div style={{ textAlign: 'center', padding: 20, color: '#aaa' }}>불러오는 중...</div>
@@ -73,13 +117,47 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
   const doneCount = tasks.filter((b) => b.done).length
   const totalH = tasks.reduce((s, b) => s + (b.durHour || 0), 0)
   const guestbook = (data.guestbook as Array<{ from: string; text: string; date?: string; time?: string }>) || []
+  const sprint = data.sprint as SprintShape | null | undefined
+  const spct = sprintPct(sprint)
+  const dayMode = data.dayMode as string | undefined
+  const dmInfo = dayMode ? DAY_MODE_LABEL[dayMode] : null
+  const status = activeStatus(data.lastActiveAt as string | undefined)
 
   return (
     <div>
-      <div style={{ textAlign: 'center', marginBottom: 14 }}>
+      <div style={{ textAlign: 'center', marginBottom: 10 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>{name}</div>
-        <div style={{ fontSize: 11, color: '#aaa', marginTop: 2 }}>오늘의 기록</div>
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: status.live ? '#2BA84A' : '#aaa', marginTop: 4 }}>
+          <span style={{ width: 6, height: 6, borderRadius: 3, background: status.live ? '#2BA84A' : '#ccc', display: 'inline-block' }} />
+          {status.label}
+        </div>
       </div>
+
+      {/* Day mode banner */}
+      {dmInfo && (
+        <div style={{ background: dmInfo.color + '22', borderLeft: `3px solid ${dmInfo.color}`, padding: '6px 10px', borderRadius: 8, marginBottom: 12, fontSize: 11, color: '#555' }}>
+          {dmInfo.emoji} {dmInfo.text}
+        </div>
+      )}
+
+      {/* Sprint progress (1주 챌린지) */}
+      {sprint && spct != null && (
+        <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', borderRadius: 12, padding: 12, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🎯 이번주 챌린지</div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--pink)' }}>{spct}%</div>
+          </div>
+          <div style={{ height: 6, background: '#fff', borderRadius: 3, marginBottom: 8, overflow: 'hidden' }}>
+            <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 3, width: spct + '%', transition: 'width .3s' }} />
+          </div>
+          {sprint.goals.slice(0, 3).map((g) => (
+            <div key={g.id} style={{ fontSize: 10, color: '#666', marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {g.name || '(이름없음)'}</span>
+              <span style={{ color: 'var(--pd)', fontWeight: 600 }}>{g.current}/{g.target} {g.unit}</span>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Summary chips */}
       <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
@@ -115,10 +193,14 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
           </div>
           {habits.map((h) => {
             const done = !!habitLogs[today]?.[String(h.id)]
+            const streak = computeStreak(String(h.id), habitLogs)
             return (
               <div key={h.id} style={{ fontSize: 12, padding: '6px 0', display: 'flex', alignItems: 'center', gap: 6, borderBottom: '1px solid #f0f0f0' }}>
                 <span style={{ fontSize: 14, opacity: done ? 1 : .3 }}>{done ? '🌸' : '○'}</span>
-                <span style={{ opacity: done ? 1 : .6 }}>{h.name}</span>
+                <span style={{ flex: 1, opacity: done ? 1 : .6 }}>{h.name}</span>
+                {streak > 0 && (
+                  <span style={{ fontSize: 10, color: streak >= 7 ? '#E24B4A' : '#888', fontWeight: 600 }}>🔥 {streak}일째</span>
+                )}
               </div>
             )
           })}
@@ -137,11 +219,22 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
           </div>
         ))
       )}
-      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+      {/* Quick cheer buttons — one tap, no typing */}
+      <div style={{ display: 'flex', gap: 6, marginTop: 8, marginBottom: 6 }}>
+        {CHEERS.map((c) => (
+          <button
+            key={c.emoji}
+            onClick={() => sendGuestEntry(c.emoji + ' ' + c.text)}
+            style={{ flex: 1, padding: '8px 4px', borderRadius: 10, background: '#FFF6F8', border: '1.5px solid var(--pl)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}
+          >{c.emoji} {c.text}</button>
+        ))}
+      </div>
+
+      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
         <input
           value={guestInput}
           onChange={(e) => setGuestInput(e.target.value)}
-          placeholder="응원 한마디 남기기..."
+          placeholder="직접 메시지 남기기..."
           style={{ flex: 1, padding: '8px 10px', border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) postGuestbook() }}
         />
@@ -162,10 +255,42 @@ export function FriendsPanel({ onClose }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string }>>({})
   useBackClose(true, onClose)
 
   const myCode = uid ? getMyShareCode(uid) : null
   const myName = localStorage.getItem('ff_nickname') || displayName || '익명'
+
+  useEffect(() => {
+    let cancelled = false
+    Promise.all(friends.map(async (f) => {
+      try {
+        const d = await loadUserDoc(f.uid)
+        return { uid: f.uid, lastActiveAt: d?.lastActiveAt as string | undefined, nickname: d?.nickname as string | undefined }
+      } catch {
+        return { uid: f.uid }
+      }
+    })).then((results) => {
+      if (cancelled) return
+      const next: Record<string, { lastActiveAt?: string; nickname?: string }> = {}
+      for (const r of results) next[r.uid] = { lastActiveAt: r.lastActiveAt, nickname: r.nickname }
+      setFriendStatuses(next)
+    })
+    return () => { cancelled = true }
+  }, [friends])
+
+  // Load my own guestbook so I can see who left messages
+  const [myGuestbook, setMyGuestbook] = useState<Array<{ from: string; text: string; date?: string; time?: string; ts?: number; fromUid?: string }>>([])
+  const lastRead = getLastReadTs()
+  useEffect(() => {
+    if (!uid) return
+    loadUserDoc(uid).then((d) => {
+      if (d?.guestbook) setMyGuestbook(d.guestbook as typeof myGuestbook)
+    }).catch(() => {})
+    // Mark as read once user opens the panel
+    markGuestbookRead()
+     
+  }, [uid])
 
   async function addFriend() {
     const code = await showPrompt('친구의 공유 코드를 입력해:')
@@ -216,6 +341,27 @@ export function FriendsPanel({ onClose }: Props) {
               <div style={{ textAlign: 'center', color: '#aaa', fontSize: 13, padding: '20px 0' }}>로그인하면 친구와 공유할 수 있어!</div>
             ) : (
               <>
+                {/* My received guestbook */}
+                {myGuestbook.length > 0 && (
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💌 받은 응원 ({myGuestbook.length})</div>
+                    <div style={{ maxHeight: 140, overflowY: 'auto' }}>
+                      {[...myGuestbook].reverse().slice(0, 10).map((g, i) => {
+                        const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
+                        return (
+                          <div key={i} style={{ background: unread ? '#FFF6F8' : '#fff', borderRadius: 10, padding: '8px 10px', marginBottom: 6, border: '1px solid ' + (unread ? 'var(--pink)' : '#f0f0f0') }}>
+                            <div style={{ fontSize: 10, color: '#aaa' }}>
+                              {unread && <span style={{ color: 'var(--pink)', fontWeight: 700, marginRight: 4 }}>● NEW</span>}
+                              {g.from} · {g.date} {g.time}
+                            </div>
+                            <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>{g.text}</div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* My code */}
                 <div style={{ background: 'var(--pl)', borderRadius: 10, padding: 12, marginBottom: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 11, color: '#aaa', marginBottom: 4 }}>내 공유 코드</div>
@@ -227,17 +373,25 @@ export function FriendsPanel({ onClose }: Props) {
                 {friends.length === 0 ? (
                   <div style={{ color: '#bbb', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>아직 친구가 없어.<br />코드로 친구를 추가해봐!</div>
                 ) : (
-                  friends.map((f) => (
-                    <div key={f.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--pl)', borderRadius: 12, marginBottom: 8 }}>
-                      <span style={{ fontSize: 24 }}>🧸</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pd)' }}>{f.name}</div>
-                        <div style={{ fontSize: 10, color: '#bbb' }}>{f.code}</div>
+                  friends.map((f) => {
+                    const fStatus = friendStatuses[f.uid]
+                    const status = activeStatus(fStatus?.lastActiveAt)
+                    const displayName = fStatus?.nickname || f.name
+                    return (
+                      <div key={f.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--pl)', borderRadius: 12, marginBottom: 8 }}>
+                        <div style={{ position: 'relative' }}>
+                          <span style={{ fontSize: 24 }}>🧸</span>
+                          {status.live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: 4, background: '#2BA84A', border: '2px solid var(--pl)' }} />}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--pd)' }}>{displayName}</div>
+                          <div style={{ fontSize: 10, color: status.live ? '#2BA84A' : '#bbb' }}>{status.label}</div>
+                        </div>
+                        <button onClick={() => setViewingFriend(f)} style={{ padding: '4px 10px', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>보기</button>
+                        <button onClick={() => removeFriend(f.uid)} style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 24, height: 24, cursor: 'pointer', fontSize: 12 }}>✕</button>
                       </div>
-                      <button onClick={() => setViewingFriend(f)} style={{ padding: '4px 10px', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, cursor: 'pointer' }}>보기</button>
-                      <button onClick={() => removeFriend(f.uid)} style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 24, height: 24, cursor: 'pointer', fontSize: 12 }}>✕</button>
-                    </div>
-                  ))
+                    )
+                  })
                 )}
 
                 <button

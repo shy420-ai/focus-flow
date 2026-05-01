@@ -50,6 +50,8 @@ export interface UserDoc {
   tabHidden?: string[]    // hidden tab ids across devices
   sprint?: unknown  // current 1주 챌린지 (SprintBoard owns the shape)
   sprintHistory?: unknown[]  // completed sprints history
+  dayMode?: 'low' | 'normal' | 'good'  // today's condition mode
+  lastActiveAt?: string  // ISO timestamp; updated on app open
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]

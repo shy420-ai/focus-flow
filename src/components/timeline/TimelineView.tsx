@@ -10,6 +10,7 @@ import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
 import { useBackClose } from '../../hooks/useBackClose'
 import { isDevMode } from '../../lib/devMode'
+import { queue } from '../../lib/syncManager'
 import type { Block } from '../../types/block'
 
 type DayMode = 'low' | 'normal' | 'good'
@@ -19,6 +20,7 @@ function loadDayMode(): DayMode {
 }
 function saveDayMode(m: DayMode) {
   localStorage.setItem('ff_day_mode', m)
+  queue()
 }
 
 function BirthdayModal({ onClose }: { onClose: () => void }) {
