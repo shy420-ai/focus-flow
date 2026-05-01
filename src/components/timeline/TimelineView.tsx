@@ -128,6 +128,18 @@ export function TimelineView() {
 
   const { start: START, hours: HOURS, px: PX } = tlSettings
   const timelineRef = useRef<HTMLDivElement>(null)
+  // Past-hours collapse — only applies to today. Default collapsed so the
+  // user lands at "current hour" without a wall of finished slots above.
+  const [pastCollapsed, setPastCollapsed] = useState<boolean>(true)
+  const isToday = curDate === todayStr()
+  const nowHour = new Date().getHours()
+  // When collapsed, start the visible timeline at the current hour. When
+  // expanded (or viewing another day), use the configured START.
+  const displayStart = (isToday && pastCollapsed)
+    ? Math.max(START, Math.min(START + HOURS - 1, nowHour))
+    : START
+  const displayHours = START + HOURS - displayStart
+  const hiddenPastHours = displayStart - START
 
   // Scroll the page to current time exactly once on mount. The previous
   // every-60s rescroll annoyed the user ("계속 내려감"). They can re-snap
@@ -342,15 +354,32 @@ export function TimelineView() {
           </div>
         )
       })()}
+      {/* Past-hours collapse toggle — only visible on today's timeline */}
+      {isToday && hiddenPastHours > 0 && (
+        <button
+          onClick={() => setPastCollapsed(false)}
+          style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px dashed #ddd', background: '#FAFAFA', color: '#888', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+        >
+          <span>▲ 지난 {hiddenPastHours}시간 ({START}:00 ~ {displayStart}:00) 펼치기</span>
+        </button>
+      )}
+      {isToday && !pastCollapsed && (
+        <button
+          onClick={() => setPastCollapsed(true)}
+          style={{ width: '100%', padding: '6px 12px', borderRadius: 8, border: '1px dashed #ddd', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+        >
+          ▼ 지난 시간 다시 접기
+        </button>
+      )}
       <div className="timeline" ref={timelineRef}>
         {/* Time column */}
         <div className="time-col">
-          {Array.from({ length: HOURS + 1 }, (_, i) => {
-            const hour = START + i
+          {Array.from({ length: displayHours + 1 }, (_, i) => {
+            const hour = displayStart + i
             return (
               <div key={hour} className="time-tick" style={{ height: `${PX}px` }}>
                 <span>{hour}:00</span>
-                {i < HOURS && (
+                {i < displayHours && (
                   <span
                     className="half-label"
                     style={{ position: 'absolute', bottom: PX / 2 - 5, right: 0, fontSize: '8px', color: '#ccc', paddingRight: '8px' }}
@@ -366,12 +395,12 @@ export function TimelineView() {
         {/* Blocks column */}
         <div
           className="blocks-col"
-          style={{ position: 'relative', height: `${HOURS * PX}px` }}
+          style={{ position: 'relative', height: `${displayHours * PX}px` }}
           onClick={() => setActiveMenu(null)}
           onDoubleClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const relY = e.clientY - rect.top
-            const hour = START + Math.floor(relY / PX)
+            const hour = displayStart + Math.floor(relY / PX)
             const subH = Math.round((relY % PX) / PX * 6) / 6
             const startHour = hour + subH
             const newId = String(Date.now())
@@ -386,7 +415,7 @@ export function TimelineView() {
           }}
         >
           {/* Hour lines */}
-          {Array.from({ length: HOURS + 1 }, (_, i) => (
+          {Array.from({ length: displayHours + 1 }, (_, i) => (
             <div
               key={i}
               className="hour-line"
@@ -395,7 +424,7 @@ export function TimelineView() {
           ))}
 
           {/* 10-minute sub-lines */}
-          {Array.from({ length: HOURS }, (_, i) =>
+          {Array.from({ length: displayHours }, (_, i) =>
             [10, 20, 30, 40, 50].map((m) => (
               <div
                 key={`${i}-${m}`}
@@ -422,11 +451,13 @@ export function TimelineView() {
 
           {/* Now line */}
           {curDate === today && (
-            <NowLine startHour={START} totalHours={HOURS} px={PX} />
+            <NowLine startHour={displayStart} totalHours={displayHours} px={PX} />
           )}
 
-          {/* Time blocks */}
+          {/* Time blocks — skip blocks that finish before the visible window */}
           {timelineBlocks.map((block, index) => {
+            const blockEnd = block.startHour + (block.durHour || 0)
+            if (blockEnd <= displayStart) return null
             // Auto-classify: recurring = obligation (must), single = flexible
             const isFlex = !block.isRecurring
             // In '🫂 힘들어' mode, dim flexible (자율) blocks so the user only
@@ -437,7 +468,7 @@ export function TimelineView() {
                 key={block.id}
                 block={block}
                 curDate={curDate}
-                startHour={START}
+                startHour={displayStart}
                 px={PX}
                 isMenuOpen={activeMenu === block.id}
                 onMenuToggle={setActiveMenu}
