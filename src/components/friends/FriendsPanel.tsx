@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { findUserByShareCode, setShareCode, pushGuestbook, listenUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
@@ -8,6 +8,7 @@ import { flushSync } from '../../lib/syncManager'
 import { computeStreak } from '../../lib/habitStreak'
 import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
 import { showMiniToast } from '../../lib/miniToast'
+import { showConfirm } from '../../lib/showConfirm'
 import { isSectionVisible } from '../../lib/friendVisibility'
 import { Avatar } from '../ui/Avatar'
 import type { UserDoc } from '../../lib/firestore'
@@ -97,6 +98,65 @@ function loadFriends(): Friend[] {
 
 function saveFriendsLocal(friends: Friend[]) {
   localStorage.setItem('ff_friends', JSON.stringify(friends))
+}
+
+interface FriendAvatarTabProps {
+  friend: { uid: string; code: string; name: string }
+  avatar: string
+  nickname: string
+  live: boolean
+  selected: boolean
+  onSelect: () => void
+  onRequestRemove: () => void
+}
+
+function FriendAvatarTab({ avatar, nickname, live, selected, onSelect, onRequestRemove }: FriendAvatarTabProps) {
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const longPressedRef = useRef(false)
+  const [pressed, setPressed] = useState(false)
+
+  function startPress() {
+    longPressedRef.current = false
+    setPressed(true)
+    timerRef.current = setTimeout(() => {
+      longPressedRef.current = true
+      setPressed(false)
+      onRequestRemove()
+    }, 600)
+  }
+
+  function endPress() {
+    setPressed(false)
+    if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+  }
+
+  return (
+    <button
+      onClick={() => { if (!longPressedRef.current) onSelect() }}
+      onPointerDown={startPress}
+      onPointerUp={endPress}
+      onPointerCancel={endPress}
+      onPointerLeave={endPress}
+      onContextMenu={(e) => e.preventDefault()}
+      style={{
+        flexShrink: 0,
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+        fontFamily: 'inherit',
+        transform: pressed ? 'scale(.92)' : 'scale(1)',
+        transition: 'transform .15s',
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        touchAction: 'manipulation',
+      }}
+    >
+      <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: selected ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
+        <Avatar value={avatar} size={52} />
+        {live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
+      </div>
+      <div style={{ fontSize: 9, color: selected ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nickname}</div>
+    </button>
+  )
 }
 
 interface FriendDetailProps {
@@ -441,7 +501,7 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
             </div>
             <div style={{ fontSize: 9, color: selectedFriend === null ? 'var(--pink)' : '#888', fontWeight: 700, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>나</div>
           </button>
-          {/* Friend tabs */}
+          {/* Friend tabs — long-press to remove */}
           {friends.map((f) => {
             const fStatus = friendStatuses[f.uid]
             const isSel = selectedFriend?.uid === f.uid
@@ -449,17 +509,22 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
             const av = fStatus?.avatar || '🧸'
             const nm = fStatus?.nickname || f.name
             return (
-              <button
+              <FriendAvatarTab
                 key={f.uid}
-                onClick={() => setViewingFriend(f)}
-                style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-              >
-                <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: isSel ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
-                  <Avatar value={av} size={52} />
-                  {status.live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
-                </div>
-                <div style={{ fontSize: 9, color: isSel ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nm}</div>
-              </button>
+                friend={f}
+                avatar={av}
+                nickname={nm}
+                live={status.live}
+                selected={isSel}
+                onSelect={() => setViewingFriend(f)}
+                onRequestRemove={async () => {
+                  const ok = await showConfirm(`${nm} 친구 삭제할까?`)
+                  if (ok) {
+                    if (selectedFriend?.uid === f.uid) setViewingFriend(null)
+                    removeFriend(f.uid)
+                  }
+                }}
+              />
             )
           })}
           {/* Add button */}
