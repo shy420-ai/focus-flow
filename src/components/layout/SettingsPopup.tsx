@@ -13,6 +13,7 @@ import { flushSync, queue } from '../../lib/syncManager'
 import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
+import { AVATAR_OPTIONS, getAvatar, setAvatar } from '../../lib/avatar'
 import { resetXp, getXp, getLevel } from '../../lib/xp'
 import { AdhdGuideModal } from '../ui/AdhdGuideModal'
 
@@ -74,6 +75,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [px, setPx] = useState(parseInt(localStorage.getItem(PX_KEY) || '140'))
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
   const [cycleData, setCycleData] = useState(() => loadCycleData())
+  const [avatar, setAvatarState] = useState<string>(getAvatar())
 
   function handleTheme(name: ThemeName) {
     applyTheme(name)
@@ -200,7 +202,10 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
 
       {/* 닉네임 */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 4, alignItems: 'center' }}>
+        <div style={{ width: 36, height: 36, borderRadius: 18, background: 'var(--pl)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
+          {avatar}
+        </div>
         <input
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
@@ -210,8 +215,21 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         />
         <button onClick={saveNickname} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>저장</button>
       </div>
+
+      {/* 아바타 선택 */}
+      <div style={{ fontSize: 10, color: '#888', marginBottom: 4, marginTop: 8 }}>아바타 (친구·순위에 보임)</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4, marginBottom: 8 }}>
+        {AVATAR_OPTIONS.map((emo) => (
+          <button
+            key={emo}
+            onClick={() => { setAvatar(emo); setAvatarState(emo); showMiniToast('✅ 아바타 변경') }}
+            style={{ aspectRatio: '1', border: '1.5px solid ' + (avatar === emo ? 'var(--pink)' : '#eee'), background: avatar === emo ? 'var(--pl)' : '#fff', borderRadius: 8, fontSize: 18, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          >{emo}</button>
+        ))}
+      </div>
+
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12, lineHeight: 1.5 }}>
-        💡 저장하면 🏆 순위와 친구 화면에서 이 닉네임으로 표시돼
+        💡 닉네임·아바타는 🏆 순위와 친구 화면에 표시돼
       </div>
 
       {/* 친구 관리 */}

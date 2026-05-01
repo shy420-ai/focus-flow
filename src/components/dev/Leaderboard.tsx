@@ -4,6 +4,7 @@ import { getMonthlyXp } from '../../lib/xp'
 import { getTopXp, getRankSnapshot, type LeaderEntry } from '../../lib/firestore'
 import { useBackClose } from '../../hooks/useBackClose'
 import { flushSync } from '../../lib/syncManager'
+import { getAvatar } from '../../lib/avatar'
 
 
 function daysLeftThisMonth(): number {
@@ -33,6 +34,7 @@ export function LeaderboardModal({ onClose }: Props) {
 
   const myXp = getMonthlyXp()
   const myNickname = localStorage.getItem('ff_nickname') || '나'
+  const myAvatar = getAvatar()
 
   async function refresh() {
     if (!uid) return
@@ -52,7 +54,7 @@ export function LeaderboardModal({ onClose }: Props) {
       // sorted position so I see myself with the right number.
       let mergedTop = t.filter((e) => e.uid !== uid)
       if (r.rank != null && r.rank <= 10) {
-        const me = { uid, nickname: myNickname, xp: myXp }
+        const me: LeaderEntry = { uid, nickname: myNickname, xp: myXp, avatar: myAvatar }
         let insertAt = mergedTop.findIndex((e) => e.xp < myXp)
         if (insertAt === -1) insertAt = mergedTop.length
         mergedTop = [...mergedTop.slice(0, insertAt), me, ...mergedTop.slice(insertAt)].slice(0, 10)
@@ -138,6 +140,7 @@ export function LeaderboardModal({ onClose }: Props) {
                   return (
                     <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '3px 0' }}>
                       <span style={{ color: '#888', minWidth: 20 }}>↑{ahead.length - i}</span>
+                      <span style={{ fontSize: 14 }}>{u.avatar || '🧸'}</span>
                       <span style={{ flex: 1, color: '#333' }}>{u.nickname}</span>
                       <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 70, textAlign: 'right' }}>
                         {u.xp} XP <span style={{ fontSize: 9, color: '#aaa', fontWeight: 500 }}>(+{diff})</span>
@@ -158,9 +161,11 @@ export function LeaderboardModal({ onClose }: Props) {
                   {top.map((u, i) => {
                     const isMe = u.uid === uid
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`
+                    const avatar = isMe ? myAvatar : (u.avatar || '🧸')
                     return (
                       <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '4px 6px', borderRadius: 6, background: isMe ? 'var(--pl)' : 'transparent' }}>
                         <span style={{ minWidth: 24, fontSize: i < 3 ? 14 : 11, color: '#666' }}>{medal}</span>
+                        <span style={{ fontSize: 14 }}>{avatar}</span>
                         <span style={{ flex: 1, color: '#333', fontWeight: isMe ? 700 : 400 }}>{isMe ? `${myNickname} (나)` : u.nickname}</span>
                         <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 60, textAlign: 'right' }}>{u.xp} XP</span>
                       </div>
@@ -172,6 +177,7 @@ export function LeaderboardModal({ onClose }: Props) {
                       <div style={{ textAlign: 'center', color: '#ccc', fontSize: 11, padding: '2px 0' }}>···</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '4px 6px', borderRadius: 6, background: 'var(--pl)' }}>
                         <span style={{ minWidth: 24, fontSize: 11, color: '#666' }}>{rank}</span>
+                        <span style={{ fontSize: 14 }}>{myAvatar}</span>
                         <span style={{ flex: 1, color: '#333', fontWeight: 700 }}>{myNickname} (나)</span>
                         <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 60, textAlign: 'right' }}>{myXp} XP</span>
                       </div>

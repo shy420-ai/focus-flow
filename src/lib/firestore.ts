@@ -52,6 +52,7 @@ export interface UserDoc {
   sprintHistory?: unknown[]  // completed sprints history
   dayMode?: 'low' | 'normal' | 'good'  // today's condition mode
   lastActiveAt?: string  // ISO timestamp; updated on app open
+  avatar?: string        // single emoji shown in friends/leaderboard
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]
@@ -101,7 +102,7 @@ export async function pushGuestbook(friendUid: string, entry: Record<string, str
   await updateDoc(doc(db, 'users', friendUid), { guestbook: arrayUnion(entry) })
 }
 
-export interface LeaderEntry { uid: string; nickname: string; xp: number }
+export interface LeaderEntry { uid: string; nickname: string; xp: number; avatar?: string }
 
 function curMonthTag(): string {
   const d = new Date()
@@ -132,6 +133,7 @@ function toLeaderEntry({ uid, data }: { uid: string; data: UserDoc }): LeaderEnt
     uid,
     nickname: data.nickname || 'ADHD-' + uid.slice(0, 4),
     xp: entryXpForMonth(data),
+    avatar: typeof data.avatar === 'string' ? data.avatar : undefined,
   }
 }
 

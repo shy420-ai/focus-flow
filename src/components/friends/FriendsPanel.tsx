@@ -72,11 +72,6 @@ function activeStatus(lastActiveAt: string | undefined): { label: string; live: 
   return { label: `${days}일 전`, live: false }
 }
 
-const CHEERS = [
-  { emoji: '🔥', text: '화이팅 화이팅!' },
-  { emoji: '👏', text: '잘하고 있어!' },
-  { emoji: '🫂', text: '같이 가자!' },
-]
 
 interface Friend {
   uid: string
@@ -118,12 +113,14 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
     loadUserDoc(uid).then((d) => { setData(d); setLoading(false) }).catch(() => setLoading(false))
   }, [uid])
 
-  async function sendGuestEntry(text: string) {
-    if (!text.trim()) return
+  async function postGuestbook() {
+    if (!guestInput.trim()) return
+    const text = guestInput.trim()
+    setGuestInput('')
     const now = new Date()
     const entry = {
       from: myName,
-      text: text.trim(),
+      text,
       date: todayStr(),
       time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
       ts: Date.now(),
@@ -131,13 +128,6 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
     }
     await pushGuestbook(uid, entry)
     loadUserDoc(uid).then((d) => setData(d)).catch(() => {})
-  }
-
-  async function postGuestbook() {
-    if (!guestInput.trim()) return
-    const text = guestInput.trim()
-    setGuestInput('')
-    await sendGuestEntry(text)
   }
 
   if (loading) return <div style={{ textAlign: 'center', padding: 20, color: '#aaa' }}>불러오는 중...</div>
@@ -156,6 +146,7 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
   const dayMode = data.dayMode as string | undefined
   const dmInfo = dayMode ? DAY_MODE_LABEL[dayMode] : null
   const status = activeStatus(data.lastActiveAt as string | undefined)
+  const friendAvatar = (data.avatar as string | undefined) || '🧸'
   const friendXp = typeof data.xp === 'number' ? data.xp : 0
   const friendLv = levelFromXp(friendXp)
   const friendLvProg = xpInLevel(friendXp)
@@ -164,6 +155,7 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
   return (
     <div>
       <div style={{ textAlign: 'center', marginBottom: 10 }}>
+        <div style={{ fontSize: 48, marginBottom: 4 }}>{friendAvatar}</div>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>{name}</div>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: status.live ? '#2BA84A' : '#aaa', marginTop: 4 }}>
           <span style={{ width: 6, height: 6, borderRadius: 3, background: status.live ? '#2BA84A' : '#ccc', display: 'inline-block' }} />
@@ -289,22 +281,11 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
           </div>
         ))
       )}
-      {/* Quick cheer buttons — one tap, no typing */}
-      <div style={{ display: 'flex', gap: 6, marginTop: 8, marginBottom: 6 }}>
-        {CHEERS.map((c) => (
-          <button
-            key={c.emoji}
-            onClick={() => sendGuestEntry(c.emoji + ' ' + c.text)}
-            style={{ flex: 1, padding: '8px 4px', borderRadius: 10, background: '#FFF6F8', border: '1.5px solid var(--pl)', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}
-          >{c.emoji} {c.text}</button>
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
         <input
           value={guestInput}
           onChange={(e) => setGuestInput(e.target.value)}
-          placeholder="직접 메시지 남기기..."
+          placeholder="응원 한마디 남기기..."
           style={{ flex: 1, padding: '8px 10px', border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) postGuestbook() }}
         />
@@ -325,7 +306,7 @@ export function FriendsPanel({ onClose }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
-  const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string }>>({})
+  const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
   useBackClose(true, onClose)
 
   const myCode = uid ? getMyShareCode(uid) : null
@@ -336,14 +317,19 @@ export function FriendsPanel({ onClose }: Props) {
     Promise.all(friends.map(async (f) => {
       try {
         const d = await loadUserDoc(f.uid)
-        return { uid: f.uid, lastActiveAt: d?.lastActiveAt as string | undefined, nickname: d?.nickname as string | undefined }
+        return {
+          uid: f.uid,
+          lastActiveAt: d?.lastActiveAt as string | undefined,
+          nickname: d?.nickname as string | undefined,
+          avatar: d?.avatar as string | undefined,
+        }
       } catch {
         return { uid: f.uid }
       }
     })).then((results) => {
       if (cancelled) return
-      const next: Record<string, { lastActiveAt?: string; nickname?: string }> = {}
-      for (const r of results) next[r.uid] = { lastActiveAt: r.lastActiveAt, nickname: r.nickname }
+      const next: Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }> = {}
+      for (const r of results) next[r.uid] = { lastActiveAt: r.lastActiveAt, nickname: r.nickname, avatar: r.avatar }
       setFriendStatuses(next)
     })
     return () => { cancelled = true }
@@ -455,10 +441,11 @@ export function FriendsPanel({ onClose }: Props) {
                     const fStatus = friendStatuses[f.uid]
                     const status = activeStatus(fStatus?.lastActiveAt)
                     const displayName = fStatus?.nickname || f.name
+                    const avatar = fStatus?.avatar || '🧸'
                     return (
                       <div key={f.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--pl)', borderRadius: 12, marginBottom: 8 }}>
                         <div style={{ position: 'relative' }}>
-                          <span style={{ fontSize: 24 }}>🧸</span>
+                          <span style={{ fontSize: 24 }}>{avatar}</span>
                           {status.live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: 4, background: '#2BA84A', border: '2px solid var(--pl)' }} />}
                         </div>
                         <div style={{ flex: 1 }}>

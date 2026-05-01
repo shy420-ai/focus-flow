@@ -11,6 +11,7 @@ import '../store/MedStore'
 import '../components/dev/SprintBoard'
 import '../components/layout/ViewTabs'
 import '../lib/profileSync'
+import '../lib/avatar'
 
 export function useFirestoreSync(): void {
   const uid = useAppStore((s) => s.uid)
