@@ -93,7 +93,7 @@ export function MoodView() {
         overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: -10, right: -10, fontSize: 64, opacity: .15, transform: 'rotate(15deg)' }}>💝</div>
-        <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>마음</div>
+        <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>일기</div>
         <div style={{ fontSize: 11, color: '#888' }}>오늘 어떻게 지내고 있어?</div>
       </div>
 
