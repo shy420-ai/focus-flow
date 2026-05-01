@@ -11,6 +11,7 @@ import { DropsView } from './components/drop/DropsView'
 import { WeekView } from './components/week/WeekView'
 import { PomoFab } from './components/pomo/PomoFab'
 import { StatsView } from './components/stats/StatsView'
+import { FriendsPanel } from './components/friends/FriendsPanel'
 import { Onboarding } from './components/onboarding/Onboarding'
 import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
@@ -72,6 +73,7 @@ function AppContent() {
             {rightView === 'goal' && <GoalsView />}
             {rightView === 'drop' && <DropsView />}
             {rightView === 'stats' && <StatsView />}
+            {rightView === 'friends' && <FriendsPanel embedded />}
           </div>
         </div>
       ) : isDesktop && curView === 'week' ? (
@@ -88,6 +90,7 @@ function AppContent() {
           {curView === 'drop' && <DropsView />}
           {curView === 'cal' && <CalendarView />}
           {curView === 'stats' && <StatsView />}
+          {curView === 'friends' && <FriendsPanel embedded />}
         </>
       )}
       <PomoFab />

@@ -53,8 +53,10 @@ async function doSave() {
   }
   try {
     await saveUserDoc(_uid, data)
-  } catch {
-    // silently ignore sync errors
+  } catch (err) {
+    // Surface to the console so we can debug stuck writes; the queue() path
+    // doesn't have a UI affordance, so this stays a console-only signal.
+    console.error('[sync] save failed', err)
   }
 }
 

@@ -63,6 +63,15 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M9.5 6.5l8 8" opacity=".7" />
     </svg>
   ) },
+  { id: 'friends', label: '친구', icon: (
+    // two heads — friend pair
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <circle cx="9" cy="8" r="3.2" fill="currentColor" fillOpacity=".25" />
+      <circle cx="16" cy="9" r="2.5" fill="currentColor" fillOpacity=".25" />
+      <path d="M3.5 19c.5-3 3-5 5.5-5s5 2 5.5 5" />
+      <path d="M14 19c.4-2.2 2-3.5 4-3.5s3.6 1.3 4 3.5" />
+    </svg>
+  ) },
 ]
 
 const ORDER_KEY = 'ff_tab_order'

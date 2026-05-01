@@ -308,15 +308,18 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
 }
 
 interface Props {
-  onClose: () => void
+  onClose?: () => void
+  embedded?: boolean  // true = render as a tab page (no fixed overlay)
 }
 
-export function FriendsPanel({ onClose }: Props) {
+export function FriendsPanel({ onClose, embedded = false }: Props) {
   const uid = useAppStore((s) => s.uid)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
   const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
-  useBackClose(true, onClose)
+  // Only intercept the back button when rendered as a modal — the tab
+  // version stays put while the user navigates between tabs.
+  useBackClose(!embedded && !!onClose, onClose || (() => {}))
 
   const myCode = uid ? getMyShareCode(uid) : null
 
@@ -395,12 +398,10 @@ export function FriendsPanel({ onClose }: Props) {
     flushSync().catch(() => { /* offline ok */ })
   }
 
-  return (
-    <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.3)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div style={{ background: '#fff', borderRadius: 20, padding: 24, width: '90%', maxWidth: 340, maxHeight: '80vh', overflowY: 'auto' }}>
+  const inner = (
+      <div style={embedded
+        ? { padding: '16px 16px 120px', maxWidth: 480, margin: '0 auto' }
+        : { background: '#fff', borderRadius: 20, padding: 24, width: '90%', maxWidth: 340, maxHeight: '80vh', overflowY: 'auto' }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)', marginBottom: 16, textAlign: 'center' }}>👥 친구</div>
 
         {viewingFriend ? (
@@ -487,6 +488,16 @@ export function FriendsPanel({ onClose }: Props) {
           </>
         )}
       </div>
+  )
+
+  if (embedded) return inner
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.3)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={(e) => { if (e.target === e.currentTarget && onClose) onClose() }}
+    >
+      {inner}
     </div>
   )
 }
