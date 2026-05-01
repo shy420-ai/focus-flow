@@ -319,6 +319,14 @@ export function FriendsPanel({ onClose }: Props) {
 
   const myCode = uid ? getMyShareCode(uid) : null
 
+  // Make sure my own shareCode lives in Firestore as soon as I open the
+  // panel — otherwise friends can't find me until I successfully add one
+  // first (chicken-and-egg if we're both new).
+  useEffect(() => {
+    if (!uid || !myCode) return
+    setShareCode(uid, myCode).catch(() => { /* sync may be offline */ })
+  }, [uid, myCode])
+
   useEffect(() => {
     let cancelled = false
     Promise.all(friends.map(async (f) => {
