@@ -330,16 +330,26 @@ export function SprintBoard() {
     if (delta > 0) {
       window.dispatchEvent(new CustomEvent('ff-block-done', { detail: 'sprint:' + id }))
     }
-    // Lifetime XP: 1 per unit (positive or negative). Was 5; way too
-    // generous when % goals racked up 50+ clicks per session.
-    let xpDelta = 1 * (next - cur)
-    // Milestone bonus when crossing target (only the actual crossing earns/refunds)
+    // Progress-normalized XP so % and page goals reward the same total.
+    // Total XP earned at progress P = floor(P * 30). Per-click XP is the
+    // delta between totals at cur vs next, which means tiny clicks on
+    // %-goals correctly accumulate fractional XP without inflating it
+    // past 30 per goal (plus the 30-XP completion bonus = 60 max).
+    const PROGRESS_XP = 30
+    const COMPLETE_BONUS = 30
+    let xpDelta = 0
     if (g.target > 0) {
+      const capNext = Math.min(g.target, Math.max(0, next))
+      const capCur = Math.min(g.target, Math.max(0, cur))
+      const totalAtNext = Math.floor((capNext / g.target) * PROGRESS_XP)
+      const totalAtCur = Math.floor((capCur / g.target) * PROGRESS_XP)
+      xpDelta = totalAtNext - totalAtCur
+      // Milestone bonus when crossing target (only the actual crossing earns/refunds)
       if (cur < g.target && next >= g.target) {
-        xpDelta += 30
-        showMiniToast('🏆 목표 달성! +30 XP 보너스')
+        xpDelta += COMPLETE_BONUS
+        showMiniToast('🏆 목표 달성! +' + COMPLETE_BONUS + ' XP 보너스')
       } else if (cur >= g.target && next < g.target) {
-        xpDelta -= 30  // refund the bonus when undoing past the target line
+        xpDelta -= COMPLETE_BONUS
       }
     }
     if (xpDelta === 0) return
