@@ -55,6 +55,7 @@ export interface UserDoc {
   avatar?: string        // emoji or data: image URL shown in friends/leaderboard
   bio?: string           // short profile message
   friendVisibility?: Record<string, boolean>  // which sections friends can see
+  pomoLock?: boolean     // pomodoro lock mode preference
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]
