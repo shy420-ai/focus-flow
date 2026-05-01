@@ -18,6 +18,7 @@ import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
 import { PromptModal } from './components/ui/PromptModal'
 import { DoneToast } from './components/timeline/DoneToast'
+import { MoodAnnouncement } from './components/ui/MoodAnnouncement'
 import { Confetti } from './components/ui/Confetti'
 import { useAppStore } from './store/AppStore'
 import { useAuthState } from './hooks/useAuthState'
@@ -143,6 +144,7 @@ function AppContent() {
       <PromptModal />
       {doneToast !== null && <DoneToast blockId={doneToast} onClose={() => setDoneToast(null)} />}
       {showConfetti && <Confetti onDone={() => setShowConfetti(false)} />}
+      <MoodAnnouncement />
     </>
   )
 }

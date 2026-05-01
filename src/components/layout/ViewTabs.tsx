@@ -94,8 +94,9 @@ function loadHidden(): CurView[] {
 }
 
 // Tabs that only appear when dev mode is enabled. Keeps unfinished
-// experiments out of regular users' navigation.
-const DEV_ONLY: CurView[] = ['mood']
+// experiments out of regular users' navigation. (currently empty —
+// 일기 graduated to general release.)
+const DEV_ONLY: CurView[] = []
 
 function getOrderedTabs(order: CurView[], hidden: CurView[]) {
   const dev = isDevMode()
