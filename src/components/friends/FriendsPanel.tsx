@@ -178,6 +178,20 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
     return () => unsub()
   }, [uid])
 
+  // Self-view: re-render when local sprint/xp changes so the panel mirrors
+  // localStorage in real time without waiting for a Firestore round trip.
+  const [, forceTick] = useState(0)
+  useEffect(() => {
+    if (uid !== myUid) return
+    function bump() { forceTick((t) => t + 1) }
+    window.addEventListener('ff-sprint-local-changed', bump)
+    window.addEventListener('ff-xp-changed', bump)
+    return () => {
+      window.removeEventListener('ff-sprint-local-changed', bump)
+      window.removeEventListener('ff-xp-changed', bump)
+    }
+  }, [uid, myUid])
+
   async function postGuestbook() {
     if (!guestInput.trim()) return
     const text = guestInput.trim()
@@ -208,9 +222,20 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const doneCount = tasks.filter((b) => b.done).length
   const totalH = tasks.reduce((s, b) => s + (b.durHour || 0), 0)
   const guestbook = (data.guestbook as Array<{ from: string; text: string; date?: string; time?: string }>) || []
-  const sprint = data.sprint as SprintShape | null | undefined
+  // Self-view: read sprint from localStorage directly so the user always
+  // sees the freshest data, no Firestore round-trip required. Friend
+  // view: rely on the synced Firestore doc.
+  let sprint: SprintShape | null | undefined = data.sprint as SprintShape | null | undefined
+  let sprintHistory: CompletedSprintShape[] = (data.sprintHistory as CompletedSprintShape[] | undefined) || []
+  if (uid === myUid) {
+    try {
+      const localSprintRaw = localStorage.getItem('ff_sprint')
+      if (localSprintRaw) sprint = JSON.parse(localSprintRaw) as SprintShape
+      const localHistRaw = localStorage.getItem('ff_sprint_history')
+      if (localHistRaw) sprintHistory = JSON.parse(localHistRaw) as CompletedSprintShape[]
+    } catch { /* fall through to Firestore values */ }
+  }
   const spct = sprintPct(sprint)
-  const sprintHistory = (data.sprintHistory as CompletedSprintShape[] | undefined) || []
   const dayMode = data.dayMode as string | undefined
   const dmInfo = dayMode ? DAY_MODE_LABEL[dayMode] : null
   const status = activeStatus(data.lastActiveAt as string | undefined)
@@ -222,7 +247,13 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const showHabits = isSectionVisible(data, 'habits')
   const showDrop = isSectionVisible(data, 'drop')
   const drops = (data.drops as Array<{ id: number; name: string; done: boolean }> | undefined) || []
-  const friendXp = typeof data.xp === 'number' ? data.xp : 0
+  // Self-view: pull XP from localStorage so it reflects taps instantly,
+  // not after the queue debounce + Firestore round-trip.
+  let friendXp = typeof data.xp === 'number' ? data.xp : 0
+  if (uid === myUid) {
+    const localXp = parseInt(localStorage.getItem('ff_xp') || '0')
+    if (Number.isFinite(localXp) && localXp >= 0) friendXp = localXp
+  }
   const friendLv = levelFromXp(friendXp)
   const friendLvProg = xpInLevel(friendXp)
   const friendMonthlyXp = typeof data.monthlyXp === 'number' ? data.monthlyXp : 0
