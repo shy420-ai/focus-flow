@@ -26,4 +26,8 @@ export interface AdhdTip {
   body?: string
   source?: string
   tags?: string[]
+  // Date the tip was added (YYYY-MM-DD). Used to surface NEW badge for
+  // 7 days and to sort newest-first within a category. Tips without this
+  // field are treated as the original seed batch.
+  addedAt?: string
 }

@@ -214,6 +214,20 @@ export const ADHD_TIPS: AdhdTip[] = [
     tags: ['집중', '복귀', '인터럽션'],
   },
   {
+    id: 'meeting-agenda',
+    title: '회의에 멍해질 때 어젠다 미리 받기',
+    category: 'start',
+    summary: '맥락 없으면 5분 만에 멍 → 어젠다·노트로 외부 닻 만들기.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '회의 시작 5분 후 머리 멍 → 30분 동안 무슨 얘기 했는지 기억 X.\nADHD 작업기억 짧아서 맥락 안 잡히면 빠르게 떨어져 나감.\n끝나고 "결정 사항이 뭐였더라" 동료한테 다시 물어봄.' },
+      { icon: '💡', title: '해결', body: '회의 전 어젠다 받기 (없으면 요청).\n회의 중 노트 적기 — 손으로 적는 동작이 집중 닻.\n끝나면 한 줄 요약 본인용 메모.\nfidget·doodle도 OK (집중 ↑).' },
+      { icon: '🎯', title: '예시', body: '• 회의 전: "어젠다 공유해줄 수 있어요?" 한 줄 요청\n• 미리 받으면 → 발언할 부분 한 줄 미리 메모\n• 회의 중: 종이·노트북에 핵심 키워드 적기\n• 카메라 ON + 노트 같이 보이게 (집중 신호)\n• 화면 공유 시 화면 캡처 + 메모\n• 끝나면 30초 — "결정 사항 / 내가 할 거" 한 줄\n• Granola·Otter 같은 AI 회의록 도구 활용\n• 손에 fidget toy / 종이에 doodle도 OK' },
+    ],
+    source: 'CHADD ADHD workplace; Mark et al. attention research',
+    tags: ['집중', '회의', '직장'],
+  },
+  {
     id: 'sleep-on-it',
     title: '큰 결정 앞에서 흔들릴 때 자고 결정',
     category: 'mood',
@@ -438,6 +452,20 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Paivio (1986) Dual Coding Theory; Mayer (2009) Multimedia Learning',
     tags: ['공부', '시각', '암기'],
   },
+  {
+    id: 'exam-blank-mind',
+    title: '시험 직전 머리 하얘질 때 손으로 다시 그리기',
+    category: 'study',
+    summary: '백지 → 핵심 도식 손으로 한 번 그리면 회상 회로 켜짐.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '시험 입실 직전 / 발표 직전 머리 완전 백지.\n전부 다 외웠는데 첫 단어가 안 떠올라 → 패닉 → 더 안 떠올림.\nADHD + 불안 콤보의 흔한 패턴.' },
+      { icon: '💡', title: '해결', body: '본 시험 시작 5분 전: 종이에 핵심 도식·키워드 손으로 그려보기.\n쓰는 동작이 retrieval 회로 활성화 → 막혔던 머리 풀림.\n시험지 받자마자 첫 30초도 같은 룰 — 핵심 키워드 빈 종이에 토하기.' },
+      { icon: '🎯', title: '예시', body: '• 시험 직전 5분: 백지에 그날 시험 핵심 마인드맵 그리기\n• 도서관 입실 전 → 화장실에서 5분 손으로 적기\n• 시험지 받자마자: 30초 동안 빈 여백에 키워드·공식 다 적기\n• 발표 직전: 화이트보드에 도식 그려보기 (혼자 발표 리허설)\n• 4-7-8 호흡 4번 (편도체 ↓)\n• "내가 다 알고 있다" 자기말 5초\n• 첫 1분 잘 넘기면 그 다음은 자동' },
+    ],
+    source: 'Karpicke & Roediger (2008) retrieval practice; ADHD test anxiety research',
+    tags: ['공부', '시험', '불안'],
+  },
 
   // ── 🧠 감정 (추가) ────────────────────────────────────
   {
@@ -640,6 +668,20 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Linehan DBT Crisis Skills; Gottman (1993) Flooding research',
     tags: ['감정', '관계', '응급'],
   },
+  {
+    id: 'post-flood-recovery',
+    title: '폭풍 후 부끄러울 때 사후 회복 의식',
+    category: 'mood',
+    summary: '폭발 자체보다 후처리가 자존감을 만듦. 24시간 룰 + 사과.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '감정 폭발하고 나면 다음날 부끄러움·자기혐오 폭발.\n"또 그랬어, 나는 망한 인간" 모드 → 우울 가속.\n사과를 안 하거나 너무 길게 끌면 관계까지 끊어짐.' },
+      { icon: '💡', title: '해결', body: '폭발은 일어남 — 그 후의 회복이 자존감과 관계를 살림.\n24시간 안에: 짧고 솔직한 사과 + 다음 시도 1개.\n자기에게도 자기연민 — 친구가 같은 일 했으면 뭐라 할지.\n실수 메모에 "이번 폭풍 트리거" 한 줄 → 다음 예방.' },
+      { icon: '🎯', title: '예시', body: '• 24시간 안에 짧은 사과: "어제 격앙됐어, 미안해. 다음엔 ___ 해볼게"\n• 길게 변명 X — 짧게, 다음 시도 1개\n• 자기연민 카드 한 줄 읽기\n• 친구한테 "내가 그랬으면 뭐라 할까" 자문\n• 폭풍 트리거 한 줄 메모 (트리거 일지)\n• 그 트리거 환경 디자인 1개 (예: 카페인 줄이기)\n• 자기를 "결함" X, "회복하는 사람" ⭕\n• 매번 폭풍 후 회복 = 신뢰 회복 (관계도 유지됨)' },
+    ],
+    source: 'Brené Brown shame research; Gottman repair attempts',
+    tags: ['감정', 'RSD', '회복'],
+  },
 
   // ── 👥 관계 (추가) ────────────────────────────────────
   {
@@ -792,6 +834,34 @@ export const ADHD_TIPS: AdhdTip[] = [
     ],
     source: 'Orlov (2010) The ADHD Effect on Marriage',
     tags: ['관계', '연인', '책임'],
+  },
+  {
+    id: 'meeting-interrupt',
+    title: '회의에서 끼어들기 충동 들 때 메모로',
+    category: 'social',
+    summary: '말하고 싶은 거 ❌ 종이에 → 차례 올 때 정리해서 발언.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '회의에서 좋은 아이디어 떠오르면 즉시 말하고 싶음.\n근데 끼어들면 동료 짜증 + "예의 없다" 인식.\n참으면 → 30초 만에 까먹어서 좌절.\nADHD 충동성 + 작업기억 짧음의 결합.' },
+      { icon: '💡', title: '해결', body: '말하고 싶은 거 즉시 종이·메모에 적기 → 안전하게 보관.\n차례 올 때 정리된 발언으로 변환.\n잊을 걱정 X → 끼어들지 않을 수 있음.\n외부화 + 충동 관리.' },
+      { icon: '🎯', title: '예시', body: '• 회의 중 노트 + 펜 always\n• 떠오르는 아이디어 → 한 줄 적기 (그 자체로 충동 ↓)\n• 차례 오면 메모 보고 정리해서 발언\n• 줌·온라인 → 채팅창 본인용 메모 (private)\n• 작은 ★ 표시로 "꼭 말할 거" 우선순위\n• 회의 끝나고 다 발언 못 한 거 이메일 / 슬랙 후속\n• 동료한테 양해: "내가 메모하다 손 들면 발언 차례 줘"\n• ADHD 공개한 사이라면 "충동 제어 도구야" 설명' },
+    ],
+    source: 'CHADD ADHD workplace; Linehan DBT impulse skills',
+    tags: ['관계', '회의', '충동'],
+  },
+  {
+    id: 'group-conversation',
+    title: '그룹 대화 못 따라갈 때 1:1로 빠지기',
+    category: 'social',
+    summary: '여러 명 동시 대화 = 자극 과부하. 1:1 코너로 빠지기.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '4명 이상 대화 = 누가 누구한테 말하는지 따라가기 어려움.\nADHD 청각 처리 + 분리 청취 (cocktail party effect) 약함.\n"또 한 마디도 못 했네" → 모임 후 외로움·소외감.' },
+      { icon: '💡', title: '해결', body: '강제로 그룹 대화 따라가지 X.\n1:1 또는 2:1 작은 코너로 자연스럽게 빠지기.\n뇌가 처리 가능한 자극 수준으로 ↓.\nADHD엔 깊이 있는 1:1 대화가 더 잘 맞음.' },
+      { icon: '🎯', title: '예시', body: '• 모임 도착 → 한 명한테 "오늘 어땠어?" 1:1 시작\n• 그룹 대화 안 따라가져 → 옆 사람한테 작은 질문\n• 시끄러운 식당 → 한 사람 옆에 앉아 본인 대화에 집중\n• 파티: 코너에서 1~2명 깊은 대화 (전체 휘젓기 X)\n• 본인에게 사전 약속: "오늘 1명만 깊게 알면 성공"\n• 친구한테 양해: "내가 그룹 대화엔 약해, 1:1로 만나자"\n• 온라인 줌 회의 → 사이드 채팅·DM으로 1:1 보충\n• 모임 후 자기 칭찬 — 그룹 자체가 ADHD엔 어려움' },
+    ],
+    source: 'Cocktail party effect research; ADHD social processing',
+    tags: ['관계', '대화', '소셜'],
   },
 
   // ── 💊 약 ──────────────────────────────────────────────
@@ -1019,6 +1089,20 @@ export const ADHD_TIPS: AdhdTip[] = [
     ],
     source: 'Concerta® prescribing info; Cleveland Clinic; Faraone (2019) ADHD pharmacotherapy',
     tags: ['약', '리바운드', '오후'],
+  },
+  {
+    id: 'med-out-day',
+    title: '약 떨어진 날 비상 plan',
+    category: 'body',
+    summary: '약 X 일주일은 위험. 미리 처방·예비 약 시스템.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '약 깜빡 처방 못 받은 채로 떨어짐 → 며칠 약 X.\n갑자기 약 끊으면 (특히 자극제) → 우울·집중력 ↓ + 시험·발표 망함.\n응급실은 ADHD 약 처방 X — 외래 의사 약속 잡아야 함.' },
+      { icon: '💡', title: '해결', body: '예방이 핵심: 약 1주일 분 남았을 때 처방 알람.\n비상시: 의사 진료 즉시 잡기 + 약국에 fax 처방.\n며칠 약 없으면 그 기간 스케줄 가볍게 (큰 일정 X).\n장기 여행 가기 전 미리 처방 받기.' },
+      { icon: '🎯', title: '예시', body: '• 약 1주 남았을 때 알람 → 처방 예약\n• 단골 약국 정해두면 빠른 fax 처방\n• 메디 탭에 다음 처방일 등록\n• 주말 병원 영업 X → 평일 미리 챙기기\n• 약 떨어졌을 때: 큰 회의·시험 미루거나 줄이기\n• 카페인 + 운동 + 수면으로 임시 보강 (대체 X)\n• 휴가·출장 전 의사한테 "20일 분 받을 수 있나" 미리 의논\n• 비행기·해외: 처방전 영문 카피 + 약 원본 포장에 (세관)' },
+    ],
+    source: 'CHADD ADHD medication management; ADDA medication adherence',
+    tags: ['약', '비상', '예방'],
   },
 
   // ── 😴 수면 ────────────────────────────────────────────
@@ -1374,10 +1458,40 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Paivio Dual Coding Theory; visual journaling research',
     tags: ['기록', '시각', '일기'],
   },
+  {
+    id: 'impulse-spending',
+    title: '충동 구매 자주 할 때 24시간 + 자동화',
+    category: 'record',
+    summary: '"지금 사야 돼" ❌ → 위시리스트 + 24시간 후 다시.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: 'ADHD 충동성 + 즉각 보상 회로 = 충동 구매.\n온라인 쇼핑 원클릭 → 며칠 후 후회.\n신용카드·간편결제 = 돈 쓰는 감각 ↓ → 통장 잔고 보면 충격.\n매달 같은 패턴, 의지로 안 고쳐짐.' },
+      { icon: '💡', title: '해결', body: '24시간 룰 + 자동화 + 현금화.\n사고 싶은 거 → 위시리스트만 추가, 24시간 후 다시 보기.\n90% 이상은 그때 안 사도 OK 였음 — 도파민이 가라앉음.\n자동 적금·자동 결제로 의지 X.' },
+      { icon: '🎯', title: '예시', body: '• 사고 싶음 → 위시리스트·메모에 추가, 카트 비우기\n• 24시간 알람 → 다시 보고 결정\n• 5만원↑ 비싼 거 → 1주일 룰\n• 신용카드 → 체크카드 / 현금만 (지출 감각 ↑)\n• 월급 들어오자마자 자동 적금 → 안 보이게\n• 정기 결제 매달 점검 (안 쓰는 구독 해지)\n• 사기 전 자기말: "1년 후에도 가치 있을까?"\n• 일기 탭 / 덤프 탭에 "사고 싶었던 거" 메모 → 패턴 분석\n• Mint·Toss 같은 가계부 앱 자동 추적' },
+    ],
+    source: 'CHADD Money Management; Ariely (2012) impulse spending research',
+    tags: ['기록', '돈', '충동'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
-  return ADHD_TIPS.filter((t) => t.category === category)
+  // Newest (with addedAt) first; legacy tips without addedAt keep their
+  // original order at the bottom.
+  return ADHD_TIPS.filter((t) => t.category === category).sort((a, b) => {
+    if (a.addedAt && b.addedAt) return b.addedAt.localeCompare(a.addedAt)
+    if (a.addedAt) return -1
+    if (b.addedAt) return 1
+    return 0
+  })
+}
+
+const NEW_BADGE_DAYS = 7
+
+export function isTipNew(tip: AdhdTip): boolean {
+  if (!tip.addedAt) return false
+  const ts = Date.parse(tip.addedAt + 'T00:00:00Z')
+  if (!Number.isFinite(ts)) return false
+  return Date.now() - ts < NEW_BADGE_DAYS * 24 * 60 * 60 * 1000
 }
 
 export function getTip(id: string): AdhdTip | undefined {

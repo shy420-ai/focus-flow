@@ -1,7 +1,7 @@
 // ADHD wiki tab — dev-mode only for now. Categories + tip cards;
 // tap a card to see the full body in a modal.
 import { useState, useEffect } from 'react'
-import { CATEGORY_META, getCategoryTips, ADHD_TIPS } from '../../data/adhdTips'
+import { CATEGORY_META, getCategoryTips, ADHD_TIPS, isTipNew } from '../../data/adhdTips'
 import { TipDetailModal } from './TipDetailModal'
 import { ArchiveSection } from './ArchiveSection'
 import { TipsLockScreen } from './TipsLockScreen'
@@ -160,7 +160,12 @@ export function TipsView() {
               onClick={() => setSelected(t)}
               style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: '12px 38px 12px 14px', marginBottom: 6, border: '1px solid #f5f5f5', cursor: 'pointer', fontFamily: 'inherit', borderLeft: `3px solid ${cardMeta.color}`, transition: 'transform .15s, box-shadow .15s' }}
             >
-              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>{t.title}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
+                {isTipNew(t) && (
+                  <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '2px 6px', borderRadius: 99, letterSpacing: 0.3 }}>NEW</span>
+                )}
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>{t.title}</span>
+              </div>
               <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
               <button
                 onClick={(e) => { e.stopPropagation(); toggleBookmark(t.id) }}
