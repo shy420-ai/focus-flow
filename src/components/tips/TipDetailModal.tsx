@@ -27,11 +27,27 @@ export function TipDetailModal({ tip, onClose }: Props) {
 
         <div style={{ padding: 20 }}>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--pd)', marginBottom: 6 }}>{tip.title}</div>
-          <div style={{ fontSize: 12, color: meta.color, fontWeight: 600, marginBottom: 14 }}>{tip.summary}</div>
+          <div style={{ fontSize: 12, color: meta.color, fontWeight: 600, marginBottom: 18 }}>{tip.summary}</div>
 
-          <div style={{ fontSize: 13, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap', marginBottom: 16 }}>
-            {tip.body}
-          </div>
+          {tip.sections ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 16 }}>
+              {tip.sections.map((s, i) => (
+                <div key={i}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                    {s.icon && <span style={{ fontSize: 14 }}>{s.icon}</span>}
+                    <span style={{ fontSize: 13, fontWeight: 800, color: meta.color }}>{s.title}</span>
+                  </div>
+                  <div style={{ fontSize: 13, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap', paddingLeft: 22 }}>
+                    {s.body}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : tip.body ? (
+            <div style={{ fontSize: 13, color: '#444', lineHeight: 1.7, whiteSpace: 'pre-wrap', marginBottom: 16 }}>
+              {tip.body}
+            </div>
+          ) : null}
 
           {tip.tags && tip.tags.length > 0 && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 12 }}>

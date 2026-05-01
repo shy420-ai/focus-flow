@@ -7,12 +7,21 @@ export type TipCategory =
   | 'body'     // 💊 약·수면
   | 'archive'  // 📎 아카이브 (user-added links)
 
+export interface TipSection {
+  icon?: string   // emoji marker (e.g., '😔', '💡')
+  title: string
+  body: string    // newlines preserved
+}
+
 export interface AdhdTip {
   id: string
   title: string
   category: TipCategory
   summary: string   // one-line teaser
-  body: string      // longer plain-text content (newlines preserved)
-  source?: string   // citation / reference
+  // Either structured sections (preferred) or a plain-text body. The modal
+  // renderer prefers sections when both are set.
+  sections?: TipSection[]
+  body?: string
+  source?: string
   tags?: string[]
 }
