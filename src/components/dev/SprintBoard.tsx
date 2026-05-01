@@ -4,9 +4,12 @@ import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
 import { showConfirm } from '../../lib/showConfirm'
 import { LeaderboardModal } from './Leaderboard'
+import { UnitPickerModal } from './UnitPickerModal'
 import { isLeaderboardOn } from '../../lib/leaderboardPref'
 import { queue, registerCollect, registerHydrate } from '../../lib/syncManager'
 import type { UserDoc } from '../../lib/firestore'
+
+const UNIT_LABEL: Record<string, string> = { '회': '회', '시간': 'h', '분': 'm', '페이지': 'p', '개': '개', '%': '%', '': '–' }
 
 interface SprintGoal {
   id: string
@@ -107,6 +110,7 @@ export function SprintBoard() {
   const [xp, setXp] = useState<number>(getXp())
   const [leaderboardOn, setLeaderboardOnState] = useState<boolean>(isLeaderboardOn())
   const [leaderboardModalOpen, setLeaderboardModalOpen] = useState(() => sessionStorage.getItem('ff_modal_leaderboard') === '1')
+  const [unitPickerForId, setUnitPickerForId] = useState<string | null>(null)
   useEffect(() => {
     function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
     window.addEventListener('ff-leaderboard-changed', onChange)
@@ -329,18 +333,10 @@ export function SprintBoard() {
                 onChange={(e) => updateGoal(g.id, { target: Math.max(0, parseInt(e.target.value) || 0) })}
                 style={{ width: 46, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
               />
-              <select
-                value={g.unit}
-                onChange={(e) => updateGoal(g.id, { unit: e.target.value })}
-                style={{ padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0 }}
-              >
-                <option value="회">회</option>
-                <option value="시간">h</option>
-                <option value="분">m</option>
-                <option value="페이지">p</option>
-                <option value="개">개</option>
-                <option value=""></option>
-              </select>
+              <button
+                onClick={() => setUnitPickerForId(g.id)}
+                style={{ padding: '6px 12px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0, cursor: 'pointer', color: 'var(--pd)', fontWeight: 600, minWidth: 38 }}
+              >{UNIT_LABEL[g.unit] ?? g.unit ?? '–'}</button>
               <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
                 style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}>✕</button>
             </div>
@@ -397,6 +393,17 @@ export function SprintBoard() {
 
     </div>
     {leaderboardModalOpen && <LeaderboardModal onClose={() => setLeaderboardModalOpen(false)} />}
+    {unitPickerForId && sprint && (() => {
+      const goal = sprint.goals.find((g) => g.id === unitPickerForId)
+      if (!goal) return null
+      return (
+        <UnitPickerModal
+          current={goal.unit}
+          onPick={(unit) => updateGoal(goal.id, { unit })}
+          onClose={() => setUnitPickerForId(null)}
+        />
+      )
+    })()}
     </>
   )
 }
