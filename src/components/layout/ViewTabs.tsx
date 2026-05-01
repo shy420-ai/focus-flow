@@ -84,6 +84,12 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
 
 const ORDER_KEY = 'ff_tab_order'
 const HIDDEN_KEY = 'ff_hidden_tabs'
+// Timestamps record the last local edit so a stale Firestore snapshot
+// can't roll back a recent local change (e.g. user toggled then refreshed
+// before the write committed).
+const ORDER_TS_KEY = 'ff_tab_order_ts'
+const HIDDEN_TS_KEY = 'ff_hidden_tabs_ts'
+const RECENT_EDIT_MS = 60_000  // hydrate ignores remote within this window
 
 function loadOrder(): CurView[] {
   try { return JSON.parse(localStorage.getItem(ORDER_KEY) || '[]') } catch { return [] }
@@ -130,16 +136,22 @@ registerCollect(() => {
 
 registerHydrate((d: UserDoc) => {
   let changed = false
-  // Adopt remote whenever it's a valid array — including empty, since
-  // empty means "user explicitly unhid everything" on the other device.
-  if (Array.isArray(d.tabOrder)) {
+  const now = Date.now()
+  const orderTs = parseInt(localStorage.getItem(ORDER_TS_KEY) || '0')
+  const hiddenTs = parseInt(localStorage.getItem(HIDDEN_TS_KEY) || '0')
+  // Skip remote adoption if local was edited very recently — the in-flight
+  // flushSync may not have committed yet, and we don't want a stale
+  // snapshot to roll us back.
+  const orderRecent = now - orderTs < RECENT_EDIT_MS
+  const hiddenRecent = now - hiddenTs < RECENT_EDIT_MS
+  if (!orderRecent && Array.isArray(d.tabOrder)) {
     const remote = JSON.stringify(d.tabOrder)
     if (remote !== (localStorage.getItem(ORDER_KEY) || '[]')) {
       localStorage.setItem(ORDER_KEY, remote)
       changed = true
     }
   }
-  if (Array.isArray(d.tabHidden)) {
+  if (!hiddenRecent && Array.isArray(d.tabHidden)) {
     const remote = JSON.stringify(d.tabHidden)
     if (remote !== (localStorage.getItem(HIDDEN_KEY) || '[]')) {
       localStorage.setItem(HIDDEN_KEY, remote)
@@ -190,6 +202,8 @@ export function ViewTabs() {
     newTabs.splice(to, 0, moved)
     const newOrder = newTabs.map((t) => t.id)
     localStorage.setItem(ORDER_KEY, JSON.stringify(newOrder))
+    // eslint-disable-next-line react-hooks/purity
+    localStorage.setItem(ORDER_TS_KEY, String(Date.now()))
     setOrder(newOrder)
     // Push immediately so a refresh between drag-end and the debounce
     // window can't roll us back to the old order.

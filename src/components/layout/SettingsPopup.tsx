@@ -122,6 +122,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         next.splice(toIdx, 0, m)
         setOrderedTabs(next)
         localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(next.map((t) => t.id)))
+        localStorage.setItem('ff_tab_order_ts', String(Date.now()))
         window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
         flushSync().catch(() => { /* offline ok */ })
       }
@@ -183,6 +184,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       return
     }
     localStorage.setItem('ff_hidden_tabs', JSON.stringify(updated))
+    localStorage.setItem('ff_hidden_tabs_ts', String(Date.now()))
     setHiddenTabs(updated)
     window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
     // If the user just hid the tab they're currently on, jump to the first
