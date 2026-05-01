@@ -216,11 +216,12 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const status = activeStatus(data.lastActiveAt as string | undefined)
   const friendAvatar = (data.avatar as string | undefined) || '🧸'
   const friendBio = (data.bio as string | undefined) || ''
-  const showCondition = isSectionVisible(data, 'condition')
   const showXp = isSectionVisible(data, 'xp')
   const showSprint = isSectionVisible(data, 'sprint')
   const showTimeline = isSectionVisible(data, 'timeline')
   const showHabits = isSectionVisible(data, 'habits')
+  const showDrop = isSectionVisible(data, 'drop')
+  const drops = (data.drops as Array<{ id: number; name: string; done: boolean }> | undefined) || []
   const friendXp = typeof data.xp === 'number' ? data.xp : 0
   const friendLv = levelFromXp(friendXp)
   const friendLvProg = xpInLevel(friendXp)
@@ -242,8 +243,8 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </div>
       </div>
 
-      {/* Day mode banner */}
-      {showCondition && dmInfo && (
+      {/* Day mode banner — always visible (no longer in privacy toggles) */}
+      {dmInfo && (
         <div style={{ background: dmInfo.color + '22', borderLeft: `3px solid ${dmInfo.color}`, padding: '6px 10px', borderRadius: 8, marginBottom: 12, fontSize: 11, color: '#555' }}>
           {dmInfo.emoji} {dmInfo.text}
         </div>
@@ -350,6 +351,30 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
           })}
         </>
       )}
+
+      {/* Drops — undone bucket-list items (max 8) */}
+      {showDrop && drops.length > 0 && (() => {
+        const undone = drops.filter((d) => !d.done).slice(0, 8)
+        const doneCount = drops.filter((d) => d.done).length
+        if (undone.length === 0 && doneCount === 0) return null
+        return (
+          <>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', margin: '14px 0 6px' }}>
+              💧 드롭 ({doneCount}/{drops.length} 완료)
+            </div>
+            {undone.length === 0 ? (
+              <div style={{ color: '#aaa', fontSize: 11, textAlign: 'center', padding: '8px 0' }}>전부 완료했어!</div>
+            ) : (
+              undone.map((d) => (
+                <div key={d.id} style={{ fontSize: 12, padding: '4px 0', display: 'flex', alignItems: 'center', gap: 6, color: '#555' }}>
+                  <span>•</span>
+                  <span style={{ flex: 1 }}>{d.name}</span>
+                </div>
+              ))
+            )}
+          </>
+        )
+      })()}
 
       {/* Guestbook — hidden on self view (the parent 나 tab already shows
           "내 방명록" above and there's no point writing to yourself). */}

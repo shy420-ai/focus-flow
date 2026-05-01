@@ -5,7 +5,7 @@
 import { flushSync, registerCollect, registerHydrate } from './syncManager'
 import type { UserDoc } from './firestore'
 
-export type VisibilitySection = 'timeline' | 'habits' | 'sprint' | 'xp' | 'condition'
+export type VisibilitySection = 'timeline' | 'habits' | 'sprint' | 'xp' | 'drop'
 
 const KEY = 'ff_friend_visibility'
 
@@ -14,7 +14,7 @@ const DEFAULT: Record<VisibilitySection, boolean> = {
   habits: true,
   sprint: true,
   xp: true,
-  condition: true,
+  drop: true,
 }
 
 export const VISIBILITY_LABELS: Record<VisibilitySection, string> = {
@@ -22,7 +22,7 @@ export const VISIBILITY_LABELS: Record<VisibilitySection, string> = {
   habits: '습관',
   sprint: '목표',
   xp: '레벨',
-  condition: '컨디션',
+  drop: '드롭',
 }
 
 export function getVisibility(): Record<VisibilitySection, boolean> {
