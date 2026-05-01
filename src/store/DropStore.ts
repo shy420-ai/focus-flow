@@ -166,7 +166,29 @@ export const useDropStore = create<DropStore>()(
 
 // ── Firestore sync registration ──────────────────────────────────────────────
 
-registerCollect(() => ({ drops: useDropStore.getState().items }))
+// Firestore caps a single document at ~1MB. Image data URLs (~250KB each)
+// can blow past that quickly, and when the whole UserDoc save fails the
+// drops get stranded locally. Strip imageUrls oldest-first until the drops
+// payload fits in our budget — metadata (title/note/tags) always syncs.
+const SYNC_BUDGET_BYTES = 600_000
+
+registerCollect(() => {
+  const items = useDropStore.getState().items
+  const json = JSON.stringify(items)
+  if (json.length <= SYNC_BUDGET_BYTES) return { drops: items }
+  // Sort by createdAt ascending so we drop the oldest images first.
+  const ranked = items.map((it, idx) => ({ it, idx, ts: it.createdAt ?? it.id }))
+    .sort((a, b) => a.ts - b.ts)
+  const stripped = items.map((it) => ({ ...it }))
+  for (const { idx } of ranked) {
+    if (!stripped[idx].imageUrl) continue
+    const { imageUrl: _omit, ...rest } = stripped[idx]
+    void _omit
+    stripped[idx] = rest
+    if (JSON.stringify(stripped).length <= SYNC_BUDGET_BYTES) break
+  }
+  return { drops: stripped }
+})
 
 registerHydrate((d: UserDoc) => {
   if (!d.drops) return
