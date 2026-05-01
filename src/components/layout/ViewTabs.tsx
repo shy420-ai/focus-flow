@@ -96,21 +96,30 @@ function getOrderedTabs(order: CurView[], hidden: CurView[]) {
 }
 
 // Sync tab order + hidden list across devices via Firestore.
-registerCollect(() => ({
-  tabOrder: loadOrder(),
-  tabHidden: loadHidden(),
-}))
+// Only push when this device has an actual customization. A fresh device
+// with empty order/hidden defaults must not blindly overwrite the other
+// device's saved order — same defensive pattern as the friends sync.
+registerCollect(() => {
+  const out: Partial<UserDoc> = {}
+  const order = loadOrder()
+  const hidden = loadHidden()
+  if (order.length > 0) out.tabOrder = order
+  if (hidden.length > 0) out.tabHidden = hidden
+  return out
+})
 
 registerHydrate((d: UserDoc) => {
   let changed = false
-  if (Array.isArray(d.tabOrder)) {
+  // Only adopt remote when it has data; never let an empty-from-elsewhere
+  // value clobber my saved customization.
+  if (Array.isArray(d.tabOrder) && d.tabOrder.length > 0) {
     const remote = JSON.stringify(d.tabOrder)
     if (remote !== (localStorage.getItem(ORDER_KEY) || '[]')) {
       localStorage.setItem(ORDER_KEY, remote)
       changed = true
     }
   }
-  if (Array.isArray(d.tabHidden)) {
+  if (Array.isArray(d.tabHidden) && d.tabHidden.length > 0) {
     const remote = JSON.stringify(d.tabHidden)
     if (remote !== (localStorage.getItem(HIDDEN_KEY) || '[]')) {
       localStorage.setItem(HIDDEN_KEY, remote)
