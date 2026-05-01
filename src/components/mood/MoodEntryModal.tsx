@@ -25,43 +25,81 @@ const DISTORTIONS: Array<{ id: string; label: string; hint: string }> = [
   { id: 'labeling', label: '라벨링', hint: '나는 실패자 / 멍청이' },
 ]
 
-// CBT/ACT 검증된 기법만 선별. 카드는 라벨 + 한 줄 설명 + 구체 예시
-// 구조 — 빈칸([____])보다 실제 적힌 예시가 이해하기 훨씬 쉬워.
-const ACTION_TEMPLATES: Array<{ label: string; desc: string; example: string }> = [
+// CBT/ACT 검증된 기법만 선별. 카드 라벨/설명 + 구체 예시(이해용) +
+// 빈칸 폼(slots) — 카드 탭하면 빈칸만 채우는 폼이 떠서, 너 상황에
+// 맞는 문장이 자동 조립됨.
+type ActionSlot = { label: string; placeholder: string }
+type ActionTemplate = {
+  label: string
+  desc: string
+  example: string
+  slots?: ActionSlot[]
+  assemble?: (vals: string[]) => string
+}
+const ACTION_TEMPLATES: ActionTemplate[] = [
   {
     label: '4-7-8 호흡',
     desc: '격앙·충동 즉각 차단 (자율신경 진정)',
     example: '4초 들이쉬고 → 7초 멈추고 → 8초 내쉬기, 4번 반복',
+    // No slots — tap fills the example directly.
   },
   {
     label: '행동 실험',
     desc: '자동 사고가 진짜 맞는지 검증 (Beck CBT 핵심)',
     example: '"사람들이 비웃었을 거야" 진짜인지, 동료한테 "오늘 발표 어땠어" 직접 물어본다',
+    slots: [
+      { label: '확인하고 싶은 자동 사고', placeholder: '예: 사람들이 비웃었을 거야' },
+      { label: '어떻게 검증할지', placeholder: '예: 동료한테 직접 물어본다' },
+    ],
+    assemble: ([a, b]) => `"${a}" 진짜인지, ${b}`,
   },
   {
     label: '작게 부딪히기',
     desc: '피하던 거에 짧게 노출 (불안장애 1차 치료)',
     example: '회의 발언이 무서워 회피 중 → 다음 회의에서 한 마디만 해본다',
+    slots: [
+      { label: '지금 피하고 있는 것', placeholder: '예: 회의 발언' },
+      { label: '5분짜리 첫 걸음', placeholder: '예: 다음 회의에서 한 마디만 해보기' },
+    ],
+    assemble: ([a, b]) => `${a} 회피 중 → ${b}`,
   },
   {
-    label: '활동 1개 박기',
-    desc: '의욕 없을 때 작은 활동을 일정에 박기 (BA)',
-    example: '내일 점심 직후 12:30에 산책 20분을 캘린더에 박아둔다',
+    label: '일정 잡기',
+    desc: '의욕 없을 때 작은 활동을 미리 캘린더에 (BA)',
+    example: '내일 12:30에 산책 20분을 캘린더에 잡아둔다',
+    slots: [
+      { label: '활동', placeholder: '예: 산책 20분' },
+      { label: '언제', placeholder: '예: 내일 12:30' },
+    ],
+    assemble: ([a, b]) => `${b}에 ${a}을 캘린더에 잡아둔다`,
   },
   {
     label: '친구라면',
     desc: '자기비난 대신 친구한테 하듯 (Neff Self-Compassion)',
     example: '친구가 발표 더듬었으면 "한 번 그런 거지, 다음엔 잘 해" 라고 말해줬을 거야',
+    slots: [
+      { label: '친구한테 해줄 한 마디', placeholder: '예: 한 번 그런 거지, 다음엔 잘 해' },
+    ],
+    assemble: ([a]) => `친구가 그랬으면 "${a}" 라고 말해줬을 거야`,
   },
   {
     label: '시간 거리 두기',
     desc: '미래 시점에서 지금을 보기 (Self-Distancing)',
     example: '1년 후에 이 일을 떠올리면 거의 기억도 안 날 정도일 것',
+    slots: [
+      { label: '1년 후 무게 표현', placeholder: '예: 거의 기억도 안 날 / 추억 정도' },
+    ],
+    assemble: ([a]) => `1년 후에 이 일을 떠올리면 ${a} 정도일 것`,
   },
   {
     label: '가치로 돌아가기',
     desc: '감정 말고 내 가치에 맞춰 행동 (ACT)',
     example: '내가 중요하게 여기는 "솔직한 관계" 따라서, 친구한테 미안하다고 말한다',
+    slots: [
+      { label: '나에게 중요한 가치', placeholder: '예: 솔직한 관계' },
+      { label: '그 가치에 맞는 행동', placeholder: '예: 친구한테 미안하다고 말한다' },
+    ],
+    assemble: ([a, b]) => `내가 중요하게 여기는 "${a}" 따라서, ${b}`,
   },
 ]
 
@@ -109,6 +147,31 @@ export function MoodEntryModal({ entry, onClose }: Props) {
     return () => clearInterval(t)
   }, [entry])
   const overLimit = elapsed >= SOFT_LIMIT_SEC
+  // Action template slot fill-in: when a card with slots is tapped, render
+  // labeled inputs below the grid so the user only fills the blanks. The
+  // assembled sentence then drops into 다음 선택.
+  const [activeTplIdx, setActiveTplIdx] = useState<number | null>(null)
+  const [slotVals, setSlotVals] = useState<string[]>([])
+
+  function pickAction(idx: number) {
+    const t = ACTION_TEMPLATES[idx]
+    if (!t.slots || !t.assemble) {
+      setNextAction(t.example)
+      setActiveTplIdx(null)
+      return
+    }
+    setActiveTplIdx(idx)
+    setSlotVals(t.slots.map(() => ''))
+  }
+
+  function commitSlots() {
+    if (activeTplIdx == null) return
+    const t = ACTION_TEMPLATES[activeTplIdx]
+    if (!t.slots || !t.assemble) return
+    if (slotVals.some((v) => !v.trim())) return
+    setNextAction(t.assemble(slotVals))
+    setActiveTplIdx(null)
+  }
 
   function toggleChip(arr: string[], v: string, setter: (next: string[]) => void) {
     setter(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
@@ -300,25 +363,63 @@ export function MoodEntryModal({ entry, onClose }: Props) {
           </Section>
 
           {/* 7. 다음 선택 */}
-          <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 카드 탭하면 예시가 들어가.">
+          <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 카드 탭하면 빈칸만 채우는 폼이 떠.">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6, marginBottom: 8 }}>
-              {ACTION_TEMPLATES.map((t) => (
+              {ACTION_TEMPLATES.map((t, idx) => (
                 <ActionCard
                   key={t.label}
                   label={t.label}
                   desc={t.desc}
                   example={t.example}
-                  onClick={() => setNextAction(t.example)}
+                  active={activeTplIdx === idx}
+                  onClick={() => pickAction(idx)}
                 />
               ))}
               <button
-                onClick={() => setNextAction('오늘은 패스')}
+                onClick={() => { setNextAction('오늘은 패스'); setActiveTplIdx(null) }}
                 style={{ ...passCardStyle, marginTop: 4 }}
               >
                 <span style={{ fontSize: 11, fontWeight: 700, color: '#999' }}>오늘은 패스</span>
                 <span style={{ fontSize: 9, color: '#bbb', lineHeight: 1.4 }}>비워두고 넘어가기</span>
               </button>
             </div>
+
+            {/* Slot fill-in form for the active template */}
+            {activeTplIdx != null && ACTION_TEMPLATES[activeTplIdx].slots && (
+              <div style={{ background: 'var(--pl)', borderRadius: 12, padding: 12, marginBottom: 8 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
+                  ✏️ {ACTION_TEMPLATES[activeTplIdx].label} — 빈칸만 채우면 돼
+                </div>
+                {ACTION_TEMPLATES[activeTplIdx].slots!.map((slot, i) => (
+                  <div key={i} style={{ marginBottom: 8 }}>
+                    <div style={{ fontSize: 10, color: '#666', fontWeight: 600, marginBottom: 4 }}>{slot.label}</div>
+                    <input
+                      type="text"
+                      value={slotVals[i] ?? ''}
+                      onChange={(e) => {
+                        const next = [...slotVals]
+                        next[i] = e.target.value
+                        setSlotVals(next)
+                      }}
+                      placeholder={slot.placeholder}
+                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: '#fff' }}
+                    />
+                  </div>
+                ))}
+                <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+                  <button
+                    onClick={commitSlots}
+                    disabled={slotVals.some((v) => !v.trim())}
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none', background: slotVals.every((v) => v.trim()) ? 'var(--pink)' : '#ddd', color: '#fff', fontSize: 12, fontWeight: 700, cursor: slotVals.every((v) => v.trim()) ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}
+                  >이걸로 넣기</button>
+                  <button
+                    onClick={() => setActiveTplIdx(null)}
+                    style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', color: '#888', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >취소</button>
+                </div>
+              </div>
+            )}
+
             <textarea
               value={nextAction}
               onChange={(e) => setNextAction(e.target.value)}
@@ -411,15 +512,15 @@ function ModalSliderRow({ icon, label, value, onChange }: { icon: string; label:
   )
 }
 
-function ActionCard({ label, desc, example, onClick }: { label: string; desc: string; example: string; onClick: () => void }) {
+function ActionCard({ label, desc, example, active, onClick }: { label: string; desc: string; example: string; active?: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
       style={{
         padding: '10px 12px',
         borderRadius: 12,
-        border: '1.5px solid #eee',
-        background: '#fafafa',
+        border: '1.5px solid ' + (active ? 'var(--pink)' : '#eee'),
+        background: active ? 'var(--pl)' : '#fafafa',
         cursor: 'pointer',
         fontFamily: 'inherit',
         textAlign: 'left',
