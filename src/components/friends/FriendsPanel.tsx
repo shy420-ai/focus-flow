@@ -329,7 +329,6 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
   const [friendStatuses, setFriendStatuses] = useState<Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }>>({})
-  const [showSelfPreview, setShowSelfPreview] = useState(false)
   // Only intercept the back button when rendered as a modal — the tab
   // version stays put while the user navigates between tabs.
   useBackClose(!embedded && !!onClose, onClose || (() => {}))
@@ -512,34 +511,21 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
               <div style={{ fontSize: 10, color: '#bbb', marginTop: 8 }}>친구에게 이 코드 알려주면 친구가 추가할 수 있어</div>
             </div>
 
-            {/* Self preview — shows my own profile as friends see it */}
-            <button
-              onClick={() => setShowSelfPreview((o) => !o)}
-              style={{ width: '100%', marginTop: 14, padding: '10px 12px', borderRadius: 10, border: '1px dashed #ddd', background: showSelfPreview ? 'var(--pl)' : '#fff', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <span>👀 친구한테 어떻게 보이는지 미리보기</span>
-              <span style={{ fontSize: 11, color: '#888' }}>{showSelfPreview ? '▲' : '▼'}</span>
-            </button>
-            {showSelfPreview && (
-              <div style={{ marginTop: 10, padding: 12, border: '1.5px dashed var(--pink)', borderRadius: 12, background: '#FFFCFD' }}>
-                <div style={{ fontSize: 10, color: 'var(--pink)', fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>
-                  ↓ 친구가 너 페이지 열면 이렇게 보여 (비공개 항목은 자동 숨김)
-                </div>
-                <FriendDetail
-                  key="self-preview"
-                  uid={uid}
-                  name={(localStorage.getItem('ff_nickname') || '').trim() || '나'}
-                  myUid={uid}
-                  onBack={() => setShowSelfPreview(false)}
-                />
+            {/* My profile rendered just like a friend tab (with privacy
+                toggles applied). Sits below the code/guestbook so the
+                me-tab looks symmetrical with the rest. */}
+            <div style={{ marginTop: 18 }}>
+              <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 8 }}>
+                ↓ 내 화면 (친구가 보는 모습이랑 같음)
               </div>
-            )}
-
-            {friends.length > 0 && (
-              <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginTop: 14 }}>
-                💡 위 아바타 눌러서 친구 화면 바로 볼 수 있어
-              </div>
-            )}
+              <FriendDetail
+                key="self-profile"
+                uid={uid}
+                name={(localStorage.getItem('ff_nickname') || '').trim() || '나'}
+                myUid={uid}
+                onBack={() => { /* no-op for self view */ }}
+              />
+            </div>
           </div>
         )}
       </div>
