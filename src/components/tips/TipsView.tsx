@@ -1,13 +1,15 @@
-// ADHD wiki tab — dev-mode only for now. Category shell built first;
-// tip content + detail modal land in a follow-up.
+// ADHD wiki tab — dev-mode only for now. Categories + tip cards;
+// tap a card to see the full body in a modal.
 import { useState } from 'react'
 import { CATEGORY_META, getCategoryTips } from '../../data/adhdTips'
-import type { TipCategory } from '../../types/adhdTip'
+import { TipDetailModal } from './TipDetailModal'
+import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
 const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body']
 
 export function TipsView() {
   const [active, setActive] = useState<TipCategory>('start')
+  const [selected, setSelected] = useState<AdhdTip | null>(null)
   const tips = getCategoryTips(active)
   const meta = CATEGORY_META[active]
 
@@ -73,12 +75,18 @@ export function TipsView() {
         </div>
       ) : (
         tips.map((t) => (
-          <div key={t.id} style={{ background: '#fff', borderRadius: 12, padding: '12px 14px', marginBottom: 6, border: '1px solid #f5f5f5' }}>
+          <button
+            key={t.id}
+            onClick={() => setSelected(t)}
+            style={{ display: 'block', width: '100%', textAlign: 'left', background: '#fff', borderRadius: 12, padding: '12px 14px', marginBottom: 6, border: '1px solid #f5f5f5', cursor: 'pointer', fontFamily: 'inherit', borderLeft: `3px solid ${meta.color}`, transition: 'transform .15s, box-shadow .15s' }}
+          >
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>{t.title}</div>
             <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
-          </div>
+          </button>
         ))
       )}
+
+      {selected && <TipDetailModal tip={selected} onClose={() => setSelected(null)} />}
     </div>
   )
 }
