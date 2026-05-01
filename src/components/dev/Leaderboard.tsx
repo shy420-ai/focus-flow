@@ -29,7 +29,6 @@ export function LeaderboardModal({ onClose }: Props) {
   const [top, setTop] = useState<LeaderEntry[]>([])
   const [rank, setRank] = useState<number | null>(null)
   const [total, setTotal] = useState(0)
-  const [ahead, setAhead] = useState<LeaderEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -65,7 +64,6 @@ export function LeaderboardModal({ onClose }: Props) {
       setTop(mergedTop)
       setRank(r.rank)
       setTotal(r.total)
-      setAhead(r.ahead)
     } catch (err) {
       console.error(err)
       setError('순위를 불러오지 못했어')
@@ -131,26 +129,6 @@ export function LeaderboardModal({ onClose }: Props) {
                 </>
               )}
             </div>
-
-            {/* People just ahead */}
-            {ahead.length > 0 && (
-              <div style={{ background: '#fff', borderRadius: 10, padding: 10, marginBottom: 10, border: '1px solid #eee' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: '#666', marginBottom: 6 }}>🎯 추격 대상 (바로 위 {ahead.length}명)</div>
-                {ahead.map((u, i) => {
-                  const diff = u.xp - myXp
-                  return (
-                    <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '3px 0' }}>
-                      <span style={{ color: '#888', minWidth: 20 }}>↑{ahead.length - i}</span>
-                      <Avatar value={u.avatar} size={20} />
-                      <span style={{ flex: 1, color: '#333' }}>{u.nickname}</span>
-                      <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 70, textAlign: 'right' }}>
-                        {u.xp} XP <span style={{ fontSize: 9, color: '#aaa', fontWeight: 500 }}>(+{diff})</span>
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
 
             {/* Top 10 hall of fame */}
             <div style={{ background: '#fff', borderRadius: 10, padding: 10, border: '1px solid #eee' }}>
