@@ -74,6 +74,15 @@ export function tabIcon(id: CurView): ReactNode {
           <path d="M9.5 6.5l8 8" opacity=".7" />
         </svg>
       )
+    case 'friends':
+      return (
+        <svg {...sharedProps}>
+          <circle cx="9" cy="8" r="3.2" fill="currentColor" fillOpacity=".25" />
+          <circle cx="16" cy="9" r="2.5" fill="currentColor" fillOpacity=".25" />
+          <path d="M3.5 19c.5-3 3-5 5.5-5s5 2 5.5 5" />
+          <path d="M14 19c.4-2.2 2-3.5 4-3.5s3.6 1.3 4 3.5" />
+        </svg>
+      )
     default:
       return null
   }
