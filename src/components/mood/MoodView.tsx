@@ -9,6 +9,19 @@ import type { MoodEntry } from '../../types/mood'
 
 const DEFAULT_BGM_KEY = 'ff_mood_default_bgm'
 
+// Mirror of DISTORTIONS labels in MoodEntryModal — kept short so the
+// trend panel can show readable names without importing the modal file.
+const DISTORTION_LABELS: Record<string, string> = {
+  allornone: '흑백사고',
+  mindread: '마인드리딩',
+  catastrophize: '파국화',
+  selfblame: '자기비난',
+  overgeneralize: '과잉일반화',
+  emoreason: '감정적 추론',
+  should: '당위적 사고',
+  labeling: '라벨링',
+}
+
 export function MoodView() {
   const today = todayStr()
   const entries = useMoodStore((s) => s.entries)
@@ -188,6 +201,11 @@ function TrendPanel({ entries }: { entries: MoodEntry[] }) {
   entries.forEach((e) => e.emotions?.forEach((t) => emoCount.set(t, (emoCount.get(t) ?? 0) + 1)))
   const topEmotions = Array.from(emoCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
 
+  // Top distortions — your "단골 함정"
+  const distCount = new Map<string, number>()
+  entries.forEach((e) => e.distortions?.forEach((t) => distCount.set(t, (distCount.get(t) ?? 0) + 1)))
+  const topDistortions = Array.from(distCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 3)
+
   // Average distress drop (where both before & after exist)
   const drops = entries
     .map((e) => (e.distressBefore != null && e.distressAfter != null ? e.distressBefore - e.distressAfter : null))
@@ -229,11 +247,23 @@ function TrendPanel({ entries }: { entries: MoodEntry[] }) {
 
       {/* Top emotions */}
       {topEmotions.length > 0 && (
-        <div style={{ marginBottom: dropAvg != null ? 10 : 0 }}>
+        <div style={{ marginBottom: 10 }}>
           <div style={{ fontSize: 10, color: '#888', fontWeight: 600, marginBottom: 6 }}>자주 등장한 감정</div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
             {topEmotions.map(([t, n]) => (
               <span key={t} style={{ background: 'var(--pl)', color: 'var(--pd)', fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 99 }}>#{t} <span style={{ color: 'var(--pink)' }}>{n}</span></span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Top cognitive distortions — 너의 단골 함정 */}
+      {topDistortions.length > 0 && (
+        <div style={{ marginBottom: dropAvg != null ? 10 : 0 }}>
+          <div style={{ fontSize: 10, color: '#888', fontWeight: 600, marginBottom: 6 }}>🪤 자주 걸리는 함정</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {topDistortions.map(([id, n]) => (
+              <span key={id} style={{ background: 'color-mix(in srgb, var(--pink) 14%, #fff)', color: 'var(--pd)', border: '1px solid color-mix(in srgb, var(--pink) 30%, #fff)', fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 99 }}>{DISTORTION_LABELS[id] ?? id} <span style={{ color: 'var(--pink)' }}>{n}</span></span>
             ))}
           </div>
         </div>
