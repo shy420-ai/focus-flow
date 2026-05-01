@@ -7,6 +7,7 @@ import { showPrompt } from '../../lib/showPrompt'
 import { computeStreak } from '../../lib/habitStreak'
 import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
 import { showMiniToast } from '../../lib/miniToast'
+import { Avatar } from '../ui/Avatar'
 import type { UserDoc } from '../../lib/firestore'
 
 async function copyToClipboard(text: string): Promise<boolean> {
@@ -147,6 +148,7 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
   const dmInfo = dayMode ? DAY_MODE_LABEL[dayMode] : null
   const status = activeStatus(data.lastActiveAt as string | undefined)
   const friendAvatar = (data.avatar as string | undefined) || '🧸'
+  const friendBio = (data.bio as string | undefined) || ''
   const friendXp = typeof data.xp === 'number' ? data.xp : 0
   const friendLv = levelFromXp(friendXp)
   const friendLvProg = xpInLevel(friendXp)
@@ -155,8 +157,13 @@ function FriendDetail({ uid, name, myName, myUid, onBack }: FriendDetailProps) {
   return (
     <div>
       <div style={{ textAlign: 'center', marginBottom: 10 }}>
-        <div style={{ fontSize: 48, marginBottom: 4 }}>{friendAvatar}</div>
+        <div style={{ display: 'inline-block', width: 72, height: 72, borderRadius: 36, background: 'var(--pl)', overflow: 'hidden', border: '2px solid var(--pink)', marginBottom: 4 }}>
+          <Avatar value={friendAvatar} size={68} />
+        </div>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>{name}</div>
+        {friendBio && (
+          <div style={{ fontSize: 11, color: '#666', marginTop: 4, padding: '0 12px', lineHeight: 1.4 }}>{friendBio}</div>
+        )}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10, color: status.live ? '#2BA84A' : '#aaa', marginTop: 4 }}>
           <span style={{ width: 6, height: 6, borderRadius: 3, background: status.live ? '#2BA84A' : '#ccc', display: 'inline-block' }} />
           {status.label}
@@ -444,8 +451,8 @@ export function FriendsPanel({ onClose }: Props) {
                     const avatar = fStatus?.avatar || '🧸'
                     return (
                       <div key={f.uid} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: 'var(--pl)', borderRadius: 12, marginBottom: 8 }}>
-                        <div style={{ position: 'relative' }}>
-                          <span style={{ fontSize: 24 }}>{avatar}</span>
+                        <div style={{ position: 'relative', width: 36, height: 36, borderRadius: 18, overflow: 'hidden', background: '#fff', flexShrink: 0 }}>
+                          <Avatar value={avatar} size={36} />
                           {status.live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 8, height: 8, borderRadius: 4, background: '#2BA84A', border: '2px solid var(--pl)' }} />}
                         </div>
                         <div style={{ flex: 1 }}>

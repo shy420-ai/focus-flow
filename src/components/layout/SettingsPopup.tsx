@@ -14,6 +14,9 @@ import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { AVATAR_OPTIONS, getAvatar, setAvatar } from '../../lib/avatar'
+import { fileToAvatarDataUrl } from '../../lib/avatarUpload'
+import { getBio, setBio } from '../../lib/bio'
+import { Avatar } from '../ui/Avatar'
 import { resetXp, getXp, getLevel } from '../../lib/xp'
 import { AdhdGuideModal } from '../ui/AdhdGuideModal'
 
@@ -76,6 +79,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
   const [cycleData, setCycleData] = useState(() => loadCycleData())
   const [avatar, setAvatarState] = useState<string>(getAvatar())
+  const [bio, setBioState] = useState<string>(getBio())
 
   function handleTheme(name: ThemeName) {
     applyTheme(name)
@@ -201,11 +205,37 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })()}
       </div>
 
-      {/* 닉네임 */}
-      <div style={{ display: 'flex', gap: 6, marginBottom: 4, alignItems: 'center' }}>
-        <div style={{ width: 36, height: 36, borderRadius: 18, background: 'var(--pl)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22 }}>
-          {avatar}
+      {/* 프로필 사진 + 닉네임 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8, gap: 6 }}>
+        <div style={{ position: 'relative' }}>
+          <div style={{ width: 72, height: 72, borderRadius: 36, background: 'var(--pl)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', border: '2px solid var(--pink)' }}>
+            <Avatar value={avatar} size={68} />
+          </div>
+          <label style={{ position: 'absolute', bottom: -4, right: -4, background: 'var(--pink)', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 8px', borderRadius: 12, cursor: 'pointer', boxShadow: '0 2px 6px rgba(0,0,0,.15)' }}>
+            📷
+            <input
+              type="file"
+              accept="image/*"
+              style={{ display: 'none' }}
+              onChange={async (e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                try {
+                  const dataUrl = await fileToAvatarDataUrl(file)
+                  setAvatar(dataUrl)
+                  setAvatarState(dataUrl)
+                  showMiniToast('✅ 사진 변경 완료')
+                } catch (err) {
+                  showMiniToast('❌ ' + (err instanceof Error ? err.message : '실패'))
+                }
+                e.target.value = ''
+              }}
+            />
+          </label>
         </div>
+      </div>
+
+      <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
         <input
           value={nickname}
           onChange={(e) => setNickname(e.target.value)}
@@ -216,8 +246,22 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         <button onClick={saveNickname} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>저장</button>
       </div>
 
-      {/* 아바타 선택 */}
-      <div style={{ fontSize: 10, color: '#888', marginBottom: 4, marginTop: 8 }}>아바타 (친구·순위에 보임)</div>
+      {/* 한줄 소개 (Twitter-style bio) */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 4, marginTop: 6 }}>
+        <input
+          value={bio}
+          onChange={(e) => setBioState(e.target.value.slice(0, 80))}
+          placeholder="한줄 소개 (예: ADHD 같이 헤쳐나가요)"
+          maxLength={80}
+          style={{ flex: 1, padding: '8px 10px', border: '1.5px solid var(--pl)', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
+          onKeyDown={(e) => { if (e.key === 'Enter') { setBio(bio); showMiniToast('✅ 소개 저장됨') } }}
+        />
+        <button onClick={() => { setBio(bio); showMiniToast('✅ 소개 저장됨') }} style={{ padding: '8px 12px', borderRadius: 8, background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer' }}>저장</button>
+      </div>
+      <div style={{ fontSize: 9, color: '#bbb', marginBottom: 4, textAlign: 'right' }}>{bio.length}/80</div>
+
+      {/* 아바타 이모지 (사진 안 쓸 때 옵션) */}
+      <div style={{ fontSize: 10, color: '#888', marginBottom: 4, marginTop: 8 }}>또는 이모지 선택</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 4, marginBottom: 8 }}>
         {AVATAR_OPTIONS.map((emo) => (
           <button
@@ -229,7 +273,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
 
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12, lineHeight: 1.5 }}>
-        💡 닉네임·아바타는 🏆 순위와 친구 화면에 표시돼
+        💡 닉네임·프사는 🏆 순위와 친구 화면에 표시돼
       </div>
 
       {/* 친구 관리 */}

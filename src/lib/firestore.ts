@@ -52,7 +52,8 @@ export interface UserDoc {
   sprintHistory?: unknown[]  // completed sprints history
   dayMode?: 'low' | 'normal' | 'good'  // today's condition mode
   lastActiveAt?: string  // ISO timestamp; updated on app open
-  avatar?: string        // single emoji shown in friends/leaderboard
+  avatar?: string        // emoji or data: image URL shown in friends/leaderboard
+  bio?: string           // short profile message
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]

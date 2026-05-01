@@ -12,6 +12,7 @@ import '../components/dev/SprintBoard'
 import '../components/layout/ViewTabs'
 import '../lib/profileSync'
 import '../lib/avatar'
+import '../lib/bio'
 
 export function useFirestoreSync(): void {
   const uid = useAppStore((s) => s.uid)
