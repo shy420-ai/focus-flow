@@ -3,7 +3,7 @@ import { immer } from 'zustand/middleware/immer'
 import type { MedConfig, MedLog, MedItem } from '../types/med'
 import { readJSON, writeJSON } from '../lib/localStorage'
 import { todayStr } from '../lib/date'
-import { queue, registerCollect, registerHydrate } from '../lib/syncManager'
+import { flushSync, registerCollect, registerHydrate } from '../lib/syncManager'
 import type { UserDoc } from '../lib/firestore'
 
 interface MedState {
@@ -29,7 +29,10 @@ type MedStore = MedState & MedActions
 function persist(config: MedConfig | null, logs: MedLog[]) {
   writeJSON('ff_med_config', config)
   writeJSON('ff_med_logs', logs)
-  queue()
+  // Immediate push instead of debounced queue. iOS Safari aggressively
+  // kills pending timers when the tab backgrounds, which left users
+  // (especially on iPhone) thinking the med tab "didn't save".
+  flushSync().catch(() => { /* offline ok */ })
 }
 
 export const useMedStore = create<MedStore>()(
@@ -146,14 +149,26 @@ registerCollect(() => {
 })
 
 registerHydrate((d: UserDoc) => {
-  const patch: Partial<{ config: MedConfig | null; logs: MedLog[] }> = {}
-  if (d.medConfig !== undefined) patch.config = d.medConfig as MedConfig | null
-  if (d.medLogs) patch.logs = d.medLogs
-  if (Object.keys(patch).length) useMedStore.setState(patch)
-  // Hydrate birthday only — nickname is a user-controlled local preference,
-  // hydrating it from Firestore can stomp the value the user just typed in
-  // settings before the snapshot listener fires the new value back.
-  // Pull nickname only if local has nothing.
+  const local = useMedStore.getState()
+  // medConfig: only adopt remote when local has nothing yet, so a stale
+  // hydrate can't blow away the user's saved meds.
+  if ((local.config == null || (local.config.meds?.length ?? 0) === 0) && d.medConfig !== undefined) {
+    useMedStore.setState({ config: d.medConfig as MedConfig | null })
+    writeJSON('ff_med_config', d.medConfig as MedConfig | null)
+  }
+  // medLogs: append-only merge by id — never lose a take/skip the user
+  // logged before the snapshot caught up.
+  if (Array.isArray(d.medLogs) && d.medLogs.length > 0) {
+    const localById = new Map(local.logs.map((l) => [l.id, l]))
+    const merged: MedLog[] = [...local.logs]
+    for (const r of d.medLogs) {
+      if (!localById.has(r.id)) merged.push(r)
+    }
+    if (merged.length !== local.logs.length) {
+      useMedStore.setState({ logs: merged })
+      writeJSON('ff_med_logs', merged)
+    }
+  }
   if (d.birthday) localStorage.setItem('ff_birthday', d.birthday as string)
   if (d.birthyear) localStorage.setItem('ff_birthyear', String(d.birthyear))
   if (d.nickname && !localStorage.getItem('ff_nickname')) {

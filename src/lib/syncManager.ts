@@ -134,12 +134,9 @@ function applyRemote(d: UserDoc) {
       localStorage.setItem('ff_friends', JSON.stringify(merged))
     } catch { /* ignore */ }
   }
-  if (d.medConfig !== undefined) {
-    try { localStorage.setItem('ff_med_config', JSON.stringify(d.medConfig)) } catch { /* ignore */ }
-  }
-  if (d.medLogs) {
-    try { localStorage.setItem('ff_med_logs', JSON.stringify(d.medLogs)) } catch { /* ignore */ }
-  }
+  // med config / logs are now handled inside MedStore's registerHydrate
+  // with merge logic that respects local state (especially important on
+  // iOS Safari where backgrounding can drop pending writes).
   if (d.mandala) {
     try { localStorage.setItem('ff_mandala', JSON.stringify(d.mandala)) } catch { /* ignore */ }
   }
