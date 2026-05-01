@@ -64,14 +64,14 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     assemble: ([a, b]) => `${a} 회피 중 → ${b}`,
   },
   {
-    label: '일정 잡기',
-    desc: '의욕 없을 때 작은 활동을 미리 캘린더에 (BA)',
-    example: '내일 12:30에 산책 20분을 캘린더에 잡아둔다',
+    label: '반대 행동',
+    desc: '도움 안 되는 충동의 반대로 (DBT Opposite Action)',
+    example: '슬퍼서 침대에 묻히고 싶지만, 반대로 5분만 밖에 나가본다',
     slots: [
-      { label: '활동', placeholder: '예: 산책 20분' },
-      { label: '언제', placeholder: '예: 내일 12:30' },
+      { label: '지금 하고 싶은 충동', placeholder: '예: 침대에 묻혀있기' },
+      { label: '반대 방향 행동', placeholder: '예: 5분만 밖에 나가기' },
     ],
-    assemble: ([a, b]) => `${b}에 ${a}을 캘린더에 잡아둔다`,
+    assemble: ([a, b]) => `${a} 충동이 들지만, 반대로 ${b}`,
   },
   {
     label: '친구라면',

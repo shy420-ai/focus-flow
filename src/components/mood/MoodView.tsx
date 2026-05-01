@@ -105,6 +105,9 @@ export function MoodView() {
         ✨ 감정 기록 남기기
       </button>
 
+      {/* Trend analytics — pure local computation, no API/token cost */}
+      {entries.length >= 2 && <TrendPanel entries={entries} />}
+
       {/* Today section */}
       <SectionHeader emoji="🌸" title="오늘" count={todayEntries.length} />
       {todayEntries.length === 0 ? (
@@ -144,6 +147,162 @@ function SectionHeader({ emoji, title, count }: { emoji: string; title: string; 
       <span style={{ background: 'var(--pl)', color: 'var(--pd)', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{count}</span>
       <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, color-mix(in srgb, var(--pl) 80%, #fff), transparent)' }} />
     </div>
+  )
+}
+
+// Local-only accumulated stats — no API calls, no token cost.
+function TrendPanel({ entries }: { entries: MoodEntry[] }) {
+  // Average sliders across all entries (only count where the field exists).
+  const avg = (key: 'focus' | 'mood' | 'energy') => {
+    const vals = entries.map((e) => e[key]).filter((v): v is number => typeof v === 'number')
+    if (!vals.length) return null
+    return vals.reduce((s, v) => s + v, 0) / vals.length
+  }
+  const focusAvg = avg('focus')
+  const moodAvg = avg('mood')
+  const energyAvg = avg('energy')
+
+  // Last 7 days: per-day mean of mood (most expressive single line).
+  const today = new Date()
+  const days: Array<{ key: string; label: string; mood: number | null; focus: number | null; energy: number | null }> = []
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today)
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().slice(0, 10)
+    const dayEntries = entries.filter((e) => e.date === key)
+    const m = dayEntries.map((e) => e.mood).filter((v): v is number => typeof v === 'number')
+    const f = dayEntries.map((e) => e.focus).filter((v): v is number => typeof v === 'number')
+    const en = dayEntries.map((e) => e.energy).filter((v): v is number => typeof v === 'number')
+    const mean = (arr: number[]) => (arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : null)
+    days.push({
+      key,
+      label: String(d.getDate()),
+      mood: mean(m),
+      focus: mean(f),
+      energy: mean(en),
+    })
+  }
+
+  // Top emotions
+  const emoCount = new Map<string, number>()
+  entries.forEach((e) => e.emotions?.forEach((t) => emoCount.set(t, (emoCount.get(t) ?? 0) + 1)))
+  const topEmotions = Array.from(emoCount.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
+  // Average distress drop (where both before & after exist)
+  const drops = entries
+    .map((e) => (e.distressBefore != null && e.distressAfter != null ? e.distressBefore - e.distressAfter : null))
+    .filter((v): v is number => typeof v === 'number')
+  const dropAvg = drops.length ? drops.reduce((s, v) => s + v, 0) / drops.length : null
+
+  return (
+    <div style={{
+      background: 'linear-gradient(135deg, #fff 0%, color-mix(in srgb, var(--pl) 30%, #fff) 100%)',
+      borderRadius: 16,
+      padding: 14,
+      marginBottom: 14,
+      border: '1px solid color-mix(in srgb, var(--pl) 60%, #fff)',
+      boxShadow: '0 2px 10px rgba(0,0,0,.04)',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+        <span style={{ fontSize: 13 }}>📊</span>
+        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)' }}>누적 분석</span>
+        <span style={{ background: 'var(--pl)', color: 'var(--pd)', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>{entries.length}개 기록</span>
+      </div>
+
+      {/* Averages */}
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        <AvgPill icon="🎯" label="집중" value={focusAvg} />
+        <AvgPill icon="😊" label="기분" value={moodAvg} />
+        <AvgPill icon="⚡" label="에너지" value={energyAvg} />
+      </div>
+
+      {/* 7-day mini line chart */}
+      <div style={{ marginBottom: 10 }}>
+        <div style={{ fontSize: 10, color: '#888', fontWeight: 600, marginBottom: 6 }}>최근 7일 흐름</div>
+        <MiniLineChart days={days} />
+        <div style={{ display: 'flex', gap: 12, marginTop: 4, justifyContent: 'center' }}>
+          <Legend color="var(--pink)" label="기분" />
+          <Legend color="#9CB7FF" label="집중" />
+          <Legend color="#FFC58A" label="에너지" />
+        </div>
+      </div>
+
+      {/* Top emotions */}
+      {topEmotions.length > 0 && (
+        <div style={{ marginBottom: dropAvg != null ? 10 : 0 }}>
+          <div style={{ fontSize: 10, color: '#888', fontWeight: 600, marginBottom: 6 }}>자주 등장한 감정</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+            {topEmotions.map(([t, n]) => (
+              <span key={t} style={{ background: 'var(--pl)', color: 'var(--pd)', fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 99 }}>#{t} <span style={{ color: 'var(--pink)' }}>{n}</span></span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Average distress drop */}
+      {dropAvg != null && (
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'color-mix(in srgb, var(--pl) 50%, #fff)', padding: '5px 11px', borderRadius: 99, fontSize: 11, color: 'var(--pd)', fontWeight: 700 }}>
+          🌱 평균 고통 감소 <span style={{ color: 'var(--pink)' }}>-{dropAvg.toFixed(1)}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function AvgPill({ icon, label, value }: { icon: string; label: string; value: number | null }) {
+  return (
+    <div style={{ flex: 1, background: '#fff', borderRadius: 10, padding: '8px 10px', border: '1px solid color-mix(in srgb, var(--pl) 60%, #fff)', textAlign: 'center' }}>
+      <div style={{ fontSize: 12, marginBottom: 2 }}>{icon} {label}</div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--pd)' }}>{value != null ? value.toFixed(1) : '—'}</div>
+    </div>
+  )
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  return (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 9, color: '#666' }}>
+      <span style={{ width: 8, height: 8, borderRadius: 4, background: color }} />
+      {label}
+    </span>
+  )
+}
+
+interface DayPoint { mood: number | null; focus: number | null; energy: number | null; label: string }
+function MiniLineChart({ days }: { days: DayPoint[] }) {
+  const W = 320
+  const H = 70
+  const pad = 6
+  const stepX = (W - pad * 2) / Math.max(1, days.length - 1)
+  const yFor = (v: number | null) => v == null ? null : H - pad - (v / 10) * (H - pad * 2)
+  const linePath = (key: 'mood' | 'focus' | 'energy') => {
+    let d = ''
+    let started = false
+    days.forEach((day, i) => {
+      const y = yFor(day[key])
+      if (y == null) return
+      const x = pad + i * stepX
+      d += (started ? ' L' : 'M') + x + ' ' + y
+      started = true
+    })
+    return d
+  }
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block' }} preserveAspectRatio="none">
+      {/* baseline */}
+      <line x1={pad} y1={H - pad} x2={W - pad} y2={H - pad} stroke="#eee" strokeWidth={1} />
+      <line x1={pad} y1={pad} x2={W - pad} y2={pad} stroke="#f5f5f5" strokeWidth={1} strokeDasharray="2 3" />
+      <path d={linePath('focus')} stroke="#9CB7FF" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={linePath('energy')} stroke="#FFC58A" strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={linePath('mood')} stroke="var(--pink)" strokeWidth={2.5} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      {days.map((d, i) => {
+        const y = yFor(d.mood)
+        if (y == null) return null
+        return <circle key={i} cx={pad + i * stepX} cy={y} r={2.5} fill="var(--pink)" />
+      })}
+      {days.map((d, i) => (
+        <text key={`l${i}`} x={pad + i * stepX} y={H - 1} fontSize="7" textAnchor="middle" fill="#bbb">{d.label}</text>
+      ))}
+    </svg>
   )
 }
 
