@@ -163,8 +163,16 @@ export function MoodEntryModal({ entry, onClose }: Props) {
   const [activeTplIdx, setActiveTplIdx] = useState<number | null>(null)
   const [slotVals, setSlotVals] = useState<string[]>([])
 
+  const [breathingOpen, setBreathingOpen] = useState(false)
+
   function pickAction(idx: number) {
     const t = ACTION_TEMPLATES[idx]
+    // Special case: 4-7-8 호흡 → guided breathing timer instead of text fill
+    if (t.label === '4-7-8 호흡') {
+      setBreathingOpen(true)
+      setActiveTplIdx(null)
+      return
+    }
     if (!t.slots || !t.assemble) {
       setNextAction(t.example)
       setActiveTplIdx(null)
@@ -448,6 +456,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             )}
           </Section>
 
+          {breathingOpen && <BreathingTimer onClose={() => setBreathingOpen(false)} onComplete={() => { setNextAction('✅ 4-7-8 호흡 4번 완료 — 한결 가라앉음'); setBreathingOpen(false) }} />}
+
           {/* Bottom save — easier than scrolling back to top */}
           <button
             onClick={save}
@@ -480,6 +490,111 @@ const textareaStyle: React.CSSProperties = {
   boxSizing: 'border-box',
   resize: 'vertical',
   lineHeight: 1.6,
+}
+
+// Guided 4-7-8 breathing — 4 cycles of 들이쉬기 4s / 멈춤 7s / 내쉬기 8s.
+// Shown as an inline modal-style overlay so the user does the exercise
+// before continuing the journal entry.
+function BreathingTimer({ onClose, onComplete }: { onClose: () => void; onComplete: () => void }) {
+  const PHASES = [
+    { label: '들이쉬기', dur: 4, color: '#FFD8A8' },
+    { label: '멈춤', dur: 7, color: '#FFC0CB' },
+    { label: '내쉬기', dur: 8, color: '#9CB7FF' },
+  ]
+  const TOTAL_CYCLES = 4
+
+  const [cycle, setCycle] = useState(0)
+  const [phaseIdx, setPhaseIdx] = useState(0)
+  const [remaining, setRemaining] = useState(PHASES[0].dur)
+  const [done, setDone] = useState(false)
+
+  useEffect(() => {
+    if (done) return
+    const t = setTimeout(() => {
+      // Tick down; when current phase hits 0, advance to next phase or
+      // next cycle (or finish). All transitions happen inside this async
+      // callback so React doesn't see a synchronous setState chain.
+      setRemaining((r) => {
+        if (r > 1) return r - 1
+        // r === 1, this tick ends the phase
+        const nextPhase = phaseIdx + 1
+        if (nextPhase >= PHASES.length) {
+          const nextCycle = cycle + 1
+          if (nextCycle >= TOTAL_CYCLES) {
+            setDone(true)
+            return 0
+          }
+          setCycle(nextCycle)
+          setPhaseIdx(0)
+          return PHASES[0].dur
+        }
+        setPhaseIdx(nextPhase)
+        return PHASES[nextPhase].dur
+      })
+    }, 1000)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remaining, phaseIdx, cycle, done])
+
+  const phase = PHASES[phaseIdx]
+  // Circle size: grows during inhale, holds, shrinks during exhale
+  const scale = phase.label === '들이쉬기' ? 0.6 + (1 - remaining / phase.dur) * 0.6
+    : phase.label === '멈춤' ? 1.2
+    : 1.2 - (1 - remaining / phase.dur) * 0.6
+
+  return (
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.6)', backdropFilter: 'blur(4px)', zIndex: 9500, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
+    >
+      <div style={{ background: '#fff', borderRadius: 22, padding: '28px 24px', width: '90%', maxWidth: 320, textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,.25)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)' }}>🌬 4-7-8 호흡</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 16, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
+        </div>
+
+        {!done ? (
+          <>
+            <div style={{
+              width: 180, height: 180, margin: '12px auto', borderRadius: '50%',
+              background: `radial-gradient(circle, ${phase.color} 0%, color-mix(in srgb, ${phase.color} 60%, #fff) 100%)`,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              transform: `scale(${scale})`,
+              transition: 'transform 1s ease-in-out, background 0.3s',
+              boxShadow: `0 0 60px ${phase.color}88`,
+            }}>
+              <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--pd)' }}>{phase.label}</div>
+              <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--pd)', fontVariantNumeric: 'tabular-nums' }}>{remaining}</div>
+            </div>
+            <div style={{ marginTop: 18, fontSize: 11, color: '#888', fontWeight: 600 }}>
+              {cycle + 1} / {TOTAL_CYCLES} 사이클
+            </div>
+            <div style={{ marginTop: 4, display: 'flex', gap: 4, justifyContent: 'center' }}>
+              {Array.from({ length: TOTAL_CYCLES }).map((_, i) => (
+                <span key={i} style={{ width: 24, height: 4, borderRadius: 2, background: i < cycle ? 'var(--pink)' : i === cycle ? 'color-mix(in srgb, var(--pink) 50%, #fff)' : '#eee' }} />
+              ))}
+            </div>
+          </>
+        ) : (
+          <div style={{ padding: '20px 0' }}>
+            <div style={{ fontSize: 40, marginBottom: 10 }}>🌱</div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>완료!</div>
+            <div style={{ fontSize: 12, color: '#888', lineHeight: 1.6, marginBottom: 18 }}>
+              4번 다 했어. 한 번 더 해도 되고,<br />여기서 끝내도 좋아.
+            </div>
+            <button
+              onClick={onComplete}
+              style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
+            >다음 선택에 기록하기 ✓</button>
+            <button
+              onClick={onClose}
+              style={{ width: '100%', marginTop: 8, padding: 10, background: 'none', border: 'none', color: '#aaa', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+            >닫기</button>
+          </div>
+        )}
+      </div>
+    </div>
+  )
 }
 
 function ModalSliderRow({ icon, label, value, onChange }: { icon: string; label: string; value: number; onChange: (v: number) => void }) {
