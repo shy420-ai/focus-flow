@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/AppStore'
-import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc } from '../../lib/firestore'
+import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc, listenUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showPrompt } from '../../lib/showPrompt'
@@ -363,17 +363,19 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
     return () => { cancelled = true }
   }, [friends])
 
-  // Load my own guestbook so I can see who left messages
+  // Subscribe to my own guestbook so new messages from friends show up
+  // without manual refresh.
   const [myGuestbook, setMyGuestbook] = useState<Array<{ from: string; text: string; date?: string; time?: string; ts?: number; fromUid?: string }>>([])
   const lastRead = getLastReadTs()
   useEffect(() => {
     if (!uid) return
-    loadUserDoc(uid).then((d) => {
-      if (d?.guestbook) setMyGuestbook(d.guestbook as typeof myGuestbook)
-    }).catch(() => {})
+    const unsub = listenUserDoc(uid, (d) => {
+      const gb = (d?.guestbook as typeof myGuestbook | undefined) || []
+      setMyGuestbook(gb)
+    })
     // Mark as read once user opens the panel
     markGuestbookRead()
-     
+    return () => unsub()
   }, [uid])
 
   async function addFriend() {
@@ -468,10 +470,18 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
           />
         ) : (
           <div>
-            {/* My profile / received guestbook / share code */}
-            {myGuestbook.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💌 받은 응원 ({myGuestbook.length})</div>
+            {/* My received guestbook — always visible, with empty state */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                <span>💌 내 방명록 (받은 응원)</span>
+                <span style={{ fontSize: 10, color: '#aaa', fontWeight: 500 }}>{myGuestbook.length}개</span>
+              </div>
+              {myGuestbook.length === 0 ? (
+                <div style={{ background: '#fff', border: '1px dashed #eee', borderRadius: 10, padding: '14px 12px', fontSize: 11, color: '#aaa', textAlign: 'center', lineHeight: 1.5 }}>
+                  아직 받은 응원이 없어<br />
+                  <span style={{ fontSize: 10, color: '#bbb' }}>친구가 너 화면에서 응원 남기면 여기 떠</span>
+                </div>
+              ) : (
                 <div style={{ maxHeight: 220, overflowY: 'auto' }}>
                   {[...myGuestbook].reverse().slice(0, 20).map((g, i) => {
                     const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
@@ -486,8 +496,8 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                     )
                   })}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
             <div style={{ background: 'var(--pl)', borderRadius: 12, padding: 14, textAlign: 'center' }}>
               <div style={{ fontSize: 11, color: '#aaa', marginBottom: 4 }}>내 공유 코드</div>
               <div style={{ fontSize: 26, fontWeight: 700, color: 'var(--pd)', letterSpacing: 4 }}>{myCode}</div>
