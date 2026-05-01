@@ -4,6 +4,7 @@ import { fmtH, nowH, todayStr } from '../../lib/date'
 import { useAppStore } from '../../store/AppStore'
 import { BlockMenu } from './BlockMenu'
 import { getCategories } from '../../lib/categories'
+import { addXp } from '../../lib/xp'
 
 function catColor(name: string): string {
   return getCategories().find((c) => c.name === name)?.color || '#aaa'
@@ -154,11 +155,17 @@ export function TimeBlock({
     if (block.recurId && !block.done) {
       useAppStore.getState().completeRecurring(block.recurId, block.date)
       window.dispatchEvent(new CustomEvent('ff-block-done', { detail: block.id }))
+      addXp(10)
       return
     }
     const wasDone = block.done
     toggleDone(block.id)
-    if (!wasDone) window.dispatchEvent(new CustomEvent('ff-block-done', { detail: block.id }))
+    if (!wasDone) {
+      window.dispatchEvent(new CustomEvent('ff-block-done', { detail: block.id }))
+      addXp(10)
+    } else {
+      addXp(-10)
+    }
   }
 
   function handleToggleDoneTouchEnd(e: React.TouchEvent) {

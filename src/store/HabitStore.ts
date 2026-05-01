@@ -60,13 +60,20 @@ export const useHabitStore = create<HabitStore>()(
     },
 
     toggleLog: (habitId, dateStr) => {
+      let nowDone = false
       set((state) => {
         if (!state.habitLogs[dateStr]) state.habitLogs[dateStr] = {}
         const key = String(habitId)
         state.habitLogs[dateStr][key] = !state.habitLogs[dateStr][key]
+        nowDone = !!state.habitLogs[dateStr][key]
       })
       const s = get()
       persist(s.habits, s.habitLogs)
+      // ADHD reward loop: every habit check is +5 XP. Unchecking refunds it.
+      // Done as a dynamic import to avoid a circular dep through xp.ts.
+      import('../lib/xp').then(({ addXp }) => {
+        addXp(nowDone ? 5 : -5)
+      })
     },
 
     setQuickMemo: (memo) => {
