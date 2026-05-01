@@ -36,12 +36,27 @@ const ALL_TABS: Array<{ id: CurView; label: string }> = [
   { id: 'habit', label: '습관' },
   { id: 'goal', label: '목표' },
   { id: 'drop', label: '덤프' },
+  { id: 'mood', label: '일기' },
   { id: 'stats', label: '메디' },
   { id: 'friends', label: '친구' },
 ]
 
 function loadHiddenTabs(): CurView[] {
   try { return JSON.parse(localStorage.getItem('ff_hidden_tabs') || '[]') } catch { return [] }
+}
+
+const TAB_ORDER_KEY = 'ff_tab_order'
+
+function loadOrderedTabs(): typeof ALL_TABS {
+  let order: CurView[] = []
+  try { order = JSON.parse(localStorage.getItem(TAB_ORDER_KEY) || '[]') } catch { /* ignore */ }
+  if (!order.length) return ALL_TABS
+  const seen = new Set(order)
+  const ordered = order
+    .map((id) => ALL_TABS.find((t) => t.id === id))
+    .filter(Boolean) as typeof ALL_TABS
+  const missing = ALL_TABS.filter((t) => !seen.has(t.id))
+  return [...ordered, ...missing]
 }
 
 function loadCycleData() {
@@ -78,6 +93,19 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [tlEnd, setTlEnd] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6') + parseInt(localStorage.getItem(TL_HOURS_KEY) || '18'))
   const [px, setPx] = useState(parseInt(localStorage.getItem(PX_KEY) || '140'))
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
+  const [orderedTabs, setOrderedTabs] = useState(loadOrderedTabs)
+
+  function moveTab(idx: number, direction: -1 | 1) {
+    const target = idx + direction
+    if (target < 0 || target >= orderedTabs.length) return
+    const next = [...orderedTabs]
+    const [m] = next.splice(idx, 1)
+    next.splice(target, 0, m)
+    setOrderedTabs(next)
+    localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(next.map((t) => t.id)))
+    window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
+    flushSync().catch(() => { /* offline ok */ })
+  }
   const [cycleData, setCycleData] = useState(() => loadCycleData())
   const [avatar, setAvatarState] = useState<string>(getAvatar())
   const [bio, setBioState] = useState<string>(getBio())
@@ -401,20 +429,36 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       {/* 탭 관리 */}
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>
-        💡 탭을 길게 눌러 드래그하면 순서 바꿀 수 있어
+        💡 ↑↓ 화살표로 순서 바꾸고, 토글로 켜고 끌 수 있어
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginBottom: 12 }}>
-        {ALL_TABS.map((t) => {
+        {orderedTabs.map((t, idx) => {
           const on = !hiddenTabs.includes(t.id)
+          const isFirst = idx === 0
+          const isLast = idx === orderedTabs.length - 1
           return (
-            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: on ? 'var(--pd)' : '#999' }}>
+            <div key={t.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0', gap: 8 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: on ? 'var(--pd)' : '#999', flex: 1 }}>
                 <span style={{ display: 'inline-flex', color: on ? 'var(--pink)' : '#bbb' }}>{tabIcon(t.id)}</span>
                 {t.label}
               </span>
+              <div style={{ display: 'inline-flex', gap: 2 }}>
+                <button
+                  onClick={() => moveTab(idx, -1)}
+                  disabled={isFirst}
+                  style={{ width: 24, height: 24, padding: 0, border: '1px solid #eee', borderRadius: 6, background: '#fff', cursor: isFirst ? 'default' : 'pointer', color: isFirst ? '#ddd' : '#888', fontSize: 11, fontFamily: 'inherit' }}
+                  aria-label="위로"
+                >▲</button>
+                <button
+                  onClick={() => moveTab(idx, 1)}
+                  disabled={isLast}
+                  style={{ width: 24, height: 24, padding: 0, border: '1px solid #eee', borderRadius: 6, background: '#fff', cursor: isLast ? 'default' : 'pointer', color: isLast ? '#ddd' : '#888', fontSize: 11, fontFamily: 'inherit' }}
+                  aria-label="아래로"
+                >▼</button>
+              </div>
               <button
                 onClick={() => toggleTab(t.id)}
-                style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: on ? 'var(--pink)' : '#ddd', position: 'relative', transition: 'background .2s', padding: 0 }}
+                style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: on ? 'var(--pink)' : '#ddd', position: 'relative', transition: 'background .2s', padding: 0, flexShrink: 0 }}
               >
                 <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, ...(on ? { right: 2 } : { left: 2 }), transition: 'all .2s' }} />
               </button>
