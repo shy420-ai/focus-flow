@@ -132,7 +132,9 @@ export function LeaderboardModal({ onClose }: Props) {
                     <div key={u.uid} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, padding: '3px 0' }}>
                       <span style={{ color: '#888', minWidth: 20 }}>↑{ahead.length - i}</span>
                       <span style={{ flex: 1, color: '#333' }}>{u.nickname}</span>
-                      <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 60, textAlign: 'right' }}>+{diff} XP</span>
+                      <span style={{ color: 'var(--pink)', fontWeight: 700, minWidth: 70, textAlign: 'right' }}>
+                        {u.xp} XP <span style={{ fontSize: 9, color: '#aaa', fontWeight: 500 }}>(+{diff})</span>
+                      </span>
                     </div>
                   )
                 })}
