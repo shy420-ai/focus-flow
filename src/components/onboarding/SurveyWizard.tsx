@@ -14,10 +14,12 @@ interface Props {
 
 type Style = 'time' | 'goal' | 'drop' | 'all'
 type Habit = 'few' | 'many' | 'none'
+type Calendar = 'both' | 'month' | 'week' | 'none'
 type YesNo = 'yes' | 'no'
 
 interface Answers {
   style?: Style
+  calendar?: Calendar
   habit?: Habit
   friend?: YesNo
   rank?: YesNo
@@ -25,7 +27,7 @@ interface Answers {
   cycle?: YesNo
 }
 
-const TOTAL = 6
+const TOTAL = 7
 
 export function SurveyWizard({ onDone }: Props) {
   const setCurView = useAppStore((s) => s.setCurView)
@@ -43,13 +45,13 @@ export function SurveyWizard({ onDone }: Props) {
   function applyAndFinish() {
     // Compute hidden tabs from answers
     const hidden = new Set<CurView>(['tl', 'week', 'cal', 'habit', 'goal', 'drop', 'stats', 'friends'])
-    // Always-on essentials
-    hidden.delete('cal')  // monthly stays for everyone
-    hidden.delete('week')
     // Style → primary tabs
     if (a.style === 'time' || a.style === 'all') hidden.delete('tl')
     if (a.style === 'goal' || a.style === 'all') hidden.delete('goal')
     if (a.style === 'drop' || a.style === 'all') hidden.delete('drop')
+    // Calendar (week / monthly)
+    if (a.calendar === 'both' || a.calendar === 'week') hidden.delete('week')
+    if (a.calendar === 'both' || a.calendar === 'month') hidden.delete('cal')
     // Habit
     if (a.habit !== 'none') hidden.delete('habit')
     // Friend
@@ -86,9 +88,10 @@ export function SurveyWizard({ onDone }: Props) {
   // Visible tabs preview for the result screen
   const visibleSummary: string[] = []
   if (a.style === 'time' || a.style === 'all') visibleSummary.push('🕐 일간')
-  visibleSummary.push('📅 월간')
-  if (a.style === 'goal' || a.style === 'all') visibleSummary.push('🎯 목표')
+  if (a.calendar === 'both' || a.calendar === 'week') visibleSummary.push('📆 주간')
+  if (a.calendar === 'both' || a.calendar === 'month') visibleSummary.push('📅 월간')
   if (a.habit !== 'none') visibleSummary.push('🌱 습관')
+  if (a.style === 'goal' || a.style === 'all') visibleSummary.push('🎯 목표')
   if (a.style === 'drop' || a.style === 'all') visibleSummary.push('💧 드롭')
   if (a.med === 'yes' || a.cycle === 'yes') visibleSummary.push('💊 메디')
   if (a.friend === 'yes') visibleSummary.push('👥 친구')
@@ -107,11 +110,12 @@ export function SurveyWizard({ onDone }: Props) {
         {step === 0 && <IntroCard onStart={next} onSkip={() => { localStorage.setItem('ff_survey_done', '1'); onDone() }} />}
 
         {step === 1 && <Q1 value={a.style} onPick={(v) => pick('style', v)} />}
-        {step === 2 && <Q2 value={a.habit} onPick={(v) => pick('habit', v)} />}
-        {step === 3 && <Q3 value={a.friend} onPick={(v) => pick('friend', v)} />}
-        {step === 4 && <Q4 value={a.rank} onPick={(v) => pick('rank', v)} />}
-        {step === 5 && <Q5 value={a.med} onPick={(v) => pick('med', v)} />}
-        {step === 6 && <Q6 value={a.cycle} onPick={(v) => pick('cycle', v)} />}
+        {step === 2 && <Q2 value={a.calendar} onPick={(v) => pick('calendar', v)} />}
+        {step === 3 && <Q3 value={a.habit} onPick={(v) => pick('habit', v)} />}
+        {step === 4 && <Q4 value={a.friend} onPick={(v) => pick('friend', v)} />}
+        {step === 5 && <Q5 value={a.rank} onPick={(v) => pick('rank', v)} />}
+        {step === 6 && <Q6 value={a.med} onPick={(v) => pick('med', v)} />}
+        {step === 7 && <Q7 value={a.cycle} onPick={(v) => pick('cycle', v)} />}
 
         {step === TOTAL + 1 && (
           <ResultCard summary={visibleSummary} onStart={applyAndFinish} answers={a} />
@@ -204,7 +208,22 @@ function Q1({ value, onPick }: { value?: Style; onPick: (v: Style) => void }) {
   )
 }
 
-function Q2({ value, onPick }: { value?: Habit; onPick: (v: Habit) => void }) {
+function Q2({ value, onPick }: { value?: Calendar; onPick: (v: Calendar) => void }) {
+  return (
+    <QShell title="주간 / 월간 캘린더 보고 싶어?" sub="얼마나 멀리 보고 계획하는 편인지에 따라 골라.">
+      <OptCard active={value === 'both'} onClick={() => onPick('both')} emoji="📆" label="둘 다 — 주별 + 월별"
+        sub={'주간: 7일 한눈에 (이번주 진행)\n월간: 한 달 색깔로 카테고리 분포\n→ 주간 + 월간 탭 둘 다 ON'} />
+      <OptCard active={value === 'month'} onClick={() => onPick('month')} emoji="📅" label="월간만"
+        sub={'한 달 단위로만 봐도 충분해\n→ 월간 탭 ON / 주간 탭 OFF'} />
+      <OptCard active={value === 'week'} onClick={() => onPick('week')} emoji="📈" label="주간만"
+        sub={'이번주 단위로 짜는 게 편해\n→ 주간 탭 ON / 월간 탭 OFF'} />
+      <OptCard active={value === 'none'} onClick={() => onPick('none')} emoji="✋" label="둘 다 안 봐"
+        sub={'일간만으로 충분 / 캘린더 부담\n→ 주간 + 월간 탭 둘 다 OFF'} />
+    </QShell>
+  )
+}
+
+function Q3({ value, onPick }: { value?: Habit; onPick: (v: Habit) => void }) {
   return (
     <QShell title="매일 같은 시간에 반복하는 거 있어?" sub="예: 아침 약, 스트레칭, 일기, 비타민">
       <OptCard active={value === 'few'} onClick={() => onPick('few')} emoji="🌿" label="1~3개 정도"
@@ -217,7 +236,7 @@ function Q2({ value, onPick }: { value?: Habit; onPick: (v: Habit) => void }) {
   )
 }
 
-function Q3({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
+function Q4({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
     <QShell title="친구 기능 쓸래?" sub="공유 코드로 친구 추가하고 서로 페이지 보는 기능">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="👯" label="응 — 같이 응원하고 싶어"
@@ -228,7 +247,7 @@ function Q3({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   )
 }
 
-function Q4({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
+function Q5({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
     <QShell title="순위 / 랭킹 보고 싶어?" sub="다른 ADHD인이랑 이번달 XP 비교하는 거">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="🏆" label="응 — 명예의 전당 보고 싶어"
@@ -239,7 +258,7 @@ function Q4({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   )
 }
 
-function Q5({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
+function Q6({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
     <QShell title="매일 챙겨야 할 약 있어?" sub="정신과 약 / 한약 / 영양제 등 뭐든">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="💊" label="응 — 약 챙겨"
@@ -250,7 +269,7 @@ function Q5({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   )
 }
 
-function Q6({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
+function Q7({ value, onPick }: { value?: YesNo; onPick: (v: YesNo) => void }) {
   return (
     <QShell title="생리주기 트래킹할래?" sub="예측·기록용. 메디 탭에 같이 들어가.">
       <OptCard active={value === 'yes'} onClick={() => onPick('yes')} emoji="🌙" label="응 — 주기 예측 받고 싶어"
