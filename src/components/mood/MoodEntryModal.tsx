@@ -123,7 +123,6 @@ export function MoodEntryModal({ entry, onClose }: Props) {
   const [autoThought, setAutoThought] = useState(entry?.autoThought ?? '')
   const [emotions, setEmotions] = useState<string[]>(entry?.emotions ?? [])
   const [intensity, setIntensity] = useState<number>(entry?.intensity ?? 5)
-  const [bodyFelt, setBodyFelt] = useState(entry?.bodyFelt ?? '')
   const [distortions, setDistortions] = useState<string[]>(entry?.distortions ?? [])
   const [nextAction, setNextAction] = useState(entry?.nextAction ?? '')
   const [distressBefore] = useState<number | undefined>(entry?.distressBefore ?? entry?.intensity ?? undefined)
@@ -195,7 +194,7 @@ export function MoodEntryModal({ entry, onClose }: Props) {
       autoThought: autoThought.trim() || undefined,
       emotions: emotions.length ? emotions : undefined,
       intensity,
-      bodyFelt: bodyFelt.trim() || undefined,
+      bodyFelt: entry?.bodyFelt,  // legacy field preserved
       distortions: distortions.length ? distortions : undefined,
       reframe: entry?.reframe,  // preserved if existing entry already had one
       nextAction: nextAction.trim() || undefined,
@@ -321,19 +320,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             </div>
           </Section>
 
-          {/* 5. 신체 감각 */}
-          <Section title="5. 신체 감각" hint="(선택) 감정이 몸 어디에 느껴졌는지.">
-            <textarea
-              value={bodyFelt}
-              onChange={(e) => setBodyFelt(e.target.value)}
-              placeholder="예: 가슴 답답, 손에 땀, 얼굴 화끈"
-              rows={2}
-              style={textareaStyle}
-            />
-          </Section>
-
-          {/* 6. 사고 함정 */}
-          <Section title="6. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지. 예시 보고 골라.">
+          {/* 5. 사고 함정 */}
+          <Section title="5. 사고 함정 체크" hint="(선택) 자동 생각이 어느 함정에 걸렸는지. 예시 보고 골라.">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
               {DISTORTIONS.map((d) => {
                 const on = distortions.includes(d.id)
@@ -362,8 +350,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             </div>
           </Section>
 
-          {/* 7. 다음 선택 */}
-          <Section title="7. 다음 선택" hint="감정은 자동, 반응은 선택 — 카드 탭하면 빈칸만 채우는 폼이 떠.">
+          {/* 6. 다음 선택 */}
+          <Section title="6. 다음 선택" hint="감정은 자동, 반응은 선택 — 카드 탭하면 빈칸만 채우는 폼이 떠.">
             <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 6, marginBottom: 8 }}>
               {ACTION_TEMPLATES.map((t, idx) => (
                 <ActionCard
