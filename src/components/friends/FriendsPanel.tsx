@@ -196,6 +196,60 @@ function FriendAvatarTab({ avatar, nickname, live, selected, hasUpdate, onSelect
   )
 }
 
+function relativeTime(ts: number | undefined): string {
+  if (!ts) return ''
+  const diff = Date.now() - ts
+  if (diff < 60_000) return '방금'
+  const m = Math.floor(diff / 60_000)
+  if (m < 60) return `${m}분 전`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}시간 전`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}일 전`
+  return ''
+}
+
+interface BubbleProps {
+  text: string
+  from?: string
+  ts?: number
+  date?: string
+  time?: string
+  mine?: boolean
+  unread?: boolean
+}
+
+function ChatBubble({ text, from, ts, date, time, mine, unread }: BubbleProps) {
+  const rel = relativeTime(ts)
+  const stamp = rel || ([date, time].filter(Boolean).join(' '))
+  return (
+    <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
+      <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', gap: 2 }}>
+        {!mine && from && (
+          <div style={{ fontSize: 10, color: '#888', fontWeight: 600, padding: '0 8px' }}>
+            {unread && <span style={{ color: 'var(--pink)', marginRight: 4 }}>●</span>}
+            {from}
+          </div>
+        )}
+        <div style={{
+          background: mine ? 'var(--pink)' : '#fff',
+          color: mine ? '#fff' : '#333',
+          padding: '8px 12px',
+          borderRadius: mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
+          fontSize: 13,
+          lineHeight: 1.5,
+          border: mine ? 'none' : '1px solid ' + (unread ? 'var(--pink)' : '#eee'),
+          wordBreak: 'break-word',
+          whiteSpace: 'pre-wrap',
+        }}>{text}</div>
+        {stamp && (
+          <div style={{ fontSize: 9, color: '#bbb', padding: '0 6px' }}>{stamp}</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 interface FriendDetailProps {
   uid: string
   name: string
@@ -207,6 +261,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const [data, setData] = useState<UserDoc | null>(null)
   const [guestInput, setGuestInput] = useState('')
   const [loading, setLoading] = useState(true)
+  const chatScrollRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     // Live subscription so the friend's edits (nickname, avatar, sprint
@@ -214,6 +269,14 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
     const unsub = listenUserDoc(uid, (d) => { setData(d); setLoading(false) })
     return () => unsub()
   }, [uid])
+
+  // Pin chat scroll to the bottom whenever the guestbook grows so the
+  // newest message is always visible — like a real chat.
+  const guestbookCount = (data?.guestbook as unknown[] | undefined)?.length ?? 0
+  useEffect(() => {
+    const el = chatScrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [guestbookCount])
 
   // Self-view: re-render when local sprint/xp changes so the panel mirrors
   // localStorage in real time without waiting for a Firestore round trip.
@@ -526,26 +589,48 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       {/* Guestbook — hidden on self view (the parent 나 tab already shows
           "내 방명록" above and there's no point writing to yourself). */}
       {uid !== myUid && (<>
-      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', margin: '14px 0 6px' }}>💌 방명록</div>
-      {guestbook.length === 0 ? (
-        <div style={{ color: '#ccc', fontSize: 11, textAlign: 'center', padding: '8px 0' }}>아직 방명록이 없어. 첫 글을 남겨봐!</div>
-      ) : (
-        [...guestbook].reverse().slice(0, 10).map((g, i) => (
-          <div key={i} style={{ background: '#fff', borderRadius: 10, padding: '8px 10px', marginBottom: 6, border: '1px solid #f0f0f0' }}>
-            <div style={{ fontSize: 10, color: '#aaa' }}>{g.from} · {g.date} {g.time}</div>
-            <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>{g.text}</div>
-          </div>
-        ))
-      )}
-      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', margin: '14px 0 6px' }}>💬 방명록</div>
+      <div
+        ref={chatScrollRef}
+        style={{ background: 'var(--pl)', borderRadius: 14, padding: 12, maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}
+      >
+        {guestbook.length === 0 ? (
+          <div style={{ color: '#bbb', fontSize: 11, textAlign: 'center', padding: '20px 0' }}>아직 방명록이 없어. 첫 글을 남겨봐!</div>
+        ) : (
+          [...guestbook]
+            .sort((a, b) => ((a as { ts?: number }).ts ?? 0) - ((b as { ts?: number }).ts ?? 0))
+            .slice(-30)
+            .map((g, i) => {
+              const fromUid = (g as { fromUid?: string }).fromUid
+              const ts = (g as { ts?: number }).ts
+              return (
+                <ChatBubble
+                  key={i}
+                  text={g.text}
+                  from={g.from}
+                  ts={ts}
+                  date={g.date}
+                  time={g.time}
+                  mine={fromUid === myUid}
+                />
+              )
+            })
+        )}
+      </div>
+      <div style={{ display: 'flex', gap: 6, marginTop: 8, alignItems: 'center' }}>
         <input
           value={guestInput}
           onChange={(e) => setGuestInput(e.target.value)}
-          placeholder="응원 한마디 남기기..."
-          style={{ flex: 1, padding: '8px 10px', border: '1.5px solid var(--pl)', borderRadius: 10, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
+          placeholder="메시지 입력..."
+          style={{ flex: 1, padding: '10px 14px', border: '1.5px solid var(--pl)', borderRadius: 99, fontSize: 13, fontFamily: 'inherit', outline: 'none' }}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing) postGuestbook() }}
         />
-        <button onClick={postGuestbook} style={{ padding: '8px 14px', borderRadius: 10, background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>남기기</button>
+        <button
+          onClick={postGuestbook}
+          disabled={!guestInput.trim()}
+          style={{ width: 40, height: 40, borderRadius: 99, background: guestInput.trim() ? 'var(--pink)' : '#ddd', border: 'none', color: '#fff', fontSize: 14, cursor: guestInput.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          aria-label="보내기"
+        >➤</button>
       </div>
       </>)}
 
@@ -793,19 +878,16 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                   <span style={{ fontSize: 10, color: '#bbb' }}>친구가 너 화면에서 응원 남기면 여기 떠</span>
                 </div>
               ) : (
-                <div style={{ maxHeight: 220, overflowY: 'auto' }}>
-                  {[...myGuestbook].reverse().slice(0, 20).map((g, i) => {
-                    const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
-                    return (
-                      <div key={i} style={{ background: unread ? '#FFF6F8' : '#fff', borderRadius: 10, padding: '8px 10px', marginBottom: 6, border: '1px solid ' + (unread ? 'var(--pink)' : '#f0f0f0') }}>
-                        <div style={{ fontSize: 10, color: '#aaa' }}>
-                          {unread && <span style={{ color: 'var(--pink)', fontWeight: 700, marginRight: 4 }}>● NEW</span>}
-                          {g.from} · {g.date} {g.time}
-                        </div>
-                        <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>{g.text}</div>
-                      </div>
-                    )
-                  })}
+                <div style={{ background: 'var(--pl)', borderRadius: 14, padding: 12, maxHeight: 280, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                  {[...myGuestbook]
+                    .sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0))
+                    .slice(-30)
+                    .map((g, i) => {
+                      const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
+                      return (
+                        <ChatBubble key={i} text={g.text} from={g.from} ts={g.ts} date={g.date} time={g.time} unread={unread} />
+                      )
+                    })}
                 </div>
               )}
             </div>
@@ -847,19 +929,16 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                 {myGuestbook.length > 0 && (
                   <div style={{ marginBottom: 16 }}>
                     <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💌 받은 응원 ({myGuestbook.length})</div>
-                    <div style={{ maxHeight: 140, overflowY: 'auto' }}>
-                      {[...myGuestbook].reverse().slice(0, 10).map((g, i) => {
-                        const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
-                        return (
-                          <div key={i} style={{ background: unread ? '#FFF6F8' : '#fff', borderRadius: 10, padding: '8px 10px', marginBottom: 6, border: '1px solid ' + (unread ? 'var(--pink)' : '#f0f0f0') }}>
-                            <div style={{ fontSize: 10, color: '#aaa' }}>
-                              {unread && <span style={{ color: 'var(--pink)', fontWeight: 700, marginRight: 4 }}>● NEW</span>}
-                              {g.from} · {g.date} {g.time}
-                            </div>
-                            <div style={{ fontSize: 12, color: '#333', marginTop: 2 }}>{g.text}</div>
-                          </div>
-                        )
-                      })}
+                    <div style={{ background: 'var(--pl)', borderRadius: 14, padding: 12, maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                      {[...myGuestbook]
+                        .sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0))
+                        .slice(-30)
+                        .map((g, i) => {
+                          const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
+                          return (
+                            <ChatBubble key={i} text={g.text} from={g.from} ts={g.ts} date={g.date} time={g.time} unread={unread} />
+                          )
+                        })}
                     </div>
                   </div>
                 )}
