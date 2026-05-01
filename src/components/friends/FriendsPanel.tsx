@@ -186,9 +186,11 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
     function bump() { forceTick((t) => t + 1) }
     window.addEventListener('ff-sprint-local-changed', bump)
     window.addEventListener('ff-xp-changed', bump)
+    window.addEventListener('ff-drops-local-changed', bump)
     return () => {
       window.removeEventListener('ff-sprint-local-changed', bump)
       window.removeEventListener('ff-xp-changed', bump)
+      window.removeEventListener('ff-drops-local-changed', bump)
     }
   }, [uid, myUid])
 
@@ -246,7 +248,13 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const showTimeline = isSectionVisible(data, 'timeline')
   const showHabits = isSectionVisible(data, 'habits')
   const showDrop = isSectionVisible(data, 'drop')
-  const drops = (data.drops as Array<{ id: number; name: string; done: boolean }> | undefined) || []
+  let drops = (data.drops as Array<{ id: number; name: string; done: boolean }> | undefined) || []
+  if (uid === myUid) {
+    try {
+      const raw = localStorage.getItem('ff_drops')
+      if (raw) drops = JSON.parse(raw) as typeof drops
+    } catch { /* keep Firestore copy */ }
+  }
   // Self-view: pull XP from localStorage so it reflects taps instantly,
   // not after the queue debounce + Firestore round-trip.
   let friendXp = typeof data.xp === 'number' ? data.xp : 0

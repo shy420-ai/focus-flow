@@ -25,6 +25,9 @@ type DropStore = DropState & DropActions
 function persist(items: DropItem[]) {
   writeJSON('ff_drops', items)
   queue()
+  // Notify FriendsPanel self-view so it can re-render with the local list
+  // immediately, no Firestore round-trip needed.
+  window.dispatchEvent(new CustomEvent('ff-drops-local-changed'))
 }
 
 export const useDropStore = create<DropStore>()(
