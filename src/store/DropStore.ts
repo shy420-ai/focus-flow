@@ -22,12 +22,21 @@ interface DropActions {
 
 type DropStore = DropState & DropActions
 
+const TOMBSTONE_KEY = 'ff_drops_tombstones'
+
+function loadTombstones(): Set<number> {
+  try { return new Set(JSON.parse(localStorage.getItem(TOMBSTONE_KEY) || '[]')) }
+  catch { return new Set() }
+}
+
+function saveTombstones(set: Set<number>): void {
+  localStorage.setItem(TOMBSTONE_KEY, JSON.stringify(Array.from(set)))
+}
+
 function persist(items: DropItem[]) {
   writeJSON('ff_drops', items)
   // Push immediately. Drop edits are infrequent and a single delete
-  // shouldn't compete with a stale echo that brings the row back. Using
-  // queue() with its 1.5s debounce left a window where a listener tick
-  // could re-hydrate the deleted item.
+  // shouldn't compete with a stale echo that brings the row back.
   flushSync().catch(() => { /* offline ok */ })
   window.dispatchEvent(new CustomEvent('ff-drops-local-changed'))
 }
@@ -56,6 +65,11 @@ export const useDropStore = create<DropStore>()(
       set((state) => {
         state.items = state.items.filter((i) => i.id !== id)
       })
+      // Mark id as deleted so a stale Firestore snapshot can't resurrect it
+      // through the merge-on-hydrate path.
+      const tombstones = loadTombstones()
+      tombstones.add(id)
+      saveTombstones(tombstones)
       persist(get().items)
     },
 
@@ -113,15 +127,17 @@ registerCollect(() => ({ drops: useDropStore.getState().items }))
 
 registerHydrate((d: UserDoc) => {
   if (!d.drops) return
-  // Append-only on hydrate: a stale Firestore snapshot must not resurrect
-  // an item the user just deleted locally. We only adopt items remote has
-  // that we don't, plus we trust local's `done` state for shared ids.
-  // Trade-off: deletions don't propagate to other devices via this path.
+  // Append-only on hydrate, plus tombstones: a stale Firestore snapshot
+  // can't resurrect an item the user just deleted locally because the
+  // tombstone set blocks it.
   const localItems = useDropStore.getState().items
   const localById = new Map(localItems.map((i) => [i.id, i]))
+  const tombstones = loadTombstones()
   const merged: DropItem[] = [...localItems]
   for (const r of d.drops) {
-    if (!localById.has(r.id)) merged.push(r)
+    if (localById.has(r.id)) continue
+    if (tombstones.has(r.id)) continue
+    merged.push(r)
   }
   if (merged.length !== localItems.length) {
     useDropStore.setState({ items: merged })
