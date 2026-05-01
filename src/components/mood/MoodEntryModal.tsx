@@ -75,16 +75,6 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     assemble: ([a, b]) => `${a} 회피 중 → ${b}`,
   },
   {
-    label: '반대 행동',
-    desc: '도움 안 되는 충동의 반대로 (DBT Opposite Action)',
-    example: '슬퍼서 침대에 묻히고 싶지만, 반대로 5분만 밖에 나가본다',
-    slots: [
-      { label: '지금 하고 싶은 충동', placeholder: '예: 침대에 묻혀있기' },
-      { label: '반대 방향 행동', placeholder: '예: 5분만 밖에 나가기' },
-    ],
-    assemble: ([a, b]) => `${a} 충동이 들지만, 반대로 ${b}`,
-  },
-  {
     label: '친구라면',
     desc: '자기비난 대신 친구한테 하듯 (Neff Self-Compassion)',
     example: '친구가 발표 더듬었으면 "한 번 그런 거지, 다음엔 잘 해" 라고 말해줬을 거야',
