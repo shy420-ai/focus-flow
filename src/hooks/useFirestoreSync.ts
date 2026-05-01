@@ -7,6 +7,8 @@ import '../store/HabitStore'
 import '../store/DropStore'
 import '../store/GoalStore'
 import '../store/MedStore'
+import '../components/dev/SprintBoard'
+import '../components/layout/ViewTabs'
 
 export function useFirestoreSync(): void {
   const uid = useAppStore((s) => s.uid)

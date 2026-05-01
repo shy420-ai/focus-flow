@@ -9,7 +9,7 @@ import { useBackClose } from '../../hooks/useBackClose'
 import { showConfirm } from '../../lib/showConfirm'
 import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
-import { flushSync } from '../../lib/syncManager'
+import { flushSync, queue } from '../../lib/syncManager'
 import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
@@ -118,6 +118,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     localStorage.setItem('ff_hidden_tabs', JSON.stringify(updated))
     setHiddenTabs(updated)
     window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
+    queue()
   }
 
   async function setCycleStart() {

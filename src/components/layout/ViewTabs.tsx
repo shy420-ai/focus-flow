@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore, type CurView } from '../../store/AppStore'
+import { queue, registerCollect, registerHydrate } from '../../lib/syncManager'
+import type { UserDoc } from '../../lib/firestore'
 
 const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = [
   { id: 'tl', label: '일간', icon: (
@@ -84,6 +86,31 @@ function getOrderedTabs(order: CurView[], hidden: CurView[]) {
   return [...ordered, ...missing]
 }
 
+// Sync tab order + hidden list across devices via Firestore.
+registerCollect(() => ({
+  tabOrder: loadOrder(),
+  tabHidden: loadHidden(),
+}))
+
+registerHydrate((d: UserDoc) => {
+  let changed = false
+  if (Array.isArray(d.tabOrder)) {
+    const remote = JSON.stringify(d.tabOrder)
+    if (remote !== (localStorage.getItem(ORDER_KEY) || '[]')) {
+      localStorage.setItem(ORDER_KEY, remote)
+      changed = true
+    }
+  }
+  if (Array.isArray(d.tabHidden)) {
+    const remote = JSON.stringify(d.tabHidden)
+    if (remote !== (localStorage.getItem(HIDDEN_KEY) || '[]')) {
+      localStorage.setItem(HIDDEN_KEY, remote)
+      changed = true
+    }
+  }
+  if (changed) window.dispatchEvent(new CustomEvent('ff-tabs-changed'))
+})
+
 export function ViewTabs() {
   const curView = useAppStore((s) => s.curView)
   const setCurView = useAppStore((s) => s.setCurView)
@@ -121,6 +148,7 @@ export function ViewTabs() {
     const newOrder = newTabs.map((t) => t.id)
     localStorage.setItem(ORDER_KEY, JSON.stringify(newOrder))
     setOrder(newOrder)
+    queue()
   }
 
   function handleDragEnd() {

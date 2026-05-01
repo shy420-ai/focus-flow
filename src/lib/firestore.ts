@@ -46,6 +46,10 @@ export interface UserDoc {
   xp?: number             // lifetime XP (level reflects this)
   monthlyXp?: number      // current month XP (leaderboard score)
   monthlyXpMonth?: string // YYYY-MM tag for monthlyXp
+  tabOrder?: string[]     // tab nav order across devices
+  tabHidden?: string[]    // hidden tab ids across devices
+  sprint?: unknown  // current 1주 챌린지 (SprintBoard owns the shape)
+  sprintHistory?: unknown[]  // completed sprints history
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]

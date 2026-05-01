@@ -5,6 +5,8 @@ import { showMiniToast } from '../../lib/miniToast'
 import { showConfirm } from '../../lib/showConfirm'
 import { LeaderboardModal } from './Leaderboard'
 import { isLeaderboardOn } from '../../lib/leaderboardPref'
+import { queue, registerCollect, registerHydrate } from '../../lib/syncManager'
+import type { UserDoc } from '../../lib/firestore'
 
 interface SprintGoal {
   id: string
@@ -64,6 +66,7 @@ function loadSprint(): Sprint | null {
 function saveSprint(s: Sprint | null): void {
   if (s) localStorage.setItem(KEY, JSON.stringify(s))
   else localStorage.removeItem(KEY)
+  queue()
 }
 
 function loadHistory(): CompletedSprint[] {
@@ -77,6 +80,7 @@ function loadHistory(): CompletedSprint[] {
 
 function saveHistory(h: CompletedSprint[]): void {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(h))
+  queue()
 }
 
 function daysBetween(a: string, b: string): number {
@@ -107,6 +111,14 @@ export function SprintBoard() {
     function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
     window.addEventListener('ff-leaderboard-changed', onChange)
     return () => window.removeEventListener('ff-leaderboard-changed', onChange)
+  }, [])
+  useEffect(() => {
+    function onSprintChanged() {
+      setSprint(loadSprint())
+      setHistory(loadHistory())
+    }
+    window.addEventListener('ff-sprint-changed', onSprintChanged)
+    return () => window.removeEventListener('ff-sprint-changed', onSprintChanged)
   }, [])
   useEffect(() => {
     if (leaderboardModalOpen) sessionStorage.setItem('ff_modal_leaderboard', '1')
@@ -368,3 +380,32 @@ export function SprintBoard() {
     </>
   )
 }
+
+// ── Firestore sync registration ──────────────────────────────────────────────
+
+registerCollect(() => ({
+  sprint: loadSprint(),
+  sprintHistory: loadHistory(),
+}))
+
+registerHydrate((d: UserDoc) => {
+  let changed = false
+  if ('sprint' in d) {
+    const remote = JSON.stringify(d.sprint ?? null)
+    const local = localStorage.getItem(KEY) || 'null'
+    if (remote !== local) {
+      if (d.sprint) localStorage.setItem(KEY, remote)
+      else localStorage.removeItem(KEY)
+      changed = true
+    }
+  }
+  if (Array.isArray(d.sprintHistory)) {
+    const remote = JSON.stringify(d.sprintHistory)
+    const local = localStorage.getItem(HISTORY_KEY) || '[]'
+    if (remote !== local) {
+      localStorage.setItem(HISTORY_KEY, remote)
+      changed = true
+    }
+  }
+  if (changed) window.dispatchEvent(new CustomEvent('ff-sprint-changed'))
+})
