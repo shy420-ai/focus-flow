@@ -84,6 +84,12 @@ export function tabIcon(id: CurView): ReactNode {
           <path d="M14 19c.4-2.2 2-3.5 4-3.5s3.6 1.3 4 3.5" />
         </svg>
       )
+    case 'mood':
+      return (
+        <svg {...sharedProps}>
+          <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" fill="currentColor" fillOpacity=".25" />
+        </svg>
+      )
     default:
       return null
   }
