@@ -36,6 +36,31 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'Barkley (2014) ADHD and Executive Functions',
     tags: ['시작', '환경디자인', '실전'],
   },
+  {
+    id: 'sleep-on-it',
+    title: '결정·대화는 자고 나서',
+    category: 'mood',
+    summary: '잠 부족 = 편도체 60% ↑ + 전전두엽 ↓. 후회할 결정의 공식.',
+    sections: [
+      {
+        icon: '😔',
+        title: '문제',
+        body: '잠 부족하면 편도체(감정 회로) 활성도가 정상보다 약 60% 높아짐.\n동시에 전전두엽(이성·판단)은 둔해짐.\n→ 분노·불안에 휘둘려서 후회할 결정을 내리기 쉬움.\nADHD는 수면 부족 영향이 신경전형인보다 약 2배.',
+      },
+      {
+        icon: '💡',
+        title: '해결',
+        body: '큰 결정·민감한 대화는 자고 일어난 다음 날로 미루기.\nREM 수면 중 뇌가 감정 강도를 자동으로 낮춤 — "수면이 감정을 정리".\n하룻밤 자면 같은 일도 무게가 다르게 느껴짐.',
+      },
+      {
+        icon: '🎯',
+        title: '예시',
+        body: '• 화나는 카톡 → 답장 보류, 내일 아침에 다시 읽기\n• 큰 구매·해지·이직 → 24시간 룰 적용\n• 관계 끝낼지 결정 → 최소 하룻밤 자고\n• 다툼 후 사과/해명 메시지 → 새벽에 보내지 말고 자고 일어나서\n• 회의 후 격앙된 이메일 → 임시 저장, 다음 날 아침 재검토',
+      },
+    ],
+    source: 'Walker (2017) Why We Sleep; Yoo et al. (2007) The human emotional brain without sleep, Current Biology',
+    tags: ['수면', '결정', '감정조절'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
