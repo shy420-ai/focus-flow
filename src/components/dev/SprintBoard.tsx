@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { todayStr } from '../../lib/date'
 import { getXp, addXp, getLevel, xpInLevel } from '../../lib/xp'
 import { showMiniToast } from '../../lib/miniToast'
@@ -125,8 +125,18 @@ export function SprintBoard() {
     else sessionStorage.removeItem('ff_modal_leaderboard')
   }, [leaderboardModalOpen])
 
-  useEffect(() => { saveSprint(sprint) }, [sprint])
-  useEffect(() => { saveHistory(history) }, [history])
+  // Skip the initial mount so stale local data doesn't overwrite fresher
+  // Firestore data before the listener has a chance to hydrate.
+  const sprintMountedRef = useRef(false)
+  const historyMountedRef = useRef(false)
+  useEffect(() => {
+    if (!sprintMountedRef.current) { sprintMountedRef.current = true; return }
+    saveSprint(sprint)
+  }, [sprint])
+  useEffect(() => {
+    if (!historyMountedRef.current) { historyMountedRef.current = true; return }
+    saveHistory(history)
+  }, [history])
 
   function startSprint() {
     setSprint({ startDate: todayStr(), goals: [{ id: String(Date.now()), name: '', target: 10, unit: '회', current: 0 }] })
