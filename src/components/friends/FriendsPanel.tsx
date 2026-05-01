@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/AppStore'
-import { findUserByShareCode, setShareCode, pushGuestbook, loadUserDoc, listenUserDoc } from '../../lib/firestore'
+import { findUserByShareCode, setShareCode, pushGuestbook, listenUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showPrompt } from '../../lib/showPrompt'
@@ -112,7 +112,10 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadUserDoc(uid).then((d) => { setData(d); setLoading(false) }).catch(() => setLoading(false))
+    // Live subscription so the friend's edits (nickname, avatar, sprint
+    // progress, day mode, guestbook) reflect without manual refresh.
+    const unsub = listenUserDoc(uid, (d) => { setData(d); setLoading(false) })
+    return () => unsub()
   }, [uid])
 
   async function postGuestbook() {
@@ -132,7 +135,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       fromUid: myUid,
     }
     await pushGuestbook(uid, entry)
-    loadUserDoc(uid).then((d) => setData(d)).catch(() => {})
+    // listenUserDoc handles refreshing data — no explicit reload needed.
   }
 
   if (loading) return <div style={{ textAlign: 'center', padding: 20, color: '#aaa' }}>불러오는 중...</div>
@@ -342,26 +345,22 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
   }, [uid, myCode])
 
   useEffect(() => {
-    let cancelled = false
-    Promise.all(friends.map(async (f) => {
-      try {
-        const d = await loadUserDoc(f.uid)
-        return {
-          uid: f.uid,
-          lastActiveAt: d?.lastActiveAt as string | undefined,
-          nickname: d?.nickname as string | undefined,
-          avatar: d?.avatar as string | undefined,
-        }
-      } catch {
-        return { uid: f.uid }
-      }
-    })).then((results) => {
-      if (cancelled) return
-      const next: Record<string, { lastActiveAt?: string; nickname?: string; avatar?: string }> = {}
-      for (const r of results) next[r.uid] = { lastActiveAt: r.lastActiveAt, nickname: r.nickname, avatar: r.avatar }
-      setFriendStatuses(next)
-    })
-    return () => { cancelled = true }
+    // Subscribe to each friend's doc so nickname/avatar/lastActiveAt updates
+    // land in real time. Cleans up its listeners when the friends list
+    // changes or the panel unmounts.
+    const unsubs = friends.map((f) =>
+      listenUserDoc(f.uid, (d) => {
+        setFriendStatuses((prev) => ({
+          ...prev,
+          [f.uid]: {
+            lastActiveAt: d.lastActiveAt as string | undefined,
+            nickname: d.nickname as string | undefined,
+            avatar: d.avatar as string | undefined,
+          },
+        }))
+      }),
+    )
+    return () => { unsubs.forEach((u) => u()) }
   }, [friends])
 
   // Subscribe to my own guestbook so new messages from friends show up
