@@ -80,7 +80,7 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" fill="currentColor" fillOpacity=".25" />
     </svg>
   ) },
-  { id: 'tips', label: '노하우', icon: (
+  { id: 'tips', label: '정보', icon: (
     // open book — wiki/tips
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <path d="M2 4h7a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H2z" fill="currentColor" fillOpacity=".2" />

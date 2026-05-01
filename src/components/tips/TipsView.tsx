@@ -22,7 +22,7 @@ export function TipsView() {
         padding: '14px 18px',
         marginBottom: 12,
       }}>
-        <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>📚 ADHD 노하우</div>
+        <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>📚 ADHD 정보</div>
         <div style={{ fontSize: 11, color: '#888' }}>카테고리별로 정리된 팁 모음</div>
       </div>
 
