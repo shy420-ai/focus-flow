@@ -16,20 +16,40 @@ export interface TipComment {
 export interface TipFeedback {
   likes: string[]      // user uids
   comments: TipComment[]
+  // commentId → list of uids who hearted it. Stored as a map so we can
+  // arrayUnion/arrayRemove on a single comment without rewriting the
+  // whole comments array.
+  commentReactions?: Record<string, string[]>
 }
 
-const EMPTY: TipFeedback = { likes: [], comments: [] }
+const EMPTY: TipFeedback = { likes: [], comments: [], commentReactions: {} }
 
 export function listenTipFeedback(tipId: string, cb: (data: TipFeedback) => void): Unsubscribe {
   const db = getDb()
   return onSnapshot(doc(db, 'tipFeedback', tipId), (snap) => {
     if (snap.exists()) {
       const d = snap.data() as Partial<TipFeedback>
-      cb({ likes: d.likes ?? [], comments: d.comments ?? [] })
+      cb({ likes: d.likes ?? [], comments: d.comments ?? [], commentReactions: d.commentReactions ?? {} })
     } else {
       cb(EMPTY)
     }
   })
+}
+
+export async function setCommentReaction(tipId: string, commentId: string, uid: string, liked: boolean): Promise<void> {
+  const db = getDb()
+  const ref = doc(db, 'tipFeedback', tipId)
+  const path = `commentReactions.${commentId}`
+  if (liked) {
+    try { await updateDoc(ref, { [path]: arrayUnion(uid) }) }
+    catch {
+      // doc missing → seed it
+      await setDoc(ref, { commentReactions: { [commentId]: [uid] } }, { merge: true })
+    }
+  } else {
+    try { await updateDoc(ref, { [path]: arrayRemove(uid) }) }
+    catch { /* doc missing, nothing to remove */ }
+  }
 }
 
 export async function setLike(tipId: string, uid: string, liked: boolean): Promise<void> {

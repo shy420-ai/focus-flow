@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useBackClose } from '../../hooks/useBackClose'
 import { useAppStore } from '../../store/AppStore'
 import { CATEGORY_META } from '../../data/adhdTips'
-import { listenTipFeedback, setLike, addComment, deleteComment, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
+import { listenTipFeedback, setLike, addComment, deleteComment, setCommentReaction, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
 import { recordTipView } from '../../lib/tipsViewLimit'
 import type { AdhdTip } from '../../types/adhdTip'
 
@@ -149,9 +149,21 @@ export function TipDetailModal({ tip, onClose }: Props) {
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 12 }}>
-                  {sortedComments.map((c) => (
-                    <CommentRow key={c.id} comment={c} mine={c.fromUid === uid} onDelete={() => deleteComment(tip.id, c).catch(console.error)} />
-                  ))}
+                  {sortedComments.map((c) => {
+                    const reactors = fb.commentReactions?.[c.id] ?? []
+                    const reacted = reactors.includes(uid)
+                    return (
+                      <CommentRow
+                        key={c.id}
+                        comment={c}
+                        mine={c.fromUid === uid}
+                        reactedCount={reactors.length}
+                        reacted={reacted}
+                        onReact={() => setCommentReaction(tip.id, c.id, uid, !reacted).catch(console.error)}
+                        onDelete={() => deleteComment(tip.id, c).catch(console.error)}
+                      />
+                    )
+                  })}
                 </div>
               )}
 
@@ -180,7 +192,16 @@ export function TipDetailModal({ tip, onClose }: Props) {
   )
 }
 
-function CommentRow({ comment, mine, onDelete }: { comment: TipComment; mine: boolean; onDelete: () => void }) {
+interface CommentRowProps {
+  comment: TipComment
+  mine: boolean
+  reactedCount: number
+  reacted: boolean
+  onReact: () => void
+  onDelete: () => void
+}
+
+function CommentRow({ comment, mine, reactedCount, reacted, onReact, onDelete }: CommentRowProps) {
   const rel = relativeTime(comment.ts)
   return (
     <div style={{ background: '#fafafa', borderRadius: 12, padding: '8px 12px', border: '1px solid #f0f0f0' }}>
@@ -195,7 +216,27 @@ function CommentRow({ comment, mine, onDelete }: { comment: TipComment; mine: bo
           >✕</button>
         )}
       </div>
-      <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{comment.text}</div>
+      <div style={{ fontSize: 12, color: '#444', lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 6 }}>{comment.text}</div>
+      <button
+        onClick={onReact}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 4,
+          padding: '3px 9px',
+          borderRadius: 99,
+          border: '1px solid ' + (reacted ? 'var(--pink)' : '#eee'),
+          background: reacted ? 'color-mix(in srgb, var(--pink) 15%, #fff)' : '#fff',
+          color: reacted ? 'var(--pink)' : '#888',
+          fontSize: 10,
+          fontWeight: 700,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+        }}
+      >
+        <span style={{ fontSize: 11 }}>{reacted ? '❤️' : '🤍'}</span>
+        공감 {reactedCount > 0 && reactedCount}
+      </button>
     </div>
   )
 }
