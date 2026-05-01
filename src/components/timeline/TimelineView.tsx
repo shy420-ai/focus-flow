@@ -8,7 +8,7 @@ import { EditBlockModal } from './EditBlockModal'
 import { getHoroscopeText } from '../../lib/saju'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
-import { showConfirm } from '../../lib/showConfirm'
+import { CopyDayModal } from './CopyDayModal'
 import { useBackClose } from '../../hooks/useBackClose'
 import { isDevMode } from '../../lib/devMode'
 import { queue } from '../../lib/syncManager'
@@ -103,6 +103,7 @@ export function TimelineView() {
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
   const [memoState, setMemoState] = useState<MemoSheetState | null>(null)
+  const [copyModalOpen, setCopyModalOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
   const [newBlockId, setNewBlockId] = useState<string | null>(null)
   const [nudgeBar, setNudgeBar] = useState<{ text: string; type: string } | null>(null)
@@ -355,7 +356,7 @@ export function TimelineView() {
           </div>
         )
       })()}
-      {/* Copy yesterday's schedule when today has nothing yet */}
+      {/* Copy yesterday's schedule (with selection) when today is empty */}
       {(() => {
         const todayBlocks = blocks.filter((b) => b.date === curDate && !b.isBuf && (b.type === 'timeline' || !b.type))
         if (todayBlocks.length > 0) return null
@@ -364,21 +365,7 @@ export function TimelineView() {
         if (yesterdayBlocks.length === 0) return null
         return (
           <button
-            onClick={async () => {
-              const ok = await showConfirm(`어제 일정 ${yesterdayBlocks.length}개를 오늘로 복사할까?`)
-              if (!ok) return
-              const addBlock = useAppStore.getState().addBlock
-              for (const b of yesterdayBlocks) {
-                addBlock({
-                  ...b,
-                  id: String(Date.now() + Math.random()),
-                  date: curDate,
-                  done: false,
-                  memo: b.memo || '',
-                })
-              }
-              showMiniToast(`📋 ${yesterdayBlocks.length}개 복사 완료`)
-            }}
+            onClick={() => setCopyModalOpen(true)}
             style={{
               width: '100%', padding: '12px 14px', borderRadius: 14,
               border: '1.5px dashed var(--pink)',
@@ -391,11 +378,11 @@ export function TimelineView() {
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 18 }}>📋</span>
               <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                <span style={{ fontSize: 12, fontWeight: 700 }}>어제 일정 {yesterdayBlocks.length}개 그대로 가져오기</span>
-                <span style={{ fontSize: 10, color: '#888', fontWeight: 500 }}>가져온 뒤 몇 개만 수정해서 써도 ㅇㅋ</span>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>어제 일정 {yesterdayBlocks.length}개에서 골라 복사</span>
+                <span style={{ fontSize: 10, color: '#888', fontWeight: 500 }}>원하는 것만 체크해서 가져와</span>
               </span>
             </span>
-            <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 700 }}>복사</span>
+            <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 700 }}>골라 복사</span>
           </button>
         )
       })()}
@@ -620,6 +607,31 @@ export function TimelineView() {
 
       {/* Birthday modal */}
       {showBirthdayModal && <BirthdayModal onClose={() => setShowBirthdayModal(false)} />}
+
+      {/* Copy yesterday selection modal */}
+      {copyModalOpen && (() => {
+        const yesterday = addDays(curDate, -1)
+        const yesterdayBlocks = blocks.filter((b) => b.date === yesterday && !b.isBuf && (b.type === 'timeline' || !b.type))
+        return (
+          <CopyDayModal
+            sourceBlocks={yesterdayBlocks}
+            onClose={() => setCopyModalOpen(false)}
+            onCopy={(selected) => {
+              const addBlock = useAppStore.getState().addBlock
+              for (const b of selected) {
+                addBlock({
+                  ...b,
+                  id: String(Date.now() + Math.random()),
+                  date: curDate,
+                  done: false,
+                  memo: b.memo || '',
+                })
+              }
+              showMiniToast(`📋 ${selected.length}개 복사 완료`)
+            }}
+          />
+        )
+      })()}
 
       {/* Time label helper */}
       <div style={{ display: 'none' }}>

@@ -2,6 +2,8 @@ import type { Block } from '../../types/block'
 import { useAppStore } from '../../store/AppStore'
 import { showConfirm } from '../../lib/showConfirm'
 import { showPrompt } from '../../lib/showPrompt'
+import { showMiniToast } from '../../lib/miniToast'
+import { todayStr } from '../../lib/date'
 
 interface BlockMenuProps {
   block: Block
@@ -46,6 +48,27 @@ export function BlockMenu({ block, onClose, onMemo, onEdit }: BlockMenuProps) {
     )
   }
 
+  const isToday = block.date === todayStr()
+
+  function copyToToday(e: React.MouseEvent) {
+    stop(e)
+    const today = todayStr()
+    if (block.date === today) {
+      showMiniToast('이미 오늘 일정이야')
+      onClose()
+      return
+    }
+    useAppStore.getState().addBlock({
+      ...block,
+      id: String(Date.now() + Math.random()),
+      date: today,
+      done: false,
+      memo: block.memo || '',
+    })
+    showMiniToast('📋 오늘로 복사 완료')
+    onClose()
+  }
+
   return (
     <div className="block-menu">
       <button
@@ -60,6 +83,11 @@ export function BlockMenu({ block, onClose, onMemo, onEdit }: BlockMenuProps) {
       <button className="bmb bmb-memo" onClick={(e) => { stop(e); onMemo(block.id); onClose() }}>
         메모
       </button>
+      {!isToday && (
+        <button className="bmb bmb-memo" onClick={copyToToday}>
+          📋 오늘로 복사
+        </button>
+      )}
       <button className="bmb bmb-del" onClick={(e) => { stop(e); deleteBlock(block.id); onClose() }}>
         삭제
       </button>
