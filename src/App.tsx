@@ -34,6 +34,23 @@ function useIsDesktop() {
   return isDesktop
 }
 
+function loadHiddenTabs(): Set<string> {
+  try {
+    const arr = JSON.parse(localStorage.getItem('ff_hidden_tabs') || '[]') as string[]
+    return new Set(arr)
+  } catch { return new Set() }
+}
+
+function useTimelineHidden(): boolean {
+  const [hidden, setHidden] = useState(() => loadHiddenTabs().has('tl'))
+  useEffect(() => {
+    function refresh() { setHidden(loadHiddenTabs().has('tl')) }
+    window.addEventListener('ff-tabs-changed', refresh)
+    return () => window.removeEventListener('ff-tabs-changed', refresh)
+  }, [])
+  return hidden
+}
+
 function AppContent() {
   const curView = useAppStore((s) => s.curView)
   const isDesktop = useIsDesktop()
@@ -59,13 +76,31 @@ function AppContent() {
   // Right panel view on desktop: show cal when on timeline tab, otherwise the active tab
   const rightView = curView === 'tl' ? 'cal' : curView
 
+  // If the user hid 'tl' (via survey or settings) the desktop split layout
+  // would still pin the timeline on the left. Fall through to the mobile-
+  // style single-pane layout in that case so 일간 actually disappears.
+  const tlHidden = useTimelineHidden()
+
+  // If curView points at a hidden tab (because the user just hid it or the
+  // wizard removed it), auto-switch to the first visible tab so they don't
+  // get stranded on a view they can't navigate to.
+  useEffect(() => {
+    const hidden = loadHiddenTabs()
+    if (!hidden.has(curView)) return
+    const order: Array<typeof curView> = ['tl','week','cal','habit','goal','drop','stats','friends']
+    const fallback = order.find((t) => !hidden.has(t))
+    if (fallback && fallback !== curView) {
+      useAppStore.getState().setCurView(fallback)
+    }
+  }, [curView])
+
   return (
     <>
       <div style={{ position: 'sticky', top: 0, zIndex: 100 }}>
         <Header />
         <ViewTabs />
       </div>
-      {isDesktop && curView !== 'week' ? (
+      {isDesktop && curView !== 'week' && !tlHidden ? (
         <div className="desktop-layout">
           <div className="desktop-left">
             <DateNav />
