@@ -6,6 +6,8 @@ import { useMoodStore } from '../../store/MoodStore'
 import { MoodEntryModal } from './MoodEntryModal'
 import type { MoodEntry } from '../../types/mood'
 
+const DEFAULT_BGM_KEY = 'ff_mood_default_bgm'
+
 export function MoodView() {
   const today = todayStr()
   const daily = useMoodStore((s) => s.daily[today])
@@ -14,6 +16,14 @@ export function MoodView() {
   const deleteEntry = useMoodStore((s) => s.deleteEntry)
   const [editing, setEditing] = useState<MoodEntry | null>(null)
   const [showNew, setShowNew] = useState(false)
+  const [defaultBgm, setDefaultBgm] = useState(() => localStorage.getItem(DEFAULT_BGM_KEY) ?? '')
+  const [bgmOpen, setBgmOpen] = useState(false)
+
+  function saveBgm(v: string) {
+    setDefaultBgm(v)
+    if (v.trim()) localStorage.setItem(DEFAULT_BGM_KEY, v.trim())
+    else localStorage.removeItem(DEFAULT_BGM_KEY)
+  }
 
   const todayEntries = entries.filter((e) => e.date === today)
 
@@ -21,6 +31,29 @@ export function MoodView() {
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px' }}>
       <div style={{ fontSize: 13, color: 'var(--pd)', fontWeight: 700, marginBottom: 10 }}>
         💝 마음 — 너의 오늘 컨디션
+      </div>
+
+      {/* Default BGM (collapsible) — auto-plays when entry modal opens */}
+      <div style={{ background: '#fff', borderRadius: 10, padding: '8px 12px', marginBottom: 10, border: '1px solid #f5f5f5' }}>
+        <button
+          onClick={() => setBgmOpen((o) => !o)}
+          style={{ width: '100%', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+        >
+          <span style={{ fontSize: 11, color: '#666', fontWeight: 600 }}>🎵 기본 BGM {defaultBgm ? '(설정됨)' : '(없음)'}</span>
+          <span style={{ fontSize: 10, color: '#aaa' }}>{bgmOpen ? '접기' : '설정'}</span>
+        </button>
+        {bgmOpen && (
+          <div style={{ marginTop: 6 }}>
+            <input
+              type="text"
+              value={defaultBgm}
+              onChange={(e) => saveBgm(e.target.value)}
+              placeholder="https://youtu.be/... (일기 쓸 때 자동 재생)"
+              style={{ width: '100%', padding: '8px 10px', border: '1px solid #eee', borderRadius: 8, fontSize: 11, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
+            />
+            <div style={{ fontSize: 9, color: '#aaa', marginTop: 4 }}>각 기록마다 다른 곡 넣고 싶으면 모달 안에서 따로 설정</div>
+          </div>
+        )}
       </div>
 
       {/* Daily slider track */}

@@ -15,9 +15,12 @@ const EMOTION_GROUPS: Array<{ label: string; chips: string[] }> = [
 const DISTORTIONS: Array<{ id: string; label: string; hint: string }> = [
   { id: 'allornone', label: '흑백사고', hint: '다 망함 / 완벽 X면 실패' },
   { id: 'mindread', label: '마인드리딩', hint: '남이 비웃을 거야' },
-  { id: 'catastrophize', label: '파국화', hint: '커리어 끝남' },
+  { id: 'catastrophize', label: '파국화', hint: '커리어 끝남 / 인생 망함' },
   { id: 'selfblame', label: '자기비난', hint: '다 내 탓' },
-  { id: 'overgeneralize', label: '과잉일반화', hint: '항상 이래' },
+  { id: 'overgeneralize', label: '과잉일반화', hint: '나는 항상 이래' },
+  { id: 'emoreason', label: '감정적 추론', hint: '이렇게 느끼니까 사실일 거야' },
+  { id: 'should', label: '당위적 사고', hint: '꼭 ~해야만 해 / ~여야 돼' },
+  { id: 'labeling', label: '라벨링', hint: '나는 실패자 / 멍청이' },
 ]
 
 const REFRAME_TEMPLATES: Array<{ label: string; text: string }> = [
@@ -33,7 +36,10 @@ const ACTION_TEMPLATES: Array<{ label: string; text: string }> = [
   { label: '환경 바꾸기', text: '[____] 트리거 막으려면 [____] 한다' },
   { label: '셀프케어', text: '오늘 [수면/식사/휴식] 챙기기' },
   { label: '소통', text: '[누구]에게 [____]를 말해본다' },
-  { label: '그냥 통과', text: '이번 건 그냥 흘려보낸다 / 안고 간다' },
+  { label: '도움 요청', text: '혼자 안고 가지 말고 [누구]한테 한 줄 보내기' },
+  { label: '몸 움직이기', text: '5분만 [산책/스트레칭/물 마시기]' },
+  { label: '거리 두기', text: '오늘은 [SNS/그 사람/그 채팅] 잠깐 끄기' },
+  { label: '자기 위로', text: '나한테 "[____]" 라고 말해주기' },
 ]
 
 interface Props {
@@ -56,7 +62,9 @@ export function MoodEntryModal({ entry, onClose }: Props) {
   const [nextAction, setNextAction] = useState(entry?.nextAction ?? '')
   const [distressBefore] = useState<number | undefined>(entry?.distressBefore ?? entry?.intensity ?? undefined)
   const [distressAfter, setDistressAfter] = useState<number | undefined>(entry?.distressAfter)
-  const [youtubeUrl, setYoutubeUrl] = useState(entry?.youtubeUrl ?? '')
+  const [youtubeUrl, setYoutubeUrl] = useState(
+    entry?.youtubeUrl ?? localStorage.getItem('ff_mood_default_bgm') ?? ''
+  )
 
   function toggleChip(arr: string[], v: string, setter: (next: string[]) => void) {
     setter(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
@@ -88,7 +96,7 @@ export function MoodEntryModal({ entry, onClose }: Props) {
     onClose()
   }
 
-  const embedSrc = ytEmbed(youtubeUrl)
+  const embedSrc = ytEmbed(youtubeUrl, true)  // autoplay enabled
 
   return (
     <div
@@ -105,6 +113,16 @@ export function MoodEntryModal({ entry, onClose }: Props) {
         </div>
 
         <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* BGM at top — autoplays so the music starts as the modal opens */}
+          {embedSrc && (
+            <iframe
+              src={embedSrc}
+              title="BGM"
+              style={{ width: '100%', height: 80, border: 'none', borderRadius: 10 }}
+              allow="autoplay; encrypted-media"
+            />
+          )}
+
           {/* 1. 상황 */}
           <Section title="1. 상황" hint="사실 한 줄. 평가·해석 X.">
             <textarea
@@ -273,8 +291,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
             )}
           </Section>
 
-          {/* YouTube BGM */}
-          <Section title="🎵 BGM" hint="(선택) 유튜브 링크 넣으면 여기서 음악 흘러나와.">
+          {/* BGM URL (already playing at top — this is just the input) */}
+          <Section title="🎵 BGM 변경" hint="(선택) 다른 곡으로 바꾸려면 여기에 링크.">
             <input
               type="text"
               value={youtubeUrl}
@@ -282,15 +300,13 @@ export function MoodEntryModal({ entry, onClose }: Props) {
               placeholder="https://youtu.be/..."
               style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #e8e8e8', borderRadius: 10, fontSize: 12, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box' }}
             />
-            {embedSrc && (
-              <iframe
-                src={embedSrc}
-                title="BGM"
-                style={{ width: '100%', height: 80, border: 'none', borderRadius: 10, marginTop: 8 }}
-                allow="autoplay; encrypted-media"
-              />
-            )}
           </Section>
+
+          {/* Bottom save — easier than scrolling back to top */}
+          <button
+            onClick={save}
+            style={{ marginTop: 4, padding: 14, borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px color-mix(in srgb, var(--pink) 40%, transparent)' }}
+          >저장 ✓</button>
         </div>
       </div>
     </div>
@@ -356,7 +372,7 @@ const passCardStyle: React.CSSProperties = {
   gap: 3,
 }
 
-function ytEmbed(url: string): string | null {
+function ytEmbed(url: string, autoplay = false): string | null {
   if (!url.trim()) return null
   // Accept youtu.be/<id>, youtube.com/watch?v=<id>, youtube.com/embed/<id>
   const m =
@@ -364,5 +380,6 @@ function ytEmbed(url: string): string | null {
     url.match(/[?&]v=([\w-]{6,})/) ||
     url.match(/youtube\.com\/embed\/([\w-]{6,})/)
   if (!m) return null
-  return `https://www.youtube.com/embed/${m[1]}`
+  const params = autoplay ? '?autoplay=1' : ''
+  return `https://www.youtube.com/embed/${m[1]}${params}`
 }
