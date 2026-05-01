@@ -14,6 +14,8 @@ interface PomoState {
   running: boolean
   todayCount: number
   countDate: string
+  totalCount: number   // lifetime completed work pomos
+  totalMinutes: number // lifetime total work time accumulated
 }
 
 function loadState(): PomoState {
@@ -29,9 +31,11 @@ function loadState(): PomoState {
       running: false, // never restore running state
       todayCount: saved.countDate === today ? (saved.todayCount ?? 0) : 0,
       countDate: today,
+      totalCount: saved.totalCount ?? 0,
+      totalMinutes: saved.totalMinutes ?? 0,
     }
   } catch {
-    return { workMin: 25, breakMin: 5, seconds: 25 * 60, phase: 'work', running: false, todayCount: 0, countDate: todayStr() }
+    return { workMin: 25, breakMin: 5, seconds: 25 * 60, phase: 'work', running: false, todayCount: 0, countDate: todayStr(), totalCount: 0, totalMinutes: 0 }
   }
 }
 
@@ -41,9 +45,18 @@ function saveState(s: PomoState) {
 
 // Sync the lock-mode preference across devices so toggling it on phone
 // also turns it on for desktop / iPad next time they open the app.
+// Lifetime totals (totalCount / totalMinutes) also sync so accumulated
+// stats follow the user across devices.
 registerCollect(() => {
+  const out: Partial<UserDoc> = {}
   const v = localStorage.getItem('ff_pomo_lock')
-  return v === '1' ? { pomoLock: true } : v === '0' ? { pomoLock: false } : {}
+  if (v === '1' || v === '0') out.pomoLock = v === '1'
+  try {
+    const saved = JSON.parse(localStorage.getItem('ff_pomo_v2') || '{}') as Partial<{ totalCount: number; totalMinutes: number }>
+    if (typeof saved.totalCount === 'number') out.pomoTotalCount = saved.totalCount
+    if (typeof saved.totalMinutes === 'number') out.pomoTotalMinutes = saved.totalMinutes
+  } catch { /* ignore */ }
+  return out
 })
 
 registerHydrate((d: UserDoc) => {
@@ -53,6 +66,23 @@ registerHydrate((d: UserDoc) => {
       localStorage.setItem('ff_pomo_lock', want)
       window.dispatchEvent(new CustomEvent('ff-pomo-lock-changed'))
     }
+  }
+  // Merge lifetime totals: keep the larger value across devices.
+  if (typeof d.pomoTotalCount === 'number' || typeof d.pomoTotalMinutes === 'number') {
+    try {
+      const saved = JSON.parse(localStorage.getItem('ff_pomo_v2') || '{}')
+      const localCount = typeof saved.totalCount === 'number' ? saved.totalCount : 0
+      const localMins = typeof saved.totalMinutes === 'number' ? saved.totalMinutes : 0
+      const remoteCount = typeof d.pomoTotalCount === 'number' ? d.pomoTotalCount : 0
+      const remoteMins = typeof d.pomoTotalMinutes === 'number' ? d.pomoTotalMinutes : 0
+      let changed = false
+      if (remoteCount > localCount) { saved.totalCount = remoteCount; changed = true }
+      if (remoteMins > localMins) { saved.totalMinutes = remoteMins; changed = true }
+      if (changed) {
+        localStorage.setItem('ff_pomo_v2', JSON.stringify(saved))
+        window.dispatchEvent(new CustomEvent('ff-pomo-total-changed'))
+      }
+    } catch { /* ignore */ }
   }
 })
 
@@ -81,11 +111,16 @@ export function PomoFab() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   // Lock mode: fullscreen overlay + leave-detection penalty.
   const [lockMode, setLockMode] = useState<boolean>(() => localStorage.getItem('ff_pomo_lock') === '1')
-  // Pick up cross-device toggle changes.
+  // Pick up cross-device toggle / total-count changes.
   useEffect(() => {
-    function refresh() { setLockMode(localStorage.getItem('ff_pomo_lock') === '1') }
-    window.addEventListener('ff-pomo-lock-changed', refresh)
-    return () => window.removeEventListener('ff-pomo-lock-changed', refresh)
+    function refreshLock() { setLockMode(localStorage.getItem('ff_pomo_lock') === '1') }
+    function refreshTotal() { setPomo(loadState()) }
+    window.addEventListener('ff-pomo-lock-changed', refreshLock)
+    window.addEventListener('ff-pomo-total-changed', refreshTotal)
+    return () => {
+      window.removeEventListener('ff-pomo-lock-changed', refreshLock)
+      window.removeEventListener('ff-pomo-total-changed', refreshTotal)
+    }
   }, [])
   const [exitedFlash, setExitedFlash] = useState(false)
   const unlockHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -162,10 +197,13 @@ export function PomoFab() {
       if (newSec === 0) {
         playChime()
         const today = todayStr()
-        const newCount = prev.phase === 'work'
+        const isWorkDone = prev.phase === 'work'
+        const newCount = isWorkDone
           ? (prev.countDate === today ? prev.todayCount + 1 : 1)
           : prev.todayCount
-        const newPhase: 'work' | 'break' = prev.phase === 'work' ? 'break' : 'work'
+        const newTotalCount = isWorkDone ? prev.totalCount + 1 : prev.totalCount
+        const newTotalMinutes = isWorkDone ? prev.totalMinutes + prev.workMin : prev.totalMinutes
+        const newPhase: 'work' | 'break' = isWorkDone ? 'break' : 'work'
         const nextSeconds = newPhase === 'work' ? prev.workMin * 60 : prev.breakMin * 60
         const next: PomoState = {
           ...prev,
@@ -174,6 +212,8 @@ export function PomoFab() {
           seconds: nextSeconds,
           todayCount: newCount,
           countDate: today,
+          totalCount: newTotalCount,
+          totalMinutes: newTotalMinutes,
         }
         saveState(next)
         return next
@@ -404,9 +444,12 @@ export function PomoFab() {
             </span>
           </button>
 
-          {/* Today count */}
-          <div className="pomo-count">
-            오늘 뽀모도로 {pomo.todayCount}회 완료 🍅
+          {/* Today count + lifetime total */}
+          <div className="pomo-count" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+            <span>오늘 {pomo.todayCount}회 🍅</span>
+            <span style={{ fontSize: 10, color: '#888' }}>
+              누적 {pomo.totalCount}회 · {(pomo.totalMinutes / 60).toFixed(1)}h
+            </span>
           </div>
         </div>
       )}

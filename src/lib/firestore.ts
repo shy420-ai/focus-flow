@@ -56,6 +56,8 @@ export interface UserDoc {
   bio?: string           // short profile message
   friendVisibility?: Record<string, boolean>  // which sections friends can see
   pomoLock?: boolean     // pomodoro lock mode preference
+  pomoTotalCount?: number  // lifetime completed work pomos
+  pomoTotalMinutes?: number  // lifetime accumulated work minutes
   shareCode?: string
   guestbook?: Array<Record<string, unknown>>
   metrics?: Record<string, unknown>[]
