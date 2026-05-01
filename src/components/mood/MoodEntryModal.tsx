@@ -54,6 +54,17 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     assemble: ([a, b]) => `"${a}" 진짜인지, ${b}`,
   },
   {
+    label: '증거 점검',
+    desc: '자동 사고 vs 사실의 증거·반증 (Beck CBT)',
+    example: '"또 망했다" — 증거: 발표 더듬음. 반증: 끝까지 마무리, 핵심 메시지 전달됨.',
+    slots: [
+      { label: '자동 사고', placeholder: '예: 또 망했다' },
+      { label: '증거 (그 생각을 뒷받침하는 사실)', placeholder: '예: 발표 더듬었음' },
+      { label: '반증 (그 생각과 안 맞는 사실)', placeholder: '예: 끝까지 마무리, 핵심은 전달됨' },
+    ],
+    assemble: ([a, b, c]) => `"${a}" — 증거: ${b} / 반증: ${c}`,
+  },
+  {
     label: '작게 부딪히기',
     desc: '피하던 거에 짧게 노출 (불안장애 1차 치료)',
     example: '회의 발언이 무서워 회피 중 → 다음 회의에서 한 마디만 해본다',
@@ -92,14 +103,14 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
     assemble: ([a]) => `1년 후에 이 일을 떠올리면 ${a} 정도일 것`,
   },
   {
-    label: '가치로 돌아가기',
-    desc: '감정 말고 내 가치에 맞춰 행동 (ACT)',
-    example: '내가 중요하게 여기는 "솔직한 관계" 따라서, 친구한테 미안하다고 말한다',
+    label: '본질적 가치로 돌아가기',
+    desc: '감정 말고 내 본질 가치에 맞춰 행동 (ACT)',
+    example: '내가 본질적으로 중요하게 여기는 "솔직한 관계" 따라서, 친구한테 미안하다고 말한다',
     slots: [
-      { label: '나에게 중요한 가치', placeholder: '예: 솔직한 관계' },
+      { label: '나에게 본질적인 가치', placeholder: '예: 솔직한 관계' },
       { label: '그 가치에 맞는 행동', placeholder: '예: 친구한테 미안하다고 말한다' },
     ],
-    assemble: ([a, b]) => `내가 중요하게 여기는 "${a}" 따라서, ${b}`,
+    assemble: ([a, b]) => `내가 본질적으로 중요하게 여기는 "${a}" 따라서, ${b}`,
   },
 ]
 
