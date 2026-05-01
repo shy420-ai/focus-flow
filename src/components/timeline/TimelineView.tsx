@@ -8,6 +8,7 @@ import { EditBlockModal } from './EditBlockModal'
 import { getHoroscopeText } from '../../lib/saju'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
+import { showConfirm } from '../../lib/showConfirm'
 import { useBackClose } from '../../hooks/useBackClose'
 import { isDevMode } from '../../lib/devMode'
 import { queue } from '../../lib/syncManager'
@@ -354,6 +355,51 @@ export function TimelineView() {
           </div>
         )
       })()}
+      {/* Copy yesterday's schedule when today has nothing yet */}
+      {(() => {
+        const todayBlocks = blocks.filter((b) => b.date === curDate && !b.isBuf && (b.type === 'timeline' || !b.type))
+        if (todayBlocks.length > 0) return null
+        const yesterday = addDays(curDate, -1)
+        const yesterdayBlocks = blocks.filter((b) => b.date === yesterday && !b.isBuf && (b.type === 'timeline' || !b.type))
+        if (yesterdayBlocks.length === 0) return null
+        return (
+          <button
+            onClick={async () => {
+              const ok = await showConfirm(`어제 일정 ${yesterdayBlocks.length}개를 오늘로 복사할까?`)
+              if (!ok) return
+              const addBlock = useAppStore.getState().addBlock
+              for (const b of yesterdayBlocks) {
+                addBlock({
+                  ...b,
+                  id: String(Date.now() + Math.random()),
+                  date: curDate,
+                  done: false,
+                  memo: b.memo || '',
+                })
+              }
+              showMiniToast(`📋 ${yesterdayBlocks.length}개 복사 완료`)
+            }}
+            style={{
+              width: '100%', padding: '12px 14px', borderRadius: 14,
+              border: '1.5px dashed var(--pink)',
+              background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))',
+              color: 'var(--pd)', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+              fontFamily: 'inherit', marginBottom: 10,
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}
+          >
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 18 }}>📋</span>
+              <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: 12, fontWeight: 700 }}>어제 일정 {yesterdayBlocks.length}개 그대로 가져오기</span>
+                <span style={{ fontSize: 10, color: '#888', fontWeight: 500 }}>가져온 뒤 몇 개만 수정해서 써도 ㅇㅋ</span>
+              </span>
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 700 }}>복사</span>
+          </button>
+        )
+      })()}
+
       {/* Past-hours collapse toggle — only visible on today's timeline */}
       {isToday && hiddenPastHours > 0 && (
         <button
