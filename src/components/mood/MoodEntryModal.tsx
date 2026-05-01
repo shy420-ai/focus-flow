@@ -41,7 +41,7 @@ const DISTORTION_GROUP_LABEL: Record<Distortion['group'], { label: string; color
 // CBT/ACT 검증된 기법만 선별. 카드 라벨/설명 + 구체 예시(이해용) +
 // 빈칸 폼(slots) — 카드 탭하면 빈칸만 채우는 폼이 떠서, 너 상황에
 // 맞는 문장이 자동 조립됨.
-type ActionSlot = { label: string; placeholder: string }
+type ActionSlot = { label: string; placeholder?: string; kind?: 'slider'; min?: number; max?: number }
 type ActionTemplate = {
   label: string
   desc: string
@@ -98,13 +98,13 @@ const ACTION_TEMPLATES: ActionTemplate[] = [
   },
   {
     label: '시간 거리 두기',
-    desc: '지금 vs 미래 무게 비교 (Self-Distancing)',
-    example: '지금: 머리 90% 잡고 있음 / 1년 후: 거의 안 떠오를 듯',
+    desc: '지금 vs 1년 후 무게 비교 (Self-Distancing)',
+    example: '지금 9/10 → 1년 후 1/10',
     slots: [
-      { label: '지금 이 일의 무게 (머리에 얼마나 차지해?)', placeholder: '예: 머리 90% 잡고 있음 / 잠도 못 잘 정도' },
-      { label: '1년 후 이 일의 무게 (그때 시점에서 보면?)', placeholder: '예: 거의 안 떠오를 듯 / 가끔 생각나는 추억 정도' },
+      { label: '지금 이 일의 무게 (0=신경 X, 10=잠도 못 잠)', kind: 'slider', min: 0, max: 10 },
+      { label: '1년 후 이 일의 무게 (0=완전히 잊음, 10=평생 가는 일)', kind: 'slider', min: 0, max: 10 },
     ],
-    assemble: ([a, b]) => `지금: ${a} / 1년 후: ${b}`,
+    assemble: ([a, b]) => `지금 ${a}/10 → 1년 후 ${b}/10`,
   },
   {
     label: '본질적 가치로 돌아가기',
@@ -183,14 +183,17 @@ export function MoodEntryModal({ entry, onClose }: Props) {
       return
     }
     setActiveTplIdx(idx)
-    setSlotVals(t.slots.map(() => ''))
+    // Slider slots default to mid-range; text slots stay empty
+    setSlotVals(t.slots.map((s) => s.kind === 'slider' ? String(Math.round(((s.min ?? 0) + (s.max ?? 10)) / 2)) : ''))
   }
 
   function commitSlots() {
     if (activeTplIdx == null) return
     const t = ACTION_TEMPLATES[activeTplIdx]
     if (!t.slots || !t.assemble) return
-    if (slotVals.some((v) => !v.trim())) return
+    // Slider values are always present; text slots must be non-empty
+    const missing = t.slots.some((s, i) => s.kind !== 'slider' && !slotVals[i]?.trim())
+    if (missing) return
     setNextAction(t.assemble(slotVals))
     setActiveTplIdx(null)
   }
@@ -440,33 +443,57 @@ export function MoodEntryModal({ entry, onClose }: Props) {
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
                   ✏️ {ACTION_TEMPLATES[activeTplIdx].label} — 빈칸만 채우면 돼
                 </div>
-                {ACTION_TEMPLATES[activeTplIdx].slots!.map((slot, i) => (
-                  <div key={i} style={{ marginBottom: 8 }}>
-                    <div style={{ fontSize: 10, color: '#666', fontWeight: 600, marginBottom: 4 }}>{slot.label}</div>
-                    <input
-                      type="text"
-                      value={slotVals[i] ?? ''}
-                      onChange={(e) => {
-                        const next = [...slotVals]
-                        next[i] = e.target.value
-                        setSlotVals(next)
-                      }}
-                      placeholder={slot.placeholder}
-                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: '#fff' }}
-                    />
-                  </div>
-                ))}
+                {ACTION_TEMPLATES[activeTplIdx].slots!.map((slot, i) => {
+                  const val = slotVals[i] ?? ''
+                  const onChange = (next: string) => {
+                    const arr = [...slotVals]
+                    arr[i] = next
+                    setSlotVals(arr)
+                  }
+                  return (
+                    <div key={i} style={{ marginBottom: 10 }}>
+                      <div style={{ fontSize: 10, color: '#666', fontWeight: 600, marginBottom: 4 }}>{slot.label}</div>
+                      {slot.kind === 'slider' ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '6px 10px', background: '#fff', borderRadius: 8 }}>
+                          <input
+                            type="range"
+                            min={slot.min ?? 0}
+                            max={slot.max ?? 10}
+                            value={val || String(Math.round(((slot.min ?? 0) + (slot.max ?? 10)) / 2))}
+                            onChange={(e) => onChange(e.target.value)}
+                            style={{ flex: 1, accentColor: 'var(--pink)' }}
+                          />
+                          <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', width: 32, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{val}/{slot.max ?? 10}</span>
+                        </div>
+                      ) : (
+                        <input
+                          type="text"
+                          value={val}
+                          onChange={(e) => onChange(e.target.value)}
+                          placeholder={slot.placeholder}
+                          style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: '#fff' }}
+                        />
+                      )}
+                    </div>
+                  )
+                })}
+                {(() => {
+                  const slots = ACTION_TEMPLATES[activeTplIdx].slots!
+                  const ready = slots.every((s, i) => s.kind === 'slider' || (slotVals[i] && slotVals[i].trim()))
+                  return (
                 <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
                   <button
                     onClick={commitSlots}
-                    disabled={slotVals.some((v) => !v.trim())}
-                    style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none', background: slotVals.every((v) => v.trim()) ? 'var(--pink)' : '#ddd', color: '#fff', fontSize: 12, fontWeight: 700, cursor: slotVals.every((v) => v.trim()) ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}
+                    disabled={!ready}
+                    style={{ flex: 1, padding: '8px 12px', borderRadius: 8, border: 'none', background: ready ? 'var(--pink)' : '#ddd', color: '#fff', fontSize: 12, fontWeight: 700, cursor: ready ? 'pointer' : 'not-allowed', fontFamily: 'inherit' }}
                   >이걸로 넣기</button>
                   <button
                     onClick={() => setActiveTplIdx(null)}
                     style={{ padding: '8px 12px', borderRadius: 8, border: '1px solid #ddd', background: '#fff', color: '#888', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }}
                   >취소</button>
                 </div>
+                  )
+                })()}
               </div>
             )}
 
