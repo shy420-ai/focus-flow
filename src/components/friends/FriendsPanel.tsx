@@ -291,7 +291,9 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         </>
       )}
 
-      {/* Guestbook */}
+      {/* Guestbook — hidden on self view (the parent 나 tab already shows
+          "내 방명록" above and there's no point writing to yourself). */}
+      {uid !== myUid && (<>
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', margin: '14px 0 6px' }}>💌 방명록</div>
       {guestbook.length === 0 ? (
         <div style={{ color: '#ccc', fontSize: 11, textAlign: 'center', padding: '8px 0' }}>아직 방명록이 없어. 첫 글을 남겨봐!</div>
@@ -313,8 +315,11 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         />
         <button onClick={postGuestbook} style={{ padding: '8px 14px', borderRadius: 10, background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>남기기</button>
       </div>
+      </>)}
 
-      <button onClick={onBack} style={{ marginTop: 16, width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--pl)', background: '#fff', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>← 돌아가기</button>
+      {uid !== myUid && (
+        <button onClick={onBack} style={{ marginTop: 16, width: '100%', padding: 10, borderRadius: 10, border: '1px solid var(--pl)', background: '#fff', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>← 돌아가기</button>
+      )}
     </div>
   )
 }
