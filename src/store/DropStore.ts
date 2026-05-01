@@ -10,14 +10,18 @@ interface DropState {
 }
 
 interface DropActions {
-  addItem: (name: string) => void
+  addItem: (name: string, opts?: { template?: string; tags?: string[] }) => void
   toggleDone: (id: number) => void
   deleteItem: (id: number) => void
-  editItem: (id: number, name: string) => void
+  editItem: (id: number, patch: Partial<DropItem>) => void
   reorder: (fromIdx: number, toIdx: number) => void
   clearDone: () => void
   clearAll: () => void
   shuffle: () => void
+  toggleStar: (id: number) => void
+  setNote: (id: number, note: string) => void
+  setTags: (id: number, tags: string[]) => void
+  setImage: (id: number, imageUrl: string | null) => void
 }
 
 type DropStore = DropState & DropActions
@@ -45,10 +49,17 @@ export const useDropStore = create<DropStore>()(
   immer((set, get) => ({
     items: readJSON<DropItem[]>('ff_drops', []),
 
-    addItem: (name) => {
+    addItem: (name, opts) => {
       if (!name.trim()) return
       set((state) => {
-        state.items.unshift({ id: Date.now(), name: name.trim(), done: false })
+        state.items.unshift({
+          id: Date.now(),
+          name: name.trim(),
+          done: false,
+          template: opts?.template,
+          tags: opts?.tags?.length ? opts.tags : undefined,
+          createdAt: Date.now(),
+        })
       })
       persist(get().items)
     },
@@ -73,10 +84,42 @@ export const useDropStore = create<DropStore>()(
       persist(get().items)
     },
 
-    editItem: (id, name) => {
+    editItem: (id, patch) => {
       set((state) => {
         const item = state.items.find((i) => i.id === id)
-        if (item) item.name = name
+        if (item) Object.assign(item, patch)
+      })
+      persist(get().items)
+    },
+
+    toggleStar: (id) => {
+      set((state) => {
+        const item = state.items.find((i) => i.id === id)
+        if (item) item.starred = !item.starred
+      })
+      persist(get().items)
+    },
+
+    setNote: (id, note) => {
+      set((state) => {
+        const item = state.items.find((i) => i.id === id)
+        if (item) item.note = note
+      })
+      persist(get().items)
+    },
+
+    setTags: (id, tags) => {
+      set((state) => {
+        const item = state.items.find((i) => i.id === id)
+        if (item) item.tags = tags.length ? tags : undefined
+      })
+      persist(get().items)
+    },
+
+    setImage: (id, imageUrl) => {
+      set((state) => {
+        const item = state.items.find((i) => i.id === id)
+        if (item) item.imageUrl = imageUrl || undefined
       })
       persist(get().items)
     },
