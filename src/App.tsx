@@ -12,6 +12,7 @@ import { WeekView } from './components/week/WeekView'
 import { PomoFab } from './components/pomo/PomoFab'
 import { StatsView } from './components/stats/StatsView'
 import { FriendsPanel } from './components/friends/FriendsPanel'
+import { MoodView } from './components/mood/MoodView'
 import { SurveyWizard } from './components/onboarding/SurveyWizard'
 import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
@@ -132,6 +133,7 @@ function AppContent() {
           {curView === 'cal' && <CalendarView />}
           {curView === 'stats' && <StatsView />}
           {curView === 'friends' && <FriendsPanel embedded />}
+          {curView === 'mood' && <MoodView />}
         </>
       )}
       <PomoFab />

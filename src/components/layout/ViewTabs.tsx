@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore, type CurView } from '../../store/AppStore'
 import { flushSync, registerCollect, registerHydrate } from '../../lib/syncManager'
+import { isDevMode } from '../../lib/devMode'
 import type { UserDoc } from '../../lib/firestore'
 
 const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = [
@@ -73,6 +74,12 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M14 19c.4-2.2 2-3.5 4-3.5s3.6 1.3 4 3.5" />
     </svg>
   ) },
+  { id: 'mood', label: '마음', icon: (
+    // heart with sparkle — emotion journal
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" fill="currentColor" fillOpacity=".25" />
+    </svg>
+  ) },
 ]
 
 const ORDER_KEY = 'ff_tab_order'
@@ -86,8 +93,15 @@ function loadHidden(): CurView[] {
   try { return JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]') } catch { return [] }
 }
 
+// Tabs that only appear when dev mode is enabled. Keeps unfinished
+// experiments out of regular users' navigation.
+const DEV_ONLY: CurView[] = ['mood']
+
 function getOrderedTabs(order: CurView[], hidden: CurView[]) {
-  const visible = ALL_TABS.filter((t) => !hidden.includes(t.id))
+  const dev = isDevMode()
+  const visible = ALL_TABS
+    .filter((t) => dev || !DEV_ONLY.includes(t.id))
+    .filter((t) => !hidden.includes(t.id))
   if (!order.length) return visible
   const ordered = order
     .map((id) => visible.find((t) => t.id === id))
@@ -148,7 +162,12 @@ export function ViewTabs() {
       setOrder(loadOrder())
     }
     window.addEventListener('ff-tabs-changed', onTabsChanged)
-    return () => window.removeEventListener('ff-tabs-changed', onTabsChanged)
+    // Also re-render when dev mode flips so dev-only tabs appear/disappear.
+    window.addEventListener('ff-dev-mode-changed', onTabsChanged)
+    return () => {
+      window.removeEventListener('ff-tabs-changed', onTabsChanged)
+      window.removeEventListener('ff-dev-mode-changed', onTabsChanged)
+    }
   }, [])
 
   const tabs = getOrderedTabs(order, hidden)
