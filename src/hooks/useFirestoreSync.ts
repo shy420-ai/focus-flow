@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useAppStore } from '../store/AppStore'
-import { startSync, stopSync } from '../lib/syncManager'
-import { bumpLastActive } from '../lib/profileSync'
+import { startSync, stopSync, flushSync } from '../lib/syncManager'
+import { bumpLastActive, setMyUid } from '../lib/profileSync'
 
 // Import stores to ensure their registerCollect/registerHydrate calls run
 import '../store/HabitStore'
@@ -20,9 +20,16 @@ export function useFirestoreSync(): void {
 
   useEffect(() => {
     if (uid && !skipLogin) {
+      setMyUid(uid)
       startSync(uid)
       bumpLastActive()
-      return () => stopSync()
+      // Push profile + shareCode immediately on sign-in so friends can find
+      // me by code without me having to open the friends tab first.
+      flushSync().catch(() => { /* offline ok */ })
+      return () => {
+        setMyUid(null)
+        stopSync()
+      }
     }
     return undefined
   }, [uid, skipLogin])

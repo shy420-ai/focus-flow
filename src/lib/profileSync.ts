@@ -10,6 +10,23 @@ function nowIso(): string {
   return new Date().toISOString()
 }
 
+// Deterministic 6-char share code derived from uid. Same as the one in
+// FriendsPanel — kept here so we can include it in collect at app start
+// without waiting for the user to open the friends tab.
+function shareCodeFromUid(uid: string): string {
+  let h = 0
+  for (let i = 0; i < uid.length; i++) {
+    h = ((h << 5) - h) + uid.charCodeAt(i)
+    h |= 0
+  }
+  return Math.abs(h).toString(36).toUpperCase().slice(0, 6)
+}
+
+let _myUid: string | null = null
+export function setMyUid(uid: string | null): void {
+  _myUid = uid
+}
+
 export function bumpLastActive(): void {
   localStorage.setItem(LAST_ACTIVE_KEY, nowIso())
   queue()
@@ -23,6 +40,10 @@ registerCollect(() => {
   }
   const lastActive = localStorage.getItem(LAST_ACTIVE_KEY)
   if (lastActive) out.lastActiveAt = lastActive
+  // Always publish my shareCode so friends can find me by it. Without
+  // this, users who never open the friends tab are unfindable — a
+  // common hangup when one half of the pair is testing.
+  if (_myUid) out.shareCode = shareCodeFromUid(_myUid)
   return out
 })
 
