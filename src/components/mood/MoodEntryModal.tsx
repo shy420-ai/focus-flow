@@ -1,10 +1,13 @@
 // CBT thought-record entry modal. All fields optional except situation
 // (so you can save a quick capture without finishing the full record).
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useBackClose } from '../../hooks/useBackClose'
 import { useMoodStore } from '../../store/MoodStore'
+import { showMiniToast } from '../../lib/miniToast'
 import { todayStr, pad } from '../../lib/date'
 import type { MoodEntry } from '../../types/mood'
+
+const SOFT_LIMIT_SEC = 300  // 5 minutes — gentle nudge, not enforced
 
 const EMOTION_GROUPS: Array<{ label: string; chips: string[] }> = [
   { label: '🌧 부정', chips: ['짜증', '분노', '억울함', '서운함', '불안', '걱정', '두려움', '긴장', '슬픔', '외로움', '공허함', '우울', '부끄러움', '죄책감', '자기혐오', '실망', '좌절', '답답함', '무기력'] },
@@ -65,6 +68,22 @@ export function MoodEntryModal({ entry, onClose }: Props) {
   const [youtubeUrl, setYoutubeUrl] = useState(
     entry?.youtubeUrl ?? localStorage.getItem('ff_mood_default_bgm') ?? ''
   )
+  // Soft 5-min timer — counts up from 0, nudges at 5:00 but never forces save.
+  const [elapsed, setElapsed] = useState(0)
+  useEffect(() => {
+    if (entry) return  // don't time edits — only fresh writes
+    const t = setInterval(() => {
+      setElapsed((s) => {
+        const next = s + 1
+        if (next === SOFT_LIMIT_SEC) {
+          showMiniToast('5분 됐어. 여기까지만 해도 충분 ✓')
+        }
+        return next
+      })
+    }, 1000)
+    return () => clearInterval(t)
+  }, [entry])
+  const overLimit = elapsed >= SOFT_LIMIT_SEC
 
   function toggleChip(arr: string[], v: string, setter: (next: string[]) => void) {
     setter(arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
@@ -103,11 +122,22 @@ export function MoodEntryModal({ entry, onClose }: Props) {
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(2px)', zIndex: 9300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
+      <style>{`@keyframes mood-pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }`}</style>
       <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 520, maxHeight: '92vh', overflowY: 'auto', boxShadow: '0 -8px 32px rgba(0,0,0,.18)' }}>
         <div style={{ padding: '14px 20px', borderBottom: '1px solid #f0f0f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, background: '#fff', zIndex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>💝 {entry ? '감정 기록 편집' : '새 감정 기록'}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>💝 {entry ? '감정 기록 편집' : '새 감정 기록'}</div>
+            {!entry && (
+              <span style={{ fontSize: 10, color: overLimit ? 'var(--pink)' : '#aaa', fontVariantNumeric: 'tabular-nums', fontWeight: overLimit ? 700 : 500 }}>
+                ⏱ {pad(Math.floor(elapsed / 60))}:{pad(elapsed % 60)}
+              </span>
+            )}
+          </div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button onClick={save} style={{ background: 'var(--pink)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>저장</button>
+            <button
+              onClick={save}
+              style={{ background: 'var(--pink)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', animation: overLimit ? 'mood-pulse 1.4s ease-in-out infinite' : undefined }}
+            >저장</button>
             <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
           </div>
         </div>
@@ -305,8 +335,8 @@ export function MoodEntryModal({ entry, onClose }: Props) {
           {/* Bottom save — easier than scrolling back to top */}
           <button
             onClick={save}
-            style={{ marginTop: 4, padding: 14, borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px color-mix(in srgb, var(--pink) 40%, transparent)' }}
-          >저장 ✓</button>
+            style={{ marginTop: 4, padding: 14, borderRadius: 12, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 4px 12px color-mix(in srgb, var(--pink) 40%, transparent)', animation: overLimit ? 'mood-pulse 1.4s ease-in-out infinite' : undefined }}
+          >{overLimit ? '저장 ✓ (5분 됐어, 충분해)' : '저장 ✓'}</button>
         </div>
       </div>
     </div>
