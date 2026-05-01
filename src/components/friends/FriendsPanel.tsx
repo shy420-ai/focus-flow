@@ -371,15 +371,27 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         else { emoji = '🫶'; msg = `${subject}, 오늘은 쉬어가도 괜찮아` }
         return (
           <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
               <span style={{ fontSize: 36, lineHeight: 1 }}>{emoji}</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 2 }}>{msg}</div>
-                <div style={{ fontSize: 11, color: '#888' }}>
-                  {doneCount}/{tasks.length} 완료 · ⏱ {totalH.toFixed(1)}h · {pct}%
-                </div>
+              <div style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>{msg}</div>
+            </div>
+
+            {/* Stat row — three pills, hour pill highlighted */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              <div style={{ flex: 1, background: '#fff', borderRadius: 10, padding: '8px 4px', textAlign: 'center' }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--pd)', lineHeight: 1.1 }}>{doneCount}<span style={{ fontSize: 11, color: '#aaa', fontWeight: 600 }}>/{tasks.length}</span></div>
+                <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>완료</div>
+              </div>
+              <div style={{ flex: 1.2, background: 'var(--pink)', borderRadius: 10, padding: '8px 4px', textAlign: 'center', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 30%, transparent)' }}>
+                <div style={{ fontSize: 18, fontWeight: 800, color: '#fff', lineHeight: 1.1 }}>⏱ {totalH.toFixed(1)}<span style={{ fontSize: 12, fontWeight: 700 }}>h</span></div>
+                <div style={{ fontSize: 9, color: '#fff', marginTop: 2, opacity: .9 }}>오늘 시간</div>
+              </div>
+              <div style={{ flex: 1, background: '#fff', borderRadius: 10, padding: '8px 4px', textAlign: 'center' }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--pink)', lineHeight: 1.1 }}>{pct}<span style={{ fontSize: 11, fontWeight: 600 }}>%</span></div>
+                <div style={{ fontSize: 9, color: '#888', marginTop: 2 }}>달성률</div>
               </div>
             </div>
+
             <div style={{ height: 8, background: '#fff', borderRadius: 4, overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 4, width: pct + '%', transition: 'width .3s' }} />
             </div>
