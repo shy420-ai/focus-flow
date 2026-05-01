@@ -46,7 +46,16 @@ export function LeaderboardModal({ onClose }: Props) {
         getTopXp(10),
         getRankSnapshot(uid, myXp, 5),
       ])
-      setTop(t)
+      // If the local view says I'm in the top 10 but Firestore replication
+      // hasn't caught up yet, splice me in at my computed rank with the
+      // local XP so I always see myself in the right spot.
+      let mergedTop = t
+      if (r.rank != null && r.rank <= 10 && !t.find((e) => e.uid === uid)) {
+        const me = { uid, nickname: myNickname, xp: myXp }
+        const insertAt = Math.min(Math.max(r.rank - 1, 0), t.length)
+        mergedTop = [...t.slice(0, insertAt), me, ...t.slice(insertAt)].slice(0, 10)
+      }
+      setTop(mergedTop)
       setRank(r.rank)
       setTotal(r.total)
       setAhead(r.ahead)
