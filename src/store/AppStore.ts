@@ -97,6 +97,16 @@ export const useAppStore = create<AppStore>()(
       set((state) => {
         state.blocks = state.blocks.filter((b) => b.id !== id)
       })
+      // Tombstone so a stale hydrate snapshot can't resurrect this block.
+      try {
+        const ts: string[] = JSON.parse(localStorage.getItem('ff_block_tombstones') || '[]')
+        if (!ts.includes(id)) {
+          ts.push(id)
+          // Cap to last 500 entries so the set doesn't grow unbounded.
+          const capped = ts.slice(-500)
+          localStorage.setItem('ff_block_tombstones', JSON.stringify(capped))
+        }
+      } catch { /* ignore */ }
       get().persistBlocks()
     },
 
@@ -295,10 +305,39 @@ registerCollect(() => {
 })
 
 registerHydrate((d: UserDoc) => {
-  const patch: Partial<{ blocks: Block[]; recurring: RecurringTask[] }> = {}
-  if (d.tasks) patch.blocks = migrateBlocks(d.tasks)
-  if (d.recurring) patch.recurring = d.recurring
-  if (Object.keys(patch).length) useAppStore.setState(patch)
+  // Append-only merge for tasks/recurring: keep every local entry, add
+  // remote ids we don't already have, and skip any tombstoned id. This
+  // stops stale Firestore snapshots from wiping a brand-new local block
+  // that hasn't flushed yet.
+  if (d.tasks) {
+    const local = useAppStore.getState().blocks
+    const localById = new Map(local.map((b) => [b.id, b]))
+    const tombstones: Set<string> = (() => {
+      try { return new Set(JSON.parse(localStorage.getItem('ff_block_tombstones') || '[]')) }
+      catch { return new Set<string>() }
+    })()
+    const merged: Block[] = [...local]
+    for (const r of d.tasks) {
+      if (localById.has(r.id)) continue
+      if (tombstones.has(r.id)) continue
+      merged.push(r)
+    }
+    if (merged.length !== local.length) {
+      useAppStore.setState({ blocks: migrateBlocks(merged) })
+      writeJSON('ff_v3', merged)
+    }
+  }
+  if (d.recurring) {
+    const local = useAppStore.getState().recurring
+    const localIds = new Set(local.map((r) => String(r.id)))
+    const merged = [...local]
+    for (const r of d.recurring) {
+      if (!localIds.has(String(r.id))) merged.push(r)
+    }
+    if (merged.length !== local.length) {
+      useAppStore.setState({ recurring: merged })
+    }
+  }
 })
 
 // 인박스에서 타임라인으로 이동할 때 쓰는 nid re-export

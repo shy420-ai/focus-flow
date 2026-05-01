@@ -5,7 +5,6 @@
  * Remote snapshot updates are applied via hydrate callbacks.
  */
 import { saveUserDoc, listenUserDoc, type UserDoc } from './firestore'
-import { migrateBlocks } from './migration'
 import type { Unsubscribe } from 'firebase/firestore'
 
 let _uid: string | null = null
@@ -87,14 +86,10 @@ function applyRemote(d: UserDoc) {
     cb(patchedD)
   }
 
-  // Apply to localStorage
-  if (d.tasks) {
-    const migrated = migrateBlocks(d.tasks)
-    try { localStorage.setItem('ff_v3', JSON.stringify(migrated)) } catch { /* ignore */ }
-  }
-  if (d.recurring) {
-    try { localStorage.setItem('ff_recurring', JSON.stringify(d.recurring)) } catch { /* ignore */ }
-  }
+  // tasks/recurring localStorage write is handled by AppStore's
+  // registerHydrate so the append-only merge with tombstones runs
+  // consistently. Direct overwrite here would ignore deletes/adds done
+  // locally before the hydrate landed.
   // drops localStorage write is handled by DropStore's registerHydrate so
   // tombstones are honored. Mirroring d.drops blindly here would resurrect
   // deleted ids on refresh.
