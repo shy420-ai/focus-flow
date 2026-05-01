@@ -1,6 +1,7 @@
 import type { AdhdTip, TipCategory } from '../types/adhdTip'
 
 export const CATEGORY_META: Record<TipCategory, { label: string; emoji: string; color: string }> = {
+  bookmarks: { label: '북마크', emoji: '⭐', color: '#F5B91E' },
   start: { label: '시작·집중', emoji: '🎯', color: '#FFB677' },
   study: { label: '학습', emoji: '🌀', color: '#9CB7FF' },
   mood: { label: '감정', emoji: '🧠', color: 'var(--pink)' },

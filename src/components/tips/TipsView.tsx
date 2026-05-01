@@ -1,14 +1,15 @@
 // ADHD wiki tab — dev-mode only for now. Categories + tip cards;
 // tap a card to see the full body in a modal.
 import { useState, useEffect } from 'react'
-import { CATEGORY_META, getCategoryTips } from '../../data/adhdTips'
+import { CATEGORY_META, getCategoryTips, ADHD_TIPS } from '../../data/adhdTips'
 import { TipDetailModal } from './TipDetailModal'
 import { ArchiveSection } from './ArchiveSection'
 import { TipsLockScreen } from './TipsLockScreen'
 import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsViewLimit'
+import { loadBookmarks, toggleBookmark } from '../../lib/tipBookmarks'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
-const CATS: TipCategory[] = ['start', 'study', 'mood', 'record', 'social', 'body', 'sleep', 'archive']
+const CATS: TipCategory[] = ['bookmarks', 'start', 'study', 'mood', 'record', 'social', 'body', 'sleep', 'archive']
 const ACTIVE_KEY = 'ff_tips_active_cat'
 
 function loadActive(): TipCategory {
@@ -26,7 +27,10 @@ export function TipsView() {
   const [locked, setLocked] = useState<boolean>(() => isLocked())
   const [viewed, setViewed] = useState<number>(() => getTipsViewedToday())
   const [limit, setLimit] = useState<number>(() => getEffectiveLimit())
-  const tips = getCategoryTips(active)
+  const [bookmarks, setBookmarks] = useState<string[]>(loadBookmarks)
+  const tips = active === 'bookmarks'
+    ? ADHD_TIPS.filter((t) => bookmarks.includes(t.id))
+    : getCategoryTips(active)
   const meta = CATEGORY_META[active]
 
   useEffect(() => {
@@ -35,8 +39,13 @@ export function TipsView() {
       setViewed(getTipsViewedToday())
       setLimit(getEffectiveLimit())
     }
+    function refreshBookmarks() { setBookmarks(loadBookmarks()) }
     window.addEventListener('ff-tips-view-changed', refresh)
-    return () => window.removeEventListener('ff-tips-view-changed', refresh)
+    window.addEventListener('ff-tip-bookmarks-changed', refreshBookmarks)
+    return () => {
+      window.removeEventListener('ff-tips-view-changed', refresh)
+      window.removeEventListener('ff-tip-bookmarks-changed', refreshBookmarks)
+    }
   }, [])
 
   return (
@@ -112,29 +121,49 @@ export function TipsView() {
       </div>
 
       {/* Archive is user-content; tips are hardcoded curation. Lock only
-          gates the curated tips, not the user's own archive. */}
+          gates the curated tips, not the user's own archive or bookmarks. */}
       {active === 'archive' ? (
         <ArchiveSection />
-      ) : locked ? (
+      ) : locked && active !== 'bookmarks' ? (
         <TipsLockScreen onUnlock={() => setLocked(false)} />
       ) : tips.length === 0 ? (
         <div style={{ background: 'color-mix(in srgb, var(--pl) 25%, #fff)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
-          아직 이 카테고리엔 팁이 없어<br />
-          <span style={{ fontSize: 10, color: '#bbb' }}>
-            (저작권 이슈 정리 후 시드 콘텐츠 추가 예정)
-          </span>
+          {active === 'bookmarks' ? (
+            <>
+              저장한 팁이 없어<br />
+              <span style={{ fontSize: 10, color: '#bbb' }}>
+                팁 카드 우측 ⭐ 눌러 북마크하기
+              </span>
+            </>
+          ) : (
+            <>
+              아직 이 카테고리엔 팁이 없어<br />
+              <span style={{ fontSize: 10, color: '#bbb' }}>
+                (저작권 이슈 정리 후 시드 콘텐츠 추가 예정)
+              </span>
+            </>
+          )}
         </div>
       ) : (
-        tips.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setSelected(t)}
-            style={{ display: 'block', width: '100%', textAlign: 'left', background: '#fff', borderRadius: 12, padding: '12px 14px', marginBottom: 6, border: '1px solid #f5f5f5', cursor: 'pointer', fontFamily: 'inherit', borderLeft: `3px solid ${meta.color}`, transition: 'transform .15s, box-shadow .15s' }}
-          >
-            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>{t.title}</div>
-            <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
-          </button>
-        ))
+        tips.map((t) => {
+          const cardMeta = CATEGORY_META[t.category]
+          const bookmarked = bookmarks.includes(t.id)
+          return (
+            <div
+              key={t.id}
+              onClick={() => setSelected(t)}
+              style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: '12px 38px 12px 14px', marginBottom: 6, border: '1px solid #f5f5f5', cursor: 'pointer', fontFamily: 'inherit', borderLeft: `3px solid ${cardMeta.color}`, transition: 'transform .15s, box-shadow .15s' }}
+            >
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>{t.title}</div>
+              <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleBookmark(t.id) }}
+                style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: 4, lineHeight: 1, color: bookmarked ? '#F5B91E' : '#ddd' }}
+                aria-label={bookmarked ? '북마크 해제' : '북마크'}
+              >{bookmarked ? '★' : '☆'}</button>
+            </div>
+          )
+        })
       )}
 
       {selected && <TipDetailModal tip={selected} onClose={() => setSelected(null)} />}

@@ -4,6 +4,7 @@ import { useAppStore } from '../../store/AppStore'
 import { CATEGORY_META } from '../../data/adhdTips'
 import { listenTipFeedback, setLike, addComment, deleteComment, setCommentReaction, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
 import { recordTipView } from '../../lib/tipsViewLimit'
+import { isBookmarked, toggleBookmark } from '../../lib/tipBookmarks'
 import type { AdhdTip } from '../../types/adhdTip'
 
 interface Props {
@@ -23,6 +24,12 @@ export function TipDetailModal({ tip, onClose }: Props) {
   // Which top-level comment is currently being replied to (id or null).
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
+  const [bookmarked, setBookmarked] = useState<boolean>(() => isBookmarked(tip.id))
+
+  function handleBookmark() {
+    toggleBookmark(tip.id)
+    setBookmarked(isBookmarked(tip.id))
+  }
 
   useEffect(() => {
     if (!uid) return
@@ -93,7 +100,14 @@ export function TipDetailModal({ tip, onClose }: Props) {
             <span style={{ fontSize: 14 }}>{meta.emoji}</span>
             <span style={{ fontSize: 11, color: meta.color, fontWeight: 700 }}>{meta.label}</span>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <button
+              onClick={handleBookmark}
+              style={{ background: 'none', border: 'none', color: bookmarked ? '#F5B91E' : '#ccc', fontSize: 20, cursor: 'pointer', padding: 4, fontFamily: 'inherit', lineHeight: 1 }}
+              aria-label={bookmarked ? '북마크 해제' : '북마크'}
+            >{bookmarked ? '★' : '☆'}</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4, fontFamily: 'inherit' }}>✕</button>
+          </div>
         </div>
 
         <div style={{ padding: 20 }}>
