@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useBackClose } from '../../hooks/useBackClose'
 import { useMoodStore } from '../../store/MoodStore'
 import { showMiniToast } from '../../lib/miniToast'
+import { loadAudioBlob, getAudioName } from '../../lib/moodAudio'
 import { todayStr, pad } from '../../lib/date'
 import type { MoodEntry } from '../../types/mood'
 
@@ -230,6 +231,26 @@ export function MoodEntryModal({ entry, onClose }: Props) {
 
   const embedSrc = ytEmbed(youtubeUrl, true)  // autoplay enabled
 
+  // mp3 BGM takes precedence over YouTube. Loaded from IndexedDB at mount;
+  // we create an Object URL so <audio> can stream it.
+  const [audioUrl, setAudioUrl] = useState<string | null>(null)
+  useEffect(() => {
+    let revokeUrl: string | null = null
+    let cancelled = false
+    if (getAudioName()) {
+      loadAudioBlob().then((blob) => {
+        if (cancelled || !blob) return
+        const url = URL.createObjectURL(blob)
+        revokeUrl = url
+        setAudioUrl(url)
+      })
+    }
+    return () => {
+      cancelled = true
+      if (revokeUrl) URL.revokeObjectURL(revokeUrl)
+    }
+  }, [])
+
   return (
     <div
       style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', backdropFilter: 'blur(2px)', zIndex: 9300, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
@@ -256,15 +277,24 @@ export function MoodEntryModal({ entry, onClose }: Props) {
         </div>
 
         <div style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* BGM at top — autoplays so the music starts as the modal opens */}
-          {embedSrc && (
+          {/* BGM at top — autoplays so the music starts as the modal opens.
+              mp3 file takes precedence over YouTube. */}
+          {audioUrl ? (
+            <audio
+              src={audioUrl}
+              autoPlay
+              loop
+              controls
+              style={{ width: '100%', borderRadius: 10 }}
+            />
+          ) : embedSrc ? (
             <iframe
               src={embedSrc}
               title="BGM"
               style={{ width: '100%', height: 80, border: 'none', borderRadius: 10 }}
               allow="autoplay; encrypted-media"
             />
-          )}
+          ) : null}
 
           {/* 1. 지금 상태 (per-entry slider snapshot) */}
           <Section title="1. 지금 상태" hint="이 순간 컨디션 — 슬라이더만 끌어도 OK.">

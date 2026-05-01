@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { todayStr } from '../../lib/date'
 import { useMoodStore } from '../../store/MoodStore'
+import { saveAudio, clearAudio, getAudioName } from '../../lib/moodAudio'
 import { MoodEntryModal } from './MoodEntryModal'
 import type { MoodEntry } from '../../types/mood'
 
@@ -44,6 +45,22 @@ export function MoodView() {
   const [defaultBgm, setDefaultBgm] = useState(() => localStorage.getItem(DEFAULT_BGM_KEY) ?? '')
   const [bgmTitle, setBgmTitle] = useState(() => localStorage.getItem(DEFAULT_BGM_TITLE_KEY) ?? '')
   const [bgmOpen, setBgmOpen] = useState(false)
+  const [audioName, setAudioName] = useState(() => getAudioName())
+
+  async function handleAudioUpload(file: File | null) {
+    if (!file) return
+    if (!file.type.startsWith('audio/')) return
+    await saveAudio(file)
+    setAudioName(file.name)
+    // Notify any open entry modal that the audio source changed.
+    window.dispatchEvent(new CustomEvent('ff-mood-audio-changed'))
+  }
+
+  async function handleAudioClear() {
+    await clearAudio()
+    setAudioName('')
+    window.dispatchEvent(new CustomEvent('ff-mood-audio-changed'))
+  }
 
   function saveBgm(v: string) {
     setDefaultBgm(v)
@@ -123,14 +140,42 @@ export function MoodView() {
         </button>
         {bgmOpen && (
           <div style={{ marginTop: 10, animation: 'mood-float-in .2s ease' }}>
+            {/* YouTube link */}
+            <div style={{ fontSize: 10, color: '#666', fontWeight: 600, marginBottom: 4 }}>유튜브 링크</div>
             <input
               type="text"
               value={defaultBgm}
               onChange={(e) => saveBgm(e.target.value)}
-              placeholder="https://youtu.be/... (일기 쓸 때 자동 재생)"
+              placeholder="https://youtu.be/..."
               style={{ width: '100%', padding: '10px 12px', border: '1.5px solid color-mix(in srgb, var(--pl) 80%, #fff)', borderRadius: 10, fontSize: 11, fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box', background: 'color-mix(in srgb, var(--pl) 25%, #fff)' }}
             />
-            <div style={{ fontSize: 10, color: '#aaa', marginTop: 6, lineHeight: 1.5 }}>각 기록마다 다른 곡 넣고 싶으면 모달 안에서 따로 설정해도 OK</div>
+
+            {/* MP3 file upload */}
+            <div style={{ fontSize: 10, color: '#666', fontWeight: 600, marginTop: 10, marginBottom: 4 }}>또는 mp3 파일 (광고 없음)</div>
+            {audioName ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'color-mix(in srgb, var(--pl) 35%, #fff)', borderRadius: 10, border: '1.5px solid color-mix(in srgb, var(--pl) 80%, #fff)' }}>
+                <span style={{ fontSize: 14 }}>🎵</span>
+                <span style={{ flex: 1, fontSize: 11, color: 'var(--pd)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{audioName}</span>
+                <button
+                  onClick={handleAudioClear}
+                  style={{ background: 'none', border: 'none', color: '#aaa', cursor: 'pointer', fontSize: 12, padding: 4, fontFamily: 'inherit' }}
+                >✕</button>
+              </div>
+            ) : (
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, padding: '10px', border: '1.5px dashed color-mix(in srgb, var(--pl) 80%, #fff)', borderRadius: 10, cursor: 'pointer', fontSize: 11, color: '#888', fontFamily: 'inherit' }}>
+                📁 mp3 파일 선택
+                <input
+                  type="file"
+                  accept="audio/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => { handleAudioUpload(e.target.files?.[0] ?? null); e.target.value = '' }}
+                />
+              </label>
+            )}
+
+            <div style={{ fontSize: 10, color: '#aaa', marginTop: 6, lineHeight: 1.5 }}>
+              {audioName ? '🎵 mp3가 우선 재생돼. 유튜브는 mp3 지우면 사용.' : '둘 다 설정하면 mp3 우선.'}
+            </div>
           </div>
         )}
       </div>
