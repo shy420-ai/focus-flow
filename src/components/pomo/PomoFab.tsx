@@ -430,18 +430,32 @@ export function PomoFab() {
           <button
             onClick={toggleLockMode}
             style={{
-              width: '100%', padding: '8px 10px', marginTop: 8, borderRadius: 10,
+              width: '100%', padding: '10px 12px', marginTop: 8, borderRadius: 10,
               border: '1.5px dashed ' + (lockMode ? 'var(--pink)' : '#ddd'),
               background: lockMode ? 'var(--pl)' : '#fff',
               color: lockMode ? 'var(--pd)' : '#888',
               fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4,
+              textAlign: 'left',
             }}
           >
-            <span>🔒 집중 잠금 모드 {lockMode ? 'ON' : 'OFF'}</span>
-            <span style={{ fontSize: 9, opacity: .7 }}>
-              {lockMode ? '시작하면 풀스크린 + 이탈 감지' : '시작 전에 켜야 작동'}
-            </span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>🔒 집중 잠금 모드</span>
+              <span style={{
+                width: 32, height: 16, borderRadius: 8,
+                background: lockMode ? 'var(--pink)' : '#ddd',
+                position: 'relative', transition: 'background .2s', flexShrink: 0,
+              }}>
+                <span style={{
+                  position: 'absolute', top: 2, ...(lockMode ? { right: 2 } : { left: 2 }),
+                  width: 12, height: 12, borderRadius: 6, background: '#fff',
+                  transition: 'all .2s',
+                }} />
+              </span>
+            </div>
+            <div style={{ fontSize: 10, opacity: .7, fontWeight: 500 }}>
+              {lockMode ? '시작하면 풀스크린 + 이탈 감지' : '시작 전에 켜야 작동해'}
+            </div>
           </button>
 
           {/* Today count + lifetime total */}
