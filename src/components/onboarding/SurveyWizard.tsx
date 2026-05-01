@@ -183,7 +183,7 @@ function OptCard({ active, onClick, emoji, label, sub, tag }: OptProps) {
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--pd)' }}>{label}</div>
           {tag && <span style={{ fontSize: 9, color: 'var(--pink)', background: '#FFF6F8', padding: '2px 6px', borderRadius: 6, fontWeight: 700, flexShrink: 0 }}>{tag}</span>}
         </div>
-        {sub && <div style={{ fontSize: 11, color: '#777', marginTop: 4, lineHeight: 1.6 }}>{sub}</div>}
+        {sub && <div style={{ fontSize: 11, color: '#777', marginTop: 4, lineHeight: 1.6, whiteSpace: 'pre-line' }}>{sub}</div>}
       </div>
     </button>
   )
