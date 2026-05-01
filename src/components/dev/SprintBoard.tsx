@@ -85,7 +85,7 @@ function daysBetween(a: string, b: string): number {
 }
 
 function goalPct(g: SprintGoal): number {
-  if (!g.target) return 0
+  if (!g.target || g.target <= 0) return 0
   return Math.min(100, Math.round((g.current / g.target) * 100))
 }
 
@@ -223,7 +223,14 @@ export function SprintBoard() {
     const next = Math.max(0, cur + delta)
     updateGoal(id, { current: next })
     if (next > cur) {
-      const result = addXp(5 * (next - cur))
+      // Per-tap XP: 5 per delta unit
+      let xpDelta = 5 * (next - cur)
+      // Milestone bonus when crossing target (only counts the first time per goal in this sprint)
+      if (g.target > 0 && cur < g.target && next >= g.target) {
+        xpDelta += 50
+        showMiniToast('🏆 목표 달성! +50 XP 보너스')
+      }
+      const result = addXp(xpDelta)
       setXp(result.newXp)
       if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
     }
@@ -279,7 +286,7 @@ export function SprintBoard() {
               <input
                 type="number"
                 value={g.target}
-                onChange={(e) => updateGoal(g.id, { target: Math.max(1, parseInt(e.target.value) || 1) })}
+                onChange={(e) => updateGoal(g.id, { target: Math.max(0, parseInt(e.target.value) || 0) })}
                 style={{ width: 46, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
               />
               <select
@@ -299,9 +306,10 @@ export function SprintBoard() {
             </div>
             <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
               <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>
-                {g.current}<span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>
+                {g.current}{g.target > 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>}
+                {g.target === 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}> {g.unit}</span>}
               </span>
-              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>
+              {g.target > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>}
             </div>
             <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
