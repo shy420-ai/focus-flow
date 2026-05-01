@@ -6,7 +6,7 @@ import { showConfirm } from '../../lib/showConfirm'
 import { LeaderboardModal } from './Leaderboard'
 import { UnitPickerModal } from './UnitPickerModal'
 import { isLeaderboardOn } from '../../lib/leaderboardPref'
-import { queue, registerCollect, registerHydrate } from '../../lib/syncManager'
+import { queue, flushSync, registerCollect, registerHydrate } from '../../lib/syncManager'
 import type { UserDoc } from '../../lib/firestore'
 
 const UNIT_LABEL: Record<string, string> = { '회': '회', '시간': 'h', '분': 'm', '페이지': 'p', '개': '개', '%': '%', '': '–' }
@@ -155,6 +155,15 @@ export function SprintBoard() {
     if (!historyMountedRef.current) { historyMountedRef.current = true; return }
     saveHistory(history)
   }, [history])
+
+  // On first mount, if we already have a sprint locally, force-publish it
+  // to Firestore. The mountedRef guards above suppress the auto-save, so
+  // without this an existing sprint can stay invisible to the friend
+  // self-preview until the user clicks +/- once.
+  useEffect(() => {
+    if (loadSprint()) flushSync().catch(() => { /* offline ok */ })
+     
+  }, [])
 
   function startSprint() {
     setSprint({ startDate: todayStr(), goals: [{ id: String(Date.now()), name: '', target: 10, unit: '회', current: 0 }] })
