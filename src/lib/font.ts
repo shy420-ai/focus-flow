@@ -106,6 +106,16 @@ async function ensurePresetLoaded(id: keyof typeof PRESETS): Promise<string> {
   return p.family
 }
 
+// Eagerly register every preset (and the custom one if present) so the
+// settings preview rows can render in their real font. Safe to call
+// repeatedly — each ensure* call short-circuits when already loaded.
+export async function preloadAllFonts(): Promise<void> {
+  await Promise.all([
+    ...Object.keys(PRESETS).map((id) => ensurePresetLoaded(id as keyof typeof PRESETS).catch(() => null)),
+    ensureCustomLoaded().catch(() => null),
+  ])
+}
+
 async function ensureCustomLoaded(): Promise<string | null> {
   const r = await loadCustomFont()
   if (!r) return null

@@ -14,7 +14,7 @@ import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
-import { getFontPref, setFontPref, listPresets, saveCustomFont, loadCustomFont, clearCustomFont, type FontPref } from '../../lib/font'
+import { getFontPref, setFontPref, listPresets, saveCustomFont, loadCustomFont, clearCustomFont, preloadAllFonts, type FontPref } from '../../lib/font'
 
 function relativeTime(ts: number): string {
   const diff = Date.now() - ts
@@ -105,9 +105,15 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [theme, setTheme] = useState<ThemeName>(getTheme())
   const [fontPref, setFontPrefState] = useState<FontPref>(getFontPref())
   const [customName, setCustomName] = useState<string | null>(null)
+  const [, setFontTick] = useState(0)
   useEffect(() => {
     loadCustomFont().then((r) => setCustomName(r?.fileName ?? null)).catch(() => { /* ignore */ })
   }, [fontPref])
+  // Eager load every preset so the preview rows render in their actual
+  // font. setFontTick() forces a re-render once loads finish.
+  useEffect(() => {
+    preloadAllFonts().then(() => setFontTick((n) => n + 1)).catch(() => { /* ignore */ })
+  }, [])
   const fontInputRef = useRef<HTMLInputElement | null>(null)
   async function pickFont(pref: FontPref) {
     if (pref === 'custom' && !customName) {
