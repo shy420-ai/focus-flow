@@ -58,15 +58,6 @@ export function Header() {
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <button
-          onClick={() => location.reload()}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#fff', opacity: .6, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-        >
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-            <path d="M8 2a6 6 0 1 0 5.29 3.15l1.42-.82A7.5 7.5 0 1 1 8 .5V2z"/>
-            <path d="M7 0l2.5 2.5L7 5V0z"/>
-          </svg>
-        </button>
-        <button
           onClick={() => setBellOpen((o) => !o)}
           style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: '#fff', opacity: .8, display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
           aria-label="알림"
