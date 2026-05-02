@@ -167,11 +167,10 @@ export function TipsView() {
               <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
               {(() => {
                 const c = counts[t.id]
-                if (!c || (c.bookmarks === 0 && c.likes === 0 && c.comments === 0)) return null
+                if (!c || (c.bookmarks === 0 && c.comments === 0)) return null
                 return (
                   <div style={{ display: 'flex', gap: 8, marginTop: 6, fontSize: 10, color: '#aaa', fontWeight: 600 }}>
                     {c.bookmarks > 0 && <span>🔖 {c.bookmarks}</span>}
-                    {c.likes > 0 && <span>❤️ {c.likes}</span>}
                     {c.comments > 0 && <span>💬 {c.comments}</span>}
                   </div>
                 )

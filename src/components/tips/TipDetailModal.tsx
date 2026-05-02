@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useBackClose } from '../../hooks/useBackClose'
 import { useAppStore } from '../../store/AppStore'
 import { CATEGORY_META } from '../../data/adhdTips'
-import { listenTipFeedback, setLike, addComment, deleteComment, setCommentReaction, recordTipRead, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
+import { listenTipFeedback, addComment, deleteComment, setCommentReaction, recordTipRead, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
 import { recordTipView } from '../../lib/tipsViewLimit'
 import { isBookmarked, toggleBookmark } from '../../lib/tipBookmarks'
 import { tipCategoryIcon } from './tipCategoryIcons'
@@ -49,13 +49,6 @@ export function TipDetailModal({ tip, onClose }: Props) {
     if (!uid) return
     recordTipRead(tip.id, uid).catch(() => { /* offline ok */ })
   }, [uid, tip.id])
-
-  const liked = !!uid && fb.likes.includes(uid)
-
-  function toggleLike() {
-    if (!uid) return
-    setLike(tip.id, uid, !liked).catch(console.error)
-  }
 
   function postComment() {
     if (!uid) return
@@ -161,31 +154,11 @@ export function TipDetailModal({ tip, onClose }: Props) {
             ※ 정보·교육 목적. 의료적 조언 아님 — 진단·치료는 전문의와.
           </div>
 
-          {/* Like + comments */}
+          {/* Comments */}
           {uid && (
             <div style={{ marginTop: 22, paddingTop: 16, borderTop: '1px solid #f0f0f0' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-                <button
-                  onClick={toggleLike}
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '8px 14px',
-                    borderRadius: 99,
-                    border: '1.5px solid ' + (liked ? 'var(--pink)' : '#eee'),
-                    background: liked ? 'color-mix(in srgb, var(--pink) 18%, #fff)' : '#fff',
-                    color: liked ? 'var(--pink)' : '#666',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>{liked ? '❤️' : '🤍'}</span>
-                  도움됐어 {fb.likes.length > 0 && fb.likes.length}
-                </button>
-                <span style={{ fontSize: 11, color: '#888', fontWeight: 600 }}>💬 {fb.comments.length}</span>
+                <span style={{ fontSize: 12, color: 'var(--pd)', fontWeight: 700 }}>💬 댓글 {fb.comments.length > 0 && fb.comments.length}</span>
               </div>
 
               {/* Comment list */}
