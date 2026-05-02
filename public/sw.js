@@ -1,4 +1,4 @@
-const CACHE = 'ff-react-v3'
+const CACHE = 'ff-react-v5'
 const BASE = new URL(self.registration.scope).pathname
 
 const STATIC = [
