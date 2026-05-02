@@ -5,9 +5,11 @@ import './styles/theme.css'
 import './styles/globals.css'
 import './styles/timeline.css'
 import { initTheme } from './lib/theme'
+import { applyFont } from './lib/font'
 import App from './App'
 
 initTheme()
+applyFont().catch(() => { /* font missing — fall back to system stack */ })
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

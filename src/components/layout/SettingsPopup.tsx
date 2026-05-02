@@ -14,6 +14,7 @@ import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
+import { getFontPref, setFontPref, listPresets, saveCustomFont, loadCustomFont, clearCustomFont, type FontPref } from '../../lib/font'
 
 function relativeTime(ts: number): string {
   const diff = Date.now() - ts
@@ -102,6 +103,46 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   }, [])
   useBackClose(true, onClose)
   const [theme, setTheme] = useState<ThemeName>(getTheme())
+  const [fontPref, setFontPrefState] = useState<FontPref>(getFontPref())
+  const [customName, setCustomName] = useState<string | null>(null)
+  useEffect(() => {
+    loadCustomFont().then((r) => setCustomName(r?.fileName ?? null)).catch(() => { /* ignore */ })
+  }, [fontPref])
+  const fontInputRef = useRef<HTMLInputElement | null>(null)
+  async function pickFont(pref: FontPref) {
+    if (pref === 'custom' && !customName) {
+      fontInputRef.current?.click()
+      return
+    }
+    setFontPrefState(pref)
+    setFontPref(pref)
+  }
+  async function onCustomFontFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!/\.(ttf|otf|woff2?|TTF|OTF|WOFF2?)$/.test(file.name)) {
+      showMiniToast('ttf / otf / woff 파일만 가능해')
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      showMiniToast('8MB 이하 파일만 가능해')
+      return
+    }
+    await saveCustomFont(file, file.name)
+    setCustomName(file.name)
+    setFontPrefState('custom')
+    setFontPref('custom')
+    showMiniToast('폰트 적용됨')
+  }
+  async function clearCustom() {
+    await clearCustomFont()
+    setCustomName(null)
+    if (fontPref === 'custom') {
+      setFontPrefState('default')
+      setFontPref('default')
+    }
+  }
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
   const [tlStart, setTlStart] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6'))
   const [tlEnd, setTlEnd] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6') + parseInt(localStorage.getItem(TL_HOURS_KEY) || '18'))
@@ -498,6 +539,57 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
             </button>
           )
         })}
+      </div>
+
+      {/* 폰트 */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>✏️ 글꼴</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+        {([
+          { id: 'default' as const, label: '기본 (시스템)', sample: '집중 → 흐름 7일' },
+          ...listPresets().map((p) => ({ id: p.id as FontPref, label: p.name, sample: '집중 → 흐름 7일' })),
+          { id: 'custom' as const, label: customName ? `📁 ${customName}` : '📁 직접 올린 폰트', sample: customName ? '집중 → 흐름 7일' : '+ ttf·otf·woff 파일 올리기' },
+        ]).map((opt) => {
+          const on = fontPref === opt.id
+          const family =
+            opt.id === 'leeseoyoon' ? "'Leeseoyoon', sans-serif" :
+            opt.id === 'dxmsub' ? "'DXMSubtitles', sans-serif" :
+            opt.id === 'custom' && customName ? "'CustomUserFont', sans-serif" :
+            'inherit'
+          return (
+            <div key={opt.id} style={{ display: 'flex', alignItems: 'stretch', gap: 6 }}>
+              <button
+                onClick={() => pickFont(opt.id)}
+                style={{
+                  flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2,
+                  padding: '8px 12px', borderRadius: 10,
+                  border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
+                  background: on ? 'color-mix(in srgb, var(--pink) 12%, #fff)' : '#fff',
+                  cursor: 'pointer', fontFamily: 'inherit', fontSize: 12,
+                  fontWeight: 600, color: 'var(--pd)', textAlign: 'left',
+                }}
+              >
+                <span style={{ fontSize: 11, fontWeight: 700, color: on ? 'var(--pink)' : '#888' }}>{opt.label}</span>
+                <span style={{ fontFamily: family, fontSize: 14, color: '#444' }}>{opt.sample}</span>
+              </button>
+              {opt.id === 'custom' && customName && (
+                <button onClick={clearCustom}
+                  style={{ width: 36, borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', color: '#bbb', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+                  aria-label="커스텀 폰트 삭제"
+                >✕</button>
+              )}
+            </div>
+          )
+        })}
+        <input
+          ref={fontInputRef}
+          type="file"
+          accept=".ttf,.otf,.woff,.woff2,font/*"
+          onChange={onCustomFontFile}
+          style={{ display: 'none' }}
+        />
+        <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', marginTop: 2 }}>
+          폰트는 이 기기에만 저장돼. 다른 기기에선 다시 골라야 해.
+        </div>
       </div>
 
       {/* 타임라인 범위 */}
