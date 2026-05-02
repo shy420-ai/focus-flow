@@ -99,9 +99,9 @@ function applyRemote(d: UserDoc) {
   if (d.roadmap) {
     try { localStorage.setItem('ff_roadmap', JSON.stringify(d.roadmap)) } catch { /* ignore */ }
   }
-  if (d.habits) {
-    try { localStorage.setItem('ff_habits', JSON.stringify(d.habits)) } catch { /* ignore */ }
-  }
+  // habits localStorage write is handled by HabitStore's registerHydrate
+  // so tombstones are honored. Mirroring d.habits blindly here would
+  // resurrect deleted ids on the next refresh.
   if (patchedD.habitLogs) {
     try { localStorage.setItem('ff_habitLogs', JSON.stringify(patchedD.habitLogs)) } catch { /* ignore */ }
   }
