@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
+import { useHabitStore } from '../../store/HabitStore'
 import { findUserByShareCode, setShareCode, pushGuestbook, deleteGuestbook, listenUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
@@ -279,6 +280,11 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const [replyText, setReplyText] = useState('')
   const [loading, setLoading] = useState(true)
   const chatScrollRef = useRef<HTMLDivElement | null>(null)
+  // Self-view: subscribe to local stores so changes reflect instantly
+  // without waiting for the 1.5s queue + Firestore round-trip.
+  const myBlocks = useAppStore((s) => s.blocks)
+  const myHabits = useHabitStore((s) => s.habits)
+  const myHabitLogs = useHabitStore((s) => s.habitLogs)
 
   useEffect(() => {
     // Live subscription so the friend's edits (nickname, avatar, sprint
@@ -356,9 +362,15 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   if (!data) return <div style={{ textAlign: 'center', padding: 20, color: '#aaa' }}>데이터를 불러올 수 없어요</div>
 
   const today = todayStr()
-  const tasks = (data.tasks || []).filter((b) => b.date === today && !b.isBuf && (b.type === 'timeline' || !b.type))
-  const habits = data.habits || []
-  const habitLogs: Record<string, Record<string, boolean>> = (data.habitLogs || {}) as Record<string, Record<string, boolean>>
+  // For self-view, prefer the live AppStore blocks so a check tap on the
+  // 일간 탭 reflects in the friend preview without the 1.5s flush delay.
+  const sourceBlocks = uid === myUid ? myBlocks : (data.tasks || [])
+  const tasks = sourceBlocks.filter((b) => b.date === today && !b.isBuf && (b.type === 'timeline' || !b.type))
+  const habits = uid === myUid ? myHabits : (data.habits || [])
+  const habitLogs: Record<string, Record<string, boolean>> = (uid === myUid
+    ? myHabitLogs
+    : (data.habitLogs || {})
+  ) as Record<string, Record<string, boolean>>
   const doneCount = tasks.filter((b) => b.done).length
   const totalH = tasks.reduce((s, b) => s + (b.durHour || 0), 0)
   const guestbook = (data.guestbook as Array<{ from: string; text: string; date?: string; time?: string }>) || []
