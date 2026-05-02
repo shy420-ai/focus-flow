@@ -1,8 +1,6 @@
-// Daily soft lock for the 정보 tab. Counts how many tips opened today;
-// past the limit, TipsView renders a lock screen with a 30s wait
-// override that grants a few more views before re-locking.
-import { isDevMode } from './devMode'
-
+// Daily soft lock for the 정보 tab — currently disabled (isLocked() always
+// returns false). View counts are still recorded so we can re-enable the
+// limit later without losing the telemetry.
 const VIEW_KEY = 'ff_tips_viewed_today'
 const OVERRIDE_KEY = 'ff_tips_override_today'
 const LIMIT_KEY = 'ff_tips_limit'
@@ -59,10 +57,8 @@ export function getEffectiveLimit(): number {
 }
 
 export function isLocked(): boolean {
-  // Dev mode bypasses the soft lock entirely — the author needs to scroll
-  // through everything while curating content.
-  if (isDevMode()) return false
-  return getTipsViewedToday() >= getEffectiveLimit()
+  // Soft lock disabled — read freely.
+  return false
 }
 
 export function recordTipView(): void {

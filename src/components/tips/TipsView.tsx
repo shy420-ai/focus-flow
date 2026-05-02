@@ -1,11 +1,9 @@
-// ADHD wiki tab — dev-mode only for now. Categories + tip cards;
-// tap a card to see the full body in a modal.
+// ADHD wiki tab. Categories + tip cards; tap a card to see the full
+// body in a modal.
 import { useState, useEffect } from 'react'
 import { CATEGORY_META, getCategoryTips, ADHD_TIPS, isTipNew } from '../../data/adhdTips'
 import { TipDetailModal } from './TipDetailModal'
 import { ArchiveSection } from './ArchiveSection'
-import { TipsLockScreen } from './TipsLockScreen'
-import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsViewLimit'
 import { loadBookmarks, toggleBookmark } from '../../lib/tipBookmarks'
 import { loadDeleted, deleteTip, restoreTip } from '../../lib/tipDeleted'
 import { isDevMode } from '../../lib/devMode'
@@ -28,14 +26,11 @@ export function TipsView() {
     localStorage.setItem(ACTIVE_KEY, c)
   }
   const [selected, setSelected] = useState<AdhdTip | null>(null)
-  const [locked, setLocked] = useState<boolean>(() => isLocked())
-  const [viewed, setViewed] = useState<number>(() => getTipsViewedToday())
-  const [limit, setLimit] = useState<number>(() => getEffectiveLimit())
   const [bookmarks, setBookmarks] = useState<string[]>(loadBookmarks)
   const [deleted, setDeleted] = useState<string[]>(loadDeleted)
   const dev = isDevMode()
   // Dev mode sees deleted tips (greyed out) so they can restore. Regular
-  // users (when 정보 tab graduates from dev) get them filtered out.
+  // users get them filtered out.
   const showDeleted = dev
   const baseTips = active === 'bookmarks'
     ? ADHD_TIPS.filter((t) => bookmarks.includes(t.id))
@@ -44,18 +39,11 @@ export function TipsView() {
   const meta = CATEGORY_META[active]
 
   useEffect(() => {
-    function refresh() {
-      setLocked(isLocked())
-      setViewed(getTipsViewedToday())
-      setLimit(getEffectiveLimit())
-    }
     function refreshBookmarks() { setBookmarks(loadBookmarks()) }
     function refreshDeleted() { setDeleted(loadDeleted()) }
-    window.addEventListener('ff-tips-view-changed', refresh)
     window.addEventListener('ff-tip-bookmarks-changed', refreshBookmarks)
     window.addEventListener('ff-tip-deleted-changed', refreshDeleted)
     return () => {
-      window.removeEventListener('ff-tips-view-changed', refresh)
       window.removeEventListener('ff-tip-bookmarks-changed', refreshBookmarks)
       window.removeEventListener('ff-tip-deleted-changed', refreshDeleted)
     }
@@ -68,26 +56,9 @@ export function TipsView() {
         borderRadius: 18,
         padding: '14px 18px',
         marginBottom: 12,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
       }}>
-        <div>
-          <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>📚 ADHD 정보</div>
-          <div style={{ fontSize: 11, color: '#888' }}>카테고리별로 정리된 팁 모음</div>
-        </div>
-        {viewed > 0 && (
-          <span style={{
-            fontSize: 10,
-            fontWeight: 700,
-            padding: '4px 10px',
-            borderRadius: 99,
-            color: viewed >= limit ? '#fff' : viewed >= limit * 0.7 ? '#B8860B' : '#7DA87C',
-            background: viewed >= limit ? 'var(--pink)' : viewed >= limit * 0.7 ? '#FFF6D8' : '#E8F4E5',
-          }}>
-            🌱 {viewed}/{limit}
-          </span>
-        )}
+        <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>📚 ADHD 정보</div>
+        <div style={{ fontSize: 11, color: '#888' }}>카테고리별로 정리된 팁 모음</div>
       </div>
 
 
@@ -138,12 +109,9 @@ export function TipsView() {
         <div style={{ flex: 1, height: 1, background: 'linear-gradient(to right, color-mix(in srgb, var(--pl) 80%, #fff), transparent)' }} />
       </div>
 
-      {/* Archive is user-content; tips are hardcoded curation. Lock only
-          gates the curated tips, not the user's own archive or bookmarks. */}
+      {/* Archive is user-content; tips are hardcoded curation. */}
       {active === 'archive' ? (
         <ArchiveSection />
-      ) : locked && active !== 'bookmarks' ? (
-        <TipsLockScreen onUnlock={() => setLocked(false)} />
       ) : tips.length === 0 ? (
         <div style={{ background: 'color-mix(in srgb, var(--pl) 25%, #fff)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
           {active === 'bookmarks' ? (

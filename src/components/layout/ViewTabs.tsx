@@ -103,7 +103,7 @@ function loadHidden(): CurView[] {
 
 // Tabs that only appear when dev mode is enabled. Keeps unfinished
 // experiments out of regular users' navigation.
-const DEV_ONLY: CurView[] = ['tips']
+const DEV_ONLY: CurView[] = []
 
 function getOrderedTabs(order: CurView[], hidden: CurView[]) {
   const dev = isDevMode()

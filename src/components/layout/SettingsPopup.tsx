@@ -52,6 +52,7 @@ const ALL_TABS: Array<{ id: CurView; label: string }> = [
   { id: 'mood', label: '일기' },
   { id: 'stats', label: '메디' },
   { id: 'friends', label: '친구' },
+  { id: 'tips', label: '정보' },
 ]
 
 function loadHiddenTabs(): CurView[] {
