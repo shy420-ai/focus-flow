@@ -296,6 +296,20 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })()}
       </div>
 
+      {/* ADHD 여성 단톡방 */}
+      <a
+        href="https://open.kakao.com/o/pWLTCgsi"
+        target="_blank"
+        rel="noreferrer"
+        style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: 'linear-gradient(135deg, #FFE156 0%, #FFB677 100%)', borderRadius: 12, marginBottom: 12, textDecoration: 'none', color: '#3a2a2a', boxShadow: '0 2px 8px rgba(255,177,119,.3)' }}
+      >
+        <span style={{ fontSize: 22 }}>💬</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.3 }}>ADHD 여성 단톡방</div>
+          <div style={{ fontSize: 10, opacity: .75, marginTop: 1 }}>카톡 오픈채팅 →</div>
+        </div>
+      </a>
+
       {/* 알림: 새 방명록 미리보기 */}
       {unreadList.length > 0 && (
         <div style={{ background: 'color-mix(in srgb, var(--pl) 50%, #fff)', border: '1.5px solid var(--pink)', borderRadius: 12, padding: 10, marginBottom: 12 }}>
