@@ -3,6 +3,7 @@ import { signInWithGoogle, signInWithEmail } from '@/lib/auth'
 import { useAppStore } from '@/store/AppStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { isInAppBrowser, inAppBrowserName } from '@/lib/inAppBrowser'
 
 export function LoginOverlay() {
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
@@ -10,6 +11,17 @@ export function LoginOverlay() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const inApp = isInAppBrowser()
+  const inAppName = inAppBrowserName()
+
+  async function copyUrl() {
+    try {
+      await navigator.clipboard.writeText(window.location.href)
+      setError('주소 복사됨 — Chrome / Safari 에 붙여넣어줘')
+    } catch {
+      setError('주소 복사 실패. 직접 주소창 복사해줘: ' + window.location.href)
+    }
+  }
 
   async function handleGoogle() {
     setLoading(true)
@@ -60,11 +72,27 @@ export function LoginOverlay() {
       <p className="text-sm text-muted-foreground">ADHD 집중 플래너</p>
 
       <div className="flex flex-col gap-3 w-full max-w-[280px] mt-2">
+        {inApp && (
+          <div style={{ background: '#FFF6E5', border: '1.5px solid #FFD580', borderRadius: 10, padding: '10px 12px', fontSize: 11, color: '#7A5A00', lineHeight: 1.6 }}>
+            <div style={{ fontWeight: 800, marginBottom: 4 }}>⚠️ 구글 로그인 안 돼요</div>
+            <div style={{ marginBottom: 8 }}>
+              {inAppName ? `${inAppName} 안에서` : '이 앱 안에서'}는 구글 정책상 막혀있어요. 우상단 <b>⋮</b> → <b>"Chrome으로 열기"</b> 또는 <b>"외부 브라우저로 열기"</b> 눌러서 열어주세요.
+            </div>
+            <button onClick={copyUrl}
+              style={{ width: '100%', padding: '6px 8px', borderRadius: 8, border: '1px solid #FFD580', background: '#fff', color: '#7A5A00', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+              📋 주소 복사하기
+            </button>
+            <div style={{ fontSize: 10, color: '#A07A20', marginTop: 6 }}>
+              아니면 아래 이메일·비번으로 시작해도 OK ↓
+            </div>
+          </div>
+        )}
         <Button
           variant="outline"
           className="w-full gap-2 h-12"
           onClick={handleGoogle}
-          disabled={loading}
+          disabled={loading || inApp}
+          style={inApp ? { opacity: 0.5 } : undefined}
         >
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width={18} height={18} alt="Google" />
           Google로 시작하기
