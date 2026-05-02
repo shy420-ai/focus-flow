@@ -15,6 +15,7 @@ import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
 import { getFontPref, setFontPref, listPresets, saveCustomFont, loadCustomFont, clearCustomFont, preloadAllFonts, type FontPref } from '../../lib/font'
+import { getDailyWidgetPref, setDailyWidgetPref, type DailyWidgetPref } from '../../lib/dailyTip'
 import { TipStatsPanel } from '../dev/TipStatsPanel'
 
 function relativeTime(ts: number): string {
@@ -89,6 +90,11 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
   const [tipStatsOpen, setTipStatsOpen] = useState(false)
+  const [dailyWidget, setDailyWidget] = useState<DailyWidgetPref>(getDailyWidgetPref())
+  function pickDailyWidget(p: DailyWidgetPref) {
+    setDailyWidget(p)
+    setDailyWidgetPref(p)
+  }
   const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
   const backdropDownRef = useRef(false)
   // Arm the backdrop close handler 200ms after mount so the gear-tap that
@@ -598,6 +604,38 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', marginTop: 2 }}>
           폰트는 이 기기에만 저장돼. 다른 기기에선 다시 골라야 해.
         </div>
+      </div>
+
+      {/* 일간 위젯 */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📌 일간 탭 위 카드</div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+        {([
+          { id: 'tip' as const, label: '💡 오늘의 팁' },
+          { id: 'saju' as const, label: '🔮 사주' },
+          { id: 'off' as const, label: '🚫 없음' },
+        ]).map((opt) => {
+          const on = dailyWidget === opt.id
+          return (
+            <button
+              key={opt.id}
+              onClick={() => pickDailyWidget(opt.id)}
+              style={{
+                flex: 1,
+                padding: '8px 6px',
+                borderRadius: 10,
+                border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
+                background: on ? 'color-mix(in srgb, var(--pink) 12%, #fff)' : '#fff',
+                color: on ? 'var(--pink)' : '#888',
+                fontSize: 11,
+                fontWeight: on ? 800 : 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {opt.label}
+            </button>
+          )
+        })}
       </div>
 
       {/* 타임라인 범위 */}

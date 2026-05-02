@@ -6,6 +6,8 @@ import { TimeBlock } from './TimeBlock'
 import { AddBlockSheet } from './AddBlockSheet'
 import { EditBlockModal } from './EditBlockModal'
 import { getHoroscopeText } from '../../lib/saju'
+import { DailyTipCard } from './DailyTipCard'
+import { getDailyWidgetPref, type DailyWidgetPref } from '../../lib/dailyTip'
 import { generateRecurringBlocks } from '../../lib/recurring'
 import { showMiniToast } from '../../lib/miniToast'
 import { CopyDayModal } from './CopyDayModal'
@@ -165,6 +167,12 @@ export function TimelineView() {
   const [cycleBar, setCycleBar] = useState<{ bg: string; color: string; text: string } | null>(null)
   const [horoscopeText, setHoroscopeText] = useState<string | null>(null)
   const [horoscopeHint, setHoroscopeHint] = useState<'no-birthday' | 'no-year' | null>(null)
+  const [widgetPref, setWidgetPref] = useState<DailyWidgetPref>(getDailyWidgetPref)
+  useEffect(() => {
+    function onChange() { setWidgetPref(getDailyWidgetPref()) }
+    window.addEventListener('ff-daily-widget-changed', onChange)
+    return () => window.removeEventListener('ff-daily-widget-changed', onChange)
+  }, [])
   const [dayMode, setDayModeState] = useState<DayMode>(loadDayMode)
   function changeDayMode(m: DayMode) { setDayModeState(m); saveDayMode(m) }
 
@@ -272,21 +280,25 @@ export function TimelineView() {
 
   return (
     <div className="tl-wrap">
-      {/* 호로스코프 바 — 3가지 상태 (날짜 바로 아래로 이동) */}
-      {horoscopeText ? (
-        <div
-          onClick={() => setShowBirthdayModal(true)}
-          style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 0 16px', lineHeight: 1.45, textAlign: 'center', cursor: 'pointer' }}
-          dangerouslySetInnerHTML={{ __html: horoscopeText }}
-        />
-      ) : horoscopeHint === 'no-birthday' ? (
-        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 0 16px', lineHeight: 1.45, textAlign: 'center' }}>
-          ⭐ <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>생일 입력하면 오늘의 운세를 볼 수 있어!</span>
-        </div>
-      ) : horoscopeHint === 'no-year' ? (
-        <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 0 16px', lineHeight: 1.45, textAlign: 'center' }}>
-          🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
-        </div>
+      {/* 일간 위젯 — 설정에서 사주 / 오늘의 팁 / 없음 토글 */}
+      {widgetPref === 'tip' ? (
+        <DailyTipCard />
+      ) : widgetPref === 'saju' ? (
+        horoscopeText ? (
+          <div
+            onClick={() => setShowBirthdayModal(true)}
+            style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 0 16px', lineHeight: 1.45, textAlign: 'center', cursor: 'pointer' }}
+            dangerouslySetInnerHTML={{ __html: horoscopeText }}
+          />
+        ) : horoscopeHint === 'no-birthday' ? (
+          <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 0 16px', lineHeight: 1.45, textAlign: 'center' }}>
+            ⭐ <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>생일 입력하면 오늘의 운세를 볼 수 있어!</span>
+          </div>
+        ) : horoscopeHint === 'no-year' ? (
+          <div style={{ padding: '6px 14px', fontSize: 12, color: 'var(--pd)', background: 'var(--pl)', borderRadius: 10, margin: '0 0 16px', lineHeight: 1.45, textAlign: 'center' }}>
+            🔮 <span onClick={() => setShowBirthdayModal(true)} style={{ textDecoration: 'underline', cursor: 'pointer' }}>태어난 년도를 추가 입력하면 사주 운세도 볼 수 있어!</span>
+          </div>
+        ) : null
       ) : null}
       {/* 사용 팁 — 그리드 위에 표시 (원본 tip-bar 위치) */}
       {!tipHidden && (
