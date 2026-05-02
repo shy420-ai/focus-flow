@@ -217,14 +217,16 @@ interface BubbleProps {
   time?: string
   mine?: boolean
   unread?: boolean
+  isReply?: boolean
+  onReply?: () => void  // omitted for replies (1-level cap)
 }
 
-function ChatBubble({ text, from, ts, date, time, mine, unread }: BubbleProps) {
+function ChatBubble({ text, from, ts, date, time, mine, unread, isReply, onReply }: BubbleProps) {
   const rel = relativeTime(ts)
   const stamp = rel || ([date, time].filter(Boolean).join(' '))
   return (
-    <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: 8 }}>
-      <div style={{ maxWidth: '78%', display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', gap: 2 }}>
+    <div style={{ display: 'flex', justifyContent: mine ? 'flex-end' : 'flex-start', marginBottom: isReply ? 4 : 8 }}>
+      <div style={{ maxWidth: isReply ? '70%' : '78%', display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', gap: 2 }}>
         {!mine && from && (
           <div style={{ fontSize: 10, color: '#888', fontWeight: 600, padding: '0 8px' }}>
             {unread && <span style={{ color: 'var(--pink)', marginRight: 4 }}>●</span>}
@@ -234,17 +236,23 @@ function ChatBubble({ text, from, ts, date, time, mine, unread }: BubbleProps) {
         <div style={{
           background: mine ? 'var(--pink)' : '#fff',
           color: mine ? '#fff' : '#333',
-          padding: '8px 12px',
+          padding: isReply ? '6px 10px' : '8px 12px',
           borderRadius: mine ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-          fontSize: 13,
+          fontSize: isReply ? 12 : 13,
           lineHeight: 1.5,
           border: mine ? 'none' : '1px solid ' + (unread ? 'var(--pink)' : '#eee'),
           wordBreak: 'break-word',
           whiteSpace: 'pre-wrap',
         }}>{text}</div>
-        {stamp && (
-          <div style={{ fontSize: 9, color: '#bbb', padding: '0 6px' }}>{stamp}</div>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 6px' }}>
+          {stamp && <div style={{ fontSize: 9, color: '#bbb' }}>{stamp}</div>}
+          {onReply && (
+            <button
+              onClick={onReply}
+              style={{ background: 'none', border: 'none', color: '#888', fontSize: 9, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >답글</button>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -260,6 +268,8 @@ interface FriendDetailProps {
 function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const [data, setData] = useState<UserDoc | null>(null)
   const [guestInput, setGuestInput] = useState('')
+  const [replyingTs, setReplyingTs] = useState<number | null>(null)
+  const [replyText, setReplyText] = useState('')
   const [loading, setLoading] = useState(true)
   const chatScrollRef = useRef<HTMLDivElement | null>(null)
 
@@ -313,7 +323,26 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       fromUid: myUid,
     }
     await pushGuestbook(uid, entry)
-    // listenUserDoc handles refreshing data — no explicit reload needed.
+  }
+
+  async function postReply(parentTs: number) {
+    if (!replyText.trim()) return
+    const text = replyText.trim()
+    setReplyText('')
+    setReplyingTs(null)
+    const freshName = localStorage.getItem('ff_nickname')?.trim() || '익명'
+    const now = new Date()
+    const entry = {
+      from: freshName,
+      text,
+      date: todayStr(),
+      time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
+      // eslint-disable-next-line react-hooks/purity
+      ts: Date.now(),
+      fromUid: myUid,
+      parentTs,
+    }
+    await pushGuestbook(uid, entry)
   }
 
   if (loading) return <div style={{ textAlign: 'center', padding: 20, color: '#aaa' }}>불러오는 중...</div>
@@ -601,24 +630,62 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
         {guestbook.length === 0 ? (
           <div style={{ color: '#bbb', fontSize: 11, textAlign: 'center', padding: '20px 0' }}>아직 방명록이 없어. 첫 글을 남겨봐!</div>
         ) : (
-          [...guestbook]
-            .sort((a, b) => ((a as { ts?: number }).ts ?? 0) - ((b as { ts?: number }).ts ?? 0))
-            .slice(-30)
-            .map((g, i) => {
-              const fromUid = (g as { fromUid?: string }).fromUid
-              const ts = (g as { ts?: number }).ts
+          (() => {
+            const all = [...guestbook] as Array<{ from: string; text: string; date?: string; time?: string; ts?: number; fromUid?: string; parentTs?: number }>
+            const top = all.filter((g) => !g.parentTs).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)).slice(-30)
+            const repliesOf = (parentTs: number) => all.filter((g) => g.parentTs === parentTs).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0))
+            return top.map((g, i) => {
+              const replies = g.ts ? repliesOf(g.ts) : []
               return (
-                <ChatBubble
-                  key={i}
-                  text={g.text}
-                  from={g.from}
-                  ts={ts}
-                  date={g.date}
-                  time={g.time}
-                  mine={fromUid === myUid}
-                />
+                <div key={i}>
+                  <ChatBubble
+                    text={g.text}
+                    from={g.from}
+                    ts={g.ts}
+                    date={g.date}
+                    time={g.time}
+                    mine={g.fromUid === myUid}
+                    onReply={g.ts ? () => { setReplyingTs(replyingTs === g.ts ? null : g.ts!); setReplyText('') } : undefined}
+                  />
+                  {/* Replies — indented under parent */}
+                  {replies.length > 0 && (
+                    <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 2, marginBottom: 8 }}>
+                      {replies.map((r, j) => (
+                        <ChatBubble
+                          key={j}
+                          text={r.text}
+                          from={r.from}
+                          ts={r.ts}
+                          date={r.date}
+                          time={r.time}
+                          mine={r.fromUid === myUid}
+                          isReply
+                        />
+                      ))}
+                    </div>
+                  )}
+                  {/* Inline reply input */}
+                  {replyingTs === g.ts && (
+                    <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 4, marginBottom: 8, display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                      <input
+                        value={replyText}
+                        onChange={(e) => setReplyText(e.target.value)}
+                        placeholder={`@${g.from}에게 답글`}
+                        autoFocus
+                        style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--pl)', borderRadius: 99, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && g.ts) postReply(g.ts) }}
+                      />
+                      <button
+                        onClick={() => g.ts && postReply(g.ts)}
+                        disabled={!replyText.trim()}
+                        style={{ width: 32, height: 32, borderRadius: 99, background: replyText.trim() ? 'var(--pink)' : '#ddd', border: 'none', color: '#fff', fontSize: 12, cursor: replyText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                      >➤</button>
+                    </div>
+                  )}
+                </div>
               )
             })
+          })()
         )}
       </div>
       <div style={{ display: 'flex', gap: 6, marginTop: 8, alignItems: 'center' }}>
