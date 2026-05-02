@@ -7,7 +7,6 @@ import { LeaderboardModal } from './Leaderboard'
 import { UnitPickerModal } from './UnitPickerModal'
 import { SprintGoalEditModal } from './SprintGoalEditModal'
 import { isLeaderboardOn } from '../../lib/leaderboardPref'
-import { isDevMode } from '../../lib/devMode'
 import { queue, flushSync, registerCollect, registerHydrate } from '../../lib/syncManager'
 import type { UserDoc } from '../../lib/firestore'
 
@@ -230,9 +229,6 @@ export function SprintBoard() {
 
   const lv = getLevel(xp)
   const xpProg = xpInLevel(xp)
-  // Dev-only compact UI experiment — strip visual noise and merge
-  // duplicate progress info. Toggle by flipping 개발자 모드 in 설정.
-  const compact = isDevMode()
 
   const introBanner = !introDismissed && (
     <div style={{
@@ -268,28 +264,26 @@ export function SprintBoard() {
   )
 
   const levelHeader = (
-    <div style={{ background: 'linear-gradient(135deg, var(--pink), var(--pd))', borderRadius: 14, padding: compact ? '8px 12px' : 14, marginBottom: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,.08)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: compact ? 4 : 6 }}>
+    <div style={{ background: 'linear-gradient(135deg, var(--pink), var(--pd))', borderRadius: 14, padding: 14, marginBottom: 12, color: '#fff', boxShadow: '0 4px 16px rgba(0,0,0,.08)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
         <div>
-          {!compact && <span style={{ fontSize: 11, opacity: 0.85, marginRight: 6 }}>나의 레벨</span>}
-          <span style={{ fontSize: compact ? 16 : 24, fontWeight: 800 }}>Lv.{lv}</span>
+          <span style={{ fontSize: 11, opacity: 0.85, marginRight: 6 }}>나의 레벨</span>
+          <span style={{ fontSize: 24, fontWeight: 800 }}>Lv.{lv}</span>
           <span style={{ fontSize: 11, opacity: 0.9, marginLeft: 8 }}>{xpProg.current}/{xpProg.needed} XP</span>
         </div>
         {leaderboardOn && (
           <button onClick={() => setLeaderboardModalOpen(true)}
-            style={{ background: 'rgba(255,255,255,.2)', border: '1px solid rgba(255,255,255,.4)', color: '#fff', borderRadius: 8, padding: compact ? '4px 8px' : '6px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+            style={{ background: 'rgba(255,255,255,.2)', border: '1px solid rgba(255,255,255,.4)', color: '#fff', borderRadius: 8, padding: '6px 10px', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             🏆 순위
           </button>
         )}
       </div>
-      <div style={{ height: compact ? 5 : 8, background: 'rgba(255,255,255,.2)', borderRadius: 4, overflow: 'hidden' }}>
+      <div style={{ height: 8, background: 'rgba(255,255,255,.2)', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ height: '100%', background: '#fff', width: xpProg.pct + '%', borderRadius: 4, transition: 'width .3s' }} />
       </div>
-      {!compact && (
-        <div style={{ fontSize: 9, marginTop: 6, opacity: 0.85 }}>
-          +N XP per 행동 · +100 XP per 챌린지 완료
-        </div>
-      )}
+      <div style={{ fontSize: 9, marginTop: 6, opacity: 0.85 }}>
+        +N XP per 행동 · +100 XP per 챌린지 완료
+      </div>
     </div>
   )
 
@@ -411,13 +405,11 @@ export function SprintBoard() {
         <div style={{ height: 12, background: '#fff', borderRadius: 6, marginBottom: 10, overflow: 'hidden' }}>
           <div style={{ height: '100%', background: 'var(--pink)', width: overall + '%', transition: 'width .3s', borderRadius: 6 }} />
         </div>
-        {!compact && (
-          <div style={{ fontSize: 10, color: '#888', textAlign: 'center' }}>
-            전체 진행률 = 목표들 평균 (자동) · 아래 목표마다 ± 버튼으로 조정
-          </div>
-        )}
+        <div style={{ fontSize: 10, color: '#888', textAlign: 'center' }}>
+          전체 진행률 = 목표들 평균 (자동) · 아래 목표마다 ± 버튼으로 조정
+        </div>
       </div>
-      {!compact && <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 챌린지 목표 (최대 3개)</div>}
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 챌린지 목표 (최대 3개)</div>
       {sprint.goals.filter((g) => !isCompleted(g)).map((g) => {
         const p = goalPct(g)
         const activeList = sprint.goals.filter((x) => !isCompleted(x))
@@ -425,100 +417,65 @@ export function SprintBoard() {
         const isFirst = idx === 0
         const isLast = idx === activeList.length - 1
         return (
-          <div key={g.id} style={{ marginBottom: compact ? 8 : 10, padding: compact ? '10px 12px' : 12, background: 'var(--pl)', borderRadius: 10 }}>
-            {compact ? (
-              <>
-                {/* Compact: title + ✕ in header row, single progress display, smaller +1 */}
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
-                  <input
-                    value={g.name}
-                    onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                    placeholder="목표 이름"
-                    style={{ flex: 1, minWidth: 0, padding: '4px 0', border: 'none', fontSize: 13, fontWeight: 700, fontFamily: 'inherit', outline: 'none', background: 'transparent', color: 'var(--pd)' }}
-                  />
-                  <button onClick={() => setEditGoalId(g.id)} aria-label="목표 수정"
-                    style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 12, flexShrink: 0 }}>✏️</button>
-                  <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
-                    style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <div style={{ flex: 1, height: 6, background: '#fff', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 3 }} />
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', minWidth: 60, textAlign: 'right' }}>
-                    {g.current}<span style={{ color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>
-                  </span>
-                </div>
-                {(() => {
-                  const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
-                  return (
-                    <button onClick={() => bumpGoal(g.id, step)}
-                      style={{ width: '100%', padding: '8px 0', borderRadius: 8, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>+{step}</button>
-                  )
-                })()}
-              </>
-            ) : (
-              <>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
-                    <button
-                      onClick={() => moveGoal(g.id, -1)}
-                      disabled={isFirst}
-                      style={{ background: isFirst ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isFirst ? 'default' : 'pointer', fontSize: 9, color: isFirst ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
-                      aria-label="위로 이동"
-                    >▲</button>
-                    <button
-                      onClick={() => moveGoal(g.id, 1)}
-                      disabled={isLast}
-                      style={{ background: isLast ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isLast ? 'default' : 'pointer', fontSize: 9, color: isLast ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
-                      aria-label="아래로 이동"
-                    >▼</button>
-                  </div>
-                  <input
-                    value={g.name}
-                    onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                    placeholder="이름 (ex.운동)"
-                    style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
-                  />
-                  <input
-                    type="number"
-                    value={g.target}
-                    onChange={(e) => updateGoal(g.id, { target: Math.max(0, parseInt(e.target.value) || 0) })}
-                    style={{ width: 46, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
-                  />
+          <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
+                <button
+                  onClick={() => moveGoal(g.id, -1)}
+                  disabled={isFirst}
+                  style={{ background: isFirst ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isFirst ? 'default' : 'pointer', fontSize: 9, color: isFirst ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
+                  aria-label="위로 이동"
+                >▲</button>
+                <button
+                  onClick={() => moveGoal(g.id, 1)}
+                  disabled={isLast}
+                  style={{ background: isLast ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isLast ? 'default' : 'pointer', fontSize: 9, color: isLast ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
+                  aria-label="아래로 이동"
+                >▼</button>
+              </div>
+              <input
+                value={g.name}
+                onChange={(e) => updateGoal(g.id, { name: e.target.value })}
+                placeholder="이름 (ex.운동)"
+                style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+              />
+              <input
+                type="number"
+                value={g.target}
+                onChange={(e) => updateGoal(g.id, { target: Math.max(0, parseInt(e.target.value) || 0) })}
+                style={{ width: 46, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
+              />
+              <button
+                onClick={() => setUnitPickerForId(g.id)}
+                style={{ padding: '6px 12px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0, cursor: 'pointer', color: 'var(--pd)', fontWeight: 600, minWidth: 38 }}
+              >{UNIT_LABEL[g.unit] ?? g.unit ?? '–'}</button>
+              <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
+                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}>✕</button>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>
+                {g.current}{g.target > 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>}
+                {g.target === 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}> {g.unit}</span>}
+              </span>
+              {g.target > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>}
+            </div>
+            <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
+            </div>
+            {(() => {
+              const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <button onClick={() => bumpGoal(g.id, step)}
+                    style={{ flex: 1, minWidth: 0, padding: '12px 0', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 35%, transparent)' }}>내가 해냄 🙌 +{step}</button>
                   <button
-                    onClick={() => setUnitPickerForId(g.id)}
-                    style={{ padding: '6px 12px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0, cursor: 'pointer', color: 'var(--pd)', fontWeight: 600, minWidth: 38 }}
-                  >{UNIT_LABEL[g.unit] ?? g.unit ?? '–'}</button>
-                  <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
-                    style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}>✕</button>
+                    onClick={() => setEditGoalId(g.id)}
+                    aria-label="현재 값 / 단위 수정"
+                    style={{ flexShrink: 0, padding: '10px 12px', borderRadius: 8, border: '1.5px solid #fff', background: '#fff', color: '#888', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                  >✏️</button>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-                  <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>
-                    {g.current}{g.target > 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>}
-                    {g.target === 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}> {g.unit}</span>}
-                  </span>
-                  {g.target > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>}
-                </div>
-                <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
-                </div>
-                {(() => {
-                  const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
-                  return (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <button onClick={() => bumpGoal(g.id, step)}
-                        style={{ flex: 1, minWidth: 0, padding: '12px 0', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 35%, transparent)' }}>내가 해냄 🙌 +{step}</button>
-                      <button
-                        onClick={() => setEditGoalId(g.id)}
-                        aria-label="현재 값 / 단위 수정"
-                        style={{ flexShrink: 0, padding: '10px 12px', borderRadius: 8, border: '1.5px solid #fff', background: '#fff', color: '#888', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
-                      >✏️</button>
-                    </div>
-                  )
-                })()}
-              </>
-            )}
+              )
+            })()}
           </div>
         )
       })}
