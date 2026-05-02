@@ -12,8 +12,8 @@ import { TipDetailModal } from '../tips/TipDetailModal'
 const PERIOD_META: Record<DailyPeriod, { emoji: string; label: string }> = {
   morning: { emoji: '🌅', label: '아침' },
   day:     { emoji: '🌞', label: '낮' },
-  evening: { emoji: '🌙', label: '저녁' },
-  night:   { emoji: '🌚', label: '밤' },
+  evening: { emoji: '🌆', label: '저녁' },
+  night:   { emoji: '🌙', label: '밤' },
 }
 
 export function DailyTipCard() {
