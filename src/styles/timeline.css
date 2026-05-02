@@ -117,9 +117,17 @@
 .b-name {
   font-size: 11px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+.b-name-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
 }
 .b-time { font-size: 10px; margin-top: 1px; opacity: 0.75; }
 .b-memo { font-size: 9px; margin-top: 1px; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -186,7 +194,7 @@
 .bmb-del { background: #FFF0F0; color: #E24B4A; }
 
 /* Quick action buttons */
-.b-quick { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.b-quick { display: inline-flex; gap: 3px; margin-left: 6px; vertical-align: middle; flex-shrink: 0; }
 .b-qbtn {
   width: 18px;
   height: 18px;

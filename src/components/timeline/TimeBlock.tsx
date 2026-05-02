@@ -222,9 +222,11 @@ export function TimeBlock({
               {block.category}
             </span>
           )}
-          {block.done ? '✓ ' : ''}
-          {block.name}
-          {block.isRecurring && <span className="recur-icon">🔁</span>}
+          <span className="b-name-text">
+            {block.done ? '✓ ' : ''}
+            {block.name}
+            {block.isRecurring && <span className="recur-icon">🔁</span>}
+          </span>
           <span className="b-quick">
             <button
               className="b-qbtn"
@@ -242,6 +244,7 @@ export function TimeBlock({
               ⋯
             </button>
           </span>
+          {/* /b-name */}
         </div>
         <div className="b-time">
           {fmtH(block.startHour)} – {fmtH(block.startHour + block.durHour)}
