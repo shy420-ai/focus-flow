@@ -90,6 +90,13 @@ export function tabIcon(id: CurView): ReactNode {
           <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" fill="currentColor" fillOpacity=".25" />
         </svg>
       )
+    case 'tips':
+      return (
+        <svg {...sharedProps}>
+          <path d="M2 4h7a3 3 0 0 1 3 3v14a2 2 0 0 0-2-2H2z" fill="currentColor" fillOpacity=".2" />
+          <path d="M22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z" fill="currentColor" fillOpacity=".2" />
+        </svg>
+      )
     default:
       return null
   }
