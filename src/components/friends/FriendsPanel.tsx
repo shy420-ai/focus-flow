@@ -372,8 +372,16 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
   const dayMode = data.dayMode as string | undefined
   const dmInfo = dayMode ? DAY_MODE_LABEL[dayMode] : null
   const status = activeStatus(data.lastActiveAt as string | undefined)
-  const friendAvatar = (data.avatar as string | undefined) || '🧸'
-  const friendBio = (data.bio as string | undefined) || ''
+  // Self-view: read avatar/bio from localStorage so the latest local
+  // changes show immediately without waiting for the Firestore round-trip.
+  let friendAvatar = (data.avatar as string | undefined) || '🧸'
+  let friendBio = (data.bio as string | undefined) || ''
+  if (uid === myUid) {
+    const localAv = localStorage.getItem('ff_avatar')
+    if (localAv) friendAvatar = localAv
+    const localBio = localStorage.getItem('ff_bio')
+    if (localBio !== null) friendBio = localBio
+  }
   // Pomodoro lifetime stats. Self-view reads from localStorage to show the
   // freshest number; friend-view reads from the synced UserDoc.
   let pomoCount = typeof data.pomoTotalCount === 'number' ? data.pomoTotalCount : 0
@@ -802,8 +810,30 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
 
   // Subscribe to my own guestbook so new messages from friends show up
   // without manual refresh.
-  const [myGuestbook, setMyGuestbook] = useState<Array<{ from: string; text: string; date?: string; time?: string; ts?: number; fromUid?: string }>>([])
+  const [myGuestbook, setMyGuestbook] = useState<Array<{ from: string; text: string; date?: string; time?: string; ts?: number; fromUid?: string; parentTs?: number }>>([])
+  const [selfReplyTs, setSelfReplyTs] = useState<number | null>(null)
+  const [selfReplyText, setSelfReplyText] = useState('')
   const lastRead = getLastReadTs()
+
+  async function postSelfReply(parentTs: number) {
+    if (!uid || !selfReplyText.trim()) return
+    const text = selfReplyText.trim()
+    setSelfReplyText('')
+    setSelfReplyTs(null)
+    const freshName = localStorage.getItem('ff_nickname')?.trim() || '익명'
+    const now = new Date()
+    const entry = {
+      from: freshName,
+      text,
+      date: todayStr(),
+      time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
+      // eslint-disable-next-line react-hooks/purity
+      ts: Date.now(),
+      fromUid: uid,
+      parentTs,
+    }
+    await pushGuestbook(uid, entry)
+  }
   useEffect(() => {
     if (!uid) return
     const unsub = listenUserDoc(uid, (d) => {
@@ -949,16 +979,62 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                   <span style={{ fontSize: 10, color: '#bbb' }}>친구가 너 화면에서 응원 남기면 여기 떠</span>
                 </div>
               ) : (
-                <div style={{ background: 'var(--pl)', borderRadius: 14, padding: 12, maxHeight: 280, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-                  {[...myGuestbook]
-                    .sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0))
-                    .slice(-30)
-                    .map((g, i) => {
+                <div style={{ background: 'var(--pl)', borderRadius: 14, padding: 12, maxHeight: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+                  {(() => {
+                    const top = myGuestbook.filter((g) => !g.parentTs).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0)).slice(-30)
+                    const repliesOf = (parentTs: number) => myGuestbook.filter((g) => g.parentTs === parentTs).sort((a, b) => (a.ts ?? 0) - (b.ts ?? 0))
+                    return top.map((g, i) => {
                       const unread = g.ts != null && g.ts > lastRead && g.fromUid !== uid
+                      const replies = g.ts ? repliesOf(g.ts) : []
                       return (
-                        <ChatBubble key={i} text={g.text} from={g.from} ts={g.ts} date={g.date} time={g.time} unread={unread} />
+                        <div key={i}>
+                          <ChatBubble
+                            text={g.text}
+                            from={g.from}
+                            ts={g.ts}
+                            date={g.date}
+                            time={g.time}
+                            unread={unread}
+                            mine={g.fromUid === uid}
+                            onReply={g.ts ? () => { setSelfReplyTs(selfReplyTs === g.ts ? null : g.ts!); setSelfReplyText('') } : undefined}
+                          />
+                          {replies.length > 0 && (
+                            <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 2, marginBottom: 8 }}>
+                              {replies.map((r, j) => (
+                                <ChatBubble
+                                  key={j}
+                                  text={r.text}
+                                  from={r.from}
+                                  ts={r.ts}
+                                  date={r.date}
+                                  time={r.time}
+                                  mine={r.fromUid === uid}
+                                  isReply
+                                />
+                              ))}
+                            </div>
+                          )}
+                          {selfReplyTs === g.ts && (
+                            <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 4, marginBottom: 8, display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                              <input
+                                value={selfReplyText}
+                                onChange={(e) => setSelfReplyText(e.target.value)}
+                                placeholder={`@${g.from}에게 답글`}
+                                autoFocus
+                                style={{ flex: 1, padding: '8px 12px', border: '1.5px solid var(--pl)', borderRadius: 99, fontSize: 12, fontFamily: 'inherit', outline: 'none' }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' && !e.nativeEvent.isComposing && g.ts) postSelfReply(g.ts) }}
+                              />
+                              <button
+                                onClick={() => g.ts && postSelfReply(g.ts)}
+                                disabled={!selfReplyText.trim()}
+                                style={{ width: 32, height: 32, borderRadius: 99, background: selfReplyText.trim() ? 'var(--pink)' : '#ddd', border: 'none', color: '#fff', fontSize: 12, cursor: selfReplyText.trim() ? 'pointer' : 'not-allowed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                              >➤</button>
+                            </div>
+                          )}
+                        </div>
                       )
-                    })}
+                    })
+                  })()}
                 </div>
               )}
             </div>
