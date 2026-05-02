@@ -1953,14 +1953,23 @@ export const ADHD_TIPS: AdhdTip[] = [
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
-  // Newest (with addedAt) first; legacy tips without addedAt keep their
-  // original order at the bottom.
-  return ADHD_TIPS.filter((t) => t.category === category).sort((a, b) => {
-    if (a.addedAt && b.addedAt) return b.addedAt.localeCompare(a.addedAt)
-    if (a.addedAt) return -1
-    if (b.addedAt) return 1
+  // Newest first by addedAt; tied dates broken by array order (later
+  // entries are newer additions, e.g. tips added in the same day's
+  // commit). Legacy tips without addedAt sink to the bottom.
+  const indexed = ADHD_TIPS
+    .map((t, i) => ({ t, i }))
+    .filter((x) => x.t.category === category)
+  indexed.sort((a, b) => {
+    if (a.t.addedAt && b.t.addedAt) {
+      const c = b.t.addedAt.localeCompare(a.t.addedAt)
+      if (c !== 0) return c
+      return b.i - a.i  // same date → later in array first
+    }
+    if (a.t.addedAt) return -1
+    if (b.t.addedAt) return 1
     return 0
   })
+  return indexed.map((x) => x.t)
 }
 
 const NEW_BADGE_DAYS = 7
