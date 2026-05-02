@@ -301,11 +301,11 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         href="https://open.kakao.com/o/pWLTCgsi"
         target="_blank"
         rel="noreferrer"
-        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', background: 'color-mix(in srgb, var(--pl) 55%, #fff)', border: '1px solid color-mix(in srgb, var(--pink) 35%, #fff)', borderRadius: 10, marginBottom: 10, textDecoration: 'none', color: 'var(--pd)' }}
+        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'var(--pink)', borderRadius: 12, marginBottom: 10, textDecoration: 'none', color: '#fff', boxShadow: '0 2px 10px color-mix(in srgb, var(--pink) 30%, transparent)' }}
       >
-        <span style={{ fontSize: 13 }}>💬</span>
-        <span style={{ flex: 1, fontSize: 11, fontWeight: 600, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>ADHD 여성 단톡방 — 카톡 오픈채팅</span>
-        <span style={{ fontSize: 11, color: 'var(--pink)', fontWeight: 700 }}>→</span>
+        <span style={{ fontSize: 14 }}>💬</span>
+        <span style={{ flex: 1, fontSize: 12, fontWeight: 700, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>ADHD 여성 단톡방 — 카톡 오픈채팅</span>
+        <span style={{ fontSize: 12, fontWeight: 800 }}>→</span>
       </a>
 
       {/* 알림: 새 방명록 미리보기 */}
