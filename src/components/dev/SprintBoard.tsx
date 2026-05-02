@@ -12,6 +12,12 @@ import type { UserDoc } from '../../lib/firestore'
 
 const UNIT_LABEL: Record<string, string> = { '회': '회', '시간': 'h', '분': 'm', '페이지': 'p', '개': '개', '%': '%', '': '–' }
 
+interface SubStep {
+  id: string
+  name: string
+  done: boolean
+}
+
 interface SprintGoal {
   id: string
   name: string
@@ -20,6 +26,9 @@ interface SprintGoal {
   current: number  // 현재 누적
   smallStep?: number  // +버튼 작은 단위 (default 1)
   bigStep?: number    // +버튼 큰 단위 (default 5)
+  // 잘게 쪼갠 step. 있으면 진행률 = 완료된 step / 전체 step.
+  // 카운트 모드(+N)와 step 모드는 같은 카드에서 공존 — step 0개면 카운트만 표시.
+  steps?: SubStep[]
 }
 
 interface Sprint {
@@ -44,7 +53,7 @@ function loadSprint(): Sprint | null {
     const raw = localStorage.getItem(KEY)
     if (!raw) return null
     const s = JSON.parse(raw) as Sprint
-    s.goals = (s.goals || []).map((g: { id?: string; name?: string; target?: number; unit?: string; current?: number; progress?: number; smallStep?: number; bigStep?: number }) => {
+    s.goals = (s.goals || []).map((g: { id?: string; name?: string; target?: number; unit?: string; current?: number; progress?: number; smallStep?: number; bigStep?: number; steps?: unknown }) => {
       // Migrate either shape to current target/unit/current model
       const target = typeof g.target === 'number' && g.target > 0 ? g.target : 10
       const unit = typeof g.unit === 'string' ? g.unit : '회'
@@ -61,6 +70,19 @@ function loadSprint(): Sprint | null {
       }
       if (typeof g.smallStep === 'number' && g.smallStep > 0) out.smallStep = g.smallStep
       if (typeof g.bigStep === 'number' && g.bigStep > 0) out.bigStep = g.bigStep
+      if (Array.isArray(g.steps)) {
+        const steps: SubStep[] = []
+        for (const raw of g.steps) {
+          if (!raw || typeof raw !== 'object') continue
+          const s = raw as { id?: string; name?: string; done?: unknown }
+          steps.push({
+            id: typeof s.id === 'string' ? s.id : String(Date.now() + Math.random()),
+            name: typeof s.name === 'string' ? s.name : '',
+            done: !!s.done,
+          })
+        }
+        if (steps.length) out.steps = steps
+      }
       return out
     })
     delete s.overall  // overall is always auto-computed from goals now
@@ -100,14 +122,21 @@ function daysBetween(a: string, b: string): number {
 }
 
 function goalPct(g: SprintGoal): number {
+  // step 모드 (steps 1개 이상) = 완료된 step / 전체 step. step 0개면 카운트 모드 사용.
+  if (g.steps && g.steps.length > 0) {
+    const done = g.steps.filter((s) => s.done).length
+    return Math.round((done / g.steps.length) * 100)
+  }
   if (!g.target || g.target <= 0) return 0
   return Math.min(100, Math.round((g.current / g.target) * 100))
 }
 
-// A goal is "completed" once current ≥ target. Completed goals get
-// archived into the 🏆 완료 section so they free up a slot but still
-// count 100% toward the sprint average.
+// A goal is "completed" once current ≥ target (count mode) OR all steps
+// are checked (step mode). Completed goals archive to 🏆 완료.
 function isCompleted(g: SprintGoal): boolean {
+  if (g.steps && g.steps.length > 0) {
+    return g.steps.every((s) => s.done)
+  }
   return g.target > 0 && g.current >= g.target
 }
 
@@ -224,6 +253,52 @@ export function SprintBoard() {
     const newGoals = [...sprint.goals]
     ;[newGoals[idx], newGoals[next]] = [newGoals[next], newGoals[idx]]
     setSprint({ ...sprint, goals: newGoals })
+  }
+
+  // ── Step (subtask) CRUD ──────────────────────────────────────────
+  function addStep(goalId: string, name: string) {
+    if (!sprint || !name.trim()) return
+    const step: SubStep = { id: String(Date.now() + Math.random()), name: name.trim(), done: false }
+    setSprint({
+      ...sprint,
+      goals: sprint.goals.map((g) => g.id === goalId ? { ...g, steps: [...(g.steps || []), step] } : g),
+    })
+  }
+  function toggleStep(goalId: string, stepId: string) {
+    if (!sprint) return
+    let nowDone = false
+    setSprint({
+      ...sprint,
+      goals: sprint.goals.map((g) => {
+        if (g.id !== goalId || !g.steps) return g
+        return {
+          ...g,
+          steps: g.steps.map((s) => {
+            if (s.id !== stepId) return s
+            nowDone = !s.done
+            return { ...s, done: nowDone }
+          }),
+        }
+      }),
+    })
+    // 작은 도파민 hit — step 1개 체크 = +2 XP, 해제 = -2.
+    const result = addXp(nowDone ? 2 : -2)
+    setXp(result.newXp)
+    if (result.leveledUp) showMiniToast('🎉 Lv.' + result.newLevel + ' 달성!')
+    if (nowDone) {
+      window.dispatchEvent(new CustomEvent('ff-block-done', { detail: 'step:' + stepId }))
+    }
+  }
+  function removeStep(goalId: string, stepId: string) {
+    if (!sprint) return
+    setSprint({
+      ...sprint,
+      goals: sprint.goals.map((g) => {
+        if (g.id !== goalId || !g.steps) return g
+        const next = g.steps.filter((s) => s.id !== stepId)
+        return { ...g, steps: next.length ? next : undefined }
+      }),
+    })
   }
 
 
@@ -462,16 +537,50 @@ export function SprintBoard() {
             <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
               <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
             </div>
+            {/* 잘게 쪼갠 step (있으면) */}
+            {g.steps && g.steps.length > 0 && (
+              <div style={{ marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {g.steps.map((s) => (
+                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: '#fff', borderRadius: 8 }}>
+                    <button
+                      onClick={() => toggleStep(g.id, s.id)}
+                      aria-label={s.done ? '완료 해제' : '완료'}
+                      style={{
+                        width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+                        border: '1.5px solid ' + (s.done ? 'var(--pink)' : '#ccc'),
+                        background: s.done ? 'var(--pink)' : '#fff',
+                        color: '#fff', fontSize: 11, fontWeight: 800,
+                        cursor: 'pointer', padding: 0, lineHeight: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >{s.done ? '✓' : ''}</button>
+                    <span style={{ flex: 1, fontSize: 12, color: s.done ? '#aaa' : 'var(--pd)', textDecoration: s.done ? 'line-through' : 'none' }}>{s.name}</span>
+                    <button
+                      onClick={() => removeStep(g.id, s.id)}
+                      aria-label="step 삭제"
+                      style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 11, padding: 2, flexShrink: 0 }}
+                    >✕</button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* + step 추가 인풋 */}
+            <StepAddRow onAdd={(name) => addStep(g.id, name)} />
+
             {(() => {
               const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
+              const hasSteps = !!(g.steps && g.steps.length > 0)
               return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <button onClick={() => bumpGoal(g.id, step)}
-                    style={{ flex: 1, minWidth: 0, padding: '12px 0', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 35%, transparent)' }}>내가 해냄 🙌 +{step}</button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                  {!hasSteps && (
+                    <button onClick={() => bumpGoal(g.id, step)}
+                      style={{ flex: 1, minWidth: 0, padding: '12px 0', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 35%, transparent)' }}>내가 해냄 🙌 +{step}</button>
+                  )}
                   <button
                     onClick={() => setEditGoalId(g.id)}
                     aria-label="현재 값 / 단위 수정"
-                    style={{ flexShrink: 0, padding: '10px 12px', borderRadius: 8, border: '1.5px solid #fff', background: '#fff', color: '#888', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit' }}
+                    style={{ flexShrink: 0, padding: '10px 12px', borderRadius: 8, border: '1.5px solid #fff', background: '#fff', color: '#888', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginLeft: hasSteps ? 'auto' : 0 }}
                   >✏️</button>
                 </div>
               )
@@ -560,6 +669,55 @@ export function SprintBoard() {
       )
     })()}
     </>
+  )
+}
+
+// 작은 + step 추가 입력 줄. 빈 카드는 [+ 작게 쪼개기] 버튼 1개로 보이고,
+// 누르면 인풋이 펼쳐짐. 입력 후 Enter 또는 ➤ = 추가, 빈 입력으로 다시
+// blur 하면 자동 닫힘.
+function StepAddRow({ onAdd }: { onAdd: (name: string) => void }) {
+  const [open, setOpen] = useState(false)
+  const [text, setText] = useState('')
+  const inputRef = useRef<HTMLInputElement | null>(null)
+
+  function commit() {
+    const t = text.trim()
+    if (!t) return
+    onAdd(t)
+    setText('')
+    // 인풋 유지 — 연속 입력 편하게
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 0) }}
+        style={{ width: '100%', padding: '6px 10px', borderRadius: 8, border: '1.5px dashed #d8d8d8', background: 'transparent', color: '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+      >+ 작게 쪼개기</button>
+    )
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+      <input
+        ref={inputRef}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') { e.preventDefault(); commit() }
+          if (e.key === 'Escape') { setOpen(false); setText('') }
+        }}
+        onBlur={() => { if (!text.trim()) setOpen(false) }}
+        placeholder="ex. 트위터 케이스 정리"
+        style={{ flex: 1, minWidth: 0, padding: '8px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
+      />
+      <button
+        onClick={commit}
+        disabled={!text.trim()}
+        style={{ width: 36, padding: 0, borderRadius: 8, border: 'none', background: text.trim() ? 'var(--pink)' : '#ddd', color: '#fff', fontSize: 13, cursor: text.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit', flexShrink: 0 }}
+      >➤</button>
+    </div>
   )
 }
 
