@@ -281,8 +281,8 @@ export function PomoFab() {
           background: exitedFlash
             ? 'linear-gradient(135deg, #FFE4E4, #FFB8B8)'
             : pomo.phase === 'work'
-              ? 'linear-gradient(135deg, #FFF0F3, #FFD8E1)'
-              : 'linear-gradient(135deg, #E8F8F0, #C7EBD9)',
+              ? 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 60%, #fff), var(--pl))'
+              : 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pink) 30%, #fff))',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           color: 'var(--pd)', userSelect: 'none', transition: 'background .3s',
           overflow: 'hidden',
