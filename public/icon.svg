@@ -12,8 +12,8 @@
   </defs>
 
   <!-- Scaled + recentered content (content native center ~= (269,260),
-       canvas center = (256,256), scale 1.45 to fill the canvas) -->
-  <g transform="translate(256 256) scale(1.45) translate(-269 -260)">
+       canvas center = (256,256), scale 1.2 — bigger but with breathing room) -->
+  <g transform="translate(256 256) scale(1.2) translate(-269 -260)">
     <!-- Flow curve (S-shape) -->
     <path d="M300 100 Q420 100 420 180 Q420 260 300 260 Q180 260 180 340 Q180 420 300 420"
           stroke="url(#flow)" stroke-width="32" fill="none" stroke-linecap="round"/>
