@@ -15,6 +15,7 @@ import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
 import { getFontPref, setFontPref, listPresets, saveCustomFont, loadCustomFont, clearCustomFont, preloadAllFonts, type FontPref } from '../../lib/font'
+import { TipStatsPanel } from '../dev/TipStatsPanel'
 
 function relativeTime(ts: number): string {
   const diff = Date.now() - ts
@@ -87,6 +88,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
+  const [tipStatsOpen, setTipStatsOpen] = useState(false)
   const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
   const backdropDownRef = useRef(false)
   // Arm the backdrop close handler 200ms after mount so the gear-tap that
@@ -711,6 +713,12 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
           style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
         >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
+        {devOn && (
+          <button
+            onClick={() => setTipStatsOpen(true)}
+            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pink)', background: 'var(--pl)', color: 'var(--pd)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+          >📊 정보탭 통계 보기</button>
+        )}
       </div>
 
       {/* 사용자 통계 */}
@@ -760,6 +768,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         }}
       />
     )}
+    {tipStatsOpen && <TipStatsPanel onClose={() => setTipStatsOpen(false)} />}
     </div>
   )
 }

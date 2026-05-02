@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useBackClose } from '../../hooks/useBackClose'
 import { useAppStore } from '../../store/AppStore'
 import { CATEGORY_META } from '../../data/adhdTips'
-import { listenTipFeedback, setLike, addComment, deleteComment, setCommentReaction, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
+import { listenTipFeedback, setLike, addComment, deleteComment, setCommentReaction, recordTipRead, type TipFeedback, type TipComment } from '../../lib/tipFeedback'
 import { recordTipView } from '../../lib/tipsViewLimit'
 import { isBookmarked, toggleBookmark } from '../../lib/tipBookmarks'
 import { tipCategoryIcon } from './tipCategoryIcons'
@@ -40,8 +40,15 @@ export function TipDetailModal({ tip, onClose }: Props) {
   // Count this view toward today's soft limit (only once on mount).
   useEffect(() => {
     recordTipView()
-     
+
   }, [])
+
+  // Record the read globally (uid arrayUnion → dedup'd) so the dev stats
+  // panel can show real reach numbers.
+  useEffect(() => {
+    if (!uid) return
+    recordTipRead(tip.id, uid).catch(() => { /* offline ok */ })
+  }, [uid, tip.id])
 
   const liked = !!uid && fb.likes.includes(uid)
 

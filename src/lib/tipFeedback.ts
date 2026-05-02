@@ -1,7 +1,7 @@
-// Shared tip feedback (likes + comments + bookmarks) stored in Firestore
-// at /tipFeedback/{tipId}. Requires Firestore rules to allow authenticated
-// reads and writes on this collection (see deployment notes).
-import { doc, getDoc, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore'
+// Shared tip feedback (likes + comments + bookmarks + reads) stored in
+// Firestore at /tipFeedback/{tipId}. Requires Firestore rules to allow
+// authenticated reads and writes on this collection.
+import { doc, getDoc, getDocs, collection, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore'
 import type { Unsubscribe } from 'firebase/firestore'
 import { getDb } from './firestore'
 
@@ -22,9 +22,10 @@ export interface TipFeedback {
   // whole comments array.
   commentReactions?: Record<string, string[]>
   bookmarks?: string[] // user uids who bookmarked (for global count)
+  reads?: string[]     // user uids who opened the detail modal (dedup'd)
 }
 
-const EMPTY: TipFeedback = { likes: [], comments: [], commentReactions: {}, bookmarks: [] }
+const EMPTY: TipFeedback = { likes: [], comments: [], commentReactions: {}, bookmarks: [], reads: [] }
 
 export interface TipCounts {
   likes: number
@@ -73,6 +74,40 @@ export async function getTipCountsBatch(tipIds: string[]): Promise<Record<string
     }
   }))
   return out
+}
+
+// Record an open of the detail modal. arrayUnion makes this idempotent —
+// the same uid landing many times doesn't inflate the count. Best-effort:
+// failures are silent (offline, rules glitch, etc.).
+export async function recordTipRead(tipId: string, uid: string): Promise<void> {
+  const db = getDb()
+  const ref = doc(db, 'tipFeedback', tipId)
+  try { await setDoc(ref, { reads: arrayUnion(uid) }, { merge: true }) }
+  catch { /* offline ok */ }
+}
+
+// One-shot read of every tipFeedback doc. Used by the dev stats panel.
+// Heavy — fetches every document. Don't call from regular UI paths.
+export interface TipFeedbackRow {
+  id: string
+  reads: string[]
+  likes: string[]
+  bookmarks: string[]
+  comments: TipComment[]
+}
+export async function getAllTipFeedback(): Promise<TipFeedbackRow[]> {
+  const db = getDb()
+  const snap = await getDocs(collection(db, 'tipFeedback'))
+  return snap.docs.map((d) => {
+    const data = d.data() as Partial<TipFeedback>
+    return {
+      id: d.id,
+      reads: data.reads ?? [],
+      likes: data.likes ?? [],
+      bookmarks: data.bookmarks ?? [],
+      comments: data.comments ?? [],
+    }
+  })
 }
 
 export async function setBookmarkRemote(tipId: string, uid: string, on: boolean): Promise<void> {
