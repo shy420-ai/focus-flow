@@ -1,7 +1,7 @@
-// Shared tip feedback (likes + comments) stored in Firestore at
-// /tipFeedback/{tipId}. Requires Firestore rules to allow authenticated
+// Shared tip feedback (likes + comments + bookmarks) stored in Firestore
+// at /tipFeedback/{tipId}. Requires Firestore rules to allow authenticated
 // reads and writes on this collection (see deployment notes).
-import { doc, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore'
+import { doc, getDoc, setDoc, updateDoc, onSnapshot, arrayUnion, arrayRemove } from 'firebase/firestore'
 import type { Unsubscribe } from 'firebase/firestore'
 import { getDb } from './firestore'
 
@@ -15,26 +15,75 @@ export interface TipComment {
 }
 
 export interface TipFeedback {
-  likes: string[]      // user uids
+  likes: string[]      // user uids who tapped 도움됐어
   comments: TipComment[]
   // commentId → list of uids who hearted it. Stored as a map so we can
   // arrayUnion/arrayRemove on a single comment without rewriting the
   // whole comments array.
   commentReactions?: Record<string, string[]>
+  bookmarks?: string[] // user uids who bookmarked (for global count)
 }
 
-const EMPTY: TipFeedback = { likes: [], comments: [], commentReactions: {} }
+const EMPTY: TipFeedback = { likes: [], comments: [], commentReactions: {}, bookmarks: [] }
+
+export interface TipCounts {
+  likes: number
+  comments: number
+  bookmarks: number
+}
 
 export function listenTipFeedback(tipId: string, cb: (data: TipFeedback) => void): Unsubscribe {
   const db = getDb()
   return onSnapshot(doc(db, 'tipFeedback', tipId), (snap) => {
     if (snap.exists()) {
       const d = snap.data() as Partial<TipFeedback>
-      cb({ likes: d.likes ?? [], comments: d.comments ?? [], commentReactions: d.commentReactions ?? {} })
+      cb({
+        likes: d.likes ?? [],
+        comments: d.comments ?? [],
+        commentReactions: d.commentReactions ?? {},
+        bookmarks: d.bookmarks ?? [],
+      })
     } else {
       cb(EMPTY)
     }
   })
+}
+
+// One-shot batch read of counts for the visible tip cards. Top-level
+// comments only (replies don't count toward the card-level 💬 number).
+export async function getTipCountsBatch(tipIds: string[]): Promise<Record<string, TipCounts>> {
+  const db = getDb()
+  const out: Record<string, TipCounts> = {}
+  await Promise.all(tipIds.map(async (id) => {
+    try {
+      const snap = await getDoc(doc(db, 'tipFeedback', id))
+      if (!snap.exists()) {
+        out[id] = { likes: 0, comments: 0, bookmarks: 0 }
+        return
+      }
+      const d = snap.data() as Partial<TipFeedback>
+      const topLevel = (d.comments ?? []).filter((c) => !c.parentId).length
+      out[id] = {
+        likes: (d.likes ?? []).length,
+        comments: topLevel,
+        bookmarks: (d.bookmarks ?? []).length,
+      }
+    } catch {
+      out[id] = { likes: 0, comments: 0, bookmarks: 0 }
+    }
+  }))
+  return out
+}
+
+export async function setBookmarkRemote(tipId: string, uid: string, on: boolean): Promise<void> {
+  const db = getDb()
+  const ref = doc(db, 'tipFeedback', tipId)
+  if (on) {
+    await setDoc(ref, { bookmarks: arrayUnion(uid) }, { merge: true })
+  } else {
+    try { await updateDoc(ref, { bookmarks: arrayRemove(uid) }) }
+    catch { /* doc missing, nothing to remove */ }
+  }
 }
 
 export async function setCommentReaction(tipId: string, commentId: string, uid: string, liked: boolean): Promise<void> {

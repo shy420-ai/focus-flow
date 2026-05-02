@@ -6,6 +6,7 @@ import { TipDetailModal } from './TipDetailModal'
 import { ArchiveSection } from './ArchiveSection'
 import { loadBookmarks, toggleBookmark } from '../../lib/tipBookmarks'
 import { loadDeleted, deleteTip, restoreTip } from '../../lib/tipDeleted'
+import { getTipCountsBatch, type TipCounts } from '../../lib/tipFeedback'
 import { isDevMode } from '../../lib/devMode'
 import { showConfirm } from '../../lib/showConfirm'
 import { tipCategoryIcon } from './tipCategoryIcons'
@@ -28,6 +29,7 @@ export function TipsView() {
   const [selected, setSelected] = useState<AdhdTip | null>(null)
   const [bookmarks, setBookmarks] = useState<string[]>(loadBookmarks)
   const [deleted, setDeleted] = useState<string[]>(loadDeleted)
+  const [counts, setCounts] = useState<Record<string, TipCounts>>({})
   const dev = isDevMode()
   // Dev mode sees deleted tips (greyed out) so they can restore. Regular
   // users get them filtered out.
@@ -48,6 +50,18 @@ export function TipsView() {
       window.removeEventListener('ff-tip-deleted-changed', refreshDeleted)
     }
   }, [])
+
+  // Fetch global counts (likes / comments / bookmarks) for the visible
+  // tip cards whenever the visible set changes. One-shot read — refreshes
+  // when category changes or when the user comes back to the modal.
+  useEffect(() => {
+    if (active === 'archive' || tips.length === 0) return
+    let cancel = false
+    const ids = tips.map((t) => t.id)
+    getTipCountsBatch(ids).then((res) => { if (!cancel) setCounts((c) => ({ ...c, ...res })) }).catch(() => { /* offline ok */ })
+    return () => { cancel = true }
+
+  }, [active, tips.length])
 
   return (
     <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px' }}>
@@ -151,6 +165,17 @@ export function TipsView() {
                 <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', textDecoration: isDel ? 'line-through' : 'none' }}>{t.title}</span>
               </div>
               <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
+              {(() => {
+                const c = counts[t.id]
+                if (!c || (c.bookmarks === 0 && c.likes === 0 && c.comments === 0)) return null
+                return (
+                  <div style={{ display: 'flex', gap: 8, marginTop: 6, fontSize: 10, color: '#aaa', fontWeight: 600 }}>
+                    {c.bookmarks > 0 && <span>🔖 {c.bookmarks}</span>}
+                    {c.likes > 0 && <span>❤️ {c.likes}</span>}
+                    {c.comments > 0 && <span>💬 {c.comments}</span>}
+                  </div>
+                )
+              })()}
               <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0 }}>
                 {dev && (
                   <button
