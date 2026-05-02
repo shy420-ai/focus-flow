@@ -22,6 +22,7 @@ export function DropsView() {
   const editItem = useDropStore((s) => s.editItem)
   const clearDone = useDropStore((s) => s.clearDone)
   const clearAll = useDropStore((s) => s.clearAll)
+  const shuffle = useDropStore((s) => s.shuffle)
 
   const [inputVal, setInputVal] = useState('')
   const [search, setSearch] = useState('')
@@ -124,6 +125,7 @@ export function DropsView() {
           {done.length > 0 && (
             <button className="drop-action-btn" onClick={clearDone}>🗑 완료 지우기</button>
           )}
+          <button className="drop-action-btn" onClick={shuffle}>🎲 랜덤 섞기</button>
           <button className="drop-action-btn" onClick={async () => {
             if (await showConfirm('덤프 전체 초기화? 모든 항목이 사라져')) clearAll()
           }}>🔄 전체 초기화</button>
