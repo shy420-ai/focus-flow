@@ -1879,6 +1879,77 @@ export const ADHD_TIPS: AdhdTip[] = [
     source: 'AASM shift work disorder; ADHD shift work case studies',
     tags: ['수면', '교대근무', '야간'],
   },
+  // ── 📚 학습 — ADHD 친화 뽀모도로 5종 (추가 2026-05-02) ──────────────────
+  {
+    id: 'pomo-50-10',
+    title: '뽀모 5분 휴식 짧을 때 — 50/10',
+    category: 'study',
+    summary: '25/5 기본보다 안정적. ADHD 데일리 루틴용.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '기본 뽀모 (25/5)는 ADHD에 너무 짧음.\n5분으론 진짜 disengage 안 됨 — 물 한 잔 + 화장실이면 끝.\n25분도 시동 걸리는 순간 끝남 → 매번 처음부터.\n결국 사이클 자체가 스트레스 됨.' },
+      { icon: '💡', title: '해결', body: '50분 일 / 10분 휴식 = ADHD sweet spot.\n50분 = 시동 + 깊이 들어가기 + 마무리까지.\n10분 = 진짜 회복 (스트레칭·물·창밖·1정거장 산책).\n4사이클 (4시간) 후 = 30분 큰 휴식 + 식사.' },
+      { icon: '🎯', title: '예시', body: '• 평일 매일 루틴 = 50/10 디폴트\n• 시작 = "지금 50분 OK?" 자기한테 물어 (X면 22/22로)\n• 50분 안에 마무리 강박 X — 자연스럽게 끊어지면 OK\n• 10분 휴식 = 폰 X (rabbit hole), 몸 쓰기\n• 끝 알람도 켜기 — 휴식 무한 폭주 방지\n• 4사이클 후 = 30분 식사·낮잠·산책\n• 컨디션 ↓ 인 날 = 40/15 또는 30/15 유연하게\n• 포플 뽀모 탭에서 일·휴 시간 둘 다 조정 가능' },
+    ],
+    source: 'Cirillo Pomodoro Technique; ADHD productivity research (Hallowell)',
+    tags: ['학습', '뽀모도로', '50/10'],
+  },
+  {
+    id: 'pomo-90-20',
+    title: '깊은 작업할 때 — 90/20 (Ultradian)',
+    category: 'study',
+    summary: '신체 ultradian rhythm 90분 사이클. 글쓰기·코딩용.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '논문·기획·코딩 같은 깊은 작업 = 25분으론 절대 X.\n시동 거는 데만 15분 → 진짜 일은 10분 → 끊김 → 재시동.\nADHD 하이퍼포커스 시작될 만하면 알람 울림 = 짜증.\n결국 깊은 작업 평일에 하나도 못 함.' },
+      { icon: '💡', title: '해결', body: '인체 ultradian rhythm = 약 90분 주기로 각성도 파동 (Kleitman).\n90분 일 + 20분 휴식이 생리적으로 가장 자연스러움.\n하루 3~4사이클이 한계 — 그 이상은 번아웃.\n20분 휴식 = 산책·낮잠·식사·샤워 — 진짜 회복.' },
+      { icon: '🎯', title: '예시', body: '• 시작 시간: 머리 맑은 오전 (기상 후 1~2시간 후)\n• 90분 안에 작업 1개 완성 목표 (마이크로 목표)\n• 20분 휴식 = 폰 X. 산책·낮잠·식사 권장\n• 하루 3사이클 (= 깊은 작업 4.5시간) = 충분, 4사이클 한계\n• 컨디션 ↓ 인 날 = 90분 못 채워도 OK, 60분 끝나도 정상\n• 약 효과 시간 (콘서타 6~10h) 안에 2~3사이클 끝내기\n• 90분이 너무 길면 = 60/15 변형으로 시작\n• 15분만 일하고 그만 = 그날은 90/20 X, Animedoro로 전환' },
+    ],
+    source: 'Kleitman BRAC ultradian cycle; Tony Schwartz Energy Project',
+    tags: ['학습', '뽀모도로', '깊은작업'],
+  },
+  {
+    id: 'pomo-animedoro',
+    title: '시동 안 걸릴 때 — Animedoro 22/22',
+    category: 'study',
+    summary: '22분 일 → 애니 1화. 시동 거는 응급용.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '50분·90분 = 너무 길어 보여서 아예 시작 못 함.\n시동 안 걸리는 ADHD 의 "오늘 망함" 패턴.\n공부 0분 vs 22분 = 무조건 22분이 ↑.\n바닥난 날·생리·수면부족·약 효과 ↓ 날에 특히 잘 맞음.' },
+      { icon: '💡', title: '해결', body: 'Animedoro = 22분 빡세게 + 22분 애니 1화 (or 유튜브·산책).\n휴식 22분 = 확실한 보상 → 도파민 회로 만족 → 다음 시작 마찰 ↓.\n매일 X — 시동 안 걸리는 날 응급용.\n이걸로라도 매일 1~2 사이클 = 안 하는 것보단 무조건 ↑.' },
+      { icon: '🎯', title: '예시', body: '• 만든 사람: Josh (의대생 ADHD 유튜버)\n• 22분 일 = 작은 단위 1개 (논문 1챕터·문제 5개·이메일 답장)\n• 휴식 = 애니 1화 (22~24분) — 끝나는 시점 명확\n• 애니 X면 = 유튜브 1편·팟캐스트 1챕터·산책 22분\n• 끝 알람 무조건 켜기 — 한 화가 두 화 됨\n• 첫 사이클 = "오늘 시동 걸기" — 그 다음은 50/10 으로 갈아탈 수도\n• 매일 X — 컨디션 좋은 날은 90/20 으로 가\n• 공부 시간 짧아 보여도 누적 효과: 매일 22분 = 한 달 11시간' },
+    ],
+    source: 'Josh "Animedoro" YouTube method; ADHD task initiation research',
+    tags: ['학습', '뽀모도로', '시동'],
+  },
+  {
+    id: 'pomo-flowtime',
+    title: '컨디션 출렁일 때 — Flowtime',
+    category: 'study',
+    summary: '타이머 X. 자연스럽게 일하고 1/4 만큼 쉼.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '하루마다 컨디션 다른 ADHD = 고정 비율 안 맞음.\n어떤 날 90분 거뜬, 어떤 날 10분도 힘듦.\n타이머 강제 분절 → 하이퍼포커스 잘 든 날 흐름 끊김.\n시동 안 걸리는 날 90분 알람 = 부담만 ↑.' },
+      { icon: '💡', title: '해결', body: 'Flowtime = 자연스럽게 시작 + 자연스럽게 끝 + 그 시간의 1/4 만큼 쉼.\n50분 일 → 12분 쉼, 20분 일 → 5분 쉼.\nADHD 페이스 존중 — 강제 비율 X.\n타이머는 휴식 시간만 켜 (휴식 폭주 방지).' },
+      { icon: '🎯', title: '예시', body: '• 만든 사람: Zoë Read-Bivens — Flowtime Technique\n• 1단계: 시작 시간 + 작업 적기 ("14:03 보고서 작성")\n• 2단계: 일에 몰입 (몇 분이든 OK)\n• 3단계: 자연스레 멈출 때 = 그때 시간 적기 ("14:47 = 44분")\n• 4단계: 44 ÷ 4 = 11분 쉼 (반올림)\n• 5단계: 휴식 알람 켜고 쉬기 → 다시 1단계\n• 멈추는 타이밍 못 잡으면 = 1시간 알람 보조 (그때 자연 멈춤 신호)\n• 적은 기록은 다음 날 보면 자기 패턴 보임\n• 포플은 일간 블록 + 노트로 대체 사용 가능 (타이머 X)' },
+    ],
+    source: 'Zoë Read-Bivens Flowtime Technique; ADHD self-pacing research',
+    tags: ['학습', '뽀모도로', 'Flowtime'],
+  },
+  {
+    id: 'pomo-choose',
+    title: '뽀모 비율 고르는 가이드',
+    category: 'study',
+    summary: '컨디션·작업·하루 시간대별로 다른 비율 쓰기.',
+    addedAt: '2026-05-02',
+    sections: [
+      { icon: '😔', title: '문제', body: '"가장 좋은 뽀모 비율" 찾으려고 1개월 이거저거 시도.\n결국 다 안 맞음 → 뽀모 자체 포기.\nADHD = 컨디션 매일 다름 → 한 비율로 고정 X.\n비율보다 "유연성" 이 핵심.' },
+      { icon: '💡', title: '해결', body: '하루 컨디션·작업 종류 보고 매번 비율 바꾸기.\n오전 = 깊은 작업 90/20, 오후 = 50/10.\n시동 안 걸리는 날 = Animedoro, 컨디션 좋은 날 = Flowtime.\n비율 강박 X — 매일 자기한테 "지금 몇 분 OK?" 물어.' },
+      { icon: '🎯', title: '예시', body: '📅 매일 루틴 (꾸준함 우선) → 50/10\n📚 깊은 작업 (논문·기획·코딩) → 90/20\n😩 시동 안 걸리는 날 → Animedoro 22/22\n🎢 하루마다 출렁 → Flowtime\n🚀 하이퍼포커스 잘 도는 사람 → Flowtime > 90/20\n\n조합 OK:\n• 오전 = 90/20 → 오후 = Animedoro\n• 평일 = 50/10 → 주말 = Flowtime\n• 첫 사이클 = Animedoro (시동) → 다음 = 50/10\n\n핵심: "정답 비율" X = 매일 컨디션 맞춰 바꾸는 유연성.\n그날 안 되는 비율 = 그날만 다른 비율로 — 강박 X.' },
+    ],
+    source: 'ADHD coaching practice; pomodoro variants comparison studies',
+    tags: ['학습', '뽀모도로', '가이드'],
+  },
 ]
 
 export function getCategoryTips(category: TipCategory): AdhdTip[] {
