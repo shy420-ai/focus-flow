@@ -10,8 +10,6 @@ import { isLeaderboardOn } from '../../lib/leaderboardPref'
 import { queue, flushSync, registerCollect, registerHydrate } from '../../lib/syncManager'
 import type { UserDoc } from '../../lib/firestore'
 
-const UNIT_LABEL: Record<string, string> = { '회': '회', '시간': 'h', '분': 'm', '페이지': 'p', '개': '개', '%': '%', '': '–' }
-
 interface SubStep {
   id: string
   name: string
@@ -244,16 +242,6 @@ export function SprintBoard() {
     setSprint({ ...sprint, goals: sprint.goals.filter((g) => g.id !== id) })
   }
 
-  function moveGoal(id: string, direction: -1 | 1) {
-    if (!sprint) return
-    const idx = sprint.goals.findIndex((g) => g.id === id)
-    if (idx < 0) return
-    const next = idx + direction
-    if (next < 0 || next >= sprint.goals.length) return
-    const newGoals = [...sprint.goals]
-    ;[newGoals[idx], newGoals[next]] = [newGoals[next], newGoals[idx]]
-    setSprint({ ...sprint, goals: newGoals })
-  }
 
   // ── Step (subtask) CRUD ──────────────────────────────────────────
   function addStep(goalId: string, name: string) {
@@ -402,11 +390,7 @@ export function SprintBoard() {
 
   const elapsed = daysBetween(sprint.startDate, todayStr())
   const daysLeft = Math.max(SPRINT_DAYS - elapsed, 0)
-  const sprintProgress = Math.min((elapsed / SPRINT_DAYS) * 100, 100)
   const overall = sprintOverall(sprint)
-  const lastSprint = history.length ? history[history.length - 1] : null
-  const lastOverall = lastSprint ? sprintOverall(lastSprint) : null
-  const diff = lastOverall != null ? overall - lastOverall : null
 
   function bumpGoal(id: string, delta: number) {
     if (!sprint) return
@@ -451,193 +435,123 @@ export function SprintBoard() {
 
   return (
     <>
-    {levelHeader}
-    <div style={{ background: '#fff', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 10 }}>⚡ 챌린지 D-{daysLeft}</div>
-
-      <div style={{ height: 4, background: 'var(--pl)', borderRadius: 2, marginBottom: 4, overflow: 'hidden' }}>
-        <div style={{ height: '100%', background: '#ddd', width: sprintProgress + '%', transition: 'width .3s' }} />
-      </div>
-      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 12 }}>
-        {sprint.startDate} 시작 · 시간 {Math.round(sprintProgress)}% 경과
-      </div>
-
-      {/* 전체 진행률 (큰 카드 - hero) */}
-      <div style={{ background: 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pl) 50%, #fff))', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pink)' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>🎯 챌린지 전체 진행률</div>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 6 }}>
-          <span style={{ fontSize: 36, fontWeight: 800, color: 'var(--pd)', lineHeight: 1 }}>{overall}<span style={{ fontSize: 18, color: 'var(--pink)' }}>%</span></span>
-          {diff != null && lastOverall != null && (
-            diff > 0 ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#1FA176' }}>↑ +{diff}% (저번 {lastOverall}%)</span>
-            ) : diff < 0 ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: '#EF9F27' }}>↓ {diff}% (저번 {lastOverall}%)</span>
-            ) : (
-              <span style={{ fontSize: 12, color: '#888' }}>= 저번이랑 동률</span>
-            )
-          )}
-        </div>
-        <div style={{ height: 12, background: '#fff', borderRadius: 6, marginBottom: 10, overflow: 'hidden' }}>
-          <div style={{ height: '100%', background: 'var(--pink)', width: overall + '%', transition: 'width .3s', borderRadius: 6 }} />
-        </div>
-        <div style={{ fontSize: 10, color: '#888', textAlign: 'center' }}>
-          전체 진행률 = 목표들 평균 (자동) · 아래 목표마다 ± 버튼으로 조정
-        </div>
-      </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 챌린지 목표 (최대 3개)</div>
-      {sprint.goals.filter((g) => !isCompleted(g)).map((g) => {
-        const p = goalPct(g)
-        const activeList = sprint.goals.filter((x) => !isCompleted(x))
-        const idx = activeList.findIndex((x) => x.id === g.id)
-        const isFirst = idx === 0
-        const isLast = idx === activeList.length - 1
-        return (
-          <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
-            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 2, flexShrink: 0 }}>
-                <button
-                  onClick={() => moveGoal(g.id, -1)}
-                  disabled={isFirst}
-                  style={{ background: isFirst ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isFirst ? 'default' : 'pointer', fontSize: 9, color: isFirst ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
-                  aria-label="위로 이동"
-                >▲</button>
-                <button
-                  onClick={() => moveGoal(g.id, 1)}
-                  disabled={isLast}
-                  style={{ background: isLast ? '#f5f5f5' : '#fff', border: 'none', borderRadius: 4, width: 22, height: 13, cursor: isLast ? 'default' : 'pointer', fontSize: 9, color: isLast ? '#ddd' : '#888', padding: 0, lineHeight: 1 }}
-                  aria-label="아래로 이동"
-                >▼</button>
-              </div>
-              <input
-                value={g.name}
-                onChange={(e) => updateGoal(g.id, { name: e.target.value })}
-                placeholder="이름 (ex.운동)"
-                style={{ flex: 1, minWidth: 0, padding: '6px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 13, fontWeight: 600, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
-              />
-              <input
-                type="number"
-                value={g.target}
-                onChange={(e) => updateGoal(g.id, { target: Math.max(0, parseInt(e.target.value) || 0) })}
-                style={{ width: 46, padding: '6px 4px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', textAlign: 'center', flexShrink: 0 }}
-              />
-              <button
-                onClick={() => setUnitPickerForId(g.id)}
-                style={{ padding: '6px 12px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff', flexShrink: 0, cursor: 'pointer', color: 'var(--pd)', fontWeight: 600, minWidth: 38 }}
-              >{UNIT_LABEL[g.unit] ?? g.unit ?? '–'}</button>
-              <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }}
-                style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 8, width: 28, height: 28, cursor: 'pointer', fontSize: 13, flexShrink: 0 }}>✕</button>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>
-                {g.current}{g.target > 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>}
-                {g.target === 0 && <span style={{ fontSize: 12, color: '#aaa', fontWeight: 500 }}> {g.unit}</span>}
-              </span>
-              {g.target > 0 && <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--pink)' }}>{p}%</span>}
-            </div>
-            <div style={{ height: 8, background: '#fff', borderRadius: 4, marginBottom: 8, overflow: 'hidden' }}>
-              <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s', borderRadius: 4 }} />
-            </div>
-            {/* 잘게 쪼갠 step (있으면) */}
-            {g.steps && g.steps.length > 0 && (
-              <div style={{ marginBottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-                {g.steps.map((s) => (
-                  <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: '#fff', borderRadius: 8 }}>
-                    <button
-                      onClick={() => toggleStep(g.id, s.id)}
-                      aria-label={s.done ? '완료 해제' : '완료'}
-                      style={{
-                        width: 18, height: 18, borderRadius: 5, flexShrink: 0,
-                        border: '1.5px solid ' + (s.done ? 'var(--pink)' : '#ccc'),
-                        background: s.done ? 'var(--pink)' : '#fff',
-                        color: '#fff', fontSize: 11, fontWeight: 800,
-                        cursor: 'pointer', padding: 0, lineHeight: 1,
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}
-                    >{s.done ? '✓' : ''}</button>
-                    <span style={{ flex: 1, fontSize: 12, color: s.done ? '#aaa' : 'var(--pd)', textDecoration: s.done ? 'line-through' : 'none' }}>{s.name}</span>
-                    <button
-                      onClick={() => removeStep(g.id, s.id)}
-                      aria-label="step 삭제"
-                      style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 11, padding: 2, flexShrink: 0 }}
-                    >✕</button>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* + step 추가 인풋 */}
-            <StepAddRow onAdd={(name) => addStep(g.id, name)} />
-
-            {(() => {
-              const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
-              const hasSteps = !!(g.steps && g.steps.length > 0)
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                  {!hasSteps && (
-                    <button onClick={() => bumpGoal(g.id, step)}
-                      style={{ flex: 1, minWidth: 0, padding: '12px 0', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', boxShadow: '0 2px 8px color-mix(in srgb, var(--pink) 35%, transparent)' }}>내가 해냄 🙌 +{step}</button>
-                  )}
-                  <button
-                    onClick={() => setEditGoalId(g.id)}
-                    aria-label="현재 값 / 단위 수정"
-                    style={{ flexShrink: 0, padding: '10px 12px', borderRadius: 8, border: '1.5px solid #fff', background: '#fff', color: '#888', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', marginLeft: hasSteps ? 'auto' : 0 }}
-                  >✏️</button>
-                </div>
-              )
-            })()}
-          </div>
-        )
-      })}
-
-      {(() => {
-        const activeCount = sprint.goals.filter((g) => !isCompleted(g)).length
-        if (activeCount >= 3) return null
-        return (
-          <button onClick={addGoal}
-            style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginTop: 6 }}>
-            + 목표 추가 ({activeCount}/3)
-          </button>
-        )
-      })()}
-
-      {/* 🏆 완료된 목표들 — 슬롯 안 차지하지만 챌린지 평균엔 100%로 계속 반영. */}
-      {(() => {
-        const done = sprint.goals.filter(isCompleted)
-        if (done.length === 0) return null
-        return (
-          <div style={{ marginTop: 14, padding: 12, background: 'linear-gradient(135deg, #FFF6E0, #FFEAB8)', borderRadius: 10, border: '1.5px solid #F5C97E' }}>
-            <div style={{ fontSize: 11, fontWeight: 800, color: '#8B6914', marginBottom: 8 }}>🏆 완료 ({done.length})</div>
-            {done.map((g) => (
-              <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: '#fff', borderRadius: 8, marginBottom: 4, fontSize: 12 }}>
-                <span style={{ fontSize: 13 }}>✅</span>
-                <span style={{ flex: 1, fontWeight: 700, color: 'var(--pd)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {g.name || '(이름 없음)'}
-                </span>
-                <span style={{ color: '#8B6914', fontWeight: 600 }}>{g.current}/{g.target}{g.unit}</span>
-                <button onClick={async () => { if (await showConfirm('완료한 목표를 챌린지에서 빼기?\n\n평균에서도 빠져')) removeGoal(g.id) }}
-                  style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
-              </div>
-            ))}
-            <div style={{ fontSize: 9, color: '#8B6914', marginTop: 4, textAlign: 'center', opacity: 0.7 }}>
-              완료한 목표는 슬롯 차지 X · 평균엔 100%로 계속 반영
-            </div>
-          </div>
-        )
-      })()}
-
-      {daysLeft === 0 && (
-        <div style={{ marginTop: 10, padding: 12, background: '#FFF8E1', borderRadius: 8, textAlign: 'center' }}>
-          <div style={{ fontSize: 11, color: '#8B6914', marginBottom: 8, lineHeight: 1.5 }}>
-            🏁 챌린지 종료! 결과를 히스토리에 저장하고 다음 챌린지 시작
-          </div>
-          <button onClick={endSprint}
-            style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: '#8B6914', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-            마무리하기
-          </button>
-        </div>
-      )}
-
+    {/* Top: 1-line summary + Lv badge */}
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+      <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--pd)' }}>
+        ⚡ 챌린지 D-{daysLeft} <span style={{ color: 'var(--pink)' }}>· {overall}%</span>
+      </span>
+      <button onClick={() => leaderboardOn && setLeaderboardModalOpen(true)}
+        style={{ background: 'var(--pl)', border: 'none', color: 'var(--pd)', borderRadius: 99, padding: '3px 10px', fontSize: 10, fontWeight: 700, cursor: leaderboardOn ? 'pointer' : 'default', fontFamily: 'inherit' }}>
+        Lv.{lv} {leaderboardOn ? '🏆' : ''}
+      </button>
     </div>
+    {/* Slim progress bar */}
+    <div style={{ height: 4, background: 'var(--pl)', borderRadius: 2, overflow: 'hidden', marginBottom: 14 }}>
+      <div style={{ height: '100%', background: 'var(--pink)', width: overall + '%', transition: 'width .3s' }} />
+    </div>
+    {/* Goals as a flat list (drops-style) */}
+    {sprint.goals.filter((g) => !isCompleted(g)).map((g) => {
+      const p = goalPct(g)
+      const hasSteps = !!(g.steps && g.steps.length > 0)
+      const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
+      return (
+        <div key={g.id} style={{ marginBottom: 8, padding: '10px 12px', background: '#fff', borderRadius: 10, border: '1px solid var(--pl)' }}>
+          {/* Title row */}
+          <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+            <input
+              value={g.name}
+              onChange={(e) => updateGoal(g.id, { name: e.target.value })}
+              placeholder="목표 이름"
+              style={{ flex: 1, minWidth: 0, padding: '2px 0', border: 'none', fontSize: 13, fontWeight: 700, color: 'var(--pd)', fontFamily: 'inherit', outline: 'none', background: 'transparent' }}
+            />
+            {!hasSteps && (
+              <button onClick={() => bumpGoal(g.id, step)}
+                style={{ padding: '4px 12px', borderRadius: 99, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
+                +{step}
+              </button>
+            )}
+            <button onClick={() => setEditGoalId(g.id)} aria-label="수정"
+              style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✏️</button>
+            <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }} aria-label="삭제"
+              style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
+          </div>
+          {/* Progress row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <div style={{ flex: 1, height: 4, background: 'var(--pl)', borderRadius: 2, overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--pink)', width: p + '%', transition: 'width .3s' }} />
+            </div>
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--pd)', minWidth: 70, textAlign: 'right' }}>
+              {g.current}<span style={{ color: '#aaa', fontWeight: 500 }}>/{g.target}{g.unit}</span>
+            </span>
+          </div>
+          {/* Steps */}
+          {hasSteps && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 6 }}>
+              {g.steps!.map((s) => (
+                <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}>
+                  <button
+                    onClick={() => toggleStep(g.id, s.id)}
+                    aria-label={s.done ? '완료 해제' : '완료'}
+                    style={{
+                      width: 16, height: 16, borderRadius: 4, flexShrink: 0,
+                      border: '1.5px solid ' + (s.done ? 'var(--pink)' : '#ccc'),
+                      background: s.done ? 'var(--pink)' : '#fff',
+                      color: '#fff', fontSize: 10, fontWeight: 800,
+                      cursor: 'pointer', padding: 0, lineHeight: 1,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >{s.done ? '✓' : ''}</button>
+                  <span style={{ flex: 1, fontSize: 12, color: s.done ? '#aaa' : '#444', textDecoration: s.done ? 'line-through' : 'none' }}>{s.name}</span>
+                  <button onClick={() => removeStep(g.id, s.id)} aria-label="삭제"
+                    style={{ background: 'transparent', border: 'none', color: '#ddd', cursor: 'pointer', fontSize: 10, padding: 2, flexShrink: 0 }}>✕</button>
+                </div>
+              ))}
+            </div>
+          )}
+          <StepAddRow onAdd={(name) => addStep(g.id, name)} />
+        </div>
+      )
+    })}
+
+    {(() => {
+      const activeCount = sprint.goals.filter((g) => !isCompleted(g)).length
+      if (activeCount >= 3) return null
+      return (
+        <button onClick={addGoal}
+          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed var(--pl)', background: 'transparent', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginTop: 4, marginBottom: 8 }}>
+          + 새 목표 ({activeCount}/3)
+        </button>
+      )
+    })()}
+
+    {/* 🏆 완료 — compact one-liner per goal */}
+    {(() => {
+      const done = sprint.goals.filter(isCompleted)
+      if (done.length === 0) return null
+      return (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: '#8B6914', marginBottom: 4 }}>🏆 완료 {done.length}</div>
+          {done.map((g) => (
+            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px', fontSize: 11, color: '#888' }}>
+              <span>✅</span>
+              <span style={{ flex: 1, textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name || '(이름 없음)'}</span>
+              <button onClick={async () => { if (await showConfirm('완료한 목표를 챌린지에서 빼기?\n\n평균에서도 빠져')) removeGoal(g.id) }}
+                style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 10, padding: 2 }}>✕</button>
+            </div>
+          ))}
+        </div>
+      )
+    })()}
+
+    {daysLeft === 0 && (
+      <div style={{ marginTop: 10, padding: 10, background: '#FFF8E1', borderRadius: 8, textAlign: 'center' }}>
+        <div style={{ fontSize: 11, color: '#8B6914', marginBottom: 8 }}>🏁 챌린지 종료!</div>
+        <button onClick={endSprint}
+          style={{ padding: '6px 16px', borderRadius: 8, border: 'none', background: '#8B6914', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+          마무리하기
+        </button>
+      </div>
+    )}
     {leaderboardModalOpen && <LeaderboardModal onClose={() => setLeaderboardModalOpen(false)} />}
     {unitPickerForId && sprint && (() => {
       const goal = sprint.goals.find((g) => g.id === unitPickerForId)
