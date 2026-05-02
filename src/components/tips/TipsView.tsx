@@ -7,6 +7,9 @@ import { ArchiveSection } from './ArchiveSection'
 import { TipsLockScreen } from './TipsLockScreen'
 import { isLocked, getTipsViewedToday, getEffectiveLimit } from '../../lib/tipsViewLimit'
 import { loadBookmarks, toggleBookmark } from '../../lib/tipBookmarks'
+import { loadDeleted, deleteTip, restoreTip } from '../../lib/tipDeleted'
+import { isDevMode } from '../../lib/devMode'
+import { showConfirm } from '../../lib/showConfirm'
 import { tipCategoryIcon } from './tipCategoryIcons'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
@@ -29,9 +32,15 @@ export function TipsView() {
   const [viewed, setViewed] = useState<number>(() => getTipsViewedToday())
   const [limit, setLimit] = useState<number>(() => getEffectiveLimit())
   const [bookmarks, setBookmarks] = useState<string[]>(loadBookmarks)
-  const tips = active === 'bookmarks'
+  const [deleted, setDeleted] = useState<string[]>(loadDeleted)
+  const dev = isDevMode()
+  // Dev mode sees deleted tips (greyed out) so they can restore. Regular
+  // users (when 정보 tab graduates from dev) get them filtered out.
+  const showDeleted = dev
+  const baseTips = active === 'bookmarks'
     ? ADHD_TIPS.filter((t) => bookmarks.includes(t.id))
     : getCategoryTips(active)
+  const tips = showDeleted ? baseTips : baseTips.filter((t) => !deleted.includes(t.id))
   const meta = CATEGORY_META[active]
 
   useEffect(() => {
@@ -41,11 +50,14 @@ export function TipsView() {
       setLimit(getEffectiveLimit())
     }
     function refreshBookmarks() { setBookmarks(loadBookmarks()) }
+    function refreshDeleted() { setDeleted(loadDeleted()) }
     window.addEventListener('ff-tips-view-changed', refresh)
     window.addEventListener('ff-tip-bookmarks-changed', refreshBookmarks)
+    window.addEventListener('ff-tip-deleted-changed', refreshDeleted)
     return () => {
       window.removeEventListener('ff-tips-view-changed', refresh)
       window.removeEventListener('ff-tip-bookmarks-changed', refreshBookmarks)
+      window.removeEventListener('ff-tip-deleted-changed', refreshDeleted)
     }
   }, [])
 
@@ -154,24 +166,45 @@ export function TipsView() {
         tips.map((t) => {
           const cardMeta = CATEGORY_META[t.category]
           const bookmarked = bookmarks.includes(t.id)
+          const isDel = deleted.includes(t.id)
           return (
             <div
               key={t.id}
-              onClick={() => setSelected(t)}
-              style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: '12px 38px 12px 14px', marginBottom: 6, border: '1px solid #f5f5f5', cursor: 'pointer', fontFamily: 'inherit', borderLeft: `3px solid ${cardMeta.color}`, transition: 'transform .15s, box-shadow .15s' }}
+              onClick={() => { if (!isDel) setSelected(t) }}
+              style={{ position: 'relative', background: '#fff', borderRadius: 12, padding: '12px 38px 12px 14px', marginBottom: 6, border: '1px solid #f5f5f5', cursor: isDel ? 'default' : 'pointer', fontFamily: 'inherit', borderLeft: `3px solid ${cardMeta.color}`, transition: 'transform .15s, box-shadow .15s', opacity: isDel ? 0.45 : 1 }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
-                {isTipNew(t) && (
+                {isDel && (
+                  <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: '#bbb', padding: '2px 6px', borderRadius: 99, letterSpacing: 0.3 }}>삭제됨</span>
+                )}
+                {!isDel && isTipNew(t) && (
                   <span style={{ fontSize: 9, fontWeight: 800, color: '#fff', background: 'var(--pink)', padding: '2px 6px', borderRadius: 99, letterSpacing: 0.3 }}>NEW</span>
                 )}
-                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>{t.title}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', textDecoration: isDel ? 'line-through' : 'none' }}>{t.title}</span>
               </div>
               <div style={{ fontSize: 11, color: '#666', lineHeight: 1.5 }}>{t.summary}</div>
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleBookmark(t.id) }}
-                style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: 4, lineHeight: 1, color: bookmarked ? '#F5B91E' : '#ddd' }}
-                aria-label={bookmarked ? '북마크 해제' : '북마크'}
-              >{bookmarked ? '★' : '☆'}</button>
+              <div style={{ position: 'absolute', top: 6, right: 6, display: 'flex', gap: 0 }}>
+                {dev && (
+                  <button
+                    onClick={async (e) => {
+                      e.stopPropagation()
+                      if (isDel) {
+                        restoreTip(t.id)
+                        return
+                      }
+                      const ok = await showConfirm(`이 팁을 삭제할까?\n\n${t.title}`)
+                      if (ok) deleteTip(t.id)
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: 4, lineHeight: 1, color: isDel ? '#56C6A0' : '#E24B4A' }}
+                    aria-label={isDel ? '복구' : '삭제'}
+                  >{isDel ? '↺' : '🗑'}</button>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); toggleBookmark(t.id) }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, padding: 4, lineHeight: 1, color: bookmarked ? '#F5B91E' : '#ddd' }}
+                  aria-label={bookmarked ? '북마크 해제' : '북마크'}
+                >{bookmarked ? '★' : '☆'}</button>
+              </div>
             </div>
           )
         })
