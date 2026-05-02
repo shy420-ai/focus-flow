@@ -104,6 +104,13 @@ function goalPct(g: SprintGoal): number {
   return Math.min(100, Math.round((g.current / g.target) * 100))
 }
 
+// A goal is "completed" once current ≥ target. Completed goals get
+// archived into the 🏆 완료 section so they free up a slot but still
+// count 100% toward the sprint average.
+function isCompleted(g: SprintGoal): boolean {
+  return g.target > 0 && g.current >= g.target
+}
+
 function sprintOverall(s: { overall?: number; goals: SprintGoal[] }): number {
   // Always compute from goals so per-goal taps stay in sync with the overall %.
   // For completed sprints (in history), use the stored snapshot if goals are empty.
@@ -188,7 +195,13 @@ export function SprintBoard() {
   }
 
   function addGoal() {
-    if (!sprint || sprint.goals.length >= 3) return
+    if (!sprint) return
+    // Only active (uncompleted) goals count against the 3-goal slot
+    // limit. Completed goals get archived into the 🏆 완료 section so
+    // they keep contributing 100% to the sprint average without taking
+    // up a slot.
+    const activeCount = sprint.goals.filter((g) => !isCompleted(g)).length
+    if (activeCount >= 3) return
     setSprint({ ...sprint, goals: [...sprint.goals, { id: String(Date.now()), name: '', target: 10, unit: '회', current: 0 }] })
   }
 
@@ -397,10 +410,12 @@ export function SprintBoard() {
         </div>
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📋 이번 챌린지 목표 (최대 3개)</div>
-      {sprint.goals.map((g, idx) => {
+      {sprint.goals.filter((g) => !isCompleted(g)).map((g) => {
         const p = goalPct(g)
+        const activeList = sprint.goals.filter((x) => !isCompleted(x))
+        const idx = activeList.findIndex((x) => x.id === g.id)
         const isFirst = idx === 0
-        const isLast = idx === sprint.goals.length - 1
+        const isLast = idx === activeList.length - 1
         return (
           <div key={g.id} style={{ marginBottom: 10, padding: 12, background: 'var(--pl)', borderRadius: 10 }}>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 8 }}>
@@ -465,12 +480,41 @@ export function SprintBoard() {
         )
       })}
 
-      {sprint.goals.length < 3 && (
-        <button onClick={addGoal}
-          style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginTop: 6 }}>
-          + 목표 추가 ({sprint.goals.length}/3)
-        </button>
-      )}
+      {(() => {
+        const activeCount = sprint.goals.filter((g) => !isCompleted(g)).length
+        if (activeCount >= 3) return null
+        return (
+          <button onClick={addGoal}
+            style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', marginTop: 6 }}>
+            + 목표 추가 ({activeCount}/3)
+          </button>
+        )
+      })()}
+
+      {/* 🏆 완료된 목표들 — 슬롯 안 차지하지만 챌린지 평균엔 100%로 계속 반영. */}
+      {(() => {
+        const done = sprint.goals.filter(isCompleted)
+        if (done.length === 0) return null
+        return (
+          <div style={{ marginTop: 14, padding: 12, background: 'linear-gradient(135deg, #FFF6E0, #FFEAB8)', borderRadius: 10, border: '1.5px solid #F5C97E' }}>
+            <div style={{ fontSize: 11, fontWeight: 800, color: '#8B6914', marginBottom: 8 }}>🏆 완료 ({done.length})</div>
+            {done.map((g) => (
+              <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: '#fff', borderRadius: 8, marginBottom: 4, fontSize: 12 }}>
+                <span style={{ fontSize: 13 }}>✅</span>
+                <span style={{ flex: 1, fontWeight: 700, color: 'var(--pd)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {g.name || '(이름 없음)'}
+                </span>
+                <span style={{ color: '#8B6914', fontWeight: 600 }}>{g.current}/{g.target}{g.unit}</span>
+                <button onClick={async () => { if (await showConfirm('완료한 목표를 챌린지에서 빼기?\n\n평균에서도 빠져')) removeGoal(g.id) }}
+                  style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
+              </div>
+            ))}
+            <div style={{ fontSize: 9, color: '#8B6914', marginTop: 4, textAlign: 'center', opacity: 0.7 }}>
+              완료한 목표는 슬롯 차지 X · 평균엔 100%로 계속 반영
+            </div>
+          </div>
+        )
+      })()}
 
       {daysLeft === 0 && (
         <div style={{ marginTop: 10, padding: 12, background: '#FFF8E1', borderRadius: 8, textAlign: 'center' }}>
