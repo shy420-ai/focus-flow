@@ -1882,7 +1882,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   // ── 📚 학습 — ADHD 친화 뽀모도로 5종 (추가 2026-05-02) ──────────────────
   {
     id: 'pomo-50-10',
-    title: '뽀모 5분 휴식 짧을 때 — 50/10',
+    title: '뽀모도로 기법 1 — 50/10 (5분 휴식 짧을 때)',
     category: 'study',
     summary: '25/5 기본보다 안정적. ADHD 데일리 루틴용.',
     addedAt: '2026-05-02',
@@ -1896,7 +1896,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'pomo-90-20',
-    title: '깊은 작업할 때 — 90/20 (Ultradian)',
+    title: '뽀모도로 기법 2 — 90/20 (깊은 작업할 때)',
     category: 'study',
     summary: '신체 ultradian rhythm 90분 사이클. 글쓰기·코딩용.',
     addedAt: '2026-05-02',
@@ -1910,7 +1910,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'pomo-animedoro',
-    title: '시동 안 걸릴 때 — Animedoro 22/22',
+    title: '뽀모도로 기법 3 — Animedoro 22/22 (시동 안 걸릴 때)',
     category: 'study',
     summary: '22분 일 → 애니 1화. 시동 거는 응급용.',
     addedAt: '2026-05-02',
@@ -1924,7 +1924,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'pomo-flowtime',
-    title: '컨디션 출렁일 때 — Flowtime',
+    title: '뽀모도로 기법 4 — Flowtime (컨디션 출렁일 때)',
     category: 'study',
     summary: '타이머 X. 자연스럽게 일하고 1/4 만큼 쉼.',
     addedAt: '2026-05-02',
@@ -1938,7 +1938,7 @@ export const ADHD_TIPS: AdhdTip[] = [
   },
   {
     id: 'pomo-choose',
-    title: '뽀모 비율 고르는 가이드',
+    title: '뽀모도로 기법 가이드 — 비율 고르는 법',
     category: 'study',
     summary: '컨디션·작업·하루 시간대별로 다른 비율 쓰기.',
     addedAt: '2026-05-02',
