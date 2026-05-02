@@ -44,7 +44,7 @@ function loadSprint(): Sprint | null {
     const raw = localStorage.getItem(KEY)
     if (!raw) return null
     const s = JSON.parse(raw) as Sprint
-    s.goals = (s.goals || []).map((g: { id?: string; name?: string; target?: number; unit?: string; current?: number; progress?: number }) => {
+    s.goals = (s.goals || []).map((g: { id?: string; name?: string; target?: number; unit?: string; current?: number; progress?: number; smallStep?: number; bigStep?: number }) => {
       // Migrate either shape to current target/unit/current model
       const target = typeof g.target === 'number' && g.target > 0 ? g.target : 10
       const unit = typeof g.unit === 'string' ? g.unit : '회'
@@ -52,13 +52,16 @@ function loadSprint(): Sprint | null {
       if (typeof g.current !== 'number' && typeof g.progress === 'number') {
         current = Math.round((g.progress / 100) * target)
       }
-      return {
+      const out: SprintGoal = {
         id: g.id || String(Date.now() + Math.random()),
         name: g.name || '',
         target,
         unit,
         current,
       }
+      if (typeof g.smallStep === 'number' && g.smallStep > 0) out.smallStep = g.smallStep
+      if (typeof g.bigStep === 'number' && g.bigStep > 0) out.bigStep = g.bigStep
+      return out
     })
     delete s.overall  // overall is always auto-computed from goals now
     return s
