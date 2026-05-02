@@ -13,6 +13,7 @@ import {
   getDocs,
   getCountFromServer,
   arrayUnion,
+  arrayRemove,
   updateDoc,
   type Unsubscribe,
 } from 'firebase/firestore'
@@ -128,6 +129,11 @@ export async function setShareCode(uid: string, shareCode: string): Promise<void
 export async function pushGuestbook(friendUid: string, entry: Record<string, string | number>): Promise<void> {
   const db = getDb()
   await updateDoc(doc(db, 'users', friendUid), { guestbook: arrayUnion(entry) })
+}
+
+export async function deleteGuestbook(targetUid: string, entry: Record<string, unknown>): Promise<void> {
+  const db = getDb()
+  await updateDoc(doc(db, 'users', targetUid), { guestbook: arrayRemove(entry) })
 }
 
 export interface LeaderEntry { uid: string; nickname: string; xp: number; avatar?: string }

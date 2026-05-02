@@ -13,6 +13,19 @@ import { flushSync } from '../../lib/syncManager'
 import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
+import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
+
+function relativeTime(ts: number): string {
+  const diff = Date.now() - ts
+  if (diff < 60_000) return '방금'
+  const m = Math.floor(diff / 60_000)
+  if (m < 60) return `${m}분 전`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}시간 전`
+  const d = Math.floor(h / 24)
+  if (d < 7) return `${d}일 전`
+  return new Date(ts).toISOString().slice(5, 10)
+}
 import { AVATAR_OPTIONS, getAvatar, setAvatar } from '../../lib/avatar'
 import { getBio, setBio } from '../../lib/bio'
 import { getVisibility, setVisibility, VISIBILITY_LABELS, type VisibilitySection } from '../../lib/friendVisibility'
@@ -98,6 +111,15 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   // ≡ handle so taps elsewhere on the row don't start a drag.
   const [dragId, setDragId] = useState<CurView | null>(null)
   const [dragOverId, setDragOverId] = useState<CurView | null>(null)
+  const unreadList = useUnreadGuestbook()
+  const setCurView = useAppStore((s) => s.setCurView)
+
+  function openFromNotif() {
+    onClose()
+    setCurView('friends')
+    markGuestbookRead()
+  }
+
 
   function onHandleDown(e: React.PointerEvent, id: CurView) {
     setDragId(id)
@@ -273,6 +295,37 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           } catch { return '?' }
         })()}
       </div>
+
+      {/* 알림: 새 방명록 미리보기 */}
+      {unreadList.length > 0 && (
+        <div style={{ background: 'color-mix(in srgb, var(--pl) 50%, #fff)', border: '1.5px solid var(--pink)', borderRadius: 12, padding: 10, marginBottom: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>💌 새 방명록 {unreadList.length}개</span>
+            <button onClick={markGuestbookRead} style={{ background: 'none', border: 'none', color: '#888', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>모두 읽음</button>
+          </div>
+          <div style={{ maxHeight: 180, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {unreadList.slice(0, 5).map((e, i) => (
+              <button
+                key={i}
+                onClick={openFromNotif}
+                style={{ display: 'block', width: '100%', textAlign: 'left', padding: '6px 10px', background: '#fff', border: '1px solid #f5f5f5', borderRadius: 8, cursor: 'pointer', fontFamily: 'inherit' }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--pd)' }}>{e.from}</span>
+                  <span style={{ fontSize: 9, color: '#bbb' }}>{relativeTime(e.ts)}</span>
+                </div>
+                <div style={{ fontSize: 11, color: '#555', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  {e.text}
+                </div>
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={openFromNotif}
+            style={{ display: 'block', width: '100%', marginTop: 6, padding: '7px', background: 'var(--pink)', border: 'none', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', borderRadius: 8 }}
+          >👥 친구 탭 → 내 방명록 →</button>
+        </div>
+      )}
 
       {/* 프로필 사진 + 닉네임 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8, gap: 6 }}>

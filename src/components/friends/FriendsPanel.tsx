@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
-import { findUserByShareCode, setShareCode, pushGuestbook, listenUserDoc } from '../../lib/firestore'
+import { findUserByShareCode, setShareCode, pushGuestbook, deleteGuestbook, listenUserDoc } from '../../lib/firestore'
 import { todayStr, pad, fmtH } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { showPrompt } from '../../lib/showPrompt'
@@ -219,9 +219,10 @@ interface BubbleProps {
   unread?: boolean
   isReply?: boolean
   onReply?: () => void  // omitted for replies (1-level cap)
+  onDelete?: () => void  // mine only
 }
 
-function ChatBubble({ text, from, ts, date, time, mine, unread, isReply, onReply }: BubbleProps) {
+function ChatBubble({ text, from, ts, date, time, mine, unread, isReply, onReply, onDelete }: BubbleProps) {
   const rel = relativeTime(ts)
   const stamp = rel || ([date, time].filter(Boolean).join(' '))
   return (
@@ -243,14 +244,20 @@ function ChatBubble({ text, from, ts, date, time, mine, unread, isReply, onReply
           border: mine ? 'none' : '1px solid ' + (unread ? 'var(--pink)' : '#eee'),
           wordBreak: 'break-word',
           whiteSpace: 'pre-wrap',
-        }}>{text}</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 6px' }}>
+        }}>{isReply && <span style={{ opacity: .7, marginRight: 4 }}>↳</span>}{text}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 6px' }}>
           {stamp && <div style={{ fontSize: 9, color: '#bbb' }}>{stamp}</div>}
           {onReply && (
             <button
               onClick={onReply}
               style={{ background: 'none', border: 'none', color: '#888', fontSize: 9, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
             >답글</button>
+          )}
+          {onDelete && (
+            <button
+              onClick={onDelete}
+              style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 9, cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >삭제</button>
           )}
         </div>
       </div>
@@ -337,7 +344,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
       text,
       date: todayStr(),
       time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
-      // eslint-disable-next-line react-hooks/purity
+       
       ts: Date.now(),
       fromUid: myUid,
       parentTs,
@@ -654,10 +661,11 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
                     time={g.time}
                     mine={g.fromUid === myUid}
                     onReply={g.ts ? () => { setReplyingTs(replyingTs === g.ts ? null : g.ts!); setReplyText('') } : undefined}
+                    onDelete={g.fromUid === myUid ? () => deleteGuestbook(uid, g as unknown as Record<string, unknown>).catch(console.error) : undefined}
                   />
                   {/* Replies — indented under parent */}
                   {replies.length > 0 && (
-                    <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 2, marginBottom: 8 }}>
+                    <div style={{ marginLeft: 22, paddingLeft: 12, borderLeft: '3px solid var(--pink)', background: 'color-mix(in srgb, var(--pink) 6%, transparent)', borderRadius: '0 8px 8px 0', paddingTop: 6, paddingBottom: 4, marginTop: 2, marginBottom: 8 }}>
                       {replies.map((r, j) => (
                         <ChatBubble
                           key={j}
@@ -668,13 +676,14 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
                           time={r.time}
                           mine={r.fromUid === myUid}
                           isReply
+                          onDelete={r.fromUid === myUid ? () => deleteGuestbook(uid, r as unknown as Record<string, unknown>).catch(console.error) : undefined}
                         />
                       ))}
                     </div>
                   )}
                   {/* Inline reply input */}
                   {replyingTs === g.ts && (
-                    <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 4, marginBottom: 8, display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                    <div style={{ marginLeft: 22, paddingLeft: 12, borderLeft: '3px solid var(--pink)', background: 'color-mix(in srgb, var(--pink) 6%, transparent)', borderRadius: '0 8px 8px 0', paddingTop: 6, paddingBottom: 4, marginTop: 4, marginBottom: 8, display: 'flex', gap: 6, alignItems: 'flex-end' }}>
                       <input
                         value={replyText}
                         onChange={(e) => setReplyText(e.target.value)}
@@ -827,7 +836,7 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
       text,
       date: todayStr(),
       time: pad(now.getHours()) + ':' + pad(now.getMinutes()),
-      // eslint-disable-next-line react-hooks/purity
+       
       ts: Date.now(),
       fromUid: uid,
       parentTs,
@@ -997,9 +1006,10 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                             unread={unread}
                             mine={g.fromUid === uid}
                             onReply={g.ts ? () => { setSelfReplyTs(selfReplyTs === g.ts ? null : g.ts!); setSelfReplyText('') } : undefined}
+                            onDelete={g.fromUid === uid && uid ? () => deleteGuestbook(uid, g as unknown as Record<string, unknown>).catch(console.error) : undefined}
                           />
                           {replies.length > 0 && (
-                            <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 2, marginBottom: 8 }}>
+                            <div style={{ marginLeft: 22, paddingLeft: 12, borderLeft: '3px solid var(--pink)', background: 'color-mix(in srgb, var(--pink) 6%, transparent)', borderRadius: '0 8px 8px 0', paddingTop: 6, paddingBottom: 4, marginTop: 2, marginBottom: 8 }}>
                               {replies.map((r, j) => (
                                 <ChatBubble
                                   key={j}
@@ -1010,12 +1020,13 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                                   time={r.time}
                                   mine={r.fromUid === uid}
                                   isReply
+                                  onDelete={r.fromUid === uid && uid ? () => deleteGuestbook(uid, r as unknown as Record<string, unknown>).catch(console.error) : undefined}
                                 />
                               ))}
                             </div>
                           )}
                           {selfReplyTs === g.ts && (
-                            <div style={{ marginLeft: 18, paddingLeft: 8, borderLeft: '2px solid color-mix(in srgb, var(--pink) 40%, #fff)', marginTop: 4, marginBottom: 8, display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                            <div style={{ marginLeft: 22, paddingLeft: 12, borderLeft: '3px solid var(--pink)', background: 'color-mix(in srgb, var(--pink) 6%, transparent)', borderRadius: '0 8px 8px 0', paddingTop: 6, paddingBottom: 4, marginTop: 4, marginBottom: 8, display: 'flex', gap: 6, alignItems: 'flex-end' }}>
                               <input
                                 value={selfReplyText}
                                 onChange={(e) => setSelfReplyText(e.target.value)}
