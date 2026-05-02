@@ -16,7 +16,7 @@ export interface DailyPrompt {
 export const DAILY_PROMPTS: DailyPrompt[] = [
   // 🌅 아침 (5~10시)
   {
-    period: 'morning', prompt: '아침에 일어나기 힘들 때', tipId: 'alarm-bypass',
+    period: 'morning', prompt: '아침에 일어나기 힘들 때는?', tipId: 'alarm-bypass',
     bullets: [
       '폰 알람 = 침대에서 3m 이상 (책상 위)',
       '워치 진동 + 폰 + 거실 스피커 = 3중',
@@ -24,7 +24,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'morning', prompt: '시동 안 걸리는 아침', tipId: 'task-initiation',
+    period: 'morning', prompt: '아침에 시동 안 걸릴 때는?', tipId: 'task-initiation',
     bullets: [
       '"5분만" 룰 — 5분만 눕고 끝 (대부분 일어나짐)',
       '입은 채로 잠 = 갈아입는 마찰 ↓',
@@ -32,7 +32,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'morning', prompt: '약 효과 시작 전 흔들림', tipId: 'med-rebound',
+    period: 'morning', prompt: '약 효과 시작 전 흔들릴 때는?', tipId: 'med-rebound',
     bullets: [
       '아침 약 = 일어나자마자 (효과 1시간 후)',
       '효과 떨어지는 시간 = 단백질 간식 미리',
@@ -40,7 +40,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'morning', prompt: '콘서타 적응기 부작용', tipId: 'concerta-titration',
+    period: 'morning', prompt: '콘서타 적응기 부작용 있을 때는?', tipId: 'concerta-titration',
     bullets: [
       '첫 2주 = 부작용 일지 (식욕·잠·심박)',
       '2주마다 의사 상담 = 용량 조정',
@@ -48,7 +48,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'morning', prompt: '약 까먹는 게 일상', tipId: 'med-forget',
+    period: 'morning', prompt: '약 자꾸 까먹을 때는?', tipId: 'med-forget',
     bullets: [
       '약통 = 칫솔 옆 (매일 보는 자리)',
       '폰 알람 + 워치 진동 = 둘 다 켜기',
@@ -56,7 +56,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'morning', prompt: '새 약 처방 받은 첫 2주', tipId: 'new-med-first-2-weeks',
+    period: 'morning', prompt: '새 약 처방 받은 첫 2주에는?', tipId: 'new-med-first-2-weeks',
     bullets: [
       '큰 결정·면접·운전 시험 X',
       '부작용 일지 — 졸음·식욕·기분 매일 한 줄',
@@ -66,7 +66,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
 
   // 🌞 낮 (10~17시)
   {
-    period: 'day', prompt: '집중 안 되는 시간', tipId: 'noise-calibration',
+    period: 'day', prompt: '집중 안 될 때는?', tipId: 'noise-calibration',
     bullets: [
       '갈색소음 (brown noise) = ADHD에 가장 좋음',
       'YouTube "brown noise 8 hours" 무료',
@@ -74,7 +74,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '점심 후 졸음 폭발', tipId: 'power-nap',
+    period: 'day', prompt: '점심 후 졸음 폭발할 때는?', tipId: 'power-nap',
     bullets: [
       '정확히 20분 — 알람 무조건 (더 자면 역효과)',
       '의자 기대거나 차 안 — 침대 X',
@@ -82,7 +82,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '한 일 끝났는데 다음 시작 못함', tipId: 'task-transition',
+    period: 'day', prompt: '한 일 끝났는데 다음 시작 못 할 때는?', tipId: 'task-transition',
     bullets: [
       '끝난 신호 = 책상 1칸 정리',
       '5분 break = 물 + 창밖 1분',
@@ -90,7 +90,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '멀티태스킹으로 다 망치는 중', tipId: 'single-tasking',
+    period: 'day', prompt: '멀티태스킹으로 다 망치는 중일 땐?', tipId: 'single-tasking',
     bullets: [
       '브라우저 탭 5개 ↑ = 다 닫고 1개만',
       '폰 = 다른 방 / 가방 / 잠금',
@@ -98,7 +98,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '뽀모 25/5 휴식 너무 짧을 때', tipId: 'pomo-50-10',
+    period: 'day', prompt: '뽀모 25/5 휴식이 너무 짧을 때는?', tipId: 'pomo-50-10',
     bullets: [
       '50분 일 / 10분 휴식으로 바꾸기',
       '10분 휴식 = 폰 X, 몸 쓰기',
@@ -106,7 +106,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '강의·회의 따라가기 힘듦', tipId: 'lecture-recording',
+    period: 'day', prompt: '강의·회의 따라가기 힘들 땐?', tipId: 'lecture-recording',
     bullets: [
       '녹음 ON + 키워드 + 시간 스탬프만 메모',
       '클로바노트 = 한국어 자동 텍스트 변환',
@@ -114,7 +114,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '비밀번호 매번 새로 만드는 중', tipId: 'password-vault',
+    period: 'day', prompt: '비밀번호 매번 새로 만들 때는?', tipId: 'password-vault',
     bullets: [
       '1Password / Bitwarden / iCloud Keychain 1개',
       '마스터 비번 = 외울 수 있는 긴 문장',
@@ -122,7 +122,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'day', prompt: '직장 평가 시즌 두려움', tipId: 'work-prearrange',
+    period: 'day', prompt: '직장 평가 시즌 두려울 땐?', tipId: 'work-prearrange',
     bullets: [
       '주 1회 금요일 15분 1:1 정기화',
       '시작 때 평가 기준 글로 받기',
@@ -132,7 +132,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
 
   // 🌙 저녁 (17~22시)
   {
-    period: 'evening', prompt: '또 야식 폭주 중', tipId: 'revenge-bedtime',
+    period: 'evening', prompt: '또 야식 폭주 중일 땐?', tipId: 'revenge-bedtime',
     bullets: [
       '낮에 단백질 식사 추가 (저녁 폭주 ↓)',
       '취침 1시간 전 알람 = 폰 다른 방',
@@ -140,7 +140,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '내일 약속 또 까먹을까', tipId: 'one-calendar',
+    period: 'evening', prompt: '내일 약속 또 까먹을 것 같을 땐?', tipId: 'one-calendar',
     bullets: [
       '받자마자 캘린더 — 카톡 보면 그 자리에서',
       '시리/구글 음성 — "내일 3시 치과"',
@@ -148,7 +148,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '결정 못 하고 마비', tipId: 'decision-paralysis',
+    period: 'evening', prompt: '결정 못 하고 마비될 땐?', tipId: 'decision-paralysis',
     bullets: [
       '큰 결정 = 작고 되돌릴 수 있는 1개로 쪼개기',
       '"이직" → "이력서 1줄만 갱신"',
@@ -156,7 +156,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '몸이 신호 보내는 중', tipId: 'body-warning-signs',
+    period: 'evening', prompt: '몸이 신호 보내는 중일 땐?', tipId: 'body-warning-signs',
     bullets: [
       '두통·소화불량·근긴장 = 하루 멈춤 신호',
       '저녁에 1시간 일찍 마무리',
@@ -164,7 +164,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '하이퍼포커스 끝나고 멍', tipId: 'hyperfocus-crash',
+    period: 'evening', prompt: '하이퍼포커스 끝나고 멍할 땐?', tipId: 'hyperfocus-crash',
     bullets: [
       '직후 = 단백질 간식 + 물 큰 잔',
       '5분 산책 (도파민 회로 식히기)',
@@ -172,7 +172,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '오늘 하루 망함 느낌', tipId: 'post-flood-recovery',
+    period: 'evening', prompt: '오늘 하루 망한 느낌 들 땐?', tipId: 'post-flood-recovery',
     bullets: [
       '"오늘 = 끝, 내일 새로 시작" 의식적 컷',
       '따뜻한 샤워 → 옷 갈아입기',
@@ -180,7 +180,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '외로움 짓눌릴 때', tipId: 'loneliness-weak-tie',
+    period: 'evening', prompt: '외로움 짓눌릴 때는?', tipId: 'loneliness-weak-tie',
     bullets: [
       '동네 카페·편의점 = 약한 연결도 OK',
       '단골 가게 만들기 — 자연스레 인사',
@@ -188,7 +188,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'evening', prompt: '거절 못 해서 일정 폭발', tipId: 'no-power',
+    period: 'evening', prompt: '거절 못 해서 일정 폭발할 땐?', tipId: 'no-power',
     bullets: [
       '"잠깐, 캘린더 보고 답해줄게" 즉답 X',
       '24시간 룰 = 그날 안 답하고 다음날 결정',
@@ -198,7 +198,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
 
   // 🌚 밤 (22~5시)
   {
-    period: 'night', prompt: '30분 누웠는데 못 자는 중', tipId: 'cant-sleep-thirty-min',
+    period: 'night', prompt: '30분 누웠는데 못 잘 땐?', tipId: 'cant-sleep-thirty-min',
     bullets: [
       '침대에서 나와 — 다른 방으로',
       '약한 조명 + 종이책 5분',
@@ -206,7 +206,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'night', prompt: '머리에 생각 끝없이', tipId: 'racing-thoughts-bed',
+    period: 'night', prompt: '머리에 생각 끝없이 떠오를 땐?', tipId: 'racing-thoughts-bed',
     bullets: [
       '머리맡 메모지에 떠오르는 거 다 적기',
       '"내일 아침에 처리" 한 줄로 끝내기',
@@ -214,7 +214,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'night', prompt: '자기 전에 폰만 보는 중', tipId: 'screen-cutoff',
+    period: 'night', prompt: '자기 전에 폰만 보고 있을 땐?', tipId: 'screen-cutoff',
     bullets: [
       '잠 1시간 전 = 폰 다른 방·서랍에',
       '침대 옆 = 종이책 / 일기장만',
@@ -222,7 +222,7 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
     ],
   },
   {
-    period: 'night', prompt: '운동하고 잠 안 옴', tipId: 'pre-bed-exercise',
+    period: 'night', prompt: '운동하고 잠 안 올 땐?', tipId: 'pre-bed-exercise',
     bullets: [
       '저녁 격렬한 운동 = 잠 3시간 전까지만',
       '7시 이후 = 가벼운 산책·요가만',

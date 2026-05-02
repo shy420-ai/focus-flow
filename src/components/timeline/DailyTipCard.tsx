@@ -6,11 +6,14 @@ import { pickDailyTip, pickNextDailyTip, currentPeriod, type DailyPrompt, type D
 import { getTip } from '../../data/adhdTips'
 import { TipDetailModal } from '../tips/TipDetailModal'
 
-const PERIOD_META: Record<DailyPeriod, { emoji: string; label: string; gradient: string; accent: string }> = {
-  morning: { emoji: '🌅', label: '아침', gradient: 'linear-gradient(135deg, #FFE9D9 0%, #FFF6EE 100%)', accent: '#E8A87C' },
-  day:     { emoji: '🌞', label: '낮',  gradient: 'linear-gradient(135deg, #FFF6D8 0%, #FFFCEB 100%)', accent: '#E8B547' },
-  evening: { emoji: '🌙', label: '저녁', gradient: 'linear-gradient(135deg, #FCE4EC 0%, #FFF5F7 100%)', accent: 'var(--pink)' },
-  night:   { emoji: '🌚', label: '밤',  gradient: 'linear-gradient(135deg, #E0DFFF 0%, #F4F3FF 100%)', accent: '#9B7BB5' },
+// All four periods share the FocusFlow theme color (pink) — only the
+// emoji + label change. Keeps the daily card visually consistent with
+// the rest of the app, regardless of which theme the user picks.
+const PERIOD_META: Record<DailyPeriod, { emoji: string; label: string }> = {
+  morning: { emoji: '🌅', label: '아침' },
+  day:     { emoji: '🌞', label: '낮' },
+  evening: { emoji: '🌙', label: '저녁' },
+  night:   { emoji: '🌚', label: '밤' },
 }
 
 export function DailyTipCard() {
@@ -37,24 +40,24 @@ export function DailyTipCard() {
       <div
         style={{
           margin: '0 0 16px',
-          background: meta.gradient,
-          border: '1.5px solid ' + meta.accent,
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 80%, #fff) 0%, #fff 100%)',
+          border: '1.5px solid var(--pink)',
           borderRadius: 16,
           fontFamily: 'inherit',
           overflow: 'hidden',
-          boxShadow: '0 2px 12px color-mix(in srgb, ' + meta.accent + ' 18%, transparent)',
+          boxShadow: '0 2px 12px color-mix(in srgb, var(--pink) 18%, transparent)',
         }}
       >
         {/* Header */}
         <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8, borderBottom: '1px solid rgba(0,0,0,.04)' }}>
           <span style={{ fontSize: 18 }}>{meta.emoji}</span>
-          <span style={{ fontSize: 11, fontWeight: 800, color: meta.accent, letterSpacing: 0.3 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: 'var(--pink)', letterSpacing: 0.3 }}>
             {meta.label} · 오늘의 팁
           </span>
           <button
             onClick={() => setPrompt(pickNextDailyTip(prompt.tipId))}
             aria-label="다른 팁 보기"
-            style={{ marginLeft: 'auto', background: 'rgba(255,255,255,.5)', border: '1px solid rgba(0,0,0,.06)', color: '#666', borderRadius: 99, width: 26, height: 26, cursor: 'pointer', fontSize: 13, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            style={{ marginLeft: 'auto', background: '#fff', border: '1px solid var(--pl)', color: 'var(--pd)', borderRadius: 99, width: 26, height: 26, cursor: 'pointer', fontSize: 13, padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >↻</button>
         </div>
 
@@ -66,7 +69,7 @@ export function DailyTipCard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: tip ? 10 : 0 }}>
             {prompt.bullets.map((b, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 12, color: '#444', lineHeight: 1.5 }}>
-                <span style={{ color: meta.accent, fontWeight: 800, flexShrink: 0 }}>•</span>
+                <span style={{ color: 'var(--pink)', fontWeight: 800, flexShrink: 0 }}>•</span>
                 <span style={{ flex: 1 }}>{b}</span>
               </div>
             ))}
@@ -80,7 +83,7 @@ export function DailyTipCard() {
                 padding: '8px 12px',
                 borderRadius: 10,
                 border: 'none',
-                background: meta.accent,
+                background: 'var(--pink)',
                 color: '#fff',
                 fontSize: 11,
                 fontWeight: 800,
