@@ -434,36 +434,35 @@ export function TimelineView() {
             const rect = e.currentTarget.getBoundingClientRect()
             const startY = e.clientY - rect.top
             const startHour = displayStart + Math.max(0, startY) / PX
-            // Arm via 350ms long-press. If user moves before then = it's
-            // a scroll, so cancel arming and let scroll proceed.
-            const target = e.currentTarget as Element
-            const pointerId = e.pointerId
+            // 350ms timer flips armed flag + shows preview.
+            // setPointerCapture is deferred to the next live pointermove
+            // (more reliable than calling from a timeout).
             const timer = setTimeout(() => {
-              if (!dragCreateRef.current) return
-              dragCreateRef.current.armed = true
-              setDragPreview({ startHour, durHour: 10/60 })
-              try { target.setPointerCapture(pointerId) } catch { /* ignore */ }
+              const d = dragCreateRef.current
+              if (!d) return
+              d.armed = true
+              setDragPreview({ startHour: d.startHour, durHour: 10/60 })
               if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-                try { navigator.vibrate(8) } catch { /* ignore */ }
+                try { navigator.vibrate(10) } catch { /* ignore */ }
               }
             }, 350)
-            dragCreateRef.current = { startHour, startY, pointerId, armed: false, armTimer: timer }
+            dragCreateRef.current = { startHour, startY, pointerId: e.pointerId, armed: false, armTimer: timer }
           }}
           onPointerMove={(e) => {
             const d = dragCreateRef.current
             if (!d || d.pointerId !== e.pointerId) return
             const rect = e.currentTarget.getBoundingClientRect()
             const relY = e.clientY - rect.top
-            // Before armed: any vertical move > 8px = it's a scroll, cancel.
+            // Pre-arm: vertical movement > 12px = it's a scroll → cancel.
             if (!d.armed) {
-              if (Math.abs(relY - d.startY) > 8) {
+              if (Math.abs(relY - d.startY) > 12) {
                 if (d.armTimer) clearTimeout(d.armTimer)
                 dragCreateRef.current = null
-                setDragPreview(null)
               }
               return
             }
-            // Armed: update preview based on current Y.
+            // Armed: capture pointer on first live move (reliable here).
+            try { (e.currentTarget as Element).setPointerCapture(e.pointerId) } catch { /* ignore */ }
             const cur = displayStart + Math.max(0, relY) / PX
             const a = Math.min(d.startHour, cur)
             const b = Math.max(d.startHour, cur)
@@ -492,10 +491,14 @@ export function TimelineView() {
             }
           }}
           onPointerCancel={() => {
+            // Only reset if we never armed — if we already armed, the
+            // browser shouldn't normally cancel mid-capture, and if it
+            // does we'd rather not silently drop the user's preview.
             const d = dragCreateRef.current
-            if (d?.armTimer) clearTimeout(d.armTimer)
-            dragCreateRef.current = null
-            setDragPreview(null)
+            if (d && !d.armed) {
+              dragCreateRef.current = null
+              setDragPreview(null)
+            }
           }}
           onDoubleClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
