@@ -2,7 +2,30 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { todayStr } from '../../lib/date'
 import { registerCollect, registerHydrate, queue } from '../../lib/syncManager'
 import { useDraggableFab } from '../../hooks/useDraggableFab'
+import { ADHD_TIPS } from '../../data/adhdTips'
+import { TipDetailModal } from '../tips/TipDetailModal'
+import type { AdhdTip } from '../../types/adhdTip'
 import type { UserDoc } from '../../lib/firestore'
+
+// Compact technique presets surfaced inside the pomo popup so users discover
+// the variants beyond the default 25/5. Tap = apply work/break minutes.
+// `tipId` opens the matching detail card from the info tab.
+interface PomoTechnique {
+  id: string
+  label: string       // shown big (e.g. "50/10")
+  desc: string        // shown small (e.g. "데일리")
+  workMin: number
+  breakMin: number
+  tipId: string
+}
+const TECHNIQUES: PomoTechnique[] = [
+  { id: 'micro-5-1', label: '5/1',   desc: '응급',     workMin: 5,  breakMin: 1,  tipId: 'pomo-micro-5-1' },
+  { id: 'animedoro', label: '22/22', desc: '시동',     workMin: 22, breakMin: 22, tipId: 'pomo-animedoro' },
+  { id: 'classic',   label: '25/5',  desc: '기본',     workMin: 25, breakMin: 5,  tipId: 'pomodoro-short' },
+  { id: 'daily',     label: '50/10', desc: '데일리',   workMin: 50, breakMin: 10, tipId: 'pomo-50-10' },
+  { id: 'desktime',  label: '52/17', desc: '직장인',   workMin: 52, breakMin: 17, tipId: 'pomo-52-17' },
+  { id: 'deep',      label: '90/20', desc: '깊은작업', workMin: 90, breakMin: 20, tipId: 'pomo-90-20' },
+]
 
 
 interface PomoState {
@@ -313,6 +336,35 @@ export function PomoFab() {
     })
   }
 
+  function applyTechnique(t: PomoTechnique) {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    setPomo((prev) => {
+      const next: PomoState = {
+        ...prev,
+        workMin: t.workMin,
+        breakMin: t.breakMin,
+        running: false,
+        phase: 'work',
+        seconds: t.workMin * 60,
+        sessionsCompleted: 0,
+      }
+      saveState(next)
+      return next
+    })
+  }
+
+  // Tip detail modal opened from technique chip ℹ or "전체 가이드" link.
+  const [guideTip, setGuideTip] = useState<AdhdTip | null>(null)
+  function openTip(tipId: string) {
+    const tip = ADHD_TIPS.find((t) => t.id === tipId)
+    if (tip) setGuideTip(tip)
+  }
+
+  // Match the active preset by current work/break to highlight the chip.
+  const activeTechId = TECHNIQUES.find(
+    (t) => t.workMin === pomo.workMin && t.breakMin === pomo.breakMin,
+  )?.id ?? null
+
   const total =
     pomo.phase === 'work' ? pomo.workMin * 60 :
     pomo.phase === 'longBreak' ? pomo.longBreakMin * 60 :
@@ -434,6 +486,14 @@ export function PomoFab() {
 
       {/* Panel — 원본 모바일 UI: 텍스트 시간 + 프로그레스바 */}
       {open && (
+        <>
+          {/* Tap-outside-to-close backdrop. z=199 sits below the FAB (200) so the
+              FAB still receives clicks (which already toggle), and below the
+              panel (201) so panel clicks don't bubble to the backdrop. */}
+          <div
+            onClick={() => setOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 199, background: 'transparent' }}
+          />
         <div className="pomo-panel show">
           <div className="pomo-title">🍅 뽀모도로 타이머</div>
 
@@ -455,7 +515,48 @@ export function PomoFab() {
             <div className="pomo-progress-bar" style={{ width: Math.round(pct * 100) + '%' }} />
           </div>
 
-          {/* Preset buttons */}
+          {/* 📚 Technique guide — discoverable presets pulling from info-tab tips */}
+          <div style={{ marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, padding: '0 2px' }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--pd)' }}>📚 뽀모 기법</span>
+              <button
+                onClick={() => openTip('pomo-choose')}
+                style={{ background: 'none', border: 'none', color: 'var(--pink)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
+              >전체 가이드 ›</button>
+            </div>
+            <div style={{ display: 'flex', gap: 5, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4, scrollbarWidth: 'none' }}>
+              {TECHNIQUES.map((t) => {
+                const on = activeTechId === t.id
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => applyTechnique(t)}
+                    style={{
+                      flexShrink: 0,
+                      minWidth: 56,
+                      padding: '5px 8px',
+                      borderRadius: 8,
+                      border: 'none',
+                      background: on ? 'var(--pink)' : '#fff',
+                      color: on ? '#fff' : 'var(--pd)',
+                      cursor: 'pointer',
+                      fontFamily: 'inherit',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 1,
+                      boxShadow: on ? 'none' : '0 0 0 1px #eee inset',
+                    }}
+                  >
+                    <span style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.1 }}>{t.label}</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, opacity: on ? 0.9 : 0.6 }}>{t.desc}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Bare-minute presets (fine-tune) */}
           <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
             {[5, 10, 15, 25, 30, 60].map((m) => (
               <button key={m} className="pomo-btn" style={{ padding: '3px 7px', fontSize: 10 }} onClick={() => setWorkMin(m)}>{m}</button>
@@ -578,7 +679,10 @@ export function PomoFab() {
             </span>
           </div>
         </div>
+        </>
       )}
+
+      {guideTip && <TipDetailModal tip={guideTip} onClose={() => setGuideTip(null)} />}
     </>
   )
 }
