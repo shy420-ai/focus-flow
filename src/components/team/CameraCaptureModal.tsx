@@ -156,14 +156,38 @@ export function CameraCaptureModal({ onCapture, onCancel, onFallback }: Props) {
             disabled={!ready}
             style={{
               width: 72, height: 72, borderRadius: '50%',
-              background: '#fff', border: '4px solid rgba(255,255,255,.4)',
-              boxShadow: '0 0 0 4px rgba(255,255,255,.15)',
+              background: '#fff', border: 'none',
+              boxShadow: '0 0 0 4px rgba(255,255,255,.18), 0 4px 16px rgba(0,0,0,.25)',
               cursor: ready ? 'pointer' : 'default', padding: 0,
               opacity: ready ? 1 : 0.5,
               fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              transition: 'transform .12s',
             }}
+            onPointerDown={(e) => { if (ready) e.currentTarget.style.transform = 'scale(0.92)' }}
+            onPointerUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+            onPointerLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
             aria-label="촬영"
-          />
+          >
+            <style>{`
+              @keyframes pomo-heartbeat {
+                0%, 100% { transform: scale(1) }
+                14%      { transform: scale(1.12) }
+                28%      { transform: scale(1) }
+                42%      { transform: scale(1.08) }
+                70%      { transform: scale(1) }
+              }
+            `}</style>
+            <svg
+              width="40" height="40" viewBox="0 0 24 24"
+              fill="#FF7AA2" stroke="#E8557A" strokeWidth="1.2"
+              strokeLinejoin="round"
+              style={{ animation: ready ? 'pomo-heartbeat 1.6s ease-in-out infinite' : 'none', display: 'block' }}
+              aria-hidden="true"
+            >
+              <path d="M12 21s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.5-7 10-7 10z" />
+            </svg>
+          </button>
 
           <button
             onClick={() => setFacing((f) => (f === 'user' ? 'environment' : 'user'))}
