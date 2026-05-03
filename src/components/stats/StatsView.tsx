@@ -313,6 +313,10 @@ function TimelineHealthView() {
   const wakeGoal = config?.wakeGoal ?? 7
   const todayBedLog = logs.filter((l) => l.date === today && l.type === 'bed').sort((a, b) => (a.time ?? 0) - (b.time ?? 0))[0]
   const todayWake = logs.find((l) => l.date === today && l.type === 'wake')
+  // 실제 기상 시각 = 오늘 가장 빠른 약 복용 시각 (proxy) — 명시적 wake.time 이 있으면 그 값 우선
+  const todayTakes = logs.filter((l) => l.date === today && l.type === 'take' && l.time != null).sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
+  const wakeActualH = todayWake?.time ?? todayTakes[0]?.time ?? null
+  const wakeH = wakeActualH ?? wakeGoal
   const now = new Date()
   const nowH = now.getHours() + now.getMinutes() / 60
 
@@ -329,8 +333,14 @@ function TimelineHealthView() {
   }
   const events: Ev[] = []
 
-  // 1) 기상 — wake log 있으면 take 시각 추정 또는 wakeGoal
-  events.push({ time: wakeGoal, emoji: '🌅', title: '기상', sub: todayWake ? '기록됨' : '예정', color: '#F5BD3C' })
+  // 1) 기상 — 실제 (wake/take) 또는 목표
+  events.push({
+    time: wakeH,
+    emoji: '🌅',
+    title: '기상',
+    sub: wakeActualH != null ? `실제 ${fmtHM(wakeH)}` : `목표 ${fmtHM(wakeH)} (예정)`,
+    color: '#F5BD3C',
+  })
 
   // 2) 약 복용 (각 약마다)
   for (const m of meds) {
@@ -340,19 +350,21 @@ function TimelineHealthView() {
     const take = logs.find((l) => l.date === today && l.type === 'take' && l.timing === m.timing)
 
     let plannedH: number
-    if (m.timing === '아침') plannedH = wakeGoal + 0.5
+    if (m.timing === '아침') plannedH = wakeH + 0.5  // 실제 기상 + 30분
     else if (m.timing === '점심') plannedH = 12
     else if (m.timing === '저녁') {
       plannedH = (db.cat === '수면' || db.cat === '항정신병') ? bedGoal - 1 : bedGoal - 3
     }
-    else plannedH = nowH  // 수시
+    else plannedH = nowH
 
     const actualH = take?.time ?? plannedH
+    // 약 정보 한 줄 — duration·peak·사이드 핵심만
+    const infoLine = `${db.cat} · 지속 ${db.duration}h · 피크 ${db.peak}`
     events.push({
       time: actualH,
       emoji: '💊',
       title: `${m.name} ${m.dose}`,
-      sub: take ? `복용 완료 (${db.cat})` : `복용 예정 (${db.cat})`,
+      sub: (take ? '✅ 복용 ' + fmtHM(actualH) : '⏳ 복용 예정') + ' — ' + infoLine,
       color: cc,
       actionable: !take,
       onTake: () => {
