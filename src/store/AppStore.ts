@@ -4,7 +4,7 @@ import type { Block } from '../types/block'
 import type { RecurringTask } from '../types/recurring'
 import { readJSON, writeJSON } from '../lib/localStorage'
 import { migrateBlocks } from '../lib/migration'
-import { todayStr } from '../lib/date'
+import { todayStr, logicalTodayStr } from '../lib/date'
 import { freeSlot } from '../lib/recurring'
 import { nid } from '../lib/id'
 import { queue, registerCollect, registerHydrate } from '../lib/syncManager'
@@ -69,7 +69,7 @@ export const useAppStore = create<AppStore>()(
     uid: localStorage.getItem('ff_uid'),
     displayName: null,
     skipLogin: !!localStorage.getItem('ff_skip_login'),
-    curDate: todayStr(),
+    curDate: logicalTodayStr(),
     curView: (['tl','week','habit','goal','drop','cal','stats','friends','mood','tips'].includes(localStorage.getItem('ff_cur_view') || '') ? localStorage.getItem('ff_cur_view') as CurView : 'tl'),
     recurring: loadInitialRecurring(),
     calY: now.getFullYear(),

@@ -23,7 +23,7 @@ import { MoodAnnouncement } from './components/ui/MoodAnnouncement'
 import { TipsAnnouncement } from './components/ui/TipsAnnouncement'
 import { Confetti } from './components/ui/Confetti'
 import { useAppStore } from './store/AppStore'
-import { todayStr, addDays } from './lib/date'
+import { addDays, logicalTodayStr } from './lib/date'
 import { useAuthState } from './hooks/useAuthState'
 import { useFirestoreSync } from './hooks/useFirestoreSync'
 import { installFriendCodeDebug } from './lib/debugFriendCodes'
@@ -71,23 +71,14 @@ function AppContent() {
     installFriendCodeDebug()
   }, [setShowOnboarding])
 
-  // Roll curDate over to the new day, but at 4 AM rather than midnight.
-  // ADHD users often stay up past midnight and still mentally consider
-  // it "the same day" — flipping to "tomorrow" at 12:01 AM feels wrong.
-  // 4 AM is a common "logical day" cutoff used by night-owl planners.
+  // Roll curDate over to the new logical day (4 AM cutoff). ADHD users
+  // often stay up past midnight and still consider it "the same day" —
+  // see logicalTodayStr() in lib/date.
   useEffect(() => {
-    const ROLL_HOUR = 4
-    function logicalToday(): string {
-      const now = new Date()
-      // Before ROLL_HOUR = still yesterday's "logical day".
-      if (now.getHours() < ROLL_HOUR) return addDays(todayStr(), -1)
-      return todayStr()
-    }
     function check() {
-      const target = logicalToday()
+      const target = logicalTodayStr()
       const state = useAppStore.getState()
       const cur = state.curDate
-      // Only auto-roll if user is sitting on the previous logical today.
       if (cur === target) return
       const prev = addDays(target, -1)
       if (cur === prev) state.setCurDate(target)

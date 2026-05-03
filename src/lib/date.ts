@@ -7,6 +7,19 @@ export function todayStr(): string {
   return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate())
 }
 
+// "Logical today" — before 4 AM the calendar day still feels like
+// yesterday for night owls (esp. ADHD users). Use this anywhere the
+// default landing date matters; calendar-accurate code keeps todayStr.
+export const DAY_ROLL_HOUR = 4
+export function logicalTodayStr(): string {
+  const d = new Date()
+  if (d.getHours() < DAY_ROLL_HOUR) {
+    const y = new Date(d.getTime() - 24 * 3600 * 1000)
+    return y.getFullYear() + '-' + pad(y.getMonth() + 1) + '-' + pad(y.getDate())
+  }
+  return todayStr()
+}
+
 export function addDays(ds: string, n: number): string {
   const d = new Date(ds + 'T12:00:00')
   d.setDate(d.getDate() + n)
