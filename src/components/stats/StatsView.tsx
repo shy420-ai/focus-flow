@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useMedStore } from '../../store/MedStore'
 import { todayStr } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
+import { GearIcon } from '../ui/GearIcon'
 import type { MedItem } from '../../types/med'
 
 // ── MED DB ────────────────────────────────────────────────────────────────────
@@ -646,7 +647,10 @@ export function StatsView() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>💊 메디 트래커</div>
         <button onClick={() => setShowSetup(true)}
-          style={{ background: 'none', border: 'none', color: '#bbb', fontSize: 18, cursor: 'pointer', padding: 4 }}>⚙</button>
+          aria-label="메디 설정"
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', color: 'var(--pink)', fontFamily: 'inherit' }}>
+          <GearIcon size={18} strokeWidth={2} />
+        </button>
       </div>
 
       {/* Tabs (only show ones with meds) */}

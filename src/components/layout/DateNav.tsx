@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { addDays, todayStr, dateLabel } from '../../lib/date'
 import { getHoliday } from '../../lib/holidays'
+import { GearIcon } from '../ui/GearIcon'
 
 export function DateNav() {
   const curDate = useAppStore((s) => s.curDate)
@@ -51,15 +52,12 @@ export function DateNav() {
             title="일간 설정"
             style={{
               background: 'var(--pl)', border: 'none', borderRadius: '50%',
-              width: 26, height: 26, cursor: 'pointer', display: 'inline-flex',
-              alignItems: 'center', justifyContent: 'center', color: 'var(--pd)',
-              padding: 0, fontFamily: 'inherit',
+              width: 28, height: 28, cursor: 'pointer', display: 'inline-flex',
+              alignItems: 'center', justifyContent: 'center',
+              color: 'var(--pink)', padding: 0, fontFamily: 'inherit',
             }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3.2" />
-              <path d="M12 2v3M12 19v3M22 12h-3M5 12H2M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1M18.4 18.4l-2.1-2.1M7.7 7.7L5.6 5.6" />
-            </svg>
+            <GearIcon size={15} strokeWidth={2} />
           </button>
         </div>
         {getHoliday(curDate) && (
