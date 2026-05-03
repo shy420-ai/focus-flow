@@ -83,7 +83,7 @@ export async function recordTipRead(tipId: string, uid: string): Promise<void> {
   const db = getDb()
   const ref = doc(db, 'tipFeedback', tipId)
   try { await setDoc(ref, { reads: arrayUnion(uid) }, { merge: true }) }
-  catch { /* offline ok */ }
+  catch (e) { console.error('[recordTipRead]', tipId, e) }
 }
 
 // One-shot read of every tipFeedback doc. Used by the dev stats panel.
@@ -114,10 +114,15 @@ export async function setBookmarkRemote(tipId: string, uid: string, on: boolean)
   const db = getDb()
   const ref = doc(db, 'tipFeedback', tipId)
   if (on) {
-    await setDoc(ref, { bookmarks: arrayUnion(uid) }, { merge: true })
+    try { await setDoc(ref, { bookmarks: arrayUnion(uid) }, { merge: true }) }
+    catch (e) { console.error('[setBookmarkRemote] add', tipId, e) }
   } else {
     try { await updateDoc(ref, { bookmarks: arrayRemove(uid) }) }
-    catch { /* doc missing, nothing to remove */ }
+    catch (e) {
+      // Doc might not exist yet; that's fine, but log other errors.
+      const code = (e as { code?: string }).code
+      if (code !== 'not-found') console.error('[setBookmarkRemote] remove', tipId, e)
+    }
   }
 }
 
