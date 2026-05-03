@@ -303,14 +303,33 @@ function DrugCard({ med, todayTake, curH }: { med: MedItem; todayTake: ReturnTyp
 // ── 🧠 인사이트 카드 — 신체 정보·수면 목표 기반으로 약 복용 권장 시각 + 수면 분석 ────
 function InsightsCard() {
   const config = useMedStore((s) => s.config)
+  const logs = useMedStore((s) => s.logs)
   const meds = config?.meds || []
-  const bedGoal = config?.bedGoal ?? 23   // 0-23 (저녁 11시)
-  const wakeGoal = config?.wakeGoal ?? 7  // 0-23 (아침 7시)
+  const bedGoal = config?.bedGoal ?? 23
+  const wakeGoal = config?.wakeGoal ?? 7
   const height = config?.height
   const weight = config?.weight
 
-  // 취침 → 기상 사이 시간 (자정 넘어가면 +24)
-  const sleepHours = wakeGoal > bedGoal ? wakeGoal - bedGoal : (24 - bedGoal) + wakeGoal
+  // 실제 기록 7일 평균 — 3건 이상 모이면 목표 대신 실제 사용
+  const last7Days: Set<string> = (() => {
+    const out = new Set<string>()
+    for (let i = 0; i < 7; i++) {
+      const d = new Date()
+      d.setDate(d.getDate() - i)
+      out.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))
+    }
+    return out
+  })()
+  const bedTimes = logs.filter((l) => l.type === 'bed' && l.time != null && last7Days.has(l.date)).map((l) => l.time!)
+  const wakeTimes = logs.filter((l) => l.type === 'take' && l.timing === '아침' && l.time != null && last7Days.has(l.date)).map((l) => l.time!)
+  const avgBedActual = bedTimes.length >= 3 ? bedTimes.reduce((a, b) => a + b, 0) / bedTimes.length : null
+  const avgWakeActual = wakeTimes.length >= 3 ? wakeTimes.reduce((a, b) => a + b, 0) / wakeTimes.length : null
+  const usingActual = avgBedActual != null || avgWakeActual != null
+  const effBed = avgBedActual != null ? avgBedActual : bedGoal
+  const effWake = avgWakeActual != null ? avgWakeActual : wakeGoal
+
+  // 취침 → 기상 사이 시간 (자정 넘어가면 +24) — 실제 기록 우선, 없으면 목표
+  const sleepHours = effWake > effBed ? effWake - effBed : (24 - effBed) + effWake
   // ADHD 권장 8-9시간
   const sleepStatus = sleepHours >= 8 ? 'ok' : 'short'
 
@@ -338,53 +357,48 @@ function InsightsCard() {
     const isAnxiolytic = db.cat === '항불안'
 
     if (isStimShort) {
-      // 자극제(콘서타·메디키넷·페니드 등): 효과 종료가 취침 6h 전이어야 수면 방해 X
-      const endByH = bedGoal - 6
+      const endByH = effBed - 6
       const latestTake = endByH - db.duration
-      const ideal = Math.min(latestTake, wakeGoal + 0.5)  // 기상 후 30분 이내가 이상적
-      const take = Math.max(wakeGoal, ideal)
+      const ideal = Math.min(latestTake, effWake + 0.5)
+      const take = Math.max(effWake, ideal)
       const endTime = take + db.duration
-      const buffer = bedGoal - endTime
+      const buffer = effBed - endTime
       when = fmtHM(take) + ' (식후)'
       if (db.duration <= 5) {
         reason = `${db.peak} 빠른 효과·짧음 (${db.duration}h) — 필요 시 ${fmtHM(take + db.duration)} 추가 복용`
       } else {
-        reason = `효과 ${fmtHM(endTime)} 종료 — 취침 ${bedGoal}시까지 ${buffer.toFixed(1)}h 여유`
+        reason = `효과 ${fmtHM(endTime)} 종료 — 취침 ${fmtHM(effBed)}까지 ${buffer.toFixed(1)}h 여유`
       }
     } else if (isStimLong) {
-      // 누적형 ADHD 약 (스트라테라·아토목세틴·인튜니브)
       const isEvening = db.timing === '저녁'
-      const take = isEvening ? bedGoal - 1 : wakeGoal + 0.5
+      const take = isEvening ? effBed - 1 : effWake + 0.5
       when = fmtHM(take) + (isEvening ? ' (취침 1h 전)' : ' (기상 직후 식후)')
       reason = `누적형 ${db.duration}h · ${db.peak} — 매일 같은 시각 복용 (효과는 2~4주 후)`
     } else if (isSleep) {
-      // 졸피뎀류
-      const take = bedGoal - 0.5
+      const take = effBed - 0.5
       when = fmtHM(take)
-      reason = `취침 ${bedGoal}시 30분 전 — 7~8h 수면 확보 후 다음 날 영향 X`
+      reason = `취침 ${fmtHM(effBed)} 30분 전 — 7~8h 수면 확보 후 다음 날 영향 X`
     } else if (isAntipsych) {
       // 세로켈/아빌리파이
       if (db.timing === '저녁') {
-        const take = bedGoal - 1
+        const take = effBed - 1
         when = fmtHM(take)
         reason = `취침 1h 전 — 졸림 효과로 수면 보조`
       } else {
-        when = fmtHM(wakeGoal + 0.5) + ' (식후)'
+        when = fmtHM(effWake + 0.5) + ' (식후)'
         reason = `누적 ${db.duration}h — 매일 같은 시각 (반감기 길어 안정적)`
       }
     } else if (isAntidep) {
-      // SSRI/SNRI / 부프로피온 / 미르타자핀 등
       const isEvening = db.timing === '저녁'
-      const take = isEvening ? bedGoal - 0.5 : wakeGoal + 0.5
+      const take = isEvening ? effBed - 0.5 : effWake + 0.5
       when = fmtHM(take) + (isEvening ? ' (취침 30분 전)' : ' (식후)')
       const isInsomniaRisk = /(부프로피온|sertraline|에스시탈로프람)/i.test(db.generic) || db.sides.some((s) => s.includes('불면'))
       reason = isEvening
         ? '졸림 부작용 → 저녁 복용 (취침 보조)'
         : isInsomniaRisk ? '아침 복용 권장 — 저녁 X (불면 부작용)' : '대부분 누적형 — 아침에 매일 같은 시각'
     } else if (isMood) {
-      // 라믹탈·리튬·데파코트
       const isEvening = db.timing === '저녁'
-      const take = isEvening ? bedGoal - 1 : wakeGoal + 0.5
+      const take = isEvening ? effBed - 1 : effWake + 0.5
       when = fmtHM(take) + (isEvening ? '' : ' (식후)')
       reason = `누적 ${db.duration}h · ${db.peak} — 매일 같은 시각 (혈중농도 안정 중요)`
     } else if (isAnxiolytic) {
@@ -406,16 +420,26 @@ function InsightsCard() {
 
       {/* 수면 분석 */}
       <div style={{ background: '#fff', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>🛏 수면</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, display: 'flex', alignItems: 'center', gap: 6 }}>
+          🛏 수면
+          <span style={{ fontSize: 8, fontWeight: 600, padding: '1px 5px', borderRadius: 4, background: usingActual ? '#56C6A0' : '#ddd', color: '#fff' }}>
+            {usingActual ? '실제 7일 평균' : '목표 시간'}
+          </span>
+        </div>
         <div style={{ fontSize: 11, color: '#555', lineHeight: 1.6 }}>
-          취침 {bedGoal}시 → 기상 {wakeGoal}시 = <b>{sleepHours}시간</b>
+          취침 <b>{fmtHM(effBed)}</b> → 기상 <b>{fmtHM(effWake)}</b> = <b>{sleepHours.toFixed(1)}시간</b>
         </div>
         {sleepStatus === 'short' ? (
           <div style={{ fontSize: 10, color: '#E24B4A', marginTop: 4 }}>
-            ⚠️ ADHD 권장 8-9시간 미달 — 취침 {(bedGoal - (8 - sleepHours) + 24) % 24}시 권장 (-{8 - sleepHours}h)
+            ⚠️ ADHD 권장 8-9시간 미달 — {(8 - sleepHours).toFixed(1)}h 부족
           </div>
         ) : (
           <div style={{ fontSize: 10, color: '#56C6A0', marginTop: 4 }}>✅ ADHD 권장 8-9시간 만족</div>
+        )}
+        {!usingActual && (
+          <div style={{ fontSize: 9, color: '#aaa', marginTop: 4 }}>
+            💡 취침·아침약 기록 3건 이상 쌓이면 실제 평균으로 자동 전환
+          </div>
         )}
       </div>
 
