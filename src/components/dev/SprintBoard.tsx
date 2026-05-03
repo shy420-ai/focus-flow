@@ -154,6 +154,9 @@ export function SprintBoard() {
   const [leaderboardModalOpen, setLeaderboardModalOpen] = useState(() => sessionStorage.getItem('ff_modal_leaderboard') === '1')
   const [unitPickerForId, setUnitPickerForId] = useState<string | null>(null)
   const [editGoalId, setEditGoalId] = useState<string | null>(null)
+  // Drag-to-reorder state (pointer events; works on touch + mouse).
+  const [dragGoalId, setDragGoalId] = useState<string | null>(null)
+  const [dragOverGoalId, setDragOverGoalId] = useState<string | null>(null)
   const [introDismissed, setIntroDismissed] = useState(() => localStorage.getItem('ff_sprint_intro_dismissed') === '1')
   useEffect(() => {
     function onChange() { setLeaderboardOnState(isLeaderboardOn()) }
@@ -392,6 +395,33 @@ export function SprintBoard() {
   const daysLeft = Math.max(SPRINT_DAYS - elapsed, 0)
   const overall = sprintOverall(sprint)
 
+  // ── Goal drag-to-reorder (pointer events on the ☰ handle) ─────
+  function onGoalDragDown(e: React.PointerEvent, id: string) {
+    setDragGoalId(id)
+    ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+  }
+  function onGoalDragMove(e: React.PointerEvent) {
+    if (!dragGoalId) return
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-goal-id]') as HTMLElement | null
+    const gid = el?.dataset.goalId
+    if (gid && gid !== dragOverGoalId) setDragOverGoalId(gid)
+  }
+  function onGoalDragUp(e: React.PointerEvent) {
+    try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+    if (sprint && dragGoalId && dragOverGoalId && dragGoalId !== dragOverGoalId) {
+      const next = [...sprint.goals]
+      const fromIdx = next.findIndex((g) => g.id === dragGoalId)
+      const toIdx = next.findIndex((g) => g.id === dragOverGoalId)
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [m] = next.splice(fromIdx, 1)
+        next.splice(toIdx, 0, m)
+        setSprint({ ...sprint, goals: next })
+      }
+    }
+    setDragGoalId(null)
+    setDragOverGoalId(null)
+  }
+
   function bumpGoal(id: string, delta: number) {
     if (!sprint) return
     const g = sprint.goals.find((x) => x.id === id)
@@ -454,10 +484,27 @@ export function SprintBoard() {
       const p = goalPct(g)
       const hasSteps = !!(g.steps && g.steps.length > 0)
       const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
+      const isDragOver = dragOverGoalId === g.id && dragGoalId !== g.id
       return (
-        <div key={g.id} style={{ marginBottom: 8, padding: '10px 12px', background: '#fff', borderRadius: 10, border: '1px solid var(--pl)' }}>
+        <div key={g.id}
+          data-goal-id={g.id}
+          style={{
+            marginBottom: 8, padding: '10px 12px', background: '#fff', borderRadius: 10,
+            border: '1px solid ' + (isDragOver ? 'var(--pink)' : 'var(--pl)'),
+            opacity: dragGoalId === g.id ? 0.5 : 1,
+            transition: 'border-color .15s, opacity .15s',
+          }}
+        >
           {/* Title row */}
           <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 6 }}>
+            <button
+              onPointerDown={(e) => onGoalDragDown(e, g.id)}
+              onPointerMove={onGoalDragMove}
+              onPointerUp={onGoalDragUp}
+              onPointerCancel={onGoalDragUp}
+              aria-label="순서 바꾸기"
+              style={{ background: 'transparent', border: 'none', color: '#bbb', cursor: 'grab', touchAction: 'none', padding: '0 4px', fontSize: 14, lineHeight: 1, flexShrink: 0 }}
+            >☰</button>
             <input
               value={g.name}
               onChange={(e) => updateGoal(g.id, { name: e.target.value })}

@@ -36,15 +36,21 @@ async function copyToClipboard(text: string): Promise<boolean> {
   }
 }
 
-interface SprintGoalShape { id: string; name: string; target: number; unit: string; current: number }
+interface SubStepShape { id: string; name: string; done: boolean }
+interface SprintGoalShape { id: string; name: string; target: number; unit: string; current: number; steps?: SubStepShape[] }
 interface SprintShape { startDate: string; goals: SprintGoalShape[] }
 interface CompletedSprintShape { startDate: string; endDate: string; goals: SprintGoalShape[]; overall?: number }
+function goalPctShape(g: SprintGoalShape): number {
+  if (g.steps && g.steps.length > 0) {
+    const done = g.steps.filter((s) => s.done).length
+    return Math.round((done / g.steps.length) * 100)
+  }
+  const t = g.target || 1
+  return Math.min(100, Math.round((g.current / t) * 100))
+}
 function sprintPct(s: SprintShape | CompletedSprintShape | null | undefined): number | null {
   if (!s || !s.goals?.length) return null
-  const avg = s.goals.reduce((sum, g) => {
-    const t = g.target || 1
-    return sum + Math.min(100, Math.round((g.current / t) * 100))
-  }, 0) / s.goals.length
+  const avg = s.goals.reduce((sum, g) => sum + goalPctShape(g), 0) / s.goals.length
   return Math.round(avg)
 }
 
@@ -554,12 +560,35 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
           <div style={{ height: 6, background: '#fff', borderRadius: 3, marginBottom: 8, overflow: 'hidden' }}>
             <div style={{ height: '100%', background: 'var(--pink)', borderRadius: 3, width: spct + '%', transition: 'width .3s' }} />
           </div>
-          {sprint.goals.slice(0, 3).map((g) => (
-            <div key={g.id} style={{ fontSize: 10, color: '#666', marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {g.name || '(이름없음)'}</span>
-              <span style={{ color: 'var(--pd)', fontWeight: 600 }}>{g.current}/{g.target} {g.unit}</span>
-            </div>
-          ))}
+          {sprint.goals.slice(0, 3).map((g) => {
+            const hasSteps = !!(g.steps && g.steps.length > 0)
+            const goalP = goalPctShape(g)
+            const doneCount = hasSteps ? g.steps!.filter((s) => s.done).length : 0
+            return (
+              <div key={g.id} style={{ marginBottom: 6 }}>
+                <div style={{ fontSize: 10, color: '#666', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6 }}>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>· {g.name || '(이름없음)'}</span>
+                  <span style={{ color: 'var(--pd)', fontWeight: 600, flexShrink: 0 }}>
+                    {hasSteps ? `${doneCount}/${g.steps!.length}` : `${g.current}/${g.target} ${g.unit}`}
+                    <span style={{ marginLeft: 4, color: 'var(--pink)' }}>{goalP}%</span>
+                  </span>
+                </div>
+                {hasSteps && (
+                  <div style={{ marginTop: 2, marginLeft: 8, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    {g.steps!.slice(0, 5).map((s) => (
+                      <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 9, color: s.done ? '#aaa' : '#666' }}>
+                        <span style={{ width: 9, height: 9, borderRadius: 2, border: '1px solid ' + (s.done ? 'var(--pink)' : '#ccc'), background: s.done ? 'var(--pink)' : 'transparent', flexShrink: 0 }} />
+                        <span style={{ flex: 1, textDecoration: s.done ? 'line-through' : 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.name}</span>
+                      </div>
+                    ))}
+                    {g.steps!.length > 5 && (
+                      <div style={{ fontSize: 9, color: '#bbb', marginLeft: 14 }}>… +{g.steps!.length - 5}개</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 
