@@ -229,6 +229,167 @@ export const DAILY_PROMPTS: DailyPrompt[] = [
       '운동 후 = 따뜻한 샤워 → 체온 ↓ 도움',
     ],
   },
+
+  // ── 추가 (2026-05-04) — 풀 다양성 ↑ ──────────────────
+  // 🌅 아침
+  {
+    period: 'morning', prompt: '시작만 하면 되는데 첫 1분이 안 될 때?', tipId: 'first-minute-magic',
+    bullets: [
+      '"1분만" 룰 — 1분 후 그만둘 수 있게 약속',
+      'If-Then 미리: "9시 알람 = 노트북 열기" (열기까지만)',
+      '같은 자리·같은 음악 = 조건 반사 시동',
+    ],
+  },
+  {
+    period: 'morning', prompt: '재택근무 출근 모드 안 들 때?', tipId: 'work-remote-isolation',
+    bullets: [
+      '잠옷 X — 출근 옷 갈아입기 (작은 의식)',
+      '시작 음악 = 매번 같은 곡 (조건 반사)',
+      '책상 = 일 전용. 침대 X 소파 X',
+    ],
+  },
+
+  // 🌞 낮
+  {
+    period: 'day', prompt: '폰을 30초마다 잡고 있을 때?', tipId: 'phone-addiction',
+    bullets: [
+      '의지 X — 다른 방·서랍·잠긴 박스에 폰',
+      'Forest·ScreenZen·디지털웰빙 앱 활용',
+      '워치만 ON (전화·텍스트 알림만)',
+    ],
+  },
+  {
+    period: 'day', prompt: '오후 2~4시 머리 안 돌 때?', tipId: 'afternoon-slump',
+    bullets: [
+      '슬럼프 = 받아들이고 가벼운 일·산책으로',
+      'Power nap 정확히 20분 (더 자면 역효과)',
+      '카페인은 오후 2시 이전만',
+    ],
+  },
+  {
+    period: 'day', prompt: '자투리 10~15분 그냥 흘릴 때?', tipId: 'micro-task-time',
+    bullets: [
+      '미리 만든 마이크로 태스크 리스트 활용',
+      '5분: 메일 1통 / 10분: 책상 정리 / 15분: 짧은 글',
+      '자투리 = 폰 X, 리스트 보고 1개 시작',
+    ],
+  },
+  {
+    period: 'day', prompt: '시간 추정 매번 망할 때?', tipId: 'work-time-blindness',
+    bullets: [
+      '본인 추정 X 1.5~2배 = 진짜 견적',
+      'Toggl·Clockify로 같은 일 5번 평균',
+      '약속할 땐 견적 + 30% 버퍼',
+    ],
+  },
+  {
+    period: 'day', prompt: '메일함 800통, 열기조차 무서울 때?', tipId: 'work-email-overload',
+    bullets: [
+      'inbox zero 강박 버리고 4D (Delete·Delegate·Defer·Do)',
+      '메일 시간 = 11:00·16:00 두 번만',
+      '5분 안 끝낼 거 = "오늘 할 일" 노트로',
+    ],
+  },
+  {
+    period: 'day', prompt: '큰 프로젝트 1년째 시작 못 할 때?', tipId: 'big-project-elephant',
+    bullets: [
+      '매일 30분만 같은 시간 — 누적이 마법',
+      '첫 30분 = 분해·계획 (작은 단계 10개)',
+      '"오늘 30분 못 했다" = OK, 다음날',
+    ],
+  },
+  {
+    period: 'day', prompt: 'SNS·유튜브 1시간 자기도 모르게 갈 때?', tipId: 'internet-block',
+    bullets: [
+      '의지 X — Cold Turkey / Freedom 차단 도구',
+      '잠금 비밀번호 = 친구한테',
+      '폰 흑백 모드 = 도파민 ↓ (실제 효과)',
+    ],
+  },
+  {
+    period: 'day', prompt: '"할 수 있는데 못 함" 자기 비난 들어올 때?', tipId: 'executive-dysfunction-self',
+    bullets: [
+      '의지 X 신경 회로 차이 — 의학적 사실',
+      '도구·약·코치 = 다 정당한 도움',
+      '한 일 카운트 (작아도) → 자존감 회복',
+    ],
+  },
+  {
+    period: 'day', prompt: '보고서·기획서 첫 줄에서 막힐 때?', tipId: 'work-doc-blank-page',
+    bullets: [
+      '거꾸로 쓰기: 결론 → 예시 → 본문 → 서론 → 제목',
+      '예시·데이터부터 = 가장 쉬운 부분',
+      '음성 입력 = 시작 마찰 ↓ (말이 더 쉬움)',
+    ],
+  },
+
+  // 🌙 저녁
+  {
+    period: 'evening', prompt: '회식 술자리 — 약 먹는 날인데?', tipId: 'work-drinking-meds',
+    bullets: [
+      '거절 멘트: "약 때문에 무알콜로 갈게요"',
+      '마실 거면 = 평소 양 1/2 + 천천히 + 물 같이',
+      '다음날 약 = 평소대로 (식사 후)',
+    ],
+  },
+  {
+    period: 'evening', prompt: '엄격한 루틴 못 만들겠을 때?', tipId: 'routine-flexible',
+    bullets: [
+      '핵심 1개만 고정 (예: 아침 약, 침대 정리)',
+      '나머지 = 그날 컨디션 따라 자유',
+      '80% 만 지키면 OK — 100% 강박 X',
+    ],
+  },
+  {
+    period: 'evening', prompt: '인사고과 받고 RSD 폭발할 때?', tipId: 'work-perf-review-rsd',
+    bullets: [
+      '24시간 룰 — 그날엔 답·결정 X',
+      '다음날 = 객관 자료 (1년 성과) 옆에 두고 다시',
+      '안전한 친구 1명한테 평가 그대로 보여주기',
+    ],
+  },
+  {
+    period: 'evening', prompt: '이직 결정 1년째 못 내리고 있을 때?', tipId: 'work-job-change-decide',
+    bullets: [
+      '큰 결정 X — 작고 reversible 한 1개부터',
+      '"이력서 1줄 갱신" → "1군데 지원"',
+      '6개월 시한 정하기 — 안 하면 안 그만두는 거',
+    ],
+  },
+  {
+    period: 'evening', prompt: '무례한 말 받아주고 자기혐오 올 때?', tipId: 'rude-delay-trap',
+    bullets: [
+      '몸 신호 4가지: 어깨·미소·심박·손에 힘',
+      '외워둘 한 마디: "어, 잠깐. 그건 좀 그렇다."',
+      '놓쳤어도 = 가라앉은 후 24시간 안에 다시',
+    ],
+  },
+
+  // 🌚 밤
+  {
+    period: 'night', prompt: '멜라토닌 잘못 먹고 있는 거 아닌가 싶을 때?', tipId: 'sleep-melatonin-timing',
+    bullets: [
+      '저용량 (0.3~0.5mg) = 충분, 5mg = 과량',
+      '잠 4시간 전 복용 = 위상 조정',
+      '매일 X — 주 4일 정도 (내성 방지)',
+    ],
+  },
+  {
+    period: 'night', prompt: '수면 무호흡 의심될 때?', tipId: 'sleep-apnea-suspect',
+    bullets: [
+      '8시간 자도 피곤 + 코골이 = 의심',
+      '수면 녹음 앱 (SnoreLab·ShutEye) 1차 진단',
+      '수면 클리닉·이비인후과 → 검사',
+    ],
+  },
+  {
+    period: 'night', prompt: '오늘 망함 느낌으로 자기 전에 누웠을 때?', tipId: 'post-flood-recovery',
+    bullets: [
+      '"오늘 = 끝, 내일 새로 시작" 의식적 컷',
+      '따뜻한 샤워 → 옷 갈아입기',
+      '내일 1개만 — "꼭 할 한 가지" 정하기',
+    ],
+  },
 ]
 
 const PERIOD_HOURS: Record<DailyPeriod, [number, number]> = {
