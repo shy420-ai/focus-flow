@@ -4,7 +4,8 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import {
-  TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, deletePost, adminDeletePost, streakBadge,
+  TEAMS, REACTIONS, COLOR_SWATCHES, listenTeam, postCheckin, toggleReaction, deletePost, adminDeletePost,
+  streakBadge, getTeamMeta, setTeamColor,
   type TeamId, type TeamPost, type ReactionEmoji,
 } from '../../lib/teamCheckin'
 import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTimeout } from '../../lib/teamStorage'
@@ -65,10 +66,17 @@ export function TeamView() {
     else localStorage.removeItem(ROOM_KEY)
     setInRoomState(id)
   }
+  // bump on color overrides changing so memoized 'meta' below recomputes.
+  const [, setColorBump] = useState(0)
   useEffect(() => {
     function onHidden() { setHiddenRooms(loadHiddenRooms()) }
+    function onColors() { setColorBump((n) => n + 1) }
     window.addEventListener('ff-team-hidden-changed', onHidden)
-    return () => window.removeEventListener('ff-team-hidden-changed', onHidden)
+    window.addEventListener('ff-team-colors-changed', onColors)
+    return () => {
+      window.removeEventListener('ff-team-hidden-changed', onHidden)
+      window.removeEventListener('ff-team-colors-changed', onColors)
+    }
   }, [])
   const [posts, setPosts] = useState<TeamPost[]>([])
   const [text, setText] = useState('')
@@ -103,7 +111,7 @@ export function TeamView() {
     return () => URL.revokeObjectURL(photoPreview)
   }, [photoPreview])
 
-  const meta = TEAMS.find((t) => t.id === active) ?? TEAMS[0]
+  const meta = getTeamMeta(active)
   // 우선순위: 사용자가 설정한 닉네임 > 구글 표시 이름 > ADHD-uid 폴백.
   // 실명 노출이 부담스러운 사용자도 SettingsPopup에서 닉네임 바꾸면 즉시 적용됨.
   const customNick = (localStorage.getItem('ff_nickname') || '').trim()
@@ -269,7 +277,9 @@ export function TeamView() {
             <span style={{ fontSize: 10, color: '#bbb' }}>우측 상단 ⚙ 눌러서 다시 켤 수 있어</span>
           </div>
         ) : (
-          visibleTeams.map((t) => (
+          visibleTeams.map((tBase) => {
+            const t = getTeamMeta(tBase.id)
+            return (
             <button
               key={t.id}
               onClick={() => { setActive(t.id); setInRoom(t.id) }}
@@ -305,7 +315,8 @@ export function TeamView() {
               </div>
               <span style={{ fontSize: 18, color: '#ccc', fontWeight: 700, flexShrink: 0 }}>›</span>
             </button>
-          ))
+            )
+          })
         )}
 
         {/* Group visibility settings — opened from gear icon */}
@@ -328,34 +339,63 @@ export function TeamView() {
               <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 14 }}>
                 탭하면 켜짐/꺼짐 — 꺼진 그룹은 목록에서 안 보여
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {TEAMS.map((t) => {
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '60vh', overflowY: 'auto' }}>
+                {TEAMS.map((tBase) => {
+                  const t = getTeamMeta(tBase.id)
                   const on = !hiddenRooms.includes(t.id)
                   return (
-                    <button key={t.id}
-                      onClick={() => toggleHidden(t.id)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '10px 12px', borderRadius: 12,
-                        border: '1.5px solid ' + (on ? t.color : '#eee'),
-                        background: on ? `color-mix(in srgb, ${t.color} 10%, #fff)` : '#fafafa',
-                        cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
-                      }}
-                    >
-                      <TeamAvatar teamId={t.id} size={36} />
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>팀 {t.label}</span>
-                      <span style={{
-                        width: 32, height: 18, borderRadius: 99,
-                        background: on ? t.color : '#ddd',
-                        position: 'relative', transition: 'background .2s', flexShrink: 0,
-                      }}>
-                        <span style={{
-                          position: 'absolute', top: 2, ...(on ? { right: 2 } : { left: 2 }),
-                          width: 14, height: 14, borderRadius: '50%', background: '#fff',
-                          transition: 'all .2s',
-                        }} />
-                      </span>
-                    </button>
+                    <div key={t.id} style={{
+                      padding: 10, borderRadius: 12,
+                      border: '1.5px solid ' + (on ? t.color : '#eee'),
+                      background: on ? `color-mix(in srgb, ${t.color} 8%, #fff)` : '#fafafa',
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <TeamAvatar teamId={t.id} size={36} />
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>팀 {t.label}</span>
+                        <button
+                          onClick={() => toggleHidden(t.id)}
+                          aria-label="표시/숨김"
+                          style={{
+                            width: 32, height: 18, borderRadius: 99,
+                            background: on ? t.color : '#ddd',
+                            position: 'relative', transition: 'background .2s',
+                            flexShrink: 0, border: 'none', cursor: 'pointer', padding: 0,
+                          }}
+                        >
+                          <span style={{
+                            position: 'absolute', top: 2, ...(on ? { right: 2 } : { left: 2 }),
+                            width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                            transition: 'all .2s',
+                          }} />
+                        </button>
+                      </div>
+                      {/* Color swatch row + reset to default */}
+                      <div style={{ display: 'flex', gap: 4, marginTop: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {COLOR_SWATCHES.map((sw) => {
+                          const picked = t.color.toLowerCase() === sw.toLowerCase()
+                          return (
+                            <button key={sw}
+                              onClick={() => setTeamColor(t.id, sw)}
+                              aria-label={`색상 ${sw}`}
+                              style={{
+                                width: 22, height: 22, borderRadius: '50%',
+                                background: sw, border: '2px solid ' + (picked ? '#222' : '#fff'),
+                                boxShadow: '0 0 0 1px #ddd',
+                                cursor: 'pointer', padding: 0, fontFamily: 'inherit',
+                              }}
+                            />
+                          )
+                        })}
+                        <button
+                          onClick={() => setTeamColor(t.id, null)}
+                          title="기본 색으로 되돌리기"
+                          style={{
+                            background: 'none', border: 'none', color: '#888',
+                            fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                            padding: '2px 6px', marginLeft: 'auto',
+                          }}>↺ 기본</button>
+                      </div>
+                    </div>
                   )
                 })}
               </div>

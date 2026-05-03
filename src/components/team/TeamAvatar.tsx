@@ -1,7 +1,7 @@
 // Round flat-design profile icons for each team room. Each icon is a
 // hand-drawn SVG that re-tints itself based on the team color so all 4
 // teams feel like a coherent set with their own theme tone.
-import { TEAMS, type TeamId } from '../../lib/teamCheckin'
+import { getTeamMeta, type TeamId } from '../../lib/teamCheckin'
 
 interface Props {
   teamId: TeamId
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function TeamAvatar({ teamId, size = 56 }: Props) {
-  const meta = TEAMS.find((t) => t.id === teamId) ?? TEAMS[0]
+  const meta = getTeamMeta(teamId)
   const c = meta.color
   // Soft pad bg = mid-tone between team color and white.
   const pad = `color-mix(in srgb, ${c} 16%, #fff)`

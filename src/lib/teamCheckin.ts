@@ -20,6 +20,57 @@ export interface TeamMeta {
   examples: string[]
 }
 
+// Available swatch palette for per-room color customization. First column is
+// each team's default; rest are alternative options. Users pick from this
+// curated list (no raw color picker — keeps the look cohesive).
+export const COLOR_SWATCHES: string[] = [
+  '#5B9DF9', // sky blue
+  '#4FBD8F', // sage
+  '#F5BD3C', // sun yellow
+  '#9B7EE0', // lavender
+  '#F58E5C', // peach
+  '#E8A0B8', // pink
+  '#E8557A', // coral
+  '#4DC4D9', // teal
+]
+
+const COLORS_KEY = 'ff_team_colors'
+
+function loadColorOverrides(): Record<string, string> {
+  try {
+    return JSON.parse(localStorage.getItem(COLORS_KEY) || '{}') as Record<string, string>
+  } catch { return {} }
+}
+export function setTeamColor(teamId: TeamId, color: string | null): void {
+  const cur = loadColorOverrides()
+  if (color) cur[teamId] = color
+  else delete cur[teamId]
+  localStorage.setItem(COLORS_KEY, JSON.stringify(cur))
+  window.dispatchEvent(new CustomEvent('ff-team-colors-changed'))
+}
+
+// hex(#RRGGBB) blended with white. pct = team color weight (0..1).
+function mixWithWhite(hex: string, pct: number): string {
+  const c = hex.replace('#', '')
+  const r = parseInt(c.slice(0, 2), 16)
+  const g = parseInt(c.slice(2, 4), 16)
+  const b = parseInt(c.slice(4, 6), 16)
+  const mr = Math.round(r * pct + 255 * (1 - pct))
+  const mg = Math.round(g * pct + 255 * (1 - pct))
+  const mb = Math.round(b * pct + 255 * (1 - pct))
+  return '#' + [mr, mg, mb].map((v) => v.toString(16).padStart(2, '0')).join('')
+}
+
+// Returns the team meta with any user-set color override applied.
+// bgSoft is auto-derived (~14% color + white) so it always matches.
+export function getTeamMeta(teamId: TeamId): TeamMeta {
+  const base = TEAMS.find((t) => t.id === teamId) ?? TEAMS[0]
+  const overrides = loadColorOverrides()
+  const custom = overrides[teamId]
+  if (!custom) return base
+  return { ...base, color: custom, bgSoft: mixWithWhite(custom, 0.14) }
+}
+
 export const TEAMS: TeamMeta[] = [
   { id: 'job',     emoji: '📝', label: '취준생', hint: '예: 오늘 자소서 1개 제출',     color: '#5B9DF9', bgSoft: '#E8F1FE',
     examples: [
