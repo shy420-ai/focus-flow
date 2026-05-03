@@ -13,7 +13,9 @@ import { isAdminCached, banUser } from '../../lib/banList'
 import { showConfirm } from '../../lib/showConfirm'
 
 const ACTIVE_KEY = 'ff_team_active'
-const MAX_LEN = 80
+// 30자 = 사진 정중앙 캡션이 2줄 안에 안전하게 들어가는 한계 + 인증 형식상
+// 짧은 한 줄을 유도. 텍스트 단독 메시지에도 동일 적용 — 큰 대화 X 컨셉.
+const MAX_LEN = 30
 const GROUP_GAP_MS = 2 * 60 * 1000  // sender breaks if last msg > 2 min ago
 
 function loadActive(): TeamId {
