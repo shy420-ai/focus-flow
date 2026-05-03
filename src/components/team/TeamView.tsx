@@ -142,7 +142,11 @@ export function TeamView() {
       setErrorMsg('전송 강제 취소됨. 다시 시도해줘.')
       return
     }
-    if (!text.trim() && !photoFile) return
+    // Photo-only policy — text without photo is rejected.
+    if (!photoFile) {
+      setErrorMsg('📷 사진 인증만 받아요. 카메라 버튼 눌러서 인증샷 찍어줘.')
+      return
+    }
     setPosting(true)
     setErrorMsg(null)
     // Hard-stop after 15s so the button can never get permanently stuck
@@ -229,7 +233,7 @@ export function TeamView() {
           <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>
             👥 그룹 인증 <span style={{ fontSize: 10, color: '#888', fontWeight: 600 }}>(베타)</span>
           </div>
-          <div style={{ fontSize: 11, color: '#888' }}>익명 · 24시간 후 자동 사라짐 · 큰 대화 X</div>
+          <div style={{ fontSize: 11, color: '#888' }}>⏰ 24시간 후 자동 사라짐 · 📷 오직 사진 인증만</div>
         </div>
 
         {visibleTeams.length === 0 ? (
@@ -299,7 +303,7 @@ export function TeamView() {
           팀 {meta.label}
         </span>
         <span style={{ flex: 1 }} />
-        <span style={{ fontSize: 9, color: '#aaa', fontWeight: 600 }}>익명 · 24h</span>
+        <span style={{ fontSize: 9, color: '#aaa', fontWeight: 600 }}>⏰ 24h · 📷 사진만</span>
       </div>
 
       {/* Chat feed */}
@@ -618,7 +622,7 @@ export function TeamView() {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
-            placeholder={meta.hint}
+            placeholder={photoFile ? '사진에 새길 한 줄 (선택)' : '먼저 📷 카메라로 인증샷 찍기'}
             rows={1}
             style={{
               flex: 1, border: 'none', outline: 'none', resize: 'none',
@@ -632,13 +636,13 @@ export function TeamView() {
           />
           <button
             onClick={submit}
-            disabled={(!text.trim() && !photoFile && !posting) || !uid}
+            disabled={(!photoFile && !posting) || !uid}
             title={posting ? '탭하면 강제 취소' : '전송'}
             style={{
               padding: '8px 14px', borderRadius: 99, border: 'none',
-              background: posting ? '#888' : ((text.trim() || photoFile) && uid ? accent : '#ddd'),
+              background: posting ? '#888' : (photoFile && uid ? accent : '#ddd'),
               color: '#fff', fontSize: 12, fontWeight: 700,
-              cursor: ((text.trim() || photoFile || posting) && uid) ? 'pointer' : 'default',
+              cursor: ((photoFile || posting) && uid) ? 'pointer' : 'default',
               fontFamily: 'inherit', flexShrink: 0,
             }}
           >{posting ? '취소' : '전송'}</button>
