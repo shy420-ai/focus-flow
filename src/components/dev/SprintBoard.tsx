@@ -688,7 +688,7 @@ function StepAddRow({ onAdd }: { onAdd: (name: string) => void }) {
           if (e.key === 'Escape') { setOpen(false); setText('') }
         }}
         onBlur={() => { if (!text.trim()) setOpen(false) }}
-        placeholder="ex. 트위터 케이스 정리"
+        placeholder="ex. 컴퓨터 켜서 한문장 쓰기"
         style={{ flex: 1, minWidth: 0, padding: '8px 10px', border: '1.5px solid #fff', borderRadius: 8, fontSize: 12, fontFamily: 'inherit', outline: 'none', background: '#fff' }}
       />
       <button
