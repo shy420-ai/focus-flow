@@ -644,11 +644,11 @@ export function StatsView() {
 
   return (
     <div style={{ padding: '16px', paddingBottom: 120 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--pd)' }}>💊 메디 트래커</div>
         <button onClick={() => setShowSetup(true)}
           aria-label="메디 설정"
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'inline-flex', alignItems: 'center', color: 'var(--pink)', fontFamily: 'inherit' }}>
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2, display: 'inline-flex', alignItems: 'center', color: 'var(--pink)', fontFamily: 'inherit' }}>
           <GearIcon size={18} strokeWidth={2} />
         </button>
       </div>

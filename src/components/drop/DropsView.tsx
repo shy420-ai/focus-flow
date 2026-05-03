@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type React from 'react'
 import { useDropStore } from '../../store/DropStore'
 import { showConfirm } from '../../lib/showConfirm'
 import { DropDetailModal } from './DropDetailModal'
@@ -23,6 +24,32 @@ export function DropsView() {
   const clearDone = useDropStore((s) => s.clearDone)
   const clearAll = useDropStore((s) => s.clearAll)
   const shuffle = useDropStore((s) => s.shuffle)
+  const reorder = useDropStore((s) => s.reorder)
+
+  // ☰ 드래그로 순서 바꾸기 — non-done 아이템 안에서만 동작.
+  const [dragId, setDragId] = useState<number | null>(null)
+  const [dragOverId, setDragOverId] = useState<number | null>(null)
+  function onDragHandleDown(e: React.PointerEvent, id: number) {
+    setDragId(id)
+    try { (e.currentTarget as Element).setPointerCapture(e.pointerId) } catch { /* ignore */ }
+  }
+  function onDragHandleMove(e: React.PointerEvent) {
+    if (dragId == null) return
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-drop-id]') as HTMLElement | null
+    const id = el?.dataset.dropId
+    if (id && Number(id) !== dragOverId) setDragOverId(Number(id))
+  }
+  function onDragHandleUp(e: React.PointerEvent) {
+    try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+    if (dragId != null && dragOverId != null && dragId !== dragOverId) {
+      const todoOnly = items.filter((i) => !i.done)
+      const fromIdx = todoOnly.findIndex((i) => i.id === dragId)
+      const toIdx = todoOnly.findIndex((i) => i.id === dragOverId)
+      if (fromIdx !== -1 && toIdx !== -1) reorder(fromIdx, toIdx)
+    }
+    setDragId(null)
+    setDragOverId(null)
+  }
 
   const [inputVal, setInputVal] = useState('')
   const [search, setSearch] = useState('')
@@ -148,7 +175,14 @@ export function DropsView() {
         <>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pink)', margin: '12px 0 6px' }}>⭐ 보관 ({starred.length})</div>
           {starred.map((item) => (
-            <DropRow key={item.id} item={item} onTap={() => setEditId(item.id)} onToggleDone={handleToggleDone} onToggleStar={toggleStar} onDelete={deleteItem} highlight />
+            <DropRow key={item.id} item={item} onTap={() => setEditId(item.id)} onToggleDone={handleToggleDone} onToggleStar={toggleStar} onDelete={deleteItem} highlight
+              draggable
+              isDragging={dragId === item.id}
+              isDragOver={dragOverId === item.id && dragId != null && dragId !== item.id}
+              onDragDown={(e) => onDragHandleDown(e, item.id)}
+              onDragMove={onDragHandleMove}
+              onDragUp={onDragHandleUp}
+            />
           ))}
         </>
       )}
@@ -158,7 +192,14 @@ export function DropsView() {
         <>
           {starred.length > 0 && <div style={{ fontSize: 11, fontWeight: 700, color: '#888', margin: '14px 0 6px' }}>🌊 임시 ({todo.length})</div>}
           {todo.map((item) => (
-            <DropRow key={item.id} item={item} onTap={() => setEditId(item.id)} onToggleDone={handleToggleDone} onToggleStar={toggleStar} onDelete={deleteItem} />
+            <DropRow key={item.id} item={item} onTap={() => setEditId(item.id)} onToggleDone={handleToggleDone} onToggleStar={toggleStar} onDelete={deleteItem}
+              draggable
+              isDragging={dragId === item.id}
+              isDragOver={dragOverId === item.id && dragId != null && dragId !== item.id}
+              onDragDown={(e) => onDragHandleDown(e, item.id)}
+              onDragMove={onDragHandleMove}
+              onDragUp={onDragHandleUp}
+            />
           ))}
         </>
       )}
@@ -192,9 +233,17 @@ interface RowProps {
   onToggleStar: (id: number) => void
   onDelete: (id: number) => void
   highlight?: boolean
+  // 드래그 핸들 — undefined 면 핸들 자체가 안 그려짐 (done 섹션 등).
+  draggable?: boolean
+  isDragging?: boolean
+  isDragOver?: boolean
+  onDragDown?: (e: React.PointerEvent) => void
+  onDragMove?: (e: React.PointerEvent) => void
+  onDragUp?: (e: React.PointerEvent) => void
 }
 
-function DropRow({ item, onTap, onToggleDone, onToggleStar, onDelete, highlight }: RowProps) {
+function DropRow({ item, onTap, onToggleDone, onToggleStar, onDelete, highlight,
+  draggable, isDragging, isDragOver, onDragDown, onDragMove, onDragUp }: RowProps) {
   const hasNote = !!item.note
   const hasImage = !!item.imageUrl
   const tEmoji = item.template ? TEMPLATE_EMOJI[item.template] : null
@@ -202,12 +251,31 @@ function DropRow({ item, onTap, onToggleDone, onToggleStar, onDelete, highlight 
   return (
     <div
       className="drop-item"
+      data-drop-id={item.id}
       style={{
         ...(highlight ? { borderLeftColor: 'var(--pink)', background: '#FFF6F8' } : {}),
         ...(isDone ? { opacity: .6 } : {}),
+        ...(isDragging ? { opacity: .35 } : {}),
+        ...(isDragOver ? { background: 'var(--pl)' } : {}),
         cursor: 'pointer',
+        transition: 'background .15s, opacity .15s',
       }}
     >
+      {draggable && onDragDown && (
+        <span
+          onPointerDown={onDragDown}
+          onPointerMove={onDragMove}
+          onPointerUp={onDragUp}
+          onPointerCancel={onDragUp}
+          style={{
+            cursor: 'grab', color: '#bbb', fontSize: 14,
+            padding: '4px 4px', touchAction: 'none',
+            userSelect: 'none', WebkitUserSelect: 'none',
+            lineHeight: 1, flexShrink: 0, alignSelf: 'center',
+          }}
+          aria-label="순서 변경"
+        >☰</span>
+      )}
       <button
         className="drop-check"
         onClick={(e) => { e.stopPropagation(); onToggleDone(item.id) }}
