@@ -21,6 +21,7 @@ interface MedActions {
   logWake: (level: number) => void
   logSleepTime: (level: number) => void
   logBedtime: (hour: number) => void
+  removeBedtime: (id: string) => void
   clearAll: () => void
 }
 
@@ -116,8 +117,15 @@ export const useMedStore = create<MedStore>()(
     logBedtime: (hour) => {
       const today = todayStr()
       set((state) => {
-        state.logs = state.logs.filter((l) => !(l.date === today && l.type === 'bed'))
-        state.logs.push({ id: String(Date.now()), date: today, type: 'bed', time: hour })
+        // 누적 기록 — 같은 날 여러 번 저장 가능 (예: 일찍 잠들었다 깨서 다시 잠).
+        state.logs.push({ id: String(Date.now()) + '-' + Math.random().toString(36).slice(2, 6), date: today, type: 'bed', time: hour })
+      })
+      persist(get().config, get().logs)
+    },
+
+    removeBedtime: (id) => {
+      set((state) => {
+        state.logs = state.logs.filter((l) => !(l.type === 'bed' && l.id === id))
       })
       persist(get().config, get().logs)
     },

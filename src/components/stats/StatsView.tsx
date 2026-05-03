@@ -306,13 +306,15 @@ function SleepTab() {
   const logWake = useMedStore((s) => s.logWake)
   const logSleepTime = useMedStore((s) => s.logSleepTime)
   const logBedtime = useMedStore((s) => s.logBedtime)
+  const removeBedtime = useMedStore((s) => s.removeBedtime)
 
   const today = todayStr()
   const todayWakeLog = logs.find((l) => l.date === today && l.type === 'wake')
   const todaySleepLog = logs.find((l) => l.date === today && l.type === 'sleeptime')
-  const todayBedLog = logs.find((l) => l.date === today && l.type === 'bed')
+  const todayBedLogs = logs.filter((l) => l.date === today && l.type === 'bed').sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
   const bedGoal = config?.bedGoal ?? 23
   const wakeGoal = config?.wakeGoal ?? 7
+  const [staged, setStaged] = useState<number>(bedGoal)
 
   // 최근 7일 평균 수면·기상 컨디션 — 간단 분석
   const last7 = Array.from({ length: 7 }, (_, i) => {
@@ -361,16 +363,15 @@ function SleepTab() {
         </div>
       )}
 
-      {/* 취침 기록 — 슬라이더 (30분 단위) */}
+      {/* 취침 기록 — 슬라이더 + 저장 버튼 (누적 기록) */}
       <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 10 }}>
-          😴 취침 기록 {todayBedLog ? <span style={{ fontSize: 11, color: '#56C6A0', marginLeft: 6 }}>✅ 기록됨</span> : null}
+          😴 취침 기록
         </div>
         {(() => {
-          // 19시(저녁 7시)부터 익일 새벽 5시까지 — ADHD 사용자 일찍·늦게 자는 케이스 다 커버
+          // 19시(저녁 7시)부터 익일 새벽 5시까지
           const min = Math.min(19, bedGoal - 2)
           const max = Math.max(bedGoal + 6, 29)
-          const cur = todayBedLog?.time ?? bedGoal
           const fmt = (h: number) => {
             const hh = Math.floor(h)
             const mm = Math.round((h % 1) * 60)
@@ -380,20 +381,55 @@ function SleepTab() {
           return (
             <>
               <div style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, color: 'var(--pink)', marginBottom: 8, letterSpacing: -1, fontFeatureSettings: '"tnum"' }}>
-                {fmt(cur)}
+                {fmt(staged)}
               </div>
               <input
                 type="range"
                 min={min} max={max} step={0.5}
-                value={cur}
-                onChange={(e) => logBedtime(parseFloat(e.target.value))}
+                value={staged}
+                onChange={(e) => setStaged(parseFloat(e.target.value))}
                 style={{ width: '100%', accentColor: 'var(--pink)' }}
               />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#aaa', marginTop: 2, fontWeight: 600 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#aaa', marginTop: 2, marginBottom: 10, fontWeight: 600 }}>
                 <span>{fmt(min)}</span>
                 <span style={{ color: 'var(--pink)' }}>목표 {bedGoal}:00</span>
                 <span>{fmt(max)}</span>
               </div>
+              <button
+                onClick={() => { logBedtime(staged); showMiniToast('😴 취침 시각 기록됨') }}
+                style={{
+                  width: '100%', padding: 10, borderRadius: 10, border: 'none',
+                  background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8,
+                }}
+              >💾 저장</button>
+              {/* 오늘 누적 기록 */}
+              {todayBedLogs.length > 0 && (
+                <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 8 }}>
+                  <div style={{ fontSize: 10, color: '#888', fontWeight: 700, marginBottom: 4 }}>오늘 기록 {todayBedLogs.length}건</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                    {todayBedLogs.map((log) => (
+                      <span key={log.id} style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 4,
+                        padding: '4px 4px 4px 10px', borderRadius: 99,
+                        background: 'var(--pl)', fontSize: 11, color: 'var(--pd)', fontWeight: 600,
+                      }}>
+                        ✅ {fmt(log.time!)}
+                        <button
+                          onClick={() => { removeBedtime(log.id); showMiniToast('🗑 기록 삭제') }}
+                          style={{
+                            background: '#fff', border: 'none', borderRadius: '50%',
+                            width: 18, height: 18, fontSize: 10, color: '#aaa',
+                            cursor: 'pointer', fontFamily: 'inherit', padding: 0,
+                            lineHeight: 1,
+                          }}
+                          aria-label="삭제"
+                        >×</button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )
         })()}
