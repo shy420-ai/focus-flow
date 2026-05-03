@@ -9,6 +9,7 @@ import {
 } from '../../lib/teamCheckin'
 import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTimeout } from '../../lib/teamStorage'
 import { CameraCaptureModal } from './CameraCaptureModal'
+import { TeamAvatar } from './TeamAvatar'
 import { isAdminCached, banUser } from '../../lib/banList'
 import { showConfirm } from '../../lib/showConfirm'
 
@@ -260,13 +261,7 @@ export function TeamView() {
               onPointerUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
               onPointerLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
             >
-              <div style={{
-                width: 56, height: 56, borderRadius: 14,
-                background: `linear-gradient(135deg, ${t.bgSoft}, #fff)`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 30, flexShrink: 0,
-                border: `1px solid ${t.bgSoft}`,
-              }}>{t.emoji}</div>
+              <TeamAvatar teamId={t.id} size={56} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', marginBottom: 2 }}>
                   팀 {t.label}
@@ -305,8 +300,8 @@ export function TeamView() {
             flexShrink: 0,
           }}
         >‹</button>
-        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 16 }}>{meta.emoji}</span>
+        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <TeamAvatar teamId={meta.id} size={28} />
           팀 {meta.label}
         </span>
         <span style={{ flex: 1 }} />
