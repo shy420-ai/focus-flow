@@ -171,6 +171,12 @@ export function PomoFab() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   // Lock mode: fullscreen overlay + leave-detection penalty.
   const [lockMode, setLockMode] = useState<boolean>(() => localStorage.getItem('ff_pomo_lock') === '1')
+  const [fabHidden, setFabHidden] = useState<boolean>(() => localStorage.getItem('ff_pomo_fab_hidden') === '1')
+  useEffect(() => {
+    function refresh() { setFabHidden(localStorage.getItem('ff_pomo_fab_hidden') === '1') }
+    window.addEventListener('ff-pomo-fab-changed', refresh)
+    return () => window.removeEventListener('ff-pomo-fab-changed', refresh)
+  }, [])
   // Pick up cross-device toggle / total-count changes.
   useEffect(() => {
     function refreshLock() { setLockMode(localStorage.getItem('ff_pomo_lock') === '1') }
@@ -534,20 +540,23 @@ export function PomoFab() {
         )
       })()}
 
-      {/* FAB — draggable on long press */}
-      <button
-        ref={bindFab as React.RefCallback<HTMLButtonElement>}
-        className="pomo-fab"
-        onClick={() => { if (!pomoFabDragging) setOpen((o) => !o) }}
-        style={{
-          ...(pomo.running ? { background: 'var(--pd)', fontSize: 13, fontWeight: 700, letterSpacing: '-.5px' } : {}),
-          ...pomoFabStyle,
-        }}
-      >
-        {pomo.running ? timeStr : (
-          <span style={{ display: 'inline-block', lineHeight: 1, transform: 'translateY(-2px)' }}>🍅</span>
-        )}
-      </button>
+      {/* FAB — hidden via settings when user opts out, but still rendered
+          when timer is running so they can see/stop the pomo. */}
+      {(!fabHidden || pomo.running) && (
+        <button
+          ref={bindFab as React.RefCallback<HTMLButtonElement>}
+          className="pomo-fab"
+          onClick={() => { if (!pomoFabDragging) setOpen((o) => !o) }}
+          style={{
+            ...(pomo.running ? { background: 'var(--pd)', fontSize: 13, fontWeight: 700, letterSpacing: '-.5px' } : {}),
+            ...pomoFabStyle,
+          }}
+        >
+          {pomo.running ? timeStr : (
+            <span style={{ display: 'inline-block', lineHeight: 1, transform: 'translateY(-2px)' }}>🍅</span>
+          )}
+        </button>
+      )}
 
       {/* Panel — 원본 모바일 UI: 텍스트 시간 + 프로그레스바 */}
       {open && (

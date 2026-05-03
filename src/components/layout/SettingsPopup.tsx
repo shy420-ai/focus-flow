@@ -678,6 +678,32 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })}
       </div>
 
+      {/* 뽀모도로 FAB 아이콘 표시 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
+        <span style={{ fontSize: 11, color: '#888' }}>🍅 뽀모 아이콘</span>
+        {(() => {
+          const hidden = localStorage.getItem('ff_pomo_fab_hidden') === '1'
+          return (['표시', '숨김'] as const).map((label, i) => {
+            const isHide = i === 1
+            const on = isHide ? hidden : !hidden
+            return (
+              <button key={label}
+                onClick={() => {
+                  localStorage.setItem('ff_pomo_fab_hidden', isHide ? '1' : '0')
+                  window.dispatchEvent(new CustomEvent('ff-pomo-fab-changed'))
+                }}
+                style={{
+                  padding: '4px 10px', borderRadius: 8,
+                  border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
+                  background: on ? 'var(--pink)' : '#fff',
+                  color: on ? '#fff' : 'var(--pd)',
+                  fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                }}>{label}</button>
+            )
+          })
+        })()}
+      </div>
+
       {/* 탭 관리 */}
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>

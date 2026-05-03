@@ -121,16 +121,18 @@ function normalizePost(p: Partial<TeamPost> & { hearts?: string[] }): TeamPost {
   if (p.hearts && p.hearts.length && !reactions['❤️']) {
     reactions['❤️'] = p.hearts
   }
-  return {
+  // Firestore rejects undefined values, so spread optional fields only when set.
+  const out: TeamPost = {
     id: p.id ?? '',
     uid: p.uid ?? '',
     nickname: p.nickname ?? '익명',
     text: p.text ?? '',
     ts: p.ts ?? 0,
     reactions,
-    photoUrl: p.photoUrl,
-    streak: p.streak,
   }
+  if (typeof p.photoUrl === 'string') out.photoUrl = p.photoUrl
+  if (typeof p.streak === 'number') out.streak = p.streak
+  return out
 }
 
 // Streak badge — 새싹이 66일에 걸쳐 꽃피우는 성장기. Lally et al. (2010)
