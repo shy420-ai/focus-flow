@@ -719,7 +719,7 @@ export function PomoFab() {
           </button>
 
           {/* Today count + lifetime total */}
-          <div className="pomo-count" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
+          <div className="pomo-count" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8, marginTop: 12 }}>
             <span>오늘 {pomo.todayCount}회 🍅</span>
             <span style={{ fontSize: 10, color: '#888' }}>
               누적 {pomo.totalCount}회 · {pomo.totalMinutes}m
