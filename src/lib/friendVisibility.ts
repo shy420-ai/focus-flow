@@ -58,14 +58,14 @@ registerCollect(() => {
 })
 
 registerHydrate((d: UserDoc) => {
+  // 사용자 토글이 새 스냅샷마다 덮어쓰여서 풀리던 이슈 해결 — local 이 한 번이라도
+  // 설정된 적 있으면 그 device 의 local 이 source of truth. 새 device(첫 install)
+  // 일 때만 remote 에서 가져와 시드함.
+  if (localStorage.getItem(KEY) !== null) return
   const v = d.friendVisibility as Partial<Record<VisibilitySection, boolean>> | undefined
   if (v && typeof v === 'object') {
     const merged = { ...DEFAULT, ...v }
-    const localStr = localStorage.getItem(KEY)
-    const remoteStr = JSON.stringify(merged)
-    if (localStr !== remoteStr) {
-      localStorage.setItem(KEY, remoteStr)
-      window.dispatchEvent(new CustomEvent('ff-friend-visibility-changed'))
-    }
+    localStorage.setItem(KEY, JSON.stringify(merged))
+    window.dispatchEvent(new CustomEvent('ff-friend-visibility-changed'))
   }
 })

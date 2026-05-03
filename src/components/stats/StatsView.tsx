@@ -296,30 +296,36 @@ function DrugCard({ med, todayTake, curH }: { med: MedItem; todayTake: ReturnTyp
   )
 }
 
-// ── Morning Tab ───────────────────────────────────────────────────────────────
-function MorningTab() {
+// ── Sleep Tab ─────────────────────────────────────────────────────────────────
+// 약과 분리된 독립 영역 — 어젯밤 수면 컨디션 / 잠드는 시간 / 취침 기록 +
+// (앞으로) 수면-약 상관 분석.
+function SleepTab() {
   const config = useMedStore((s) => s.config)
   const logs = useMedStore((s) => s.logs)
-  const logTake = useMedStore((s) => s.logTake)
-  const clearTake = useMedStore((s) => s.clearTake)
-  const logStatus = useMedStore((s) => s.logStatus)
   const logWake = useMedStore((s) => s.logWake)
   const logSleepTime = useMedStore((s) => s.logSleepTime)
+  const logBedtime = useMedStore((s) => s.logBedtime)
 
   const today = todayStr()
-  const now = new Date()
-  const nowHour = now.getHours()
-
-  const morningMeds = (config?.meds || []).filter((m) => m.timing === '아침' || m.timing === '수시')
-  const todayMorningTake = logs.find((l) => l.date === today && l.type === 'take' && l.timing === '아침')
   const todayWakeLog = logs.find((l) => l.date === today && l.type === 'wake')
   const todaySleepLog = logs.find((l) => l.date === today && l.type === 'sleeptime')
-  const todayStatuses = logs.filter((l) => l.date === today && l.type === 'status').sort((a, b) => (a.hour ?? 0) - (b.hour ?? 0))
-  const curStatus = todayStatuses.find((s) => s.hour === nowHour)
+  const todayBedLog = logs.find((l) => l.date === today && l.type === 'bed')
+  const bedGoal = config?.bedGoal ?? 23
+  const wakeGoal = config?.wakeGoal ?? 7
+
+  // 최근 7일 평균 수면·기상 컨디션 — 간단 분석
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date()
+    d.setDate(d.getDate() - i)
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+  })
+  const wakeScores = last7.map((d) => logs.find((l) => l.date === d && l.type === 'wake')?.level ?? null).filter((x): x is number => x !== null)
+  const avgWake = wakeScores.length ? wakeScores.reduce((a, b) => a + b, 0) / wakeScores.length : null
+  const recordedDays = wakeScores.length
 
   return (
     <div>
-      {/* Wake + Sleep condition */}
+      {/* 오늘 컨디션 입력 — 안 했으면 노출 */}
       {(!todayWakeLog || !todaySleepLog) && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
           {!todayWakeLog && (
@@ -349,8 +355,75 @@ function MorningTab() {
         </div>
       )}
       {todayWakeLog && todaySleepLog && (
+        <div style={{ background: 'var(--pl)', borderRadius: 12, padding: '10px 14px', marginBottom: 12, fontSize: 12, color: 'var(--pd)', fontWeight: 600 }}>
+          오늘 컨디션: {STATUS_EMOJI[todayWakeLog.level!]} {WAKE_LABEL[todayWakeLog.level!]} · {SLEEP_LABEL[todaySleepLog.level!] || ''}
+        </div>
+      )}
+
+      {/* 취침 기록 */}
+      <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
+          😴 취침 기록 {todayBedLog ? <span style={{ fontSize: 11, color: '#56C6A0', marginLeft: 6 }}>✅ {Math.floor(todayBedLog.time!)}:{String(Math.round((todayBedLog.time! % 1) * 60)).padStart(2, '0')} 기록됨</span> : null}
+        </div>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+          {Array.from({ length: 8 }, (_, i) => {
+            const h = bedGoal - 2 + i
+            const display = h >= 24 ? (h - 24) + ':00(익일)' : h + ':00'
+            return (
+              <button key={h} onClick={() => logBedtime(h)}
+                style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid ' + (todayBedLog?.time === h ? 'var(--pink)' : 'var(--pl)'), background: todayBedLog?.time === h ? 'var(--pink)' : '#fff', color: todayBedLog?.time === h ? '#fff' : '#555', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {display}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* 7일 평균 분석 */}
+      {recordedDays > 0 && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>📈 최근 7일 패턴</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: '#555' }}>
+            <span style={{ fontSize: 22 }}>{avgWake != null ? STATUS_EMOJI[Math.round(avgWake)] : '—'}</span>
+            <div style={{ flex: 1 }}>
+              <div>평균 컨디션: <b>{avgWake != null ? WAKE_LABEL[Math.round(avgWake)] : '기록 없음'}</b></div>
+              <div style={{ fontSize: 10, color: '#aaa' }}>{recordedDays}일 기록 · 목표 기상 {wakeGoal}시 / 취침 {bedGoal}시</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', padding: '4px 0', lineHeight: 1.6 }}>
+        💡 수면-약 상관 분석은 곧 추가될 예정 (예: "스틸녹스 먹은 날 평균 수면 점수")
+      </div>
+    </div>
+  )
+}
+
+// ── Morning Tab ───────────────────────────────────────────────────────────────
+function MorningTab() {
+  const config = useMedStore((s) => s.config)
+  const logs = useMedStore((s) => s.logs)
+  const logTake = useMedStore((s) => s.logTake)
+  const clearTake = useMedStore((s) => s.clearTake)
+  const logStatus = useMedStore((s) => s.logStatus)
+
+  const today = todayStr()
+  const now = new Date()
+  const nowHour = now.getHours()
+
+  const morningMeds = (config?.meds || []).filter((m) => m.timing === '아침' || m.timing === '수시')
+  const todayMorningTake = logs.find((l) => l.date === today && l.type === 'take' && l.timing === '아침')
+  const todayWakeLog = logs.find((l) => l.date === today && l.type === 'wake')
+  const todayStatuses = logs.filter((l) => l.date === today && l.type === 'status').sort((a, b) => (a.hour ?? 0) - (b.hour ?? 0))
+  const curStatus = todayStatuses.find((s) => s.hour === nowHour)
+
+  return (
+    <div>
+      {/* 수면·취침 기록은 이제 🌙 수면 sub-tab 으로 분리. 짧은 미리보기만 남김. */}
+      {todayWakeLog && (
         <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 8 }}>
-          🌅 아침 컨디션: {STATUS_EMOJI[todayWakeLog.level!]} {WAKE_LABEL[todayWakeLog.level!]} · {SLEEP_LABEL[todaySleepLog.level!] || ''}
+          🌅 아침 컨디션: {STATUS_EMOJI[todayWakeLog.level!]} {WAKE_LABEL[todayWakeLog.level!]}
         </div>
       )}
 
@@ -445,7 +518,6 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
   const logs = useMedStore((s) => s.logs)
   const logTake = useMedStore((s) => s.logTake)
   const clearTake = useMedStore((s) => s.clearTake)
-  const logBedtime = useMedStore((s) => s.logBedtime)
 
   const today = todayStr()
   const now = new Date()
@@ -453,7 +525,6 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
   const nightMeds = (config?.meds || []).filter((m) => m.timing === '저녁')
   const todayNightTake = logs.find((l) => l.date === today && l.type === 'take' && l.timing === '저녁')
   const todayBedLog = logs.find((l) => l.date === today && l.type === 'bed')
-  const bedGoal = config?.bedGoal ?? 23
   const wakeGoal = config?.wakeGoal ?? 7
 
   const sleepMeds = nightMeds.filter((m) => {
@@ -520,24 +591,12 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
         </div>
       )}
 
-      {/* 취침 기록 */}
-      <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
-          😴 취침 기록 {todayBedLog ? <span style={{ fontSize: 11, color: '#56C6A0', marginLeft: 6 }}>✅ {Math.floor(todayBedLog.time!)}:{String(Math.round((todayBedLog.time! % 1) * 60)).padStart(2, '0')} 기록됨</span> : null}
+      {/* 😴 취침 기록은 🌙 수면 sub-tab 으로 분리 */}
+      {todayBedLog && (
+        <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 8 }}>
+          ✅ 오늘 취침 {Math.floor(todayBedLog.time!)}:{String(Math.round((todayBedLog.time! % 1) * 60)).padStart(2, '0')} 기록됨
         </div>
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {Array.from({ length: 8 }, (_, i) => {
-            const h = bedGoal - 2 + i
-            const display = h >= 24 ? (h - 24) + ':00(익일)' : h + ':00'
-            return (
-              <button key={h} onClick={() => logBedtime(h)}
-                style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid ' + (todayBedLog?.time === h ? 'var(--pink)' : 'var(--pl)'), background: todayBedLog?.time === h ? 'var(--pink)' : '#fff', color: todayBedLog?.time === h ? '#fff' : '#555', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
-                {display}
-              </button>
-            )
-          })}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -650,9 +709,9 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
 // ── Main StatsView ─────────────────────────────────────────────────────────────
 export function StatsView() {
   const config = useMedStore((s) => s.config)
-  const [tab, setTab] = useState<'morning' | 'lunch' | 'night'>(() => {
+  const [tab, setTab] = useState<'morning' | 'lunch' | 'night' | 'sleep'>(() => {
     const saved = localStorage.getItem('ff_medi_tab')
-    return (saved === 'morning' || saved === 'lunch' || saved === 'night') ? saved : 'morning'
+    return (saved === 'morning' || saved === 'lunch' || saved === 'night' || saved === 'sleep') ? saved : 'morning'
   })
   const [showSetup, setShowSetup] = useState(false)
 
@@ -667,10 +726,11 @@ export function StatsView() {
   const hasNight = meds.some((m) => m.timing === '저녁')
   const ALL_TABS = [
     { id: 'morning' as const, label: '☀️ 아침약', visible: hasMorning },
-    { id: 'lunch' as const, label: '🥪 점심약', visible: hasLunch },
-    { id: 'night' as const, label: '🌙 저녁약', visible: hasNight },
+    { id: 'lunch'   as const, label: '🥪 점심약', visible: hasLunch },
+    { id: 'night'   as const, label: '🌙 저녁약', visible: hasNight },
+    { id: 'sleep'   as const, label: '😴 수면',   visible: true },  // 항상 보임
   ]
-  // Show only tabs with meds; if none set up, show all so user can pick where to add
+  // Show only tabs with meds (수면은 항상); if none set up, show all so user can pick where to add
   const TABS = hasMeds ? ALL_TABS.filter((t) => t.visible) : ALL_TABS
 
   const visibleIds = TABS.map((t) => t.id)
@@ -712,6 +772,7 @@ export function StatsView() {
           {effectiveTab === 'morning' && <MorningTab />}
           {effectiveTab === 'lunch' && <LunchTab onSetup={() => setShowSetup(true)} />}
           {effectiveTab === 'night' && <EveningTab onSetup={() => setShowSetup(true)} />}
+          {effectiveTab === 'sleep' && <SleepTab />}
         </>
       )}
 
