@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import {
-  TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, streakBadge,
+  TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, deletePost, adminDeletePost, streakBadge,
   type TeamId, type TeamPost, type ReactionEmoji,
 } from '../../lib/teamCheckin'
 import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTimeout } from '../../lib/teamStorage'
@@ -158,6 +158,27 @@ export function TeamView() {
       await toggleReaction(active, postId, uid, emoji)
     } catch (e) {
       console.error('toggleReaction failed', e)
+    }
+  }
+
+  async function handleDeleteMine(postId: string) {
+    if (!uid) return
+    if (!window.confirm('이 인증을 삭제할까?')) return
+    try {
+      await deletePost(active, postId, uid)
+    } catch (e) {
+      console.error('deletePost failed', e)
+      setErrorMsg('삭제 실패: ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
+
+  async function handleDeleteAsAdmin(postId: string, nick: string) {
+    if (!window.confirm(`운영자 권한: ${nick}의 인증을 삭제할까?`)) return
+    try {
+      await adminDeletePost(active, postId)
+    } catch (e) {
+      console.error('adminDeletePost failed', e)
+      setErrorMsg('운영 삭제 실패: ' + (e instanceof Error ? e.message : String(e)))
     }
   }
 
@@ -339,17 +360,40 @@ export function TeamView() {
                       {groupEnd && (
                         <span style={{ fontSize: 9, color: '#999', fontWeight: 600, padding: '0 2px' }}>{clockTime(p.ts)}</span>
                       )}
-                      {/* Admin-only ban button. Hidden for own posts. */}
-                      {amAdmin && !mine && (
+                      {/* Owner-only delete (×). Always visible on own posts. */}
+                      {mine && (
                         <button
-                          onClick={(e) => { e.stopPropagation(); handleBan(p.uid, p.nickname) }}
-                          title="영구 정지"
+                          onClick={(e) => { e.stopPropagation(); handleDeleteMine(p.id) }}
+                          title="인증 삭제"
                           style={{
                             background: 'none', border: 'none', cursor: 'pointer',
-                            padding: 2, fontSize: 11, color: '#E24B4A', fontFamily: 'inherit',
+                            padding: 2, fontSize: 12, color: '#aaa', fontFamily: 'inherit',
                             lineHeight: 1, fontWeight: 700,
                           }}
-                        >🚫</button>
+                        >✕</button>
+                      )}
+                      {/* Admin-only on others' posts: delete + ban */}
+                      {amAdmin && !mine && (
+                        <>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleDeleteAsAdmin(p.id, p.nickname) }}
+                            title="운영자 삭제"
+                            style={{
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              padding: 2, fontSize: 11, color: '#888', fontFamily: 'inherit',
+                              lineHeight: 1, fontWeight: 700,
+                            }}
+                          >✕</button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); handleBan(p.uid, p.nickname) }}
+                            title="영구 정지"
+                            style={{
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              padding: 2, fontSize: 11, color: '#E24B4A', fontFamily: 'inherit',
+                              lineHeight: 1, fontWeight: 700,
+                            }}
+                          >🚫</button>
+                        </>
                       )}
                     </div>
                   </div>

@@ -198,6 +198,32 @@ export function newPostId(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 }
 
+export async function deletePost(teamId: TeamId, postId: string, uid: string): Promise<void> {
+  const db = getDb()
+  const ref = doc(db, 'teams', teamId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return
+  const cur = snap.data() as Partial<TeamDoc>
+  const posts = (cur.posts ?? []).map(normalizePost)
+  // Only allow author or admin (admin check handled at call site).
+  const filtered = posts.filter((p) => !(p.id === postId && p.uid === uid))
+  if (filtered.length === posts.length) return
+  await updateDoc(ref, { posts: filtered })
+}
+
+// Admin can delete any post regardless of author. Call site verifies admin.
+export async function adminDeletePost(teamId: TeamId, postId: string): Promise<void> {
+  const db = getDb()
+  const ref = doc(db, 'teams', teamId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return
+  const cur = snap.data() as Partial<TeamDoc>
+  const posts = (cur.posts ?? []).map(normalizePost)
+  const filtered = posts.filter((p) => p.id !== postId)
+  if (filtered.length === posts.length) return
+  await updateDoc(ref, { posts: filtered })
+}
+
 export async function toggleReaction(
   teamId: TeamId,
   postId: string,
