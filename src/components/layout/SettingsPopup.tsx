@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { applyTheme, getTheme } from '../../lib/theme'
 import { THEMES, THEME_LABELS, type ThemeName } from '../../constants/themes'
 import { useAppStore, type CurView } from '../../store/AppStore'
+import { isAdminCached, primeAdminCache } from '../../lib/banList'
 import { todayStr, pad } from '../../lib/date'
 import { signOutUser } from '../../lib/auth'
 import { isDevMode, setDevMode } from '../../lib/devMode'
@@ -84,6 +85,15 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const displayName = useAppStore((s) => s.displayName)
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
+  // 개발자 모드 버튼은 /admins/list 에 등록된 uid 에서만 보이게.
+  // primeAdminCache 를 호출해 캐시를 채운 뒤 isAdminCached 로 동기 판정.
+  const [amAdmin, setAmAdmin] = useState<boolean>(() => isAdminCached(uid))
+  useEffect(() => {
+    primeAdminCache()
+    const id = setInterval(() => setAmAdmin(isAdminCached(uid)), 500)
+    const stop = setTimeout(() => clearInterval(id), 4000)
+    return () => { clearInterval(id); clearTimeout(stop) }
+  }, [uid])
   const [tipStatsOpen, setTipStatsOpen] = useState(false)
   const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
   const backdropDownRef = useRef(false)
@@ -700,15 +710,20 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
           style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
         >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
-        <button
-          onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
-          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-        >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
-        {devOn && (
-          <button
-            onClick={() => setTipStatsOpen(true)}
-            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pink)', background: 'var(--pl)', color: 'var(--pd)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-          >📊 정보탭 통계 보기</button>
+        {/* 개발자 모드 버튼 — /admins/list 에 등록된 운영자 uid 한정 노출 */}
+        {amAdmin && (
+          <>
+            <button
+              onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
+              style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+            >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
+            {devOn && (
+              <button
+                onClick={() => setTipStatsOpen(true)}
+                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pink)', background: 'var(--pl)', color: 'var(--pd)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+              >📊 정보탭 통계 보기</button>
+            )}
+          </>
         )}
       </div>
 
