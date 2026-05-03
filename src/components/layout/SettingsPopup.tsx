@@ -31,7 +31,6 @@ function relativeTime(ts: number): string {
 }
 import { AVATAR_OPTIONS, getAvatar, setAvatar } from '../../lib/avatar'
 import { getBio, setBio } from '../../lib/bio'
-import { getVisibility, setVisibility, VISIBILITY_LABELS, type VisibilitySection } from '../../lib/friendVisibility'
 import { Avatar } from '../ui/Avatar'
 import { AvatarCropModal } from '../ui/AvatarCropModal'
 import { resetXp, getXp, getLevel } from '../../lib/xp'
@@ -213,7 +212,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const [bio, setBioState] = useState<string>(getBio())
   const [emojiOpen, setEmojiOpen] = useState(false)
   const [cropFile, setCropFile] = useState<File | null>(null)
-  const [visibility, setVisibilityState] = useState<Record<VisibilitySection, boolean>>(getVisibility())
 
   function handleTheme(name: ThemeName) {
     applyTheme(name)
@@ -507,28 +505,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           </div>
         )
       })()}
-
-      {/* 친구에게 보일 항목 — privacy toggles */}
-      <div style={{ background: '#FAFAFA', borderRadius: 10, padding: 10, marginBottom: 12, border: '1px solid #eee' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>👁 친구에게 공개할 항목</div>
-        {(Object.keys(VISIBILITY_LABELS) as VisibilitySection[]).map((sec) => {
-          const on = visibility[sec]
-          return (
-            <button
-              key={sec}
-              onClick={() => {
-                const next = { ...visibility, [sec]: !on }
-                setVisibility(next)
-                setVisibilityState(next)
-              }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 8px', marginBottom: 4, borderRadius: 8, border: '1px solid ' + (on ? 'var(--pink)' : '#ddd'), background: on ? 'var(--pl)' : '#fff', color: on ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-            >
-              <span>{on ? '☑️' : '☐'} {VISIBILITY_LABELS[sec]}</span>
-              <span style={{ fontSize: 9, opacity: .7 }}>{on ? '공개' : '비공개'}</span>
-            </button>
-          )
-        })}
-      </div>
 
       {/* 테마 */}
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 8 }}>🎨 테마</div>

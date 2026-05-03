@@ -10,7 +10,7 @@ import { computeStreak } from '../../lib/habitStreak'
 import { getLastReadTs, markGuestbookRead } from '../../lib/guestbookUnread'
 import { showMiniToast } from '../../lib/miniToast'
 import { showConfirm } from '../../lib/showConfirm'
-import { isSectionVisible } from '../../lib/friendVisibility'
+import { isSectionVisible, getVisibility, setVisibility, VISIBILITY_LABELS, type VisibilitySection } from '../../lib/friendVisibility'
 import { Avatar } from '../ui/Avatar'
 import type { UserDoc } from '../../lib/firestore'
 
@@ -89,6 +89,46 @@ const DAY_MODE_LABEL: Record<string, { emoji: string; text: string; color: strin
   low: { emoji: '🌧', text: '오늘 컨디션 낮음', color: '#A7B3CC' },
   normal: { emoji: '☁️', text: '평소 컨디션', color: '#B0B0B0' },
   good: { emoji: '☀️', text: '컨디션 좋음!', color: '#F5A623' },
+}
+
+// Self-only privacy panel — moved out of SettingsPopup so visibility lives
+// next to the place it actually affects (the user's own friend-tab profile).
+function SelfPrivacyPanel() {
+  const [visibility, setVisibilityState] = useState(() => getVisibility())
+  return (
+    <div style={{ background: '#FAFAFA', borderRadius: 12, padding: 12, marginBottom: 12, border: '1px solid #eee' }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>👁 친구에게 공개할 항목</span>
+        <span style={{ fontSize: 9, color: '#aaa', fontWeight: 500 }}>탭하면 바로 적용</span>
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+        {(Object.keys(VISIBILITY_LABELS) as VisibilitySection[]).map((sec) => {
+          const on = visibility[sec]
+          return (
+            <button
+              key={sec}
+              onClick={() => {
+                const next = { ...visibility, [sec]: !on }
+                setVisibility(next)
+                setVisibilityState(next)
+              }}
+              style={{
+                padding: '5px 10px', borderRadius: 99,
+                border: '1.5px solid ' + (on ? 'var(--pink)' : '#ddd'),
+                background: on ? 'var(--pl)' : '#fff',
+                color: on ? 'var(--pd)' : '#aaa',
+                fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}
+            >
+              <span style={{ fontSize: 10 }}>{on ? '✓' : '✕'}</span>
+              <span>{VISIBILITY_LABELS[sec]}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function activeStatus(lastActiveAt: string | undefined): { label: string; live: boolean } {
@@ -464,6 +504,9 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
           {status.label}
         </div>
       </div>
+
+      {/* Self-only — privacy toggles for what friends see on my profile */}
+      {uid === myUid && <SelfPrivacyPanel />}
 
       {/* Day mode banner — always visible (no longer in privacy toggles) */}
       {dmInfo && (
