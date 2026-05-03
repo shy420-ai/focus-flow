@@ -1423,8 +1423,8 @@ export function StatsView() {
         </button>
       </div>
 
-      {/* Tabs (only show ones with meds) */}
-      {TABS.length > 0 && (
+      {/* Tabs (only show ones with meds) — 개발자 모드 timeline view 에선 sub-tab 숨김 */}
+      {TABS.length > 0 && !devOn && (
         <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
           {TABS.map((t) => (
             <button key={t.id} onClick={() => setTabPersist(t.id)}
