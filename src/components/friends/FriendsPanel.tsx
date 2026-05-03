@@ -204,27 +204,34 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
   // onRequestRemove 는 더 이상 사용 X — 삭제는 친구 상세 페이지에서.
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressedRef = useRef(false)
+  const startPosRef = useRef<{ x: number; y: number } | null>(null)
+  const downEventRef = useRef<React.PointerEvent | null>(null)
   const [pressed, setPressed] = useState(false)
-  // 3초 꾹 누르면 드래그 모드. 그 전에 release 하면 일반 탭(선택).
+  // 1초 꾹 누르면 드래그 모드. 그 전에 손가락 8px 이상 움직이면 = 가로 스크롤로
+  // 간주해서 long-press 취소 (친구 많을 때 스크롤 방해 X).
   const [armedDrag, setArmedDrag] = useState(false)
 
   function startPress(e: React.PointerEvent) {
     longPressedRef.current = false
     setPressed(true)
     setArmedDrag(false)
+    startPosRef.current = { x: e.clientX, y: e.clientY }
+    downEventRef.current = e
     timerRef.current = setTimeout(() => {
       longPressedRef.current = true
       setPressed(false)
       setArmedDrag(true)
       if ('vibrate' in navigator) navigator.vibrate(60)
       // 드래그 모드 진입 = 부모에게 알려서 dragId 세팅
-      if (onDragDown) onDragDown(e)
-    }, 3000)
+      if (onDragDown && downEventRef.current) onDragDown(downEventRef.current)
+    }, 1000)
   }
 
   function endPress(e: React.PointerEvent) {
     setPressed(false)
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+    startPosRef.current = null
+    downEventRef.current = null
     if (armedDrag) {
       setArmedDrag(false)
       if (onDragUp) onDragUp(e)
@@ -232,7 +239,21 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
   }
 
   function onMove(e: React.PointerEvent) {
-    if (armedDrag && onDragMove) onDragMove(e)
+    if (armedDrag) {
+      // 이미 드래그 모드 → 부모로 위치 전달
+      if (onDragMove) onDragMove(e)
+      return
+    }
+    // 아직 long-press 대기 중인데 손가락 움직임 = 스크롤 의도, long-press 취소
+    if (timerRef.current && startPosRef.current) {
+      const dx = e.clientX - startPosRef.current.x
+      const dy = e.clientY - startPosRef.current.y
+      if (Math.hypot(dx, dy) > 8) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+        setPressed(false)
+      }
+    }
   }
 
   return (
