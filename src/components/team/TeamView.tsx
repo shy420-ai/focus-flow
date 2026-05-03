@@ -399,8 +399,18 @@ export function TeamView() {
                     </div>
                   )}
 
-                  {/* Bubble row — bubble + reactions */}
-                  <div style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 4 }}>
+                  {/* Bubble row — keep bubble + time column tight; alignSelf
+                      forces this row to its content width instead of stretching
+                      to the column's max-width (which left the time floating
+                      far from the bubble). */}
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: mine ? 'row-reverse' : 'row',
+                    alignItems: 'flex-end',
+                    gap: 4,
+                    alignSelf: mine ? 'flex-end' : 'flex-start',
+                    maxWidth: '100%',
+                  }}>
                     {/* Bubble */}
                     <div
                       onClick={() => setReactionPickerFor(isOpen ? null : p.id)}
