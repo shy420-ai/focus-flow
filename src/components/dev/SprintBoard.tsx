@@ -396,15 +396,25 @@ export function SprintBoard() {
   const overall = sprintOverall(sprint)
 
   // ── Goal drag-to-reorder (pointer events on the ☰ handle) ─────
+  // Subtle haptics on Android/Chrome (iOS Safari ignores .vibrate by design).
+  function buzz(ms: number | number[]) {
+    if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+      try { navigator.vibrate(ms) } catch { /* ignore */ }
+    }
+  }
   function onGoalDragDown(e: React.PointerEvent, id: string) {
     setDragGoalId(id)
     ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+    buzz(8)  // pickup tick
   }
   function onGoalDragMove(e: React.PointerEvent) {
     if (!dragGoalId) return
     const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-goal-id]') as HTMLElement | null
     const gid = el?.dataset.goalId
-    if (gid && gid !== dragOverGoalId) setDragOverGoalId(gid)
+    if (gid && gid !== dragOverGoalId) {
+      setDragOverGoalId(gid)
+      buzz(5)  // hover-over-target tick
+    }
   }
   function onGoalDragUp(e: React.PointerEvent) {
     try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
@@ -416,6 +426,7 @@ export function SprintBoard() {
         const [m] = next.splice(fromIdx, 1)
         next.splice(toIdx, 0, m)
         setSprint({ ...sprint, goals: next })
+        buzz([10, 30, 10])  // commit confirmation
       }
     }
     setDragGoalId(null)
