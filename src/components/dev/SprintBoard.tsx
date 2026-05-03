@@ -514,7 +514,7 @@ export function SprintBoard() {
             {!hasSteps && (
               <button onClick={() => bumpGoal(g.id, step)}
                 style={{ padding: '5px 12px', borderRadius: 99, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, boxShadow: '0 2px 6px color-mix(in srgb, var(--pink) 30%, transparent)' }}>
-                🙌 내가 해냄 +{step}
+                🙌 내가 해냄
               </button>
             )}
             <button onClick={() => setEditGoalId(g.id)} aria-label="수정"
@@ -571,7 +571,7 @@ export function SprintBoard() {
       )
     })()}
 
-    {/* 🏆 완료 — compact one-liner per goal */}
+    {/* 🏆 완료 — compact one-liner per goal with ↩️ undo + ✕ remove */}
     {(() => {
       const done = sprint.goals.filter(isCompleted)
       if (done.length === 0) return null
@@ -582,7 +582,25 @@ export function SprintBoard() {
             <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 8px', fontSize: 11, color: '#888' }}>
               <span>✅</span>
               <span style={{ flex: 1, textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name || '(이름 없음)'}</span>
+              <button
+                onClick={() => {
+                  // Step mode: uncheck the last done step (toggleStep refunds XP).
+                  // Count mode: bump down by smallStep — bumpGoal handles XP refund + bonus reversal.
+                  if (g.steps && g.steps.length > 0) {
+                    for (let i = g.steps.length - 1; i >= 0; i--) {
+                      if (g.steps[i].done) { toggleStep(g.id, g.steps[i].id); return }
+                    }
+                  } else {
+                    const step = g.smallStep && g.smallStep > 0 ? g.smallStep : 1
+                    bumpGoal(g.id, -step)
+                  }
+                }}
+                aria-label="되돌리기"
+                title="되돌리기"
+                style={{ background: 'transparent', border: 'none', color: '#8B6914', cursor: 'pointer', fontSize: 12, padding: 2 }}
+              >↩️</button>
               <button onClick={async () => { if (await showConfirm('완료한 목표를 챌린지에서 빼기?\n\n평균에서도 빠져')) removeGoal(g.id) }}
+                aria-label="삭제"
                 style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 10, padding: 2 }}>✕</button>
             </div>
           ))}
