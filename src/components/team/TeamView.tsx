@@ -171,7 +171,7 @@ export function TeamView() {
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
               <span style={{ fontSize: 11 }}>📌</span>
-              <span style={{ fontSize: 11, fontWeight: 800, color: accent }}>이 그룹에선 이런 거 인증해</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: accent }}>팀 {meta.label}! 이 그룹에선 이런 걸 인증해</span>
             </div>
             <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: '#555', lineHeight: 1.7 }}>
               {meta.examples.map((ex, i) => <li key={i}>{ex}</li>)}
