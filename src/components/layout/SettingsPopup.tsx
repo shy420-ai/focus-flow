@@ -700,24 +700,23 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       {/* ──── ⚙ 앱 설정 ──── */}
       <div style={{ display: section === 'app' ? 'block' : 'none' }}>
 
+      {/* 통일 스타일: 모든 행 같은 padding/radius/font/테두리. 색만 차별화. */}
       {/* 1) 로그인 / 로그아웃 */}
-      <div style={{ marginBottom: 8 }}>
-        {!uid ? (
-          <button
-            onClick={() => { setSkipLogin(false); onClose() }}
-            style={{ width: '100%', padding: 10, borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}
-          >🔑 로그인하기 (기기간 싱크)</button>
-        ) : (
-          <button
-            onClick={async () => {
-              if (!(await showConfirm('로그아웃하면 이 기기에서는 로컬 데이터로만 작동해요. 계속할까요?'))) return
-              await signOutUser()
-              onClose()
-            }}
-            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid #ddd', background: '#fff', color: '#888', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}
-          >🚪 로그아웃</button>
-        )}
-      </div>
+      {!uid ? (
+        <button
+          onClick={() => { setSkipLogin(false); onClose() }}
+          style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1.5px solid var(--pl)', background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}
+        >🔑 로그인하기 (기기간 싱크)</button>
+      ) : (
+        <button
+          onClick={async () => {
+            if (!(await showConfirm('로그아웃하면 이 기기에서는 로컬 데이터로만 작동해요. 계속할까요?'))) return
+            await signOutUser()
+            onClose()
+          }}
+          style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1.5px solid var(--pl)', background: '#fff', color: '#888', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'block', textAlign: 'center', boxSizing: 'border-box' }}
+        >🚪 로그아웃</button>
+      )}
 
       {/* 2) 시작 가이드 다시 보기 */}
       <button
@@ -725,7 +724,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           onClose()
           setTimeout(() => { window.__ffShowOnboarding?.() }, 100)
         }}
-        style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+        style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1.5px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'block', textAlign: 'center', boxSizing: 'border-box' }}
       >📖 시작 가이드 다시 보기</button>
 
       {/* 3) 개발자에게 커피 사주기 */}
@@ -733,7 +732,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         href="https://qr.kakaopay.com/FH24plHDs"
         target="_blank"
         rel="noreferrer"
-        style={{ display: 'inline-block', width: '100%', padding: 10, borderRadius: 10, background: 'linear-gradient(135deg,#FFE156,#FFDAC1)', color: '#333', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', boxSizing: 'border-box', textAlign: 'center', marginBottom: 8 }}
+        style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1.5px solid var(--pl)', background: 'linear-gradient(135deg,#FFE156,#FFDAC1)', color: '#333', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'block', textAlign: 'center', textDecoration: 'none', boxSizing: 'border-box' }}
       >☕ 개발자에게 커피 한 잔 사주기</a>
 
       {/* 4) 운영자 전용 — 개발자 모드 + 통계 (admin uid 만 노출) */}
