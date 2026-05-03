@@ -3,6 +3,7 @@ import { useMedStore } from '../../store/MedStore'
 import { todayStr } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { GearIcon } from '../ui/GearIcon'
+import { showMiniToast } from '../../lib/miniToast'
 import type { MedItem } from '../../types/med'
 
 // ── MED DB ────────────────────────────────────────────────────────────────────
@@ -333,7 +334,7 @@ function SleepTab() {
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🌅 어젯밤 수면 어땠어?</div>
               <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 10 }}>
                 {STATUS_EMOJI.map((e, i) => (
-                  <button key={i} onClick={() => logWake(i)} style={{ fontSize: 26, padding: '6px 8px', borderRadius: 12, border: '2px solid transparent', background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                  <button key={i} onClick={() => { logWake(i); showMiniToast('🌅 컨디션 기록됨') }} style={{ fontSize: 26, padding: '6px 8px', borderRadius: 12, border: '2px solid transparent', background: 'transparent', cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                     <span>{e}</span><span style={{ fontSize: 9, color: '#aaa' }}>{WAKE_LABEL[i]}</span>
                   </button>
                 ))}
@@ -345,7 +346,7 @@ function SleepTab() {
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>💤 어젯밤 잠드는 데 얼마나 걸렸어?</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
                 {SLEEP_OPTS.map((o) => (
-                  <button key={o.val} onClick={() => logSleepTime(o.val)} style={{ padding: '6px 12px', borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#555' }}>
+                  <button key={o.val} onClick={() => { logSleepTime(o.val); showMiniToast('💤 수면 시간 기록됨') }} style={{ padding: '6px 12px', borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit', color: '#555' }}>
                     {o.icon} {o.label}
                   </button>
                 ))}
@@ -455,13 +456,13 @@ function MorningTab() {
       {morningMeds.length > 0 && (
         <div style={{ marginBottom: 12 }}>
           {!todayMorningTake ? (
-            <button onClick={() => logTake('아침')}
+            <button onClick={() => { logTake('아침'); showMiniToast('☀️ 아침약 복용 기록됨') }}
               style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
               ☀️ 아침약 먹었어!</button>
           ) : (
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => logTake('아침')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
-              <button onClick={() => clearTake('아침')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
+              <button onClick={() => { logTake('아침'); showMiniToast('🕐 지금 시각으로 갱신됨') }} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
+              <button onClick={() => { clearTake('아침'); showMiniToast('🗑 기록 삭제됨') }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
             </div>
           )}
         </div>
@@ -575,21 +576,40 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
       {/* Take button */}
       <div style={{ marginBottom: 12 }}>
         {!todayNightTake ? (
-          <button onClick={() => logTake('저녁')}
+          <button onClick={() => { logTake('저녁'); showMiniToast('🌙 저녁약 복용 기록됨') }}
             style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: '#5B7FFF', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             🌙 저녁약 먹었어!</button>
         ) : (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => logTake('저녁')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
-            <button onClick={() => clearTake('저녁')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
+            <button onClick={() => { logTake('저녁'); showMiniToast('🕐 지금 시각으로 갱신됨') }} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
+            <button onClick={() => { clearTake('저녁'); showMiniToast('🗑 기록 삭제됨') }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
           </div>
         )}
       </div>
 
-      {/* 취침약 가이드 */}
+      {/* 저녁약 가이드 — 일반 약 (모든 night meds 노트·지속 표시) */}
+      {nightMeds.length > 0 && (
+        <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🌙 저녁약 가이드</div>
+          {nightMeds.map((m) => {
+            const db = MED_DB.find((d) => d.name === m.name)
+            if (!db) return null
+            const isLongActing = db.duration >= 24
+            return (
+              <div key={m.name} style={{ marginBottom: 8, padding: '6px 10px', background: 'var(--pl)', borderRadius: 8 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>{m.name}</div>
+                {db.note && <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>📌 {db.note}</div>}
+                <div style={{ fontSize: 11, color: '#888' }}>⏱ 효과 지속 약 {db.duration}시간{isLongActing && ' · 누적형(장기)'}</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* 취침약 가이드 — 수면·항정신병 약만 별도 권장 시각 계산 */}
       {sleepMeds.length > 0 && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🌙 취침약 가이드</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>😴 취침약 권장 시각</div>
           {sleepMeds.map((m) => {
             const db = MED_DB.find((d) => d.name === m.name)
             if (!db) return null
@@ -661,13 +681,13 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
       {/* Take button */}
       <div style={{ marginBottom: 12 }}>
         {!todayLunchTake ? (
-          <button onClick={() => logTake('점심')}
+          <button onClick={() => { logTake('점심'); showMiniToast('🥪 점심약 복용 기록됨') }}
             style={{ width: '100%', padding: 12, borderRadius: 10, border: 'none', background: '#F4A261', color: '#fff', fontSize: 14, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
             🥪 점심약 먹었어!</button>
         ) : (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => logTake('점심')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
-            <button onClick={() => clearTake('점심')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
+            <button onClick={() => { logTake('점심'); showMiniToast('🕐 지금 시각으로 갱신됨') }} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
+            <button onClick={() => { clearTake('점심'); showMiniToast('🗑 기록 삭제됨') }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
           </div>
         )}
       </div>
@@ -677,14 +697,15 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🥪 점심약 가이드</div>
         {lunchMeds.map((m) => {
           const db = MED_DB.find((d) => d.name === m.name)
-          if (!db || db.duration >= 24) return null
+          if (!db) return null
           const take = todayLunchTake
+          const isLongActing = db.duration >= 24
           return (
             <div key={m.name} style={{ marginBottom: 8, padding: '6px 10px', background: 'var(--pl)', borderRadius: 8 }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>{m.name}</div>
               {db.note && <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>📌 {db.note}</div>}
-              <div style={{ fontSize: 11, color: '#888' }}>⏱ 효과 지속 약 {m.duration}시간</div>
-              {take ? (
+              <div style={{ fontSize: 11, color: '#888' }}>⏱ 효과 지속 약 {m.duration}시간{isLongActing && ' · 누적형(장기)'}</div>
+              {!isLongActing && take && (
                 <>
                   <div style={{ fontSize: 11, color: '#EF9F27' }}>
                     🟡 {Math.floor(take.time! + m.duration * 0.7)}:{String(Math.round(((take.time! + m.duration * 0.7) % 1) * 60)).padStart(2, '0')}쯤 효과 줄어들기 시작
@@ -693,7 +714,8 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
                     🔴 {Math.floor(take.time! + m.duration)}:{String(Math.round(((take.time! + m.duration) % 1) * 60)).padStart(2, '0')}쯤 효과 종료
                   </div>
                 </>
-              ) : (
+              )}
+              {!isLongActing && !take && (
                 <div style={{ fontSize: 11, color: '#aaa' }}>💡 복용하면 약발 떨어지는 시간 알려줄게</div>
               )}
             </div>
