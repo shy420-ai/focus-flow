@@ -116,7 +116,7 @@ export function TimelineSettings({ onClose }: Props) {
 
         {/* 더블탭 블록 */}
         <div style={{ marginBottom: 14 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#888', marginBottom: 6 }}>👆 더블탭 블록 길이</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#888', marginBottom: 6 }}>👆 더블탭 자동블록 길이</div>
           <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
             {([0.25, 0.5, 1, 1.5, 2] as const).map((h) => {
               const on = Math.abs(dur - h) < 0.01
