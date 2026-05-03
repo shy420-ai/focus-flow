@@ -220,7 +220,7 @@ export function TeamView() {
               borderRadius: 8, fontSize: 10, color: '#B23939', lineHeight: 1.5,
               fontWeight: 600,
             }}>
-              ⚠️ 얼굴·노출·신체 사진 업로드 시 운영자가 즉시 계정 영구 정지함. 앱 자체 사용 차단.
+              ⚠️ 얼굴·노출·신체 사진 업로드 시 즉시 계정 영구 정지
             </div>
           </div>
         )}
