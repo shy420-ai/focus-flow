@@ -13,7 +13,7 @@ export interface MedConfig {
   weight?: number    // kg
 }
 
-export type MedLogType = 'take' | 'status' | 'wake' | 'sleeptime' | 'bed'
+export type MedLogType = 'take' | 'status' | 'wake' | 'sleeptime' | 'bed' | 'wakeup'
 
 export interface MedLog {
   id: string

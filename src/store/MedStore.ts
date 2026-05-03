@@ -22,6 +22,8 @@ interface MedActions {
   logSleepTime: (level: number) => void
   logBedtime: (hour: number) => void
   removeBedtime: (id: string) => void
+  logWakeup: (hour?: number) => void
+  removeWakeup: (id: string) => void
   clearAll: () => void
 }
 
@@ -126,6 +128,25 @@ export const useMedStore = create<MedStore>()(
     removeBedtime: (id) => {
       set((state) => {
         state.logs = state.logs.filter((l) => !(l.type === 'bed' && l.id === id))
+      })
+      persist(get().config, get().logs)
+    },
+
+    logWakeup: (hour) => {
+      const today = todayStr()
+      const now = new Date()
+      const h = hour ?? (now.getHours() + now.getMinutes() / 60)
+      set((state) => {
+        // 같은 날 wakeup 1개만 유지 (덮어씀) — 막 일어났을 때 한 번 누르는 가정
+        state.logs = state.logs.filter((l) => !(l.date === today && l.type === 'wakeup'))
+        state.logs.push({ id: String(Date.now()) + '-w', date: today, type: 'wakeup', time: h })
+      })
+      persist(get().config, get().logs)
+    },
+
+    removeWakeup: (id) => {
+      set((state) => {
+        state.logs = state.logs.filter((l) => !(l.type === 'wakeup' && l.id === id))
       })
       persist(get().config, get().logs)
     },

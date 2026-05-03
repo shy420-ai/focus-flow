@@ -307,16 +307,21 @@ function TimelineHealthView() {
   const logs = useMedStore((s) => s.logs)
   const logTake = useMedStore((s) => s.logTake)
   const clearTake = useMedStore((s) => s.clearTake)
+  const logWakeup = useMedStore((s) => s.logWakeup)
+  const removeWakeup = useMedStore((s) => s.removeWakeup)
+  const logBedtime = useMedStore((s) => s.logBedtime)
+  const removeBedtime = useMedStore((s) => s.removeBedtime)
 
   const today = todayStr()
   const meds = config?.meds || []
   const bedGoal = config?.bedGoal ?? 23
   const wakeGoal = config?.wakeGoal ?? 7
   const todayBedLog = logs.filter((l) => l.date === today && l.type === 'bed').sort((a, b) => (a.time ?? 0) - (b.time ?? 0))[0]
-  const todayWake = logs.find((l) => l.date === today && l.type === 'wake')
-  // 실제 기상 시각 = 오늘 가장 빠른 약 복용 시각 (proxy) — 명시적 wake.time 이 있으면 그 값 우선
+  const todayWakeup = logs.find((l) => l.date === today && l.type === 'wakeup')
+  const todayWakeMood = logs.find((l) => l.date === today && l.type === 'wake')
+  // 실제 기상 시각 = wakeup 명시적 기록 우선 → wake mood 의 time → 가장 빠른 약 복용 시각 → goal
   const todayTakes = logs.filter((l) => l.date === today && l.type === 'take' && l.time != null).sort((a, b) => (a.time ?? 0) - (b.time ?? 0))
-  const wakeActualH = todayWake?.time ?? todayTakes[0]?.time ?? null
+  const wakeActualH = todayWakeup?.time ?? todayWakeMood?.time ?? todayTakes[0]?.time ?? null
   const wakeH = wakeActualH ?? wakeGoal
   const now = new Date()
   const nowH = now.getHours() + now.getMinutes() / 60
@@ -344,13 +349,21 @@ function TimelineHealthView() {
   }
   const events: Ev[] = []
 
-  // 1) 기상
+  // 1) 기상 — 명시적 버튼으로 시각 기록 가능
   events.push({
     time: wakeH,
     emoji: '🌅',
     title: '기상',
-    sub: wakeActualH != null ? `실제 ${fmtHM(wakeH)}` : `목표 ${fmtHM(wakeH)} (예정)`,
+    sub: todayWakeup
+      ? `✅ 기상 ${fmtHM(wakeH)}`
+      : wakeActualH != null
+        ? `약 복용으로 추정 ${fmtHM(wakeH)}`
+        : `목표 ${fmtHM(wakeH)} (예정)`,
     color: '#F5BD3C',
+    actionable: !todayWakeup,
+    onTake: () => { logWakeup(); showMiniToast('🌅 기상 시각 기록됨') },
+    onUntake: todayWakeup ? () => { removeWakeup(todayWakeup.id); showMiniToast('🗑 기상 기록 취소') } : undefined,
+    taken: !!todayWakeup,
   })
 
   // 2) 약 복용 — 같은 timing 끼리 그룹핑 (아침약·점심약·저녁약 카드 1개씩)
@@ -431,9 +444,24 @@ function TimelineHealthView() {
     }
   }
 
-  // 3) 취침
+  // 3) 취침 — 명시적 버튼
   const bedH = todayBedLog?.time ?? bedGoal
-  events.push({ time: bedH, emoji: '🌙', title: '취침', sub: todayBedLog ? '기록됨' : '예정', color: '#9B7BB5' })
+  events.push({
+    time: bedH,
+    emoji: '🌙',
+    title: '취침',
+    sub: todayBedLog ? `✅ 취침 ${fmtHM(bedH)}` : `목표 ${fmtHM(bedH)} (예정)`,
+    color: '#9B7BB5',
+    actionable: !todayBedLog,
+    onTake: () => {
+      const now = new Date()
+      const h = now.getHours() + now.getMinutes() / 60
+      logBedtime(h)
+      showMiniToast('🌙 취침 시각 기록됨')
+    },
+    onUntake: todayBedLog ? () => { removeBedtime(todayBedLog.id); showMiniToast('🗑 취침 기록 취소') } : undefined,
+    taken: !!todayBedLog,
+  })
 
   // 시간순 정렬
   events.sort((a, b) => a.time - b.time)
