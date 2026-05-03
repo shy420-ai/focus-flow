@@ -141,6 +141,10 @@ export function TimelineView() {
   } | null>(null)
   const [dragPreview, setDragPreview] = useState<{ startHour: number; durHour: number } | null>(null)
   const [dragArmed, setDragArmed] = useState(false)
+  // Auto-scroll velocity while finger sits near a viewport edge during
+  // an armed drag. -px/frame for upward, +px/frame for downward.
+  const autoScrollVelRef = useRef<number>(0)
+  const autoScrollRafRef = useRef<number | null>(null)
   // Past-hours collapse — only applies to today. Default collapsed so the
   // user lands at "current hour" without a wall of finished slots above.
   const [pastCollapsed, setPastCollapsed] = useState<boolean>(true)
@@ -477,9 +481,35 @@ export function TimelineView() {
             const b = Math.max(d.startHour, cur)
             const snap = (h: number) => Math.round(h * 6) / 6
             setDragPreview({ startHour: snap(a), durHour: Math.max(snap(b - a), 10/60) })
+
+            // Auto-scroll the page when finger is near the viewport edge
+            // so the user can extend the block past the visible area.
+            const edge = 80
+            const vh = window.innerHeight
+            const clientY = e.clientY
+            if (clientY < edge) {
+              autoScrollVelRef.current = -Math.ceil((edge - clientY) / 6)
+            } else if (clientY > vh - edge) {
+              autoScrollVelRef.current = Math.ceil((clientY - (vh - edge)) / 6)
+            } else {
+              autoScrollVelRef.current = 0
+            }
+            if (autoScrollVelRef.current !== 0 && autoScrollRafRef.current == null) {
+              const tick = () => {
+                if (!dragCreateRef.current?.armed || autoScrollVelRef.current === 0) {
+                  autoScrollRafRef.current = null
+                  return
+                }
+                window.scrollBy(0, autoScrollVelRef.current)
+                autoScrollRafRef.current = requestAnimationFrame(tick)
+              }
+              autoScrollRafRef.current = requestAnimationFrame(tick)
+            }
           }}
           onPointerUp={(e) => {
             try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+            autoScrollVelRef.current = 0
+            if (autoScrollRafRef.current != null) { cancelAnimationFrame(autoScrollRafRef.current); autoScrollRafRef.current = null }
             const d = dragCreateRef.current
             if (d?.armTimer) clearTimeout(d.armTimer)
             dragCreateRef.current = null
