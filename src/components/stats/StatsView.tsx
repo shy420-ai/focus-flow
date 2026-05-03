@@ -505,9 +505,179 @@ function TimelineHealthView() {
         })}
       </div>
 
+      {/* 📊 주간 분석 — 누적 패턴 기반 조언 */}
+      <PatternAdviceCard logs={logs} meds={meds} bedGoal={bedGoal} wakeGoal={wakeGoal} />
+
       <div style={{ fontSize: 9, color: '#aaa', textAlign: 'center', padding: '12px 0' }}>
         🧪 개발자 미리보기 — 시간 흐름 view
       </div>
+    </div>
+  )
+}
+
+// ── 📊 7일 / 30일 패턴 분석 카드 ─────────────────────────────────────────────
+interface PatternProps {
+  logs: ReturnType<typeof useMedStore.getState>['logs']
+  meds: MedItem[]
+  bedGoal: number
+  wakeGoal: number  // 인터페이스에는 남겨 호출부 안 깨지게
+}
+function PatternAdviceCard({ logs, meds, bedGoal }: PatternProps) {
+  const [range, setRange] = useState<7 | 30>(7)
+
+  const dateSet = (() => {
+    const out = new Set<string>()
+    for (let i = 0; i < range; i++) {
+      const d = new Date(); d.setDate(d.getDate() - i)
+      out.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))
+    }
+    return out
+  })()
+
+  const fmt = (h: number) => {
+    const adj = ((h % 24) + 24) % 24
+    const hh = Math.floor(adj)
+    const mm = Math.round((adj % 1) * 60)
+    return hh + ':' + String(mm).padStart(2, '0')
+  }
+
+  // 평균 헬퍼
+  const avg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
+  const stddev = (arr: number[]) => {
+    if (arr.length < 2) return 0
+    const m = avg(arr)!
+    const v = arr.reduce((s, x) => s + (x - m) ** 2, 0) / arr.length
+    return Math.sqrt(v)
+  }
+
+  const bedTimes = logs.filter((l) => l.type === 'bed' && l.time != null && dateSet.has(l.date)).map((l) => l.time!)
+  const takeByTiming = (timing: string) => logs.filter((l) => l.type === 'take' && l.timing === timing && l.time != null && dateSet.has(l.date)).map((l) => l.time!)
+  const wakeMoods = logs.filter((l) => l.type === 'wake' && l.level != null && dateSet.has(l.date)).map((l) => l.level!)
+
+  const avgBed = avg(bedTimes)
+  const avgWake = avg(takeByTiming('아침'))
+  const avgWakeMood = avg(wakeMoods)
+  const bedVar = stddev(bedTimes)
+
+  // 조언 생성
+  const advices: { emoji: string; title: string; body: string; tone: 'good' | 'warn' | 'info' }[] = []
+
+  if (avgBed != null) {
+    const diff = avgBed - bedGoal
+    if (Math.abs(diff) > 1) {
+      advices.push({
+        emoji: '🛏',
+        title: `실제 취침 평균 ${fmt(avgBed)}`,
+        body: `목표 ${fmt(bedGoal)}보다 ${diff > 0 ? '+' : ''}${diff.toFixed(1)}h. 매일 30분씩 당기는 게 현실적.`,
+        tone: 'warn',
+      })
+    } else {
+      advices.push({ emoji: '🛏', title: `취침 안정 (평균 ${fmt(avgBed)})`, body: '목표 ±1h 안 — 좋은 패턴', tone: 'good' })
+    }
+  }
+
+  if (bedVar > 1.5 && bedTimes.length >= 4) {
+    advices.push({
+      emoji: '🌊',
+      title: `취침 변동 ±${bedVar.toFixed(1)}h`,
+      body: '들쭉날쭉 → 매일 같은 시각이 ADHD 멜라토닌 안정에 도움',
+      tone: 'warn',
+    })
+  }
+
+  if (avgBed != null && avgWake != null) {
+    const sleepH = avgWake > avgBed ? avgWake - avgBed : (24 - avgBed) + avgWake
+    if (sleepH < 7) {
+      advices.push({
+        emoji: '⚠️',
+        title: `평균 수면 ${sleepH.toFixed(1)}h`,
+        body: `ADHD 권장 8-9h 미달. 컨디션 부족 영향 큼. 취침 ${fmt(bedGoal - (8 - sleepH))} 권장.`,
+        tone: 'warn',
+      })
+    } else {
+      advices.push({ emoji: '✅', title: `평균 수면 ${sleepH.toFixed(1)}h`, body: 'ADHD 권장 충족', tone: 'good' })
+    }
+  }
+
+  if (avgWakeMood != null) {
+    const lbl = avgWakeMood < 1.5 ? '낮음' : avgWakeMood < 2.5 ? '보통' : '좋음'
+    advices.push({
+      emoji: avgWakeMood < 1.5 ? '😵' : avgWakeMood < 2.5 ? '😐' : '🙂',
+      title: `아침 컨디션 평균 ${lbl}`,
+      body: avgWakeMood < 1.5 ? '수면 부족·약 늦은 복용·취침 늦음 등 원인 가능' : '꾸준히 좋게 유지',
+      tone: avgWakeMood < 1.5 ? 'warn' : avgWakeMood < 2.5 ? 'info' : 'good',
+    })
+  }
+
+  // 약별 조언
+  for (const m of meds) {
+    const takes = takeByTiming(m.timing)
+    if (takes.length < 3) continue
+    const avgTake = avg(takes)!
+    const v = stddev(takes)
+    const db = MED_DB.find((d) => d.name === m.name)
+    if (!db) continue
+    if (v > 1.5) {
+      advices.push({
+        emoji: '💊',
+        title: `${m.name} 복용 시각 변동 ±${v.toFixed(1)}h`,
+        body: `평균 ${fmt(avgTake)} — 일정한 시각이 ${db.cat === '기분조절' || db.cat === '항우울' ? '혈중농도 안정에' : '효과 일관성에'} 중요`,
+        tone: 'warn',
+      })
+    }
+    // ADHD 자극제: 늦게 먹으면 수면 방해
+    if (db.cat === 'ADHD' && db.duration < 24) {
+      const endH = avgTake + db.duration
+      if (endH > bedGoal - 4) {
+        advices.push({
+          emoji: '🚨',
+          title: `${m.name} 효과가 취침에 가까움`,
+          body: `평균 ${fmt(avgTake)} 복용 → ${fmt(endH)} 종료. 취침 ${fmt(bedGoal)}까지 ${(bedGoal - endH).toFixed(1)}h. 더 일찍 복용 추천.`,
+          tone: 'warn',
+        })
+      }
+    }
+  }
+
+  if (advices.length === 0 && bedTimes.length === 0 && Object.values(takeByTiming('아침')).length === 0) {
+    return (
+      <div style={{ background: '#fafafa', borderRadius: 12, padding: 14, marginTop: 12, fontSize: 11, color: '#888', lineHeight: 1.6, textAlign: 'center' }}>
+        📊 패턴 분석 — 기록이 3일 이상 쌓이면 조언이 자동으로 나타나
+      </div>
+    )
+  }
+
+  return (
+    <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginTop: 12, border: '1.5px solid var(--pl)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+        <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--pd)' }}>📊 패턴 분석 ({range}일)</div>
+        <div style={{ display: 'flex', gap: 4 }}>
+          {([7, 30] as const).map((r) => (
+            <button key={r}
+              onClick={() => setRange(r)}
+              style={{
+                padding: '3px 10px', borderRadius: 99,
+                border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                background: range === r ? 'var(--pink)' : '#f3f3f3',
+                color: range === r ? '#fff' : '#777',
+                fontSize: 10, fontWeight: 700,
+              }}>{r}일</button>
+          ))}
+        </div>
+      </div>
+      {advices.map((a, i) => {
+        const bg = a.tone === 'good' ? '#E8F5EE' : a.tone === 'warn' ? '#FFF1E0' : '#F0F4FF'
+        const fg = a.tone === 'good' ? '#1F9D5C' : a.tone === 'warn' ? '#D88532' : '#5B7FFF'
+        return (
+          <div key={i} style={{ background: bg, borderRadius: 10, padding: '8px 12px', marginBottom: 6 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: fg, marginBottom: 2, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span>{a.emoji}</span>
+              <span>{a.title}</span>
+            </div>
+            <div style={{ fontSize: 10, color: '#555', lineHeight: 1.6 }}>{a.body}</div>
+          </div>
+        )
+      })}
     </div>
   )
 }
