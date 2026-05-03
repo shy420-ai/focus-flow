@@ -138,20 +138,20 @@ function normalizePost(p: Partial<TeamPost> & { hearts?: string[] }): TeamPost {
   }
 }
 
-// Streak badge — 새싹이 66일에 걸쳐 자라는 식물 성장기. Lally et al. (2010)
-// 의 "습관 형성에 평균 66일" 연구 기반. 새 단계 = 자란 식물.
-//   🌱 새싹 (2-6일) → 🌿 잎 (7-13일) → ☘️ 무성한 잎 (14-21일)
-//   → 🪴 화분 (22-35일) → 🌲 작은 나무 (36-49일) → 🌸 꽃 (50-65일)
-//   → 🌳 습관 완성! (66일+)
+// Streak badge — 새싹이 66일에 걸쳐 꽃피우는 성장기. Lally et al. (2010)
+// 의 "습관 형성에 평균 66일" 연구 기반. 잎 → 봉오리 → 꽃 → 꽃다발 흐름:
+//   🌱 새싹 (2-6일) → 🌿 잎 (7-13일) → ☘️ 클로버 (14-21일)
+//   → 🌷 꽃봉오리 (22-32일) → 🌸 꽃 (33-44일) → 🌺 만발 (45-65일)
+//   → 💐 습관 완성 (66일+)
 export function streakBadge(n: number): { emoji: string; label: string; color: string } | null {
   if (!n || n < 2) return null
-  if (n >= 66) return { emoji: '🌳', label: `${n}일째 · 습관 완성!`, color: '#9B7EE0' }
-  if (n >= 50) return { emoji: '🌸', label: `${n}일째`, color: '#F5A8C4' }
-  if (n >= 36) return { emoji: '🌲', label: `${n}일째`, color: '#4FBD8F' }
-  if (n >= 22) return { emoji: '🪴', label: `${n}일째`, color: '#56C6A0' }
-  if (n >= 14) return { emoji: '☘️', label: `${n}일째`, color: '#80D4A8' }
-  if (n >= 7)  return { emoji: '🌿', label: `${n}일째`, color: '#A4E0BC' }
-  return { emoji: '🌱', label: `${n}일째`, color: '#C5E8C8' }
+  if (n >= 66) return { emoji: '💐', label: `${n}일째 · 습관 완성!`, color: '#9B7EE0' }
+  if (n >= 45) return { emoji: '🌺', label: `${n}일째`, color: '#E8557A' }
+  if (n >= 33) return { emoji: '🌸', label: `${n}일째`, color: '#F5A8C4' }
+  if (n >= 22) return { emoji: '🌷', label: `${n}일째`, color: '#F58E5C' }
+  if (n >= 14) return { emoji: '☘️', label: `${n}일째`, color: '#56C6A0' }
+  if (n >= 7)  return { emoji: '🌿', label: `${n}일째`, color: '#80D4A8' }
+  return { emoji: '🌱', label: `${n}일째`, color: '#A4E0BC' }
 }
 
 export function listenTeam(teamId: TeamId, cb: (data: TeamDoc) => void): Unsubscribe {
