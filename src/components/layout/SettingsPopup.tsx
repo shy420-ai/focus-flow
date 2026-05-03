@@ -655,6 +655,29 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         <span style={{ fontSize: 11, color: '#888', minWidth: 36 }}>{px}px</span>
       </div>
 
+      {/* 빈 곳 더블탭 시 기본 블록 길이 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
+        <span style={{ fontSize: 11, color: '#888' }}>더블탭 블록</span>
+        {([0.25, 0.5, 1, 1.5, 2] as const).map((h) => {
+          const cur = parseFloat(localStorage.getItem('ff_default_block_dur') || '1')
+          const on = Math.abs(cur - h) < 0.01
+          return (
+            <button key={h}
+              onClick={() => {
+                localStorage.setItem('ff_default_block_dur', String(h))
+                window.dispatchEvent(new CustomEvent('ff-default-dur-changed'))
+              }}
+              style={{
+                padding: '4px 8px', borderRadius: 8,
+                border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
+                background: on ? 'var(--pink)' : '#fff',
+                color: on ? '#fff' : 'var(--pd)',
+                fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              }}>{h < 1 ? `${Math.round(h * 60)}분` : `${h}h`}</button>
+          )
+        })}
+      </div>
+
       {/* 탭 관리 */}
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>

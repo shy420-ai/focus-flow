@@ -424,9 +424,10 @@ export function TimelineView() {
             const subH = Math.round((relY % PX) / PX * 6) / 6
             const startHour = hour + subH
             const newId = String(Date.now())
+            const defaultDur = parseFloat(localStorage.getItem('ff_default_block_dur') || '1')
             useAppStore.getState().addBlock({
               id: newId, type: 'timeline', name: '',
-              date: curDate, startHour, durHour: 1,
+              date: curDate, startHour, durHour: Number.isFinite(defaultDur) && defaultDur > 0 ? defaultDur : 1,
               color: 'pink', done: false, memo: '', category: '',
               deadline: null, priority: null,
             })
