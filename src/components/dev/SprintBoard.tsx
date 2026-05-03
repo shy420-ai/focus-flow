@@ -606,18 +606,12 @@ export function SprintBoard() {
                 }}
                 aria-label="되돌리기"
                 title="되돌리기"
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 3,
-                  background: 'color-mix(in srgb, var(--pink) 15%, #fff)',
-                  border: '1px solid color-mix(in srgb, var(--pink) 40%, #fff)',
-                  color: 'var(--pd)', borderRadius: 99,
-                  padding: '2px 8px', fontSize: 10, fontWeight: 700,
-                  cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
-                }}
-              >↺ 되돌리기</button>
+                style={{ background: 'transparent', border: 'none', color: 'var(--pink)', cursor: 'pointer', fontSize: 14, padding: 2, flexShrink: 0, lineHeight: 1 }}
+              >↺</button>
               <button onClick={async () => { if (await showConfirm('완료한 목표를 챌린지에서 빼기?\n\n평균에서도 빠져')) removeGoal(g.id) }}
                 aria-label="삭제"
-                style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 10, padding: 2, flexShrink: 0 }}>✕</button>
+                title="삭제"
+                style={{ background: 'transparent', border: 'none', color: '#bbb', cursor: 'pointer', fontSize: 13, padding: 2, flexShrink: 0, lineHeight: 1 }}>✕</button>
             </div>
           ))}
         </div>
