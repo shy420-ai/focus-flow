@@ -271,7 +271,14 @@ export function TeamView() {
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', marginBottom: 2 }}>
                   팀 {t.label}
                 </div>
-                <div style={{ fontSize: 11, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                <div style={{
+                  fontSize: 11, color: '#888', lineHeight: 1.5,
+                  display: '-webkit-box',
+                  WebkitLineClamp: 2,
+                  WebkitBoxOrient: 'vertical',
+                  overflow: 'hidden',
+                  wordBreak: 'keep-all',
+                }}>
                   {t.examples.join(' · ')}
                 </div>
               </div>
