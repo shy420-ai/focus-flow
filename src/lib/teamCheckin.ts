@@ -138,23 +138,20 @@ function normalizePost(p: Partial<TeamPost> & { hearts?: string[] }): TeamPost {
   }
 }
 
-// Streak chip helper — 10 tiered emojis with growing rarity. Hitting a new
-// tier feels like collecting a badge instead of just incrementing a counter.
-//   🌱 새싹 (2일) → 🌿 잎 (3일) → 🌳 나무 (5일) → ⭐ 별 (7일·1주)
-//   → 🏅 메달 (14일·2주) → 🔥 불 (30일·한달) → ⚡ 번개 (50일)
-//   → 💎 다이아 (100일) → 👑 왕관 (200일) → 🌈 무지개 (365일·1년)
+// Streak badge — 새싹이 66일에 걸쳐 자라는 식물 성장기. Lally et al. (2010)
+// 의 "습관 형성에 평균 66일" 연구 기반. 새 단계 = 자란 식물.
+//   🌱 새싹 (2-6일) → 🌿 잎 (7-13일) → ☘️ 무성한 잎 (14-21일)
+//   → 🪴 화분 (22-35일) → 🌲 작은 나무 (36-49일) → 🌸 꽃 (50-65일)
+//   → 🌳 습관 완성! (66일+)
 export function streakBadge(n: number): { emoji: string; label: string; color: string } | null {
   if (!n || n < 2) return null
-  if (n >= 365) return { emoji: '🌈', label: `${n}일째`, color: '#E8A0B8' }
-  if (n >= 200) return { emoji: '👑', label: `${n}일째`, color: '#9B7EE0' }
-  if (n >= 100) return { emoji: '💎', label: `${n}일째`, color: '#4DC4D9' }
-  if (n >= 50)  return { emoji: '⚡', label: `${n}일째`, color: '#E24B4A' }
-  if (n >= 30)  return { emoji: '🔥', label: `${n}일째`, color: '#F58E5C' }
-  if (n >= 14)  return { emoji: '🏅', label: `${n}일째`, color: '#F5A52A' }
-  if (n >= 7)   return { emoji: '⭐', label: `${n}일째`, color: '#F5BD3C' }
-  if (n >= 5)   return { emoji: '🌳', label: `${n}일째`, color: '#4FBD8F' }
-  if (n >= 3)   return { emoji: '🌿', label: `${n}일째`, color: '#56C6A0' }
-  return { emoji: '🌱', label: `${n}일째`, color: '#80D4A8' }
+  if (n >= 66) return { emoji: '🌳', label: `${n}일째 · 습관 완성!`, color: '#9B7EE0' }
+  if (n >= 50) return { emoji: '🌸', label: `${n}일째`, color: '#F5A8C4' }
+  if (n >= 36) return { emoji: '🌲', label: `${n}일째`, color: '#4FBD8F' }
+  if (n >= 22) return { emoji: '🪴', label: `${n}일째`, color: '#56C6A0' }
+  if (n >= 14) return { emoji: '☘️', label: `${n}일째`, color: '#80D4A8' }
+  if (n >= 7)  return { emoji: '🌿', label: `${n}일째`, color: '#A4E0BC' }
+  return { emoji: '🌱', label: `${n}일째`, color: '#C5E8C8' }
 }
 
 export function listenTeam(teamId: TeamId, cb: (data: TeamDoc) => void): Unsubscribe {
