@@ -42,20 +42,19 @@ export function TeamAvatar({ teamId, size = 56 }: Props) {
 function iconFor(teamId: TeamId, c: string) {
   switch (teamId) {
     case 'job':
-      // 자소서/이력서 — 사진 + 인적사항 + 자기소개 단락
+      // 취준생: 서류가방 — 면접·취직 활동 상징, 깔끔한 단일 오브젝트
       return (
         <g>
-          <rect x="5" y="4" width="22" height="24" rx="2.5"
-                fill={c} fillOpacity="0.22" stroke={c} strokeWidth="1.6" />
-          {/* profile photo placeholder, top-left */}
-          <rect x="8" y="7" width="6" height="7" rx="1" fill={c} />
-          {/* header lines next to photo */}
-          <line x1="16" y1="9" x2="24" y2="9"  stroke={c} strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="16" y1="12" x2="22" y2="12" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.65" />
-          {/* body paragraph lines */}
-          <line x1="8" y1="18" x2="24" y2="18" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
-          <line x1="8" y1="21" x2="24" y2="21" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
-          <line x1="8" y1="24" x2="20" y2="24" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
+          {/* handle */}
+          <path d="M12 9 V7 a2 2 0 0 1 2 -2 h4 a2 2 0 0 1 2 2 V9"
+                stroke={c} strokeWidth="2" fill="none" strokeLinecap="round" />
+          {/* body */}
+          <rect x="5" y="9" width="22" height="17" rx="2.5"
+                fill={c} fillOpacity="0.22" stroke={c} strokeWidth="2" />
+          {/* horizontal seam */}
+          <line x1="5" y1="15" x2="27" y2="15" stroke={c} strokeWidth="1.8" />
+          {/* lock catch */}
+          <rect x="13.5" y="14" width="5" height="3" rx="0.6" fill={c} />
         </g>
       )
 
