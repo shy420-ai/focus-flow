@@ -4,6 +4,7 @@ import { todayStr } from '../../lib/date'
 import { useBackClose } from '../../hooks/useBackClose'
 import { GearIcon } from '../ui/GearIcon'
 import { showMiniToast } from '../../lib/miniToast'
+import { isDevMode } from '../../lib/devMode'
 import type { MedItem } from '../../types/med'
 
 // ── MED DB ────────────────────────────────────────────────────────────────────
@@ -299,6 +300,153 @@ function DrugCard({ med, todayTake, curH }: { med: MedItem; todayTake: ReturnTyp
 
 // MedGuideCard / fmtHourMin 은 DrugCard 와 중복이라 제거됨 — DrugCard 가
 // 단일 카드로 약 상태(progress bar) + 약 정보 접힘 모두 처리.
+
+// ── ⏰ 시간 흐름 view (개발자 모드 only) — 약·수면·컨디션을 시간순 한 흐름으로 ────
+function TimelineHealthView() {
+  const config = useMedStore((s) => s.config)
+  const logs = useMedStore((s) => s.logs)
+  const logTake = useMedStore((s) => s.logTake)
+
+  const today = todayStr()
+  const meds = config?.meds || []
+  const bedGoal = config?.bedGoal ?? 23
+  const wakeGoal = config?.wakeGoal ?? 7
+  const todayBedLog = logs.filter((l) => l.date === today && l.type === 'bed').sort((a, b) => (a.time ?? 0) - (b.time ?? 0))[0]
+  const todayWake = logs.find((l) => l.date === today && l.type === 'wake')
+  const now = new Date()
+  const nowH = now.getHours() + now.getMinutes() / 60
+
+  // 이벤트 시간순 빌드
+  type Ev = {
+    time: number
+    emoji: string
+    title: string
+    sub?: string
+    color?: string
+    actionable?: boolean
+    onTake?: () => void
+    taken?: boolean
+  }
+  const events: Ev[] = []
+
+  // 1) 기상 — wake log 있으면 take 시각 추정 또는 wakeGoal
+  events.push({ time: wakeGoal, emoji: '🌅', title: '기상', sub: todayWake ? '기록됨' : '예정', color: '#F5BD3C' })
+
+  // 2) 약 복용 (각 약마다)
+  for (const m of meds) {
+    const db = MED_DB.find((d) => d.name === m.name)
+    if (!db) continue
+    const cc = CAT_COLORS[db.cat] || 'var(--pink)'
+    const take = logs.find((l) => l.date === today && l.type === 'take' && l.timing === m.timing)
+
+    let plannedH: number
+    if (m.timing === '아침') plannedH = wakeGoal + 0.5
+    else if (m.timing === '점심') plannedH = 12
+    else if (m.timing === '저녁') {
+      plannedH = (db.cat === '수면' || db.cat === '항정신병') ? bedGoal - 1 : bedGoal - 3
+    }
+    else plannedH = nowH  // 수시
+
+    const actualH = take?.time ?? plannedH
+    events.push({
+      time: actualH,
+      emoji: '💊',
+      title: `${m.name} ${m.dose}`,
+      sub: take ? `복용 완료 (${db.cat})` : `복용 예정 (${db.cat})`,
+      color: cc,
+      actionable: !take,
+      onTake: () => {
+        if (m.timing === '아침' || m.timing === '점심' || m.timing === '저녁') {
+          logTake(m.timing)
+          showMiniToast(`💊 ${m.name} 복용 기록됨`)
+        }
+      },
+      taken: !!take,
+    })
+
+    // 효과 종료 마커 (단기 자극제만 — 누적형은 의미 X)
+    if (take && db.duration < 24) {
+      events.push({
+        time: actualH + db.duration * 0.7,
+        emoji: '🟡',
+        title: `${m.name} 효과 약해짐`,
+        sub: `복용 ${db.duration * 0.7}h 후`,
+        color: '#EF9F27',
+      })
+      events.push({
+        time: actualH + db.duration,
+        emoji: '🔴',
+        title: `${m.name} 효과 종료`,
+        sub: `복용 ${db.duration}h 후`,
+        color: '#E24B4A',
+      })
+    }
+  }
+
+  // 3) 취침
+  const bedH = todayBedLog?.time ?? bedGoal
+  events.push({ time: bedH, emoji: '🌙', title: '취침', sub: todayBedLog ? '기록됨' : '예정', color: '#9B7BB5' })
+
+  // 시간순 정렬
+  events.sort((a, b) => a.time - b.time)
+
+  return (
+    <div style={{ padding: '0 0 16px' }}>
+      <div style={{ position: 'relative', paddingLeft: 14 }}>
+        {/* vertical guide line */}
+        <div style={{ position: 'absolute', left: 7, top: 8, bottom: 8, width: 2, background: 'var(--pl)' }} />
+        {events.map((ev, i) => {
+          const isPast = ev.time < nowH
+          const isNow = Math.abs(ev.time - nowH) < 0.5
+          return (
+            <div key={i} style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 10, padding: '6px 0' }}>
+              {/* dot */}
+              <div style={{
+                position: 'absolute', left: -14 + 7 - 5,
+                width: 10, height: 10, borderRadius: '50%',
+                background: isNow ? 'var(--pink)' : (ev.color || 'var(--pink)'),
+                boxShadow: isNow ? '0 0 0 4px color-mix(in srgb, var(--pink) 30%, transparent)' : 'none',
+                opacity: isPast && !isNow ? 0.4 : 1,
+              }} />
+              {/* time */}
+              <div style={{
+                fontSize: 11, fontWeight: 700, color: 'var(--pd)',
+                minWidth: 42, fontFeatureSettings: '"tnum"',
+                opacity: isPast && !isNow ? 0.5 : 1,
+              }}>{fmtHM(ev.time)}</div>
+              {/* card */}
+              <div style={{
+                flex: 1, background: '#fff', borderRadius: 10,
+                padding: '8px 10px', border: '1px solid #f0f0f0',
+                opacity: isPast && !isNow ? 0.55 : 1,
+                ...(isNow ? { borderColor: 'var(--pink)', borderWidth: 1.5, background: 'color-mix(in srgb, var(--pl) 70%, #fff)' } : {}),
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ fontSize: 14 }}>{ev.emoji}</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', flex: 1 }}>{ev.title}</span>
+                  {ev.actionable && !ev.taken && (
+                    <button
+                      onClick={ev.onTake}
+                      style={{
+                        background: 'var(--pink)', color: '#fff', border: 'none',
+                        padding: '4px 10px', borderRadius: 99, fontSize: 10, fontWeight: 700,
+                        cursor: 'pointer', fontFamily: 'inherit',
+                      }}>먹었어</button>
+                  )}
+                </div>
+                {ev.sub && <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{ev.sub}</div>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div style={{ fontSize: 9, color: '#aaa', textAlign: 'center', padding: '12px 0' }}>
+        🧪 개발자 미리보기 — 시간 흐름 view
+      </div>
+    </div>
+  )
+}
 
 // ── 🧠 인사이트 카드 — 신체 정보·수면 목표 기반으로 약 복용 권장 시각 + 수면 분석 ────
 function InsightsCard() {
@@ -896,6 +1044,7 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
 // ── Main StatsView ─────────────────────────────────────────────────────────────
 export function StatsView() {
   const config = useMedStore((s) => s.config)
+  const devOn = isDevMode()
   const [tab, setTab] = useState<'morning' | 'lunch' | 'night' | 'sleep'>(() => {
     const saved = localStorage.getItem('ff_medi_tab')
     return (saved === 'morning' || saved === 'lunch' || saved === 'night' || saved === 'sleep') ? saved : 'morning'
@@ -954,6 +1103,9 @@ export function StatsView() {
             style={{ padding: '10px 24px', borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
             약 설정하기</button>
         </div>
+      ) : devOn ? (
+        // 🧪 개발자 모드: 시간 흐름 view 미리보기
+        <TimelineHealthView />
       ) : (
         <>
           {/* 인사이트 — 신체·수면 목표 + 등록된 약 기반으로 권장 시각 계산 */}
