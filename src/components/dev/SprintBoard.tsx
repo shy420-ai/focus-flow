@@ -511,14 +511,14 @@ export function SprintBoard() {
               placeholder="목표 이름"
               style={{ flex: 1, minWidth: 0, padding: '2px 0', border: 'none', fontSize: 13, fontWeight: 700, color: 'var(--pd)', fontFamily: 'inherit', outline: 'none', background: 'transparent' }}
             />
+            <button onClick={() => setEditGoalId(g.id)} aria-label="수정"
+              style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✏️</button>
             {!hasSteps && (
               <button onClick={() => bumpGoal(g.id, step)}
                 style={{ padding: '5px 12px', borderRadius: 99, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, boxShadow: '0 2px 6px color-mix(in srgb, var(--pink) 30%, transparent)' }}>
                 🙌 내가 해냄
               </button>
             )}
-            <button onClick={() => setEditGoalId(g.id)} aria-label="수정"
-              style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✏️</button>
             <button onClick={async () => { if (await showConfirm('이 목표를 삭제할까?')) removeGoal(g.id) }} aria-label="삭제"
               style={{ background: 'transparent', border: 'none', color: '#bbb', borderRadius: 6, width: 22, height: 22, cursor: 'pointer', fontSize: 11, flexShrink: 0 }}>✕</button>
           </div>
