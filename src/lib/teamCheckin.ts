@@ -6,7 +6,7 @@ import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore'
 import type { Unsubscribe } from 'firebase/firestore'
 import { getDb } from './firestore'
 
-export type TeamId = 'job' | 'worker' | 'college' | 'student' | 'athlete'
+export type TeamId = 'job' | 'college' | 'student' | 'athlete'
 
 export interface TeamMeta {
   id: TeamId
@@ -26,12 +26,6 @@ export const TEAMS: TeamMeta[] = [
       '기상 시간 인증',
       '자소서 한 개 제출',
       '자격증 공부 및 취득 인증',
-    ] },
-  { id: 'worker',  emoji: '💼', label: '직장인', hint: '예: 9시 출근 완료',            color: '#4FBD8F', bgSoft: '#E5F5EE',
-    examples: [
-      '정시 출근 인증',
-      '업무 중 작은 마감 1개 완료',
-      '점심 후 산책 / 회복 인증',
     ] },
   { id: 'college', emoji: '🎓', label: '대학생', hint: '예: 1교시 출석 / 과제 제출',  color: '#F5BD3C', bgSoft: '#FCF3D9',
     examples: [
