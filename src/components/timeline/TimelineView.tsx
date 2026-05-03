@@ -140,6 +140,7 @@ export function TimelineView() {
     armTimer: ReturnType<typeof setTimeout> | null
   } | null>(null)
   const [dragPreview, setDragPreview] = useState<{ startHour: number; durHour: number } | null>(null)
+  const [dragArmed, setDragArmed] = useState(false)
   // Past-hours collapse — only applies to today. Default collapsed so the
   // user lands at "current hour" without a wall of finished slots above.
   const [pastCollapsed, setPastCollapsed] = useState<boolean>(true)
@@ -426,7 +427,13 @@ export function TimelineView() {
         {/* Blocks column */}
         <div
           className="blocks-col"
-          style={{ position: 'relative', height: `${displayHours * PX}px` }}
+          style={{
+            position: 'relative',
+            height: `${displayHours * PX}px`,
+            // While dragging to create, disable native scroll on this
+            // element so finger drag doesn't compete with scroll.
+            touchAction: dragArmed ? 'none' : undefined,
+          }}
           onClick={() => setActiveMenu(null)}
           onPointerDown={(e) => {
             if (e.target !== e.currentTarget) return
@@ -441,6 +448,7 @@ export function TimelineView() {
               const d = dragCreateRef.current
               if (!d) return
               d.armed = true
+              setDragArmed(true)
               setDragPreview({ startHour: d.startHour, durHour: 10/60 })
               if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
                 try { navigator.vibrate(10) } catch { /* ignore */ }
@@ -458,6 +466,7 @@ export function TimelineView() {
               if (Math.abs(relY - d.startY) > 12) {
                 if (d.armTimer) clearTimeout(d.armTimer)
                 dragCreateRef.current = null
+                setDragArmed(false)
               }
               return
             }
@@ -476,6 +485,7 @@ export function TimelineView() {
             dragCreateRef.current = null
             const preview = dragPreview
             setDragPreview(null)
+            setDragArmed(false)
             if (!d?.armed || !preview) return
             const newId = String(Date.now())
             useAppStore.getState().addBlock({
@@ -496,8 +506,10 @@ export function TimelineView() {
             // does we'd rather not silently drop the user's preview.
             const d = dragCreateRef.current
             if (d && !d.armed) {
+              if (d.armTimer) clearTimeout(d.armTimer)
               dragCreateRef.current = null
               setDragPreview(null)
+              setDragArmed(false)
             }
           }}
           onDoubleClick={(e) => {
