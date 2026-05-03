@@ -305,15 +305,12 @@ export function TeamView() {
                 <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', marginBottom: 2 }}>
                   팀 {t.label}
                 </div>
-                <div style={{
-                  fontSize: 11, color: '#888', lineHeight: 1.5,
-                  display: '-webkit-box',
-                  WebkitLineClamp: 2,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                  wordBreak: 'keep-all',
-                }}>
-                  {t.examples.join(' · ')}
+                <div style={{ fontSize: 11, color: '#888', lineHeight: 1.7, wordBreak: 'keep-all' }}>
+                  {t.examples.map((ex, i) => (
+                    <div key={i} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      · {ex} 등
+                    </div>
+                  ))}
                 </div>
               </div>
               <span style={{ fontSize: 18, color: '#ccc', fontWeight: 700, flexShrink: 0 }}>›</span>
@@ -464,7 +461,7 @@ export function TeamView() {
               <span style={{ fontSize: 11, fontWeight: 800, color: accent }}>팀 {meta.label}! 이 그룹에선 이런 걸 인증해</span>
             </div>
             <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: '#555', lineHeight: 1.7 }}>
-              {meta.examples.map((ex, i) => <li key={i}>{ex}</li>)}
+              {meta.examples.map((ex, i) => <li key={i}>{ex} 등</li>)}
             </ul>
             <div style={{
               marginTop: 8, padding: '6px 8px', background: '#FEEAEA',
