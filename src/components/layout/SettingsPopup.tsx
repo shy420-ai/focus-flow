@@ -84,6 +84,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const uid = useAppStore((s) => s.uid)
   const displayName = useAppStore((s) => s.displayName)
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
+  type Section = 'me' | 'view' | 'app'
+  const [section, setSection] = useState<Section>('me')
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
   // 개발자 모드 버튼은 /admins/list 에 등록된 uid 에서만 보이게.
   // primeAdminCache 를 호출해 캐시를 채운 뒤 isAdminCached 로 동기 판정.
@@ -376,13 +378,32 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         </div>
       )}
 
-      {/* ════════════ 🙋 나 ════════════ */}
-      <div style={{
-        fontSize: 13, fontWeight: 800, color: 'var(--pd)',
-        marginTop: 6, marginBottom: 12, paddingTop: 12, paddingBottom: 4,
-        borderTop: '2px solid var(--pl)',
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}>🙋 나</div>
+      {/* ═══ 섹션 탭 — 한 번에 한 그룹만 보이게 ═══ */}
+      <div style={{ display: 'flex', gap: 4, padding: '6px 0 12px', borderTop: '1px solid var(--pl)', marginTop: 6 }}>
+        {([
+          { id: 'me' as const,   label: '🙋 나' },
+          { id: 'view' as const, label: '🎨 구성·화면' },
+          { id: 'app' as const,  label: '⚙ 앱 설정' },
+        ]).map((s) => {
+          const on = section === s.id
+          return (
+            <button key={s.id}
+              onClick={() => setSection(s.id)}
+              style={{
+                flex: 1, padding: '7px 6px', borderRadius: 99,
+                border: 'none',
+                background: on ? 'var(--pink)' : '#f3f3f3',
+                color: on ? '#fff' : '#777',
+                fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'inherit', whiteSpace: 'nowrap',
+              }}>{s.label}</button>
+          )
+        })}
+      </div>
+
+      {/* ──── 🙋 나 ──── */}
+      {section === 'me' && <></>}
+      <div style={{ display: section === 'me' ? 'block' : 'none' }}>
 
       {/* 프로필 사진 + 닉네임 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8, gap: 6 }}>
@@ -506,13 +527,10 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
       {cycleInfo && <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>{cycleInfo}</div>}
 
-      {/* ════════════ 🎨 구성·화면 ════════════ */}
-      <div style={{
-        fontSize: 13, fontWeight: 800, color: 'var(--pd)',
-        marginTop: 6, marginBottom: 12, paddingTop: 12, paddingBottom: 4,
-        borderTop: '2px solid var(--pl)',
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}>🎨 구성·화면</div>
+      </div>
+
+      {/* ──── 🎨 구성·화면 ──── */}
+      <div style={{ display: section === 'view' ? 'block' : 'none' }}>
 
       {/* 탭 관리 — 구성·화면 첫 항목 */}
       <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
@@ -677,13 +695,10 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })()}
       </div>
 
-      {/* ════════════ ⚙ 앱 설정 ════════════ */}
-      <div style={{
-        fontSize: 13, fontWeight: 800, color: 'var(--pd)',
-        marginTop: 6, marginBottom: 12, paddingTop: 12, paddingBottom: 4,
-        borderTop: '2px solid var(--pl)',
-        display: 'flex', alignItems: 'center', gap: 6,
-      }}>⚙ 앱 설정</div>
+      </div>
+
+      {/* ──── ⚙ 앱 설정 ──── */}
+      <div style={{ display: section === 'app' ? 'block' : 'none' }}>
 
       {/* 1) 로그인 / 로그아웃 */}
       <div style={{ marginBottom: 8 }}>
@@ -757,6 +772,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           )}
         </div>
       )}
+      </div> {/* ──── /앱 설정 ──── */}
     </div>
     {cropFile && (
       <AvatarCropModal
