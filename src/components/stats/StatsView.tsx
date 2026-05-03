@@ -455,6 +455,9 @@ function SleepTab() {
                 min={min} max={max} step={0.5}
                 value={staged}
                 onChange={(e) => setStaged(parseFloat(e.target.value))}
+                onPointerUp={() => { logBedtime(staged); showMiniToast('😴 ' + fmt(staged) + ' 기록됨') }}
+                onTouchEnd={() => { logBedtime(staged); showMiniToast('😴 ' + fmt(staged) + ' 기록됨') }}
+                onKeyUp={(e) => { if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') { logBedtime(staged); showMiniToast('😴 ' + fmt(staged) + ' 기록됨') } }}
                 style={{ width: '100%', accentColor: 'var(--pink)' }}
               />
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#aaa', marginTop: 2, marginBottom: 10, fontWeight: 600 }}>
@@ -462,14 +465,9 @@ function SleepTab() {
                 <span style={{ color: 'var(--pink)' }}>목표 {bedGoal}:00</span>
                 <span>{fmt(max)}</span>
               </div>
-              <button
-                onClick={() => { logBedtime(staged); showMiniToast('😴 취침 시각 기록됨') }}
-                style={{
-                  width: '100%', padding: 10, borderRadius: 10, border: 'none',
-                  background: 'var(--pink)', color: '#fff', fontSize: 13, fontWeight: 700,
-                  cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8,
-                }}
-              >💾 저장</button>
+              <div style={{ fontSize: 9, color: '#aaa', textAlign: 'center', marginBottom: 8 }}>
+                💡 슬라이더 놓으면 자동 저장 (누적)
+              </div>
               {/* 오늘 누적 기록 */}
               {todayBedLogs.length > 0 && (
                 <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 8 }}>
