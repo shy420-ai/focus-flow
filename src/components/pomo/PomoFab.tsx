@@ -10,8 +10,12 @@ import type { UserDoc } from '../../lib/firestore'
 interface PomoState {
   workMin: number
   breakMin: number
+  longBreakMin: number       // 큰 휴식 (마지막 세트 후)
+  sessionsTarget: number     // 한 사이클 = 몇 세트 (기본 4)
+  sessionsCompleted: number  // 현재 사이클에서 완료한 세트 수
+  autoStart: boolean         // 한 페이즈 끝나면 자동으로 다음 시작
   seconds: number
-  phase: 'work' | 'break'
+  phase: 'work' | 'break' | 'longBreak'
   running: boolean
   todayCount: number
   countDate: string
@@ -24,11 +28,17 @@ function loadState(): PomoState {
     const saved = JSON.parse(localStorage.getItem('ff_pomo_v2') || '{}')
     const today = todayStr()
     const rawPhase = saved.phase ?? 'work'
+    const phase: 'work' | 'break' | 'longBreak' =
+      rawPhase === 'break' ? 'break' : rawPhase === 'longBreak' ? 'longBreak' : 'work'
     return {
       workMin: saved.workMin ?? 25,
       breakMin: saved.breakMin ?? 5,
+      longBreakMin: saved.longBreakMin ?? 30,
+      sessionsTarget: saved.sessionsTarget ?? 4,
+      sessionsCompleted: saved.sessionsCompleted ?? 0,
+      autoStart: saved.autoStart ?? false,
       seconds: saved.seconds ?? (saved.workMin ?? 25) * 60,
-      phase: (rawPhase === 'break' ? 'break' : 'work') as 'work' | 'break',
+      phase,
       running: false, // never restore running state
       todayCount: saved.countDate === today ? (saved.todayCount ?? 0) : 0,
       countDate: today,
@@ -36,7 +46,12 @@ function loadState(): PomoState {
       totalMinutes: saved.totalMinutes ?? 0,
     }
   } catch {
-    return { workMin: 25, breakMin: 5, seconds: 25 * 60, phase: 'work', running: false, todayCount: 0, countDate: todayStr(), totalCount: 0, totalMinutes: 0 }
+    return {
+      workMin: 25, breakMin: 5, longBreakMin: 30,
+      sessionsTarget: 4, sessionsCompleted: 0, autoStart: false,
+      seconds: 25 * 60, phase: 'work', running: false,
+      todayCount: 0, countDate: todayStr(), totalCount: 0, totalMinutes: 0,
+    }
   }
 }
 
@@ -204,13 +219,28 @@ export function PomoFab() {
           : prev.todayCount
         const newTotalCount = isWorkDone ? prev.totalCount + 1 : prev.totalCount
         const newTotalMinutes = isWorkDone ? prev.totalMinutes + prev.workMin : prev.totalMinutes
-        const newPhase: 'work' | 'break' = isWorkDone ? 'break' : 'work'
-        const nextSeconds = newPhase === 'work' ? prev.workMin * 60 : prev.breakMin * 60
+        // Session series logic:
+        // • work done → break (or longBreak if just hit sessionsTarget)
+        // • break or longBreak done → work; longBreak also resets the cycle
+        let newPhase: 'work' | 'break' | 'longBreak'
+        let newSessionsCompleted = prev.sessionsCompleted
+        if (isWorkDone) {
+          newSessionsCompleted = prev.sessionsCompleted + 1
+          newPhase = newSessionsCompleted >= prev.sessionsTarget ? 'longBreak' : 'break'
+        } else {
+          newPhase = 'work'
+          if (prev.phase === 'longBreak') newSessionsCompleted = 0  // cycle restart
+        }
+        const nextSeconds =
+          newPhase === 'work' ? prev.workMin * 60 :
+          newPhase === 'longBreak' ? prev.longBreakMin * 60 :
+          prev.breakMin * 60
         const next: PomoState = {
           ...prev,
-          running: false,
+          running: prev.autoStart,  // auto-continue if user opted in
           phase: newPhase,
           seconds: nextSeconds,
+          sessionsCompleted: newSessionsCompleted,
           todayCount: newCount,
           countDate: today,
           totalCount: newTotalCount,
@@ -248,7 +278,30 @@ export function PomoFab() {
   function reset() {
     if (intervalRef.current) clearInterval(intervalRef.current)
     setPomo((prev) => {
-      const next: PomoState = { ...prev, running: false, phase: 'work', seconds: prev.workMin * 60 }
+      const next: PomoState = { ...prev, running: false, phase: 'work', seconds: prev.workMin * 60, sessionsCompleted: 0 }
+      saveState(next)
+      return next
+    })
+  }
+
+  function setSessionsTarget(n: number) {
+    setPomo((prev) => {
+      const next: PomoState = { ...prev, sessionsTarget: Math.max(1, Math.min(8, n)) }
+      saveState(next)
+      return next
+    })
+  }
+  function setLongBreakMin(m: number) {
+    setPomo((prev) => {
+      const isLong = prev.phase === 'longBreak'
+      const next: PomoState = { ...prev, longBreakMin: m, seconds: isLong ? m * 60 : prev.seconds }
+      saveState(next)
+      return next
+    })
+  }
+  function toggleAutoStart() {
+    setPomo((prev) => {
+      const next: PomoState = { ...prev, autoStart: !prev.autoStart }
       saveState(next)
       return next
     })
@@ -263,7 +316,10 @@ export function PomoFab() {
     })
   }
 
-  const total = pomo.phase === 'work' ? pomo.workMin * 60 : pomo.breakMin * 60
+  const total =
+    pomo.phase === 'work' ? pomo.workMin * 60 :
+    pomo.phase === 'longBreak' ? pomo.longBreakMin * 60 :
+    pomo.breakMin * 60
   const pct = total > 0 ? (total - pomo.seconds) / total : 0
   const mins = Math.floor(pomo.seconds / 60)
   const secs = pomo.seconds % 60
@@ -299,10 +355,17 @@ export function PomoFab() {
             </div>
           )}
 
-          {/* Phase chip */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(4px)', fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 24 }}>
-            {pomo.phase === 'work' ? '🎯 집중 시간' : '☕ 쉬는 시간'}
+          {/* Phase chip + session counter */}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(4px)', fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
+            {pomo.phase === 'work' ? '🎯 집중 시간' : pomo.phase === 'longBreak' ? '🌿 큰 휴식' : '☕ 쉬는 시간'}
           </div>
+          {pomo.sessionsTarget > 1 && (
+            <div style={{ fontSize: 11, color: 'var(--pd)', marginBottom: 16, opacity: 0.75, fontWeight: 600 }}>
+              {pomo.phase === 'work'
+                ? `${pomo.sessionsCompleted + 1} / ${pomo.sessionsTarget} 세트`
+                : `${pomo.sessionsCompleted} / ${pomo.sessionsTarget} 완료`}
+            </div>
+          )}
 
           {/* Big tomato hero with pulsing halo */}
           <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
@@ -388,7 +451,14 @@ export function PomoFab() {
           {/* Text display */}
           <div className="pomo-display">
             <div className="pomo-time">{timeStr}</div>
-            <div className="pomo-phase">{pomo.phase === 'work' ? '집중 시간' : '쉬는 시간'}</div>
+            <div className="pomo-phase">
+              {pomo.phase === 'work' ? '집중 시간' : pomo.phase === 'longBreak' ? '🌿 큰 휴식' : '쉬는 시간'}
+              {pomo.sessionsTarget > 1 && (
+                <span style={{ marginLeft: 6, fontSize: 10, color: '#888', fontWeight: 600 }}>
+                  ({pomo.phase === 'work' ? pomo.sessionsCompleted + 1 : pomo.sessionsCompleted}/{pomo.sessionsTarget})
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Linear progress bar */}
@@ -422,6 +492,53 @@ export function PomoFab() {
                 if (v > 0) { setWorkMin(v); setCustomMin('') }
               }}
             >설정</button>
+          </div>
+
+          {/* Session series controls */}
+          <div style={{ background: 'var(--pl)', borderRadius: 10, padding: '8px 10px', marginBottom: 10 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🍅 세트</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <button key={n}
+                    onClick={() => setSessionsTarget(n)}
+                    style={{
+                      width: 22, height: 22, borderRadius: 6,
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      background: pomo.sessionsTarget === n ? 'var(--pink)' : '#fff',
+                      color: pomo.sessionsTarget === n ? '#fff' : 'var(--pd)',
+                      fontSize: 10, fontWeight: 700,
+                    }}>{n}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🌿 큰 휴식</span>
+              <div style={{ display: 'flex', gap: 4 }}>
+                {[15, 20, 30].map((m) => (
+                  <button key={m}
+                    onClick={() => setLongBreakMin(m)}
+                    style={{
+                      padding: '3px 8px', borderRadius: 6,
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      background: pomo.longBreakMin === m ? 'var(--pink)' : '#fff',
+                      color: pomo.longBreakMin === m ? '#fff' : 'var(--pd)',
+                      fontSize: 10, fontWeight: 700,
+                    }}>{m}m</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>⏯ 자동 시작</span>
+              <button onClick={toggleAutoStart}
+                style={{
+                  padding: '3px 12px', borderRadius: 99,
+                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                  background: pomo.autoStart ? 'var(--pink)' : '#fff',
+                  color: pomo.autoStart ? '#fff' : 'var(--pd)',
+                  fontSize: 10, fontWeight: 700,
+                }}>{pomo.autoStart ? 'ON' : 'OFF'}</button>
+            </div>
           </div>
 
           {/* Control buttons */}
