@@ -366,8 +366,9 @@ function SleepTab() {
           😴 취침 기록 {todayBedLog ? <span style={{ fontSize: 11, color: '#56C6A0', marginLeft: 6 }}>✅ 기록됨</span> : null}
         </div>
         {(() => {
-          const min = bedGoal - 2
-          const max = bedGoal + 6
+          // 19시(저녁 7시)부터 익일 새벽 5시까지 — ADHD 사용자 일찍·늦게 자는 케이스 다 커버
+          const min = Math.min(19, bedGoal - 2)
+          const max = Math.max(bedGoal + 6, 29)
           const cur = todayBedLog?.time ?? bedGoal
           const fmt = (h: number) => {
             const hh = Math.floor(h)
@@ -459,8 +460,8 @@ function MorningTab() {
               ☀️ 아침약 먹었어!</button>
           ) : (
             <div style={{ display: 'flex', gap: 6 }}>
-              <button onClick={() => logTake('아침')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🔄 다시 기록</button>
-              <button onClick={() => clearTake('아침')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>✕ 초기화</button>
+              <button onClick={() => logTake('아침')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
+              <button onClick={() => clearTake('아침')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
             </div>
           )}
         </div>
@@ -577,8 +578,8 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
             🌙 저녁약 먹었어!</button>
         ) : (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => logTake('저녁')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🔄 다시 기록</button>
-            <button onClick={() => clearTake('저녁')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>✕ 초기화</button>
+            <button onClick={() => logTake('저녁')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
+            <button onClick={() => clearTake('저녁')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
           </div>
         )}
       </div>
@@ -663,8 +664,8 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
             🥪 점심약 먹었어!</button>
         ) : (
           <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => logTake('점심')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🔄 다시 기록</button>
-            <button onClick={() => clearTake('점심')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>✕ 초기화</button>
+            <button onClick={() => logTake('점심')} style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px dashed var(--pl)', background: '#fff', color: '#aaa', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🕐 지금으로 갱신</button>
+            <button onClick={() => clearTake('점심')} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
           </div>
         )}
       </div>
