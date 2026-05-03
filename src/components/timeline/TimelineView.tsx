@@ -114,11 +114,14 @@ export function TimelineView() {
       const val = (e as CustomEvent).detail as number
       setTlSettings((prev) => ({ ...prev, px: val }))
     }
+    function onSettingsOpen() { setTlSettingsOpen(true) }
     window.addEventListener('ff-tl-range', onRange)
     window.addEventListener('ff-tl-px', onPx)
+    window.addEventListener('ff-tl-settings-open', onSettingsOpen)
     return () => {
       window.removeEventListener('ff-tl-range', onRange)
       window.removeEventListener('ff-tl-px', onPx)
+      window.removeEventListener('ff-tl-settings-open', onSettingsOpen)
     }
   }, [])
 
@@ -252,28 +255,8 @@ export function TimelineView() {
   }
 
   return (
-    <div className="tl-wrap" style={{ position: 'relative' }}>
-      {/* ⚙ 일간 탭 전용 설정 — 위 카드 / 타임라인 범위 / 더블탭 블록 */}
-      <button
-        onClick={() => setTlSettingsOpen(true)}
-        aria-label="일간 설정"
-        title="일간 설정"
-        style={{
-          position: 'absolute', top: 4, right: 12, zIndex: 4,
-          width: 30, height: 30, borderRadius: '50%',
-          background: 'rgba(255,255,255,.85)', border: 'none',
-          cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          color: '#888', fontFamily: 'inherit', padding: 0,
-          backdropFilter: 'blur(4px)',
-          boxShadow: '0 1px 3px rgba(0,0,0,.06)',
-        }}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
-      </button>
-
+    <div className="tl-wrap">
+      {/* 일간 설정 시트 — DateNav 의 ⚙ 버튼이 ff-tl-settings-open 이벤트로 트리거 */}
       {tlSettingsOpen && <TimelineSettings onClose={() => setTlSettingsOpen(false)} />}
 
       {/* 일간 위젯 — 설정에서 사주 / 오늘의 팁 / 없음 토글 */}
