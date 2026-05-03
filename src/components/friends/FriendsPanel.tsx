@@ -191,9 +191,16 @@ interface FriendAvatarTabProps {
   hasUpdate: boolean
   onSelect: () => void
   onRequestRemove: () => void
+  // 드래그 정렬 — 핸들 ☰ 아래 작은 점에서 시작
+  isDragging?: boolean
+  isDragOver?: boolean
+  onDragDown?: (e: React.PointerEvent) => void
+  onDragMove?: (e: React.PointerEvent) => void
+  onDragUp?: (e: React.PointerEvent) => void
 }
 
-function FriendAvatarTab({ avatar, nickname, live, selected, hasUpdate, onSelect, onRequestRemove }: FriendAvatarTabProps) {
+function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, onSelect, onRequestRemove,
+  isDragging, isDragOver, onDragDown, onDragMove, onDragUp }: FriendAvatarTabProps) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressedRef = useRef(false)
   const [pressed, setPressed] = useState(false)
@@ -214,39 +221,65 @@ function FriendAvatarTab({ avatar, nickname, live, selected, hasUpdate, onSelect
   }
 
   return (
-    <button
-      onClick={() => { if (!longPressedRef.current) onSelect() }}
-      onPointerDown={startPress}
-      onPointerUp={endPress}
-      onPointerCancel={endPress}
-      onPointerLeave={endPress}
-      onContextMenu={(e) => e.preventDefault()}
+    <div
+      data-friend-uid={friend.uid}
       style={{
         flexShrink: 0,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-        background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-        fontFamily: 'inherit',
-        transform: pressed ? 'scale(.92)' : 'scale(1)',
-        transition: 'transform .15s',
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        touchAction: 'manipulation',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+        opacity: isDragging ? 0.4 : 1,
+        background: isDragOver ? 'color-mix(in srgb, var(--pink) 12%, transparent)' : 'transparent',
+        borderRadius: 10, padding: '2px',
+        transition: 'opacity .15s, background .15s',
       }}
     >
-      <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: selected ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
-        <Avatar value={avatar} size={52} />
-        {live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
-        {hasUpdate && (
-          <span style={{
-            position: 'absolute', top: -2, right: -2,
-            background: 'var(--pink)', color: '#fff', fontSize: 9, fontWeight: 800,
-            padding: '1px 5px', borderRadius: 99, border: '2px solid #fff',
-            lineHeight: 1.3, letterSpacing: 0.3,
-          }}>NEW</span>
-        )}
-      </div>
-      <div style={{ fontSize: 9, color: selected ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nickname}</div>
-    </button>
+      <button
+        onClick={() => { if (!longPressedRef.current) onSelect() }}
+        onPointerDown={startPress}
+        onPointerUp={endPress}
+        onPointerCancel={endPress}
+        onPointerLeave={endPress}
+        onContextMenu={(e) => e.preventDefault()}
+        style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+          background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+          fontFamily: 'inherit',
+          transform: pressed ? 'scale(.92)' : 'scale(1)',
+          transition: 'transform .15s',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          touchAction: 'manipulation',
+        }}
+      >
+        <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: selected ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
+          <Avatar value={avatar} size={52} />
+          {live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
+          {hasUpdate && (
+            <span style={{
+              position: 'absolute', top: -2, right: -2,
+              background: 'var(--pink)', color: '#fff', fontSize: 9, fontWeight: 800,
+              padding: '1px 5px', borderRadius: 99, border: '2px solid #fff',
+              lineHeight: 1.3, letterSpacing: 0.3,
+            }}>NEW</span>
+          )}
+        </div>
+        <div style={{ fontSize: 9, color: selected ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nickname}</div>
+      </button>
+      {onDragDown && (
+        <span
+          onPointerDown={onDragDown}
+          onPointerMove={onDragMove}
+          onPointerUp={onDragUp}
+          onPointerCancel={onDragUp}
+          style={{
+            fontSize: 11, color: '#bbb', cursor: 'grab',
+            padding: '2px 6px', touchAction: 'none',
+            userSelect: 'none', WebkitUserSelect: 'none',
+            lineHeight: 1, marginTop: -2,
+          }}
+          aria-label="순서 변경"
+        >☰</span>
+      )}
+    </div>
   )
 }
 
@@ -828,6 +861,36 @@ interface Props {
 export function FriendsPanel({ onClose, embedded = false }: Props) {
   const uid = useAppStore((s) => s.uid)
   const [friends, setFriends] = useState<Friend[]>(loadFriends)
+  // 친구 ☰ 드래그로 순서 바꾸기
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOverId, setDragOverId] = useState<string | null>(null)
+  function onFriendDragDown(e: React.PointerEvent, id: string) {
+    setDragId(id)
+    try { (e.currentTarget as Element).setPointerCapture(e.pointerId) } catch { /* ignore */ }
+  }
+  function onFriendDragMove(e: React.PointerEvent) {
+    if (!dragId) return
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-friend-uid]') as HTMLElement | null
+    const uid = el?.dataset.friendUid
+    if (uid && uid !== dragOverId) setDragOverId(uid)
+  }
+  function onFriendDragUp(e: React.PointerEvent) {
+    try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
+    if (dragId && dragOverId && dragId !== dragOverId) {
+      const next = [...friends]
+      const fromIdx = next.findIndex((f) => f.uid === dragId)
+      const toIdx = next.findIndex((f) => f.uid === dragOverId)
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [m] = next.splice(fromIdx, 1)
+        next.splice(toIdx, 0, m)
+        setFriends(next)
+        saveFriendsLocal(next)
+        flushSync().catch(() => { /* offline ok */ })
+      }
+    }
+    setDragId(null)
+    setDragOverId(null)
+  }
   const [viewingFriend, setViewingFriend] = useState<Friend | null>(null)
 
   // Refresh local friends list when applyRemote merges in additions from
@@ -1026,6 +1089,11 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
                 live={status.live}
                 selected={isSel}
                 hasUpdate={hasUpdate && !isSel}
+                isDragging={dragId === f.uid}
+                isDragOver={dragOverId === f.uid && dragId != null && dragId !== f.uid}
+                onDragDown={(e) => onFriendDragDown(e, f.uid)}
+                onDragMove={onFriendDragMove}
+                onDragUp={onFriendDragUp}
                 onSelect={() => {
                   setViewingFriend(f)
                   if (curHash) {
