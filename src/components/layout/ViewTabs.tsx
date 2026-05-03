@@ -58,7 +58,7 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M12 11v10" />
     </svg>
   ) },
-  { id: 'stats', label: '메디', icon: (
+  { id: 'stats', label: '건강', icon: (
     // capsule / pill
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-30 12 12)" />

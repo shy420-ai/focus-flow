@@ -49,7 +49,7 @@ const ALL_TABS: Array<{ id: CurView; label: string }> = [
   { id: 'goal', label: '목표' },
   { id: 'drop', label: '덤프' },
   { id: 'mood', label: '일기' },
-  { id: 'stats', label: '메디' },
+  { id: 'stats', label: '건강' },
   { id: 'friends', label: '친구' },
   { id: 'tips', label: '정보' },
 ]
