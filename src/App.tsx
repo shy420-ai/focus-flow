@@ -71,25 +71,28 @@ function AppContent() {
     installFriendCodeDebug()
   }, [setShowOnboarding])
 
-  // Roll curDate over at midnight so a user with the app open across
-  // 23:59 → 00:00 lands on the new day automatically. Only auto-rolls
-  // when the user is parked on the previous "today" — if they were
-  // navigating a past or future date, leave them alone.
+  // Roll curDate over to the new day, but at 4 AM rather than midnight.
+  // ADHD users often stay up past midnight and still mentally consider
+  // it "the same day" — flipping to "tomorrow" at 12:01 AM feels wrong.
+  // 4 AM is a common "logical day" cutoff used by night-owl planners.
   useEffect(() => {
-    function check() {
-      const now = todayStr()
-      const state = useAppStore.getState()
-      // If curDate equals "yesterday" (relative to wall clock), it
-      // means the user was on what was today and crossed midnight.
-      const cur = state.curDate
-      if (cur !== now) {
-        const yesterday = addDays(now, -1)
-        if (cur === yesterday) state.setCurDate(now)
-      }
+    const ROLL_HOUR = 4
+    function logicalToday(): string {
+      const now = new Date()
+      // Before ROLL_HOUR = still yesterday's "logical day".
+      if (now.getHours() < ROLL_HOUR) return addDays(todayStr(), -1)
+      return todayStr()
     }
-    // Tick every minute — cheap, and catches the rollover quickly.
+    function check() {
+      const target = logicalToday()
+      const state = useAppStore.getState()
+      const cur = state.curDate
+      // Only auto-roll if user is sitting on the previous logical today.
+      if (cur === target) return
+      const prev = addDays(target, -1)
+      if (cur === prev) state.setCurDate(target)
+    }
     const id = setInterval(check, 60_000)
-    // Also run once on tab refocus (sleep/wake gap).
     function onVis() { if (!document.hidden) check() }
     document.addEventListener('visibilitychange', onVis)
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis) }
