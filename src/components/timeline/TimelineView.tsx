@@ -129,8 +129,16 @@ export function TimelineView() {
 
   const { start: START, hours: HOURS, px: PX } = tlSettings
   const timelineRef = useRef<HTMLDivElement>(null)
-  // Drag-to-create new block on empty timeline area (calendar-app style).
-  const dragCreateRef = useRef<{ startHour: number; pointerId: number } | null>(null)
+  // Drag-to-create: long-press (350ms) on empty area arms create mode,
+  // then vertical drag draws the preview. Long-press requirement is
+  // what separates this from a normal scroll touch.
+  const dragCreateRef = useRef<{
+    startHour: number
+    startY: number
+    pointerId: number
+    armed: boolean
+    armTimer: ReturnType<typeof setTimeout> | null
+  } | null>(null)
   const [dragPreview, setDragPreview] = useState<{ startHour: number; durHour: number } | null>(null)
   // Past-hours collapse — only applies to today. Default collapsed so the
   // user lands at "current hour" without a wall of finished slots above.
@@ -421,41 +429,55 @@ export function TimelineView() {
           style={{ position: 'relative', height: `${displayHours * PX}px` }}
           onClick={() => setActiveMenu(null)}
           onPointerDown={(e) => {
-            // Only start drag-create on empty area (not on a block child).
             if (e.target !== e.currentTarget) return
-            // Skip secondary buttons (right-click etc.)
             if (e.button !== 0) return
             const rect = e.currentTarget.getBoundingClientRect()
-            const relY = e.clientY - rect.top
-            const startHour = displayStart + Math.max(0, relY) / PX
-            dragCreateRef.current = { startHour, pointerId: e.pointerId }
+            const startY = e.clientY - rect.top
+            const startHour = displayStart + Math.max(0, startY) / PX
+            // Arm via 350ms long-press. If user moves before then = it's
+            // a scroll, so cancel arming and let scroll proceed.
+            const target = e.currentTarget as Element
+            const pointerId = e.pointerId
+            const timer = setTimeout(() => {
+              if (!dragCreateRef.current) return
+              dragCreateRef.current.armed = true
+              setDragPreview({ startHour, durHour: 10/60 })
+              try { target.setPointerCapture(pointerId) } catch { /* ignore */ }
+              if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+                try { navigator.vibrate(8) } catch { /* ignore */ }
+              }
+            }, 350)
+            dragCreateRef.current = { startHour, startY, pointerId, armed: false, armTimer: timer }
           }}
           onPointerMove={(e) => {
             const d = dragCreateRef.current
             if (!d || d.pointerId !== e.pointerId) return
             const rect = e.currentTarget.getBoundingClientRect()
             const relY = e.clientY - rect.top
+            // Before armed: any vertical move > 8px = it's a scroll, cancel.
+            if (!d.armed) {
+              if (Math.abs(relY - d.startY) > 8) {
+                if (d.armTimer) clearTimeout(d.armTimer)
+                dragCreateRef.current = null
+                setDragPreview(null)
+              }
+              return
+            }
+            // Armed: update preview based on current Y.
             const cur = displayStart + Math.max(0, relY) / PX
             const a = Math.min(d.startHour, cur)
             const b = Math.max(d.startHour, cur)
-            const dur = b - a
-            // Need ~12-min deliberate drag before we treat it as create
-            // (otherwise normal scroll on touch would trigger it).
-            if (dur < 12/60) return
-            // Capture once we're sure — prevents ongoing scroll fights.
-            try { (e.currentTarget as Element).setPointerCapture(e.pointerId) } catch { /* ignore */ }
-            // Snap to nearest 10 min
             const snap = (h: number) => Math.round(h * 6) / 6
-            setDragPreview({ startHour: snap(a), durHour: Math.max(snap(dur), 10/60) })
+            setDragPreview({ startHour: snap(a), durHour: Math.max(snap(b - a), 10/60) })
           }}
           onPointerUp={(e) => {
             try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
             const d = dragCreateRef.current
+            if (d?.armTimer) clearTimeout(d.armTimer)
             dragCreateRef.current = null
             const preview = dragPreview
             setDragPreview(null)
-            if (!d || !preview) return
-            if (preview.durHour < 10/60) return
+            if (!d?.armed || !preview) return
             const newId = String(Date.now())
             useAppStore.getState().addBlock({
               id: newId, type: 'timeline', name: '',
@@ -465,8 +487,16 @@ export function TimelineView() {
             })
             setEditId(newId)
             setNewBlockId(newId)
+            if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
+              try { navigator.vibrate([10, 30, 10]) } catch { /* ignore */ }
+            }
           }}
-          onPointerCancel={() => { dragCreateRef.current = null; setDragPreview(null) }}
+          onPointerCancel={() => {
+            const d = dragCreateRef.current
+            if (d?.armTimer) clearTimeout(d.armTimer)
+            dragCreateRef.current = null
+            setDragPreview(null)
+          }}
           onDoubleClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const relY = e.clientY - rect.top
