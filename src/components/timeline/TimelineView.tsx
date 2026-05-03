@@ -13,14 +13,7 @@ import { showMiniToast } from '../../lib/miniToast'
 import { CopyDayModal } from './CopyDayModal'
 import { useDraggableFab } from '../../hooks/useDraggableFab'
 import { useBackClose } from '../../hooks/useBackClose'
-import { isDevMode } from '../../lib/devMode'
 import type { Block } from '../../types/block'
-
-type DayMode = 'low' | 'normal' | 'good'
-function loadDayMode(): DayMode {
-  const v = localStorage.getItem('ff_day_mode')
-  return v === 'low' || v === 'good' ? v : 'normal'
-}
 
 function BirthdayModal({ onClose }: { onClose: () => void }) {
   const [year, setYear] = useState(localStorage.getItem('ff_birthyear') || '')
@@ -153,7 +146,6 @@ export function TimelineView() {
     window.addEventListener('ff-daily-widget-changed', onChange)
     return () => window.removeEventListener('ff-daily-widget-changed', onChange)
   }, [])
-  const [dayMode] = useState<DayMode>(loadDayMode)
 
 
   useEffect(() => {
@@ -480,11 +472,6 @@ export function TimelineView() {
           {timelineBlocks.map((block, index) => {
             const blockEnd = block.startHour + (block.durHour || 0)
             if (blockEnd <= displayStart) return null
-            // Auto-classify: recurring = obligation (must), single = flexible
-            const isFlex = !block.isRecurring
-            // In '🫂 힘들어' mode, dim flexible (자율) blocks so the user only
-            // visually focuses on the obligations they have to keep.
-            const dimmed = isDevMode() && dayMode === 'low' && isFlex
             return (
               <TimeBlock
                 key={block.id}
@@ -497,7 +484,6 @@ export function TimelineView() {
                 onMemo={handleMemoOpen}
                 onEdit={(id) => setEditId(id)}
                 index={index}
-                dimmed={dimmed}
               />
             )
           })}
