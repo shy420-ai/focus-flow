@@ -6,20 +6,23 @@ import { doc, getDoc, setDoc, onSnapshot, updateDoc } from 'firebase/firestore'
 import type { Unsubscribe } from 'firebase/firestore'
 import { getDb } from './firestore'
 
-export type TeamId = 'job' | 'worker' | 'student' | 'athlete'
+export type TeamId = 'job' | 'worker' | 'college' | 'student' | 'athlete'
 
 export interface TeamMeta {
   id: TeamId
   emoji: string
   label: string
   hint: string  // placeholder for the input
+  color: string // primary accent — banner/border/button per team
+  bgSoft: string // softened background tint for header gradient
 }
 
 export const TEAMS: TeamMeta[] = [
-  { id: 'job',     emoji: '🎓', label: '취준생', hint: '예: 오늘 자소서 1개 제출' },
-  { id: 'worker',  emoji: '💼', label: '직장인', hint: '예: 9시 출근 완료' },
-  { id: 'student', emoji: '📚', label: '수험생', hint: '예: 새벽 5시 기상 공부 시작' },
-  { id: 'athlete', emoji: '🏃', label: '운동인', hint: '예: 5km 러닝 완주' },
+  { id: 'job',     emoji: '📝', label: '취준생', hint: '예: 오늘 자소서 1개 제출',     color: '#5B9DF9', bgSoft: '#E8F1FE' },
+  { id: 'worker',  emoji: '💼', label: '직장인', hint: '예: 9시 출근 완료',            color: '#4FBD8F', bgSoft: '#E5F5EE' },
+  { id: 'college', emoji: '🎓', label: '대학생', hint: '예: 1교시 출석 / 과제 제출',  color: '#F5BD3C', bgSoft: '#FCF3D9' },
+  { id: 'student', emoji: '📚', label: '수험생', hint: '예: 새벽 5시 기상 공부 시작', color: '#9B7EE0', bgSoft: '#EFEAFA' },
+  { id: 'athlete', emoji: '🏃', label: '운동인', hint: '예: 5km 러닝 완주',            color: '#F58E5C', bgSoft: '#FCE8DC' },
 ]
 
 // Reaction palette — anonymous, only counts visible. Order matters (display).
@@ -35,6 +38,7 @@ export interface TeamPost {
   // emoji → list of uids (uids stored only to enforce one-per-user toggling,
   // never displayed in UI)
   reactions: Record<string, string[]>
+  photoUrl?: string  // optional — Firebase Storage download URL
 }
 
 export interface TeamDoc {
@@ -56,6 +60,7 @@ function normalizePost(p: Partial<TeamPost> & { hearts?: string[] }): TeamPost {
     text: p.text ?? '',
     ts: p.ts ?? 0,
     reactions,
+    photoUrl: p.photoUrl,
   }
 }
 
@@ -73,7 +78,7 @@ export function listenTeam(teamId: TeamId, cb: (data: TeamDoc) => void): Unsubsc
   })
 }
 
-export async function postCheckin(teamId: TeamId, uid: string, nickname: string, text: string): Promise<void> {
+export async function postCheckin(teamId: TeamId, uid: string, nickname: string, text: string, photoUrl?: string): Promise<void> {
   const db = getDb()
   const ref = doc(db, 'teams', teamId)
   const cutoff = Date.now() - TTL_MS
@@ -84,6 +89,7 @@ export async function postCheckin(teamId: TeamId, uid: string, nickname: string,
     text: text.trim().slice(0, 80),
     ts: Date.now(),
     reactions: {},
+    ...(photoUrl ? { photoUrl } : {}),
   }
   const snap = await getDoc(ref)
   if (snap.exists()) {
@@ -93,6 +99,14 @@ export async function postCheckin(teamId: TeamId, uid: string, nickname: string,
   } else {
     await setDoc(ref, { posts: [newPost] })
   }
+}
+
+// Generate a stable post id ahead of time so the photo path can match the
+// post id (cleanup later by id). Caller passes this to both uploadTeamPhoto
+// and postCheckin's internal id (currently auto-generated, so this stays
+// out of the public API for now).
+export function newPostId(): string {
+  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
 }
 
 export async function toggleReaction(
