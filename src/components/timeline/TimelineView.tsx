@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { todayStr, fmtH, addDays } from '../../lib/date'
 import { NowLine } from './NowLine'
@@ -142,23 +142,8 @@ export function TimelineView() {
   const displayHours = START + HOURS - displayStart
   const hiddenPastHours = displayStart - START
 
-  // Scroll the page to current time exactly once on mount. The previous
-  // every-60s rescroll annoyed the user ("계속 내려감"). They can re-snap
-  // manually with the 📍 지금 button (rendered above the timeline).
-  const scrollToNow = useCallback(() => {
-    const el = timelineRef.current
-    if (!el) return
-    const now = new Date()
-    const nh = now.getHours() + now.getMinutes() / 60
-    if (nh < START || nh > START + HOURS) return
-    const elTop = el.getBoundingClientRect().top + window.scrollY
-    const target = elTop + (nh - START) * PX - 80
-    window.scrollTo({ top: Math.max(0, target), behavior: 'smooth' })
-  }, [START, HOURS, PX])
-  useEffect(() => {
-    const id = setTimeout(scrollToNow, 100)
-    return () => clearTimeout(id)
-  }, [scrollToNow])
+  // Auto-scroll-to-now removed per user request — they want to land
+  // wherever they last scrolled, not be jumped down on every visit.
   const [cycleBar, setCycleBar] = useState<{ bg: string; color: string; text: string } | null>(null)
   const [horoscopeText, setHoroscopeText] = useState<string | null>(null)
   const [horoscopeHint, setHoroscopeHint] = useState<'no-birthday' | 'no-year' | null>(null)
