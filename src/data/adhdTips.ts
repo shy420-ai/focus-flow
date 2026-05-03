@@ -1946,7 +1946,8 @@ export const ADHD_TIPS: AdhdTip[] = [
     sections: [
       { icon: '😔', title: '문제', body: '"가장 좋은 뽀모 비율" 찾으려고 1개월 이거저거 시도.\n결국 다 안 맞음 → 뽀모 자체 포기.\nADHD = 컨디션 매일 다름 → 한 비율로 고정 X.\n비율보다 "유연성" 이 핵심.' },
       { icon: '💡', title: '해결', body: '하루 컨디션·작업 종류 보고 매번 비율 바꾸기.\n오전 = 깊은 작업 90/20, 오후 = 50/10.\n시동 안 걸리는 날 = Animedoro, 컨디션 좋은 날 = Flowtime.\n비율 강박 X — 매일 자기한테 "지금 몇 분 OK?" 물어.' },
-      { icon: '🎯', title: '예시', body: '📅 매일 루틴 (꾸준함 우선) → 50/10\n📚 깊은 작업 (논문·기획·코딩) → 90/20\n😩 시동 안 걸리는 날 → Animedoro 22/22\n🎢 하루마다 출렁 → Flowtime\n🚀 하이퍼포커스 잘 도는 사람 → Flowtime > 90/20\n\n조합 OK:\n• 오전 = 90/20 → 오후 = Animedoro\n• 평일 = 50/10 → 주말 = Flowtime\n• 첫 사이클 = Animedoro (시동) → 다음 = 50/10\n\n핵심: "정답 비율" X = 매일 컨디션 맞춰 바꾸는 유연성.\n그날 안 되는 비율 = 그날만 다른 비율로 — 강박 X.' },
+      { icon: '📋', title: '10가지 기법 한눈에', body: '⚡ 5/1 — 시동 0%인 날 응급용 (5분만 일하기)\n🍿 22/22 (Animedoro) — 22분 일 + 애니 1화 보상\n🍅 25/5 — Cirillo 원조 클래식 (입문용)\n📅 50/10 — ADHD 데일리 sweet spot\n💼 52/17 — DeskTime 100만명 데이터, 직장인용\n🌊 90/20 — Ultradian rhythm, 깊은 작업\n🎢 Flowtime — 자연스럽게 일하고 1/4 만큼 쉼\n📦 Time Boxing — 박스로 하루 미리 짜기 (Cal Newport)\n🐸 Eat the Frog — 가장 어려운 일 첫 시간에 (Brian Tracy)\n👥 Body Doubling — Focusmate·줌 같이 타이머' },
+      { icon: '🎯', title: '내 상황별 추천', body: '📅 매일 루틴 (꾸준함 우선) → 50/10\n📚 깊은 작업 (논문·기획·코딩) → 90/20\n😩 시동 안 걸리는 날 → Animedoro 22/22 또는 5/1\n🎢 하루마다 컨디션 출렁 → Flowtime\n🚀 하이퍼포커스 잘 도는 사람 → Flowtime > 90/20\n💼 회사 8시간 → 52/17\n📦 미리 짜는 거 좋아함 → Time Boxing\n😫 미루기 심한 날 → Eat the Frog (가장 어려운 일 먼저)\n🥺 혼자 못 시작 → Body Doubling\n\n조합 OK:\n• 오전 = 90/20 → 오후 = Animedoro\n• 평일 = 50/10 → 주말 = Flowtime\n• 첫 사이클 = Animedoro (시동) → 다음 = 50/10\n\n핵심: "정답 비율" X = 매일 컨디션 맞춰 바꾸는 유연성.\n그날 안 되는 비율 = 그날만 다른 비율로 — 강박 X.' },
     ],
     source: 'ADHD coaching practice; pomodoro variants comparison studies',
     tags: ['학습', '뽀모도로', '가이드'],
