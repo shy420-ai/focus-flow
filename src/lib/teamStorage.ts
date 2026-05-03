@@ -6,9 +6,15 @@ import { getFirebaseApp } from './firebase'
 
 // Compress an image File to a JPEG blob, max edge `maxDim`px, quality `q`.
 // Mobile photos can be 5MB+ — we never want to upload that raw.
-// If `watermark` is set, burn the text into the bottom-right corner before
-// encoding so it survives upload (used to stamp the check-in time).
-export async function compressImage(file: File, maxDim = 800, q = 0.7, watermark?: string): Promise<Blob> {
+// If `watermark` is set, burn a cute timestamp into the top-right corner.
+// If `caption` is set, burn the user's text into a gradient at the bottom.
+export async function compressImage(
+  file: File,
+  maxDim = 800,
+  q = 0.7,
+  watermark?: string,
+  caption?: string,
+): Promise<Blob> {
   const url = URL.createObjectURL(file)
   try {
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
@@ -27,6 +33,7 @@ export async function compressImage(file: File, maxDim = 800, q = 0.7, watermark
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('no 2d context')
     ctx.drawImage(img, 0, 0, w, h)
+    if (caption) drawCaption(ctx, w, h, caption)
     if (watermark) drawWatermark(ctx, w, h, watermark)
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('compress failed'))), 'image/jpeg', q)
@@ -36,36 +43,94 @@ export async function compressImage(file: File, maxDim = 800, q = 0.7, watermark
   }
 }
 
-// Bottom-right pill stamp — semi-transparent black bg + white text. Scales
-// with the image so it stays readable at thumbnail size too.
-function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, text: string): void {
-  const fontSize = Math.max(12, Math.round(Math.min(w, h) * 0.038))
-  const padX = Math.round(fontSize * 0.7)
-  const padY = Math.round(fontSize * 0.4)
-  const margin = Math.round(fontSize * 0.6)
-  ctx.font = `700 ${fontSize}px -apple-system, "Apple SD Gothic Neo", system-ui, sans-serif`
-  const metrics = ctx.measureText(text)
-  const tw = Math.ceil(metrics.width)
-  const th = fontSize
-  const boxW = tw + padX * 2
-  const boxH = th + padY * 2
-  const x = w - boxW - margin
-  const y = h - boxH - margin
-  // rounded rect bg
-  const r = Math.round(boxH / 2)
-  ctx.fillStyle = 'rgba(0,0,0,.55)'
+const KOREAN_FONT = '-apple-system, "Apple SD Gothic Neo", system-ui, "Noto Sans KR", sans-serif'
+
+function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
   ctx.moveTo(x + r, y)
-  ctx.arcTo(x + boxW, y, x + boxW, y + boxH, r)
-  ctx.arcTo(x + boxW, y + boxH, x, y + boxH, r)
-  ctx.arcTo(x, y + boxH, x, y, r)
-  ctx.arcTo(x, y, x + boxW, y, r)
+  ctx.arcTo(x + w, y, x + w, y + h, r)
+  ctx.arcTo(x + w, y + h, x, y + h, r)
+  ctx.arcTo(x, y + h, x, y, r)
+  ctx.arcTo(x, y, x + w, y, r)
   ctx.closePath()
+}
+
+// Top-right cute pill — soft white-pink bg + flower prefix + pink text.
+function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, text: string): void {
+  const fontSize = Math.max(11, Math.round(Math.min(w, h) * 0.034))
+  const padX = Math.round(fontSize * 0.8)
+  const padY = Math.round(fontSize * 0.45)
+  const margin = Math.round(fontSize * 0.7)
+  const stamp = '🌸 ' + text
+  ctx.font = `700 ${fontSize}px ${KOREAN_FONT}`
+  const tw = Math.ceil(ctx.measureText(stamp).width)
+  const boxW = tw + padX * 2
+  const boxH = fontSize + padY * 2
+  const x = w - boxW - margin
+  const y = margin
+  const r = boxH / 2
+  // soft drop shadow
+  ctx.save()
+  ctx.shadowColor = 'rgba(0,0,0,.18)'
+  ctx.shadowBlur = 8
+  ctx.shadowOffsetY = 2
+  ctx.fillStyle = 'rgba(255,255,255,.92)'
+  roundedRect(ctx, x, y, boxW, boxH, r)
   ctx.fill()
-  // text
-  ctx.fillStyle = '#fff'
+  ctx.restore()
+  ctx.fillStyle = '#D04574'
   ctx.textBaseline = 'middle'
-  ctx.fillText(text, x + padX, y + boxH / 2)
+  ctx.textAlign = 'left'
+  ctx.fillText(stamp, x + padX, y + boxH / 2)
+}
+
+// Bottom caption — gradient overlay + white text, wraps to ≤2 lines.
+function drawCaption(ctx: CanvasRenderingContext2D, w: number, h: number, text: string): void {
+  if (!text.trim()) return
+  const fontSize = Math.max(14, Math.round(Math.min(w, h) * 0.046))
+  const lineHeight = Math.round(fontSize * 1.35)
+  const margin = Math.round(fontSize * 0.9)
+  ctx.font = `700 ${fontSize}px ${KOREAN_FONT}`
+  // Wrap to lines (greedy by char to handle Korean correctly).
+  const maxW = w - margin * 2
+  const lines: string[] = []
+  let cur = ''
+  for (const ch of text) {
+    const trial = cur + ch
+    if (ctx.measureText(trial).width > maxW && cur) {
+      lines.push(cur)
+      cur = ch
+      if (lines.length === 2) break
+    } else {
+      cur = trial
+    }
+  }
+  if (lines.length < 2 && cur) lines.push(cur)
+  if (lines.length === 2 && cur && cur !== lines[1]) {
+    // truncate trailing if more text remained
+    let last = lines[1]
+    while (ctx.measureText(last + '…').width > maxW && last.length > 1) last = last.slice(0, -1)
+    lines[1] = last + '…'
+  }
+
+  const totalH = lineHeight * lines.length
+  const gradH = totalH + margin * 2
+  const grad = ctx.createLinearGradient(0, h - gradH, 0, h)
+  grad.addColorStop(0, 'rgba(0,0,0,0)')
+  grad.addColorStop(1, 'rgba(0,0,0,.7)')
+  ctx.fillStyle = grad
+  ctx.fillRect(0, h - gradH, w, gradH)
+
+  ctx.fillStyle = '#fff'
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'alphabetic'
+  ctx.shadowColor = 'rgba(0,0,0,.5)'
+  ctx.shadowBlur = 4
+  lines.forEach((line, i) => {
+    const y = h - margin - (lines.length - 1 - i) * lineHeight
+    ctx.fillText(line, w / 2, y)
+  })
+  ctx.shadowBlur = 0
 }
 
 // Format current time for the watermark stamp: "5/4 (월) 02:13"

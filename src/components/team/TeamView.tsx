@@ -123,22 +123,25 @@ export function TeamView() {
     }, 15000)
     try {
       let photoUrl: string | undefined
+      // When a photo is attached, the text caption is burned INTO the photo
+      // as a styled overlay — not stored as a separate text bubble. The
+      // post's text field becomes a sentinel ('📷') so feed knows it's a
+      // pure-photo bubble.
+      const captionForPhoto = photoFile ? text.trim().slice(0, 80) : ''
       if (photoFile) {
-        // Try Firebase Storage first (5s timeout — fail fast). On failure
-        // (Storage not enabled / rules block / network), fall back to a
-        // smaller base64 data URL embedded directly in the Firestore post.
         const stamp = watermarkStamp()
         try {
-          const compressed = await compressImage(photoFile, 800, 0.7, stamp)
+          const compressed = await compressImage(photoFile, 800, 0.7, stamp, captionForPhoto)
           const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
           photoUrl = await withTimeout(uploadTeamPhoto(active, tempId, compressed), 5000, 'storage timeout')
         } catch (storageErr) {
           console.warn('Storage upload failed, falling back to base64:', storageErr)
-          const small = await compressImage(photoFile, 480, 0.55, stamp)
+          const small = await compressImage(photoFile, 480, 0.55, stamp, captionForPhoto)
           photoUrl = await blobToDataUrl(small)
         }
       }
-      await postCheckin(active, uid, myNick, text || (photoUrl ? '📷' : ''), photoUrl)
+      const postText = photoUrl ? '📷' : text
+      await postCheckin(active, uid, myNick, postText, photoUrl)
       setText('')
       clearPhoto()
     } catch (e) {
