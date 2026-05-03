@@ -387,58 +387,79 @@ export function PomoFab() {
 
   return (
     <>
-      {/* Fullscreen lock overlay — cute tomato 🍅 hero */}
-      {lockActive && (
+      {/* Fullscreen lock overlay — work=tomato hero, break=coffee/leaf hero
+          with softer mint/sky background so user instantly knows the phase */}
+      {lockActive && (() => {
+        const isWork = pomo.phase === 'work'
+        const isLong = pomo.phase === 'longBreak'
+        // Distinct backgrounds per phase: warm pink for work, sky for short break,
+        // sage green for long break — palette signals "쉬는 시간" without reading.
+        const bgGradient = isWork
+          ? 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 60%, #fff), var(--pl))'
+          : isLong
+          ? 'linear-gradient(135deg, #d8efe1, #aee0c5)'
+          : 'linear-gradient(135deg, #e6f3fa, #bee0ee)'
+        const heroEmoji = isWork ? '🍅' : isLong ? '🌿' : '☕'
+        const hintText = isWork
+          ? '🍅 토마토 익을 때까지 옆에 있어줘'
+          : isLong
+          ? '🌿 길게 쉬어 · 산책·식사·낮잠 추천'
+          : '☕ 잠깐 한숨 돌려 · 물 한 잔 · 스트레칭'
+        const phaseBadgeBg = isWork
+          ? 'rgba(255,255,255,.6)'
+          : 'rgba(255,255,255,.85)'
+        return (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
-          background: pomo.phase === 'work'
-            ? 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 60%, #fff), var(--pl))'
-            : 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pink) 30%, #fff))',
+          background: bgGradient,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          color: 'var(--pd)', userSelect: 'none', transition: 'background .3s',
+          color: 'var(--pd)', userSelect: 'none', transition: 'background .6s',
           overflow: 'hidden',
         }}>
           <style>{`
             @keyframes pomo-bob { 0%, 100% { transform: translateY(0) rotate(-2deg) } 50% { transform: translateY(-12px) rotate(2deg) } }
             @keyframes pomo-pulse { 0%, 100% { opacity: .35; transform: scale(.98) } 50% { opacity: .55; transform: scale(1.04) } }
+            @keyframes pomo-breath { 0%, 100% { transform: translateY(0) scale(1) } 50% { transform: translateY(-6px) scale(1.04) } }
             @keyframes pomo-shake { 0%, 100% { transform: translateX(0) } 25% { transform: translateX(-8px) } 75% { transform: translateX(8px) } }
           `}</style>
 
 
           {/* Phase chip + session counter */}
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(4px)', fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
-            {pomo.phase === 'work' ? '🎯 집중 시간' : pomo.phase === 'longBreak' ? '🌿 큰 휴식' : '☕ 쉬는 시간'}
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: phaseBadgeBg, backdropFilter: 'blur(4px)', fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
+            {isWork ? '🎯 집중 시간' : isLong ? '🌿 큰 휴식 — 길게 쉬어' : '☕ 쉬는 시간 — 잠깐 멈춰'}
           </div>
           {pomo.sessionsTarget > 1 && (
             <div style={{ fontSize: 11, color: 'var(--pd)', marginBottom: 16, opacity: 0.75, fontWeight: 600 }}>
-              {pomo.phase === 'work'
+              {isWork
                 ? `${pomo.sessionsCompleted + 1} / ${pomo.sessionsTarget} 세트`
                 : `${pomo.sessionsCompleted} / ${pomo.sessionsTarget} 완료`}
             </div>
           )}
 
-          {/* Big tomato hero with pulsing halo + ripening filter.
-              Work phase: hue rotates 120deg(green) → 0deg(red) over progress.
-              Break phase: stays fully ripe (red). transition smooths per-tick steps. */}
+          {/* Hero — work=ripening tomato, break=coffee/leaf with breath animation */}
           {(() => {
-            const isWork = pomo.phase === 'work'
             const ripeness = isWork ? pct : 1
             const hue = 120 * (1 - ripeness)
             const sat = 0.6 + 0.4 * ripeness
             const bright = 0.92 + 0.08 * ripeness
+            const heroFilter = isWork
+              ? `hue-rotate(${hue}deg) saturate(${sat}) brightness(${bright}) drop-shadow(0 8px 16px rgba(229,90,99,.25))`
+              : 'drop-shadow(0 8px 16px rgba(0,0,0,.12))'
+            const heroAnim = isWork ? 'pomo-bob 3.2s ease-in-out infinite' : 'pomo-breath 4.2s ease-in-out infinite'
+            const haloBg = isWork ? 'rgba(255,255,255,.6)' : 'rgba(255,255,255,.7)'
             return (
               <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
                 <div style={{
                   position: 'absolute', inset: 0, borderRadius: '50%',
-                  background: 'rgba(255,255,255,.6)',
+                  background: haloBg,
                   animation: 'pomo-pulse 2.4s ease-in-out infinite',
                 }} />
                 <div style={{
                   fontSize: 160, lineHeight: 1, position: 'relative',
-                  animation: 'pomo-bob 3.2s ease-in-out infinite',
-                  filter: `hue-rotate(${hue}deg) saturate(${sat}) brightness(${bright}) drop-shadow(0 8px 16px rgba(229,90,99,.25))`,
+                  animation: heroAnim,
+                  filter: heroFilter,
                   transition: 'filter 1s linear',
-                }}>🍅</div>
+                }}>{heroEmoji}</div>
               </div>
             )
           })()}
@@ -448,9 +469,9 @@ export function PomoFab() {
             {timeStr}
           </div>
 
-          {/* Cute hint */}
+          {/* Phase-specific hint */}
           <div style={{ marginTop: 18, fontSize: 12, color: '#666', padding: '0 28px', textAlign: 'center', lineHeight: 1.7 }}>
-            🍅 토마토 익을 때까지 옆에 있어줘
+            {hintText}
           </div>
 
           {/* Unlock pad */}
@@ -487,7 +508,8 @@ export function PomoFab() {
             해제하면 타이머 일시정지 · 다시 시작 가능
           </div>
         </div>
-      )}
+        )
+      })()}
 
       {/* FAB — draggable on long press */}
       <button
@@ -521,7 +543,7 @@ export function PomoFab() {
           <div className="pomo-display">
             <div className="pomo-time">{timeStr}</div>
             <div className="pomo-phase">
-              {pomo.phase === 'work' ? '집중 시간' : pomo.phase === 'longBreak' ? '🌿 큰 휴식' : '쉬는 시간'}
+              {pomo.phase === 'work' ? '🎯 집중 시간' : pomo.phase === 'longBreak' ? '🌿 큰 휴식 — 길게 쉬어' : '☕ 쉬는 시간 — 잠깐 멈춰'}
               {pomo.sessionsTarget > 1 && (
                 <span style={{ marginLeft: 6, fontSize: 10, color: '#888', fontWeight: 600 }}>
                   ({pomo.phase === 'work' ? pomo.sessionsCompleted + 1 : pomo.sessionsCompleted}/{pomo.sessionsTarget})
