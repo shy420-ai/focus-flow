@@ -13,6 +13,8 @@ import { isAdminCached, banUser } from '../../lib/banList'
 import { showConfirm } from '../../lib/showConfirm'
 
 const ACTIVE_KEY = 'ff_team_active'
+const ROOM_KEY = 'ff_team_inroom'  // null = list view, TeamId = inside that room
+const HIDDEN_KEY = 'ff_team_hidden_rooms'  // JSON string[] — rooms hidden from list
 // 30자 = 사진 정중앙 캡션이 2줄 안에 안전하게 들어가는 한계 + 인증 형식상
 // 짧은 한 줄을 유도. 텍스트 단독 메시지에도 동일 적용 — 큰 대화 X 컨셉.
 const MAX_LEN = 30
@@ -21,6 +23,16 @@ const GROUP_GAP_MS = 2 * 60 * 1000  // sender breaks if last msg > 2 min ago
 function loadActive(): TeamId {
   const v = localStorage.getItem(ACTIVE_KEY)
   return TEAMS.find((t) => t.id === v) ? (v as TeamId) : 'job'
+}
+function loadInRoom(): TeamId | null {
+  const v = localStorage.getItem(ROOM_KEY)
+  return TEAMS.find((t) => t.id === v) ? (v as TeamId) : null
+}
+function loadHiddenRooms(): TeamId[] {
+  try {
+    const arr = JSON.parse(localStorage.getItem(HIDDEN_KEY) || '[]') as string[]
+    return arr.filter((id) => TEAMS.some((t) => t.id === id)) as TeamId[]
+  } catch { return [] }
 }
 
 function clockTime(ts: number): string {
@@ -44,6 +56,18 @@ export function TeamView() {
   const uid = useAppStore((s) => s.uid)
   const displayName = useAppStore((s) => s.displayName)
   const [active, setActive] = useState<TeamId>(loadActive)
+  const [inRoom, setInRoomState] = useState<TeamId | null>(loadInRoom)
+  const [hiddenRooms, setHiddenRooms] = useState<TeamId[]>(loadHiddenRooms)
+  const setInRoom = (id: TeamId | null) => {
+    if (id) localStorage.setItem(ROOM_KEY, id)
+    else localStorage.removeItem(ROOM_KEY)
+    setInRoomState(id)
+  }
+  useEffect(() => {
+    function onHidden() { setHiddenRooms(loadHiddenRooms()) }
+    window.addEventListener('ff-team-hidden-changed', onHidden)
+    return () => window.removeEventListener('ff-team-hidden-changed', onHidden)
+  }, [])
   const [posts, setPosts] = useState<TeamPost[]>([])
   const [text, setText] = useState('')
   const [posting, setPosting] = useState(false)
@@ -196,38 +220,86 @@ export function TeamView() {
   const accent = meta.color
   const bgSoft = meta.bgSoft
 
-  return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)' }}>
-      {/* Team chips — segment-style */}
-      <div style={{ display: 'flex', gap: 4, padding: '8px 0 6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
-        {TEAMS.map((t) => {
-          const on = active === t.id
-          return (
+  // Room-list view (KakaoTalk-style). Tapping a card enters chat mode.
+  if (inRoom === null) {
+    const visibleTeams = TEAMS.filter((t) => !hiddenRooms.includes(t.id))
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', padding: '8px 4px 16px' }}>
+        <div style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 70%, #fff) 0%, #fff 100%)', borderRadius: 18, padding: '14px 18px', marginBottom: 12 }}>
+          <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>
+            👥 그룹 인증 <span style={{ fontSize: 10, color: '#888', fontWeight: 600 }}>(베타)</span>
+          </div>
+          <div style={{ fontSize: 11, color: '#888' }}>익명 · 24시간 후 자동 사라짐 · 큰 대화 X</div>
+        </div>
+
+        {visibleTeams.length === 0 ? (
+          <div style={{ background: 'color-mix(in srgb, var(--pl) 25%, #fff)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
+            모든 그룹 숨김 상태야<br />
+            <span style={{ fontSize: 10, color: '#bbb' }}>설정 → 그룹 표시에서 다시 켤 수 있어</span>
+          </div>
+        ) : (
+          visibleTeams.map((t) => (
             <button
               key={t.id}
-              onClick={() => setActive(t.id)}
+              onClick={() => { setActive(t.id); setInRoom(t.id) }}
               style={{
-                flexShrink: 0,
-                padding: '6px 12px', borderRadius: 99,
-                border: 'none',
-                background: on ? t.color : '#f3f3f3',
-                color: on ? '#fff' : '#777',
-                fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                fontFamily: 'inherit', whiteSpace: 'nowrap',
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                transition: 'background .15s',
+                display: 'flex', alignItems: 'center', gap: 12,
+                width: '100%', padding: '14px 14px',
+                marginBottom: 8, borderRadius: 14, fontFamily: 'inherit',
+                background: '#fff',
+                border: '1px solid #f0f0f0',
+                borderLeft: `4px solid ${t.color}`,
+                cursor: 'pointer', textAlign: 'left',
+                transition: 'transform .12s, box-shadow .12s',
               }}
+              onPointerDown={(e) => { e.currentTarget.style.transform = 'scale(0.98)' }}
+              onPointerUp={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
+              onPointerLeave={(e) => { e.currentTarget.style.transform = 'scale(1)' }}
             >
-              <span style={{ fontSize: 13 }}>{t.emoji}</span>
-              <span>{t.label}</span>
+              <div style={{
+                width: 56, height: 56, borderRadius: 14,
+                background: `linear-gradient(135deg, ${t.bgSoft}, #fff)`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 30, flexShrink: 0,
+                border: `1px solid ${t.bgSoft}`,
+              }}>{t.emoji}</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', marginBottom: 2 }}>
+                  팀 {t.label}
+                </div>
+                <div style={{ fontSize: 11, color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {t.examples.join(' · ')}
+                </div>
+              </div>
+              <span style={{ fontSize: 18, color: '#ccc', fontWeight: 700, flexShrink: 0 }}>›</span>
             </button>
-          )
-        })}
+          ))
+        )}
       </div>
+    )
+  }
 
-      {/* Sub header — minimal info line */}
-      <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', padding: '4px 0 8px', flexShrink: 0 }}>
-        익명 · 24h 후 사라짐 · 큰 대화 X
+  // Chat view — for the selected room.
+  return (
+    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)' }}>
+      {/* Header — back + team name (replaces old chip row) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0 4px', flexShrink: 0 }}>
+        <button
+          onClick={() => setInRoom(null)}
+          aria-label="뒤로"
+          style={{
+            width: 32, height: 32, borderRadius: '50%',
+            background: '#f3f3f3', border: 'none', cursor: 'pointer',
+            fontSize: 14, fontWeight: 800, color: 'var(--pd)', fontFamily: 'inherit',
+            flexShrink: 0,
+          }}
+        >‹</button>
+        <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <span style={{ fontSize: 16 }}>{meta.emoji}</span>
+          팀 {meta.label}
+        </span>
+        <span style={{ flex: 1 }} />
+        <span style={{ fontSize: 9, color: '#aaa', fontWeight: 600 }}>익명 · 24h</span>
       </div>
 
       {/* Chat feed */}
@@ -491,18 +563,29 @@ export function TeamView() {
         display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0,
       }}>
         {photoPreview && (
-          <div style={{ position: 'relative', display: 'inline-block', alignSelf: 'flex-start', margin: '4px 0 0 8px' }}>
-            <img src={photoPreview} alt="미리보기" style={{ maxWidth: 100, maxHeight: 80, borderRadius: 10, display: 'block', border: '1px solid #eee' }} />
-            <button
-              onClick={clearPhoto}
-              style={{
-                position: 'absolute', top: -6, right: -6,
-                width: 20, height: 20, borderRadius: '50%',
-                background: '#000', color: '#fff', border: '2px solid #fff',
-                cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0,
-                lineHeight: 1, fontFamily: 'inherit',
-              }}>×</button>
-          </div>
+          <>
+            <div style={{ position: 'relative', display: 'inline-block', alignSelf: 'flex-start', margin: '4px 0 0 8px' }}>
+              <img src={photoPreview} alt="미리보기" style={{ maxWidth: 100, maxHeight: 80, borderRadius: 10, display: 'block', border: '1px solid #eee' }} />
+              <button
+                onClick={clearPhoto}
+                style={{
+                  position: 'absolute', top: -6, right: -6,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: '#000', color: '#fff', border: '2px solid #fff',
+                  cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0,
+                  lineHeight: 1, fontFamily: 'inherit',
+                }}>×</button>
+            </div>
+            <div style={{
+              fontSize: 10, color: accent, fontWeight: 700,
+              padding: '4px 10px', margin: '2px 8px 0',
+              background: `color-mix(in srgb, ${accent} 8%, #fff)`,
+              borderRadius: 10, lineHeight: 1.5,
+              display: 'inline-flex', alignItems: 'center', gap: 4, alignSelf: 'flex-start',
+            }}>
+              ✨ 적은 텍스트는 사진에 새겨져 인증샷으로 올라가요
+            </div>
+          </>
         )}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
           <button

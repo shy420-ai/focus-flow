@@ -678,6 +678,47 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })}
       </div>
 
+      {/* 그룹(팀) 표시 — 보고 싶지 않은 그룹 숨기기 */}
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 6, fontWeight: 700 }}>👥 그룹 표시</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, justifyContent: 'center' }}>
+          {([
+            { id: 'job',     emoji: '📝', label: '취준생' },
+            { id: 'college', emoji: '🎓', label: '대학생' },
+            { id: 'student', emoji: '📚', label: '수험생' },
+            { id: 'athlete', emoji: '🏃', label: '운동인' },
+          ] as const).map((t) => {
+            let hidden: string[] = []
+            try { hidden = JSON.parse(localStorage.getItem('ff_team_hidden_rooms') || '[]') } catch { /* ignore */ }
+            const on = !hidden.includes(t.id)
+            return (
+              <button key={t.id}
+                onClick={() => {
+                  let cur: string[] = []
+                  try { cur = JSON.parse(localStorage.getItem('ff_team_hidden_rooms') || '[]') } catch { /* ignore */ }
+                  const next = cur.includes(t.id) ? cur.filter((x) => x !== t.id) : [...cur, t.id]
+                  localStorage.setItem('ff_team_hidden_rooms', JSON.stringify(next))
+                  window.dispatchEvent(new CustomEvent('ff-team-hidden-changed'))
+                }}
+                style={{
+                  padding: '5px 10px', borderRadius: 99,
+                  border: '1.5px solid ' + (on ? 'var(--pink)' : '#eee'),
+                  background: on ? 'var(--pink)' : '#fff',
+                  color: on ? '#fff' : '#aaa',
+                  fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}>
+                <span>{t.emoji}</span>
+                <span>{t.label}</span>
+              </button>
+            )
+          })}
+        </div>
+        <div style={{ fontSize: 9, color: '#bbb', textAlign: 'center', marginTop: 4 }}>
+          탭하면 켜짐/꺼짐 — 꺼진 그룹은 목록에서 안 보임
+        </div>
+      </div>
+
       {/* 뽀모도로 FAB 아이콘 표시 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
         <span style={{ fontSize: 11, color: '#888' }}>🍅 뽀모 아이콘</span>
