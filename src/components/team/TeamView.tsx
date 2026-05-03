@@ -9,6 +9,7 @@ import {
 } from '../../lib/teamCheckin'
 import { compressImage, uploadTeamPhoto, watermarkStamp } from '../../lib/teamStorage'
 import { CameraCaptureModal } from './CameraCaptureModal'
+import { isAdminCached, banUser } from '../../lib/banList'
 
 const ACTIVE_KEY = 'ff_team_active'
 const MAX_LEN = 80
@@ -75,6 +76,23 @@ export function TeamView() {
 
   const meta = TEAMS.find((t) => t.id === active) ?? TEAMS[0]
   const myNick = displayName || (uid ? 'ADHD-' + uid.slice(0, 4) : '익명')
+  const amAdmin = isAdminCached(uid)
+
+  async function handleBan(targetUid: string, targetNick: string) {
+    if (!uid) return
+    const reason = window.prompt(
+      `${targetNick} 계정 영구 정지. 사유 입력 (밴 사유는 본인에게 표시됨):`,
+      '얼굴/노출 사진 업로드 — 커뮤니티 가이드라인 위반',
+    )
+    if (!reason) return
+    try {
+      await banUser(targetUid, reason, uid)
+      alert('영구 정지 처리 완료. 다음 세션부터 적용됨.')
+    } catch (e) {
+      console.error('banUser failed', e)
+      alert('밴 실패: ' + (e instanceof Error ? e.message : String(e)))
+    }
+  }
 
   function openCamera() { setCameraOpen(true) }
   function pickFromGallery() {
@@ -191,6 +209,13 @@ export function TeamView() {
             <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: '#555', lineHeight: 1.7 }}>
               {meta.examples.map((ex, i) => <li key={i}>{ex}</li>)}
             </ul>
+            <div style={{
+              marginTop: 8, padding: '6px 8px', background: '#FEEAEA',
+              borderRadius: 8, fontSize: 10, color: '#B23939', lineHeight: 1.5,
+              fontWeight: 600,
+            }}>
+              ⚠️ 얼굴·노출·신체 사진 업로드 시 운영자가 즉시 계정 영구 정지함. 앱 자체 사용 차단.
+            </div>
           </div>
         )}
 
@@ -297,6 +322,18 @@ export function TeamView() {
                       {/* Time only on last msg of group */}
                       {groupEnd && (
                         <span style={{ fontSize: 9, color: '#999', fontWeight: 600, padding: '0 2px' }}>{clockTime(p.ts)}</span>
+                      )}
+                      {/* Admin-only ban button. Hidden for own posts. */}
+                      {amAdmin && !mine && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); handleBan(p.uid, p.nickname) }}
+                          title="영구 정지"
+                          style={{
+                            background: 'none', border: 'none', cursor: 'pointer',
+                            padding: 2, fontSize: 11, color: '#E24B4A', fontFamily: 'inherit',
+                            lineHeight: 1, fontWeight: 700,
+                          }}
+                        >🚫</button>
                       )}
                     </div>
                   </div>

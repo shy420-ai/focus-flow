@@ -15,6 +15,8 @@ import { FriendsPanel } from './components/friends/FriendsPanel'
 import { MoodView } from './components/mood/MoodView'
 import { TipsView } from './components/tips/TipsView'
 import { TeamView } from './components/team/TeamView'
+import { BanScreen } from './components/team/BanScreen'
+import { isBanned, primeAdminCache, type BanRecord } from './lib/banList'
 import { SurveyWizard } from './components/onboarding/SurveyWizard'
 import { MiniToast } from './components/ui/MiniToast'
 import { ConfirmModal } from './components/ui/ConfirmModal'
@@ -58,7 +60,21 @@ function useTimelineHidden(): boolean {
 
 function AppContent() {
   const curView = useAppStore((s) => s.curView)
+  const uid = useAppStore((s) => s.uid)
   const isDesktop = useIsDesktop()
+  // Permanent ban check — runs once per uid change. Banned uids see the
+  // BanScreen and can't access any tab. Admin cache is primed in parallel
+  // so the team-tab moderation buttons appear without an extra round-trip.
+  const [ban, setBan] = useState<BanRecord | null>(null)
+  useEffect(() => {
+    if (!uid) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBan(null)
+      return
+    }
+    primeAdminCache()
+    isBanned(uid).then(setBan).catch(() => { /* ignore */ })
+  }, [uid])
   // Wizard runs once. ff_survey_done covers new flow; ff_onboarded covers
   // legacy users who finished the old tour and shouldn't see the wizard.
   const [showOnboarding, setShowOnboarding] = useState(
@@ -119,6 +135,8 @@ function AppContent() {
       useAppStore.getState().setCurView(fallback)
     }
   }, [curView])
+
+  if (ban) return <BanScreen ban={ban} />
 
   return (
     <>
