@@ -45,6 +45,7 @@ export function TeamView() {
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const feedRef = useRef<HTMLDivElement>(null)
   const photoPreview = useMemo(
@@ -83,6 +84,13 @@ export function TeamView() {
     if (!uid || posting) return
     if (!text.trim() && !photoFile) return
     setPosting(true)
+    setErrorMsg(null)
+    // Hard-stop after 30s so the button can never get permanently stuck
+    // when Storage / Firestore hangs (e.g. Storage not enabled).
+    const safety = setTimeout(() => {
+      setPosting(false)
+      setErrorMsg('업로드 시간 초과 (30초). 네트워크나 Storage 설정 확인.')
+    }, 30000)
     try {
       let photoUrl: string | undefined
       if (photoFile) {
@@ -96,8 +104,9 @@ export function TeamView() {
     } catch (e) {
       console.error('postCheckin failed', e)
       const msg = e instanceof Error ? e.message : String(e)
-      alert('업로드 실패\n\n' + msg + '\n\nFirebase Storage 보안 규칙을 확인해줘.')
+      setErrorMsg(msg)
     } finally {
+      clearTimeout(safety)
       setPosting(false)
     }
   }
@@ -347,6 +356,22 @@ export function TeamView() {
         )}
       </div>
 
+      {/* Inline error banner — shows when an upload/post fails */}
+      {errorMsg && (
+        <div style={{
+          background: '#FEEAEA', color: '#B23939', borderRadius: 10,
+          padding: '8px 12px', marginTop: 6, fontSize: 11, lineHeight: 1.5,
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+          flexShrink: 0,
+        }}>
+          <span style={{ flex: 1, wordBreak: 'break-word' }}>⚠️ {errorMsg}</span>
+          <button
+            onClick={() => setErrorMsg(null)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#B23939', fontSize: 14, padding: 0, fontFamily: 'inherit', lineHeight: 1, flexShrink: 0 }}
+          >×</button>
+        </div>
+      )}
+
       {/* Composer */}
       <div style={{
         background: '#fff', borderRadius: 24, marginTop: 8, padding: 6,
@@ -373,9 +398,18 @@ export function TeamView() {
             disabled={posting}
             title="카메라"
             style={{
-              background: 'none', border: 'none', cursor: 'pointer', padding: 8,
-              fontSize: 20, lineHeight: 1, color: accent, fontFamily: 'inherit', flexShrink: 0,
-            }}>📷</button>
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: 8, lineHeight: 0, color: accent, fontFamily: 'inherit', flexShrink: 0,
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-label="카메라">
+              <path d="M3 8.5a2 2 0 0 1 2-2h2.2L9 4.5h6L16.8 6.5H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9z" fill="currentColor" fillOpacity=".15" />
+              <circle cx="12" cy="13" r="3.6" />
+              <circle cx="12" cy="13" r="1.4" fill="currentColor" />
+              <circle cx="17.5" cy="9" r=".7" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
