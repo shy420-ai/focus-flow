@@ -438,7 +438,7 @@ export function SprintBoard() {
     {/* Top: 1-line summary + Lv badge */}
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
       <span style={{ fontSize: 13, fontWeight: 800, color: 'var(--pd)' }}>
-        ⚡ 챌린지 D-{daysLeft} <span style={{ color: 'var(--pink)' }}>· {overall}%</span>
+        ⚡ 1주 챌린지 D-{daysLeft} <span style={{ color: 'var(--pink)' }}>· {overall}%</span>
       </span>
       <button onClick={() => leaderboardOn && setLeaderboardModalOpen(true)}
         style={{ background: 'var(--pl)', border: 'none', color: 'var(--pd)', borderRadius: 99, padding: '3px 10px', fontSize: 10, fontWeight: 700, cursor: leaderboardOn ? 'pointer' : 'default', fontFamily: 'inherit' }}>
@@ -466,8 +466,8 @@ export function SprintBoard() {
             />
             {!hasSteps && (
               <button onClick={() => bumpGoal(g.id, step)}
-                style={{ padding: '4px 12px', borderRadius: 99, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                +{step}
+                style={{ padding: '5px 12px', borderRadius: 99, border: 'none', background: 'var(--pink)', color: '#fff', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0, boxShadow: '0 2px 6px color-mix(in srgb, var(--pink) 30%, transparent)' }}>
+                🙌 내가 해냄 +{step}
               </button>
             )}
             <button onClick={() => setEditGoalId(g.id)} aria-label="수정"
