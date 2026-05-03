@@ -584,8 +584,6 @@ export function SprintBoard() {
               <span style={{ flex: 1, textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{g.name || '(이름 없음)'}</span>
               <button
                 onClick={() => {
-                  // Step mode: uncheck the last done step (toggleStep refunds XP).
-                  // Count mode: bump down by smallStep — bumpGoal handles XP refund + bonus reversal.
                   if (g.steps && g.steps.length > 0) {
                     for (let i = g.steps.length - 1; i >= 0; i--) {
                       if (g.steps[i].done) { toggleStep(g.id, g.steps[i].id); return }
@@ -597,11 +595,18 @@ export function SprintBoard() {
                 }}
                 aria-label="되돌리기"
                 title="되돌리기"
-                style={{ background: 'transparent', border: 'none', color: '#8B6914', cursor: 'pointer', fontSize: 12, padding: 2 }}
-              >↩️</button>
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 3,
+                  background: 'color-mix(in srgb, var(--pink) 15%, #fff)',
+                  border: '1px solid color-mix(in srgb, var(--pink) 40%, #fff)',
+                  color: 'var(--pd)', borderRadius: 99,
+                  padding: '2px 8px', fontSize: 10, fontWeight: 700,
+                  cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
+                }}
+              >↺ 되돌리기</button>
               <button onClick={async () => { if (await showConfirm('완료한 목표를 챌린지에서 빼기?\n\n평균에서도 빠져')) removeGoal(g.id) }}
                 aria-label="삭제"
-                style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 10, padding: 2 }}>✕</button>
+                style={{ background: 'transparent', border: 'none', color: '#ccc', cursor: 'pointer', fontSize: 10, padding: 2, flexShrink: 0 }}>✕</button>
             </div>
           ))}
         </div>
