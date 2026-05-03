@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { todayStr } from '../../lib/date'
-import { addXp } from '../../lib/xp'
-import { showMiniToast } from '../../lib/miniToast'
 import { registerCollect, registerHydrate, queue } from '../../lib/syncManager'
 import { useDraggableFab } from '../../hooks/useDraggableFab'
 import type { UserDoc } from '../../lib/firestore'
@@ -138,7 +136,6 @@ export function PomoFab() {
       window.removeEventListener('ff-pomo-total-changed', refreshTotal)
     }
   }, [])
-  const [exitedFlash, setExitedFlash] = useState(false)
   const unlockHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [unlockProgress, setUnlockProgress] = useState(0)
 
@@ -163,35 +160,11 @@ export function PomoFab() {
     }
   }, [pomo.running, lockMode])
 
-  // Detect tab/app exit while running in lock mode → penalty + alert.
-  // Grace period (60s) covers the common "screen auto-locked then back"
-  // case so a passive screen-off doesn't get punished. Real app
-  // switching is almost always > 60s for an actual distraction.
-  useEffect(() => {
-    if (!pomo.running || !lockMode) return
-    function onVisibility() {
-      if (document.hidden) {
-        // user left — record so we punish on return
-        ;(window as unknown as { __pomoLeftAt?: number }).__pomoLeftAt = Date.now()
-      } else {
-        const w = window as unknown as { __pomoLeftAt?: number }
-        if (w.__pomoLeftAt) {
-          const gone = Date.now() - w.__pomoLeftAt
-          w.__pomoLeftAt = undefined
-          if (gone > 60_000) {
-            // Punish: -10 XP, flash red banner
-            addXp(-10)
-            setExitedFlash(true)
-            showMiniToast('❌ 이탈 감지! XP -10')
-            playChime()
-            setTimeout(() => setExitedFlash(false), 4000)
-          }
-        }
-      }
-    }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => document.removeEventListener('visibilitychange', onVisibility)
-  }, [pomo.running, lockMode])
+  // 이탈 감지 페널티 — 비활성. 사용자가 화면을 안 만졌을 뿐인데
+  // OS 가 자동으로 화면을 끄는 경우(passive screen lock)와 진짜 다른
+  // 앱으로 빠져나간 경우를 웹에서 구분할 방법이 없어서, 잘못된 경고로
+  // 신뢰만 잃는 부작용이 컸음. 잠금 모드는 = 풀스크린 시각 효과만
+  // 유지하고 XP 페널티는 제거함.
 
   function toggleLockMode() {
     setLockMode((prev) => {
@@ -358,11 +331,9 @@ export function PomoFab() {
       {lockActive && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 9999,
-          background: exitedFlash
-            ? 'linear-gradient(135deg, #FFE4E4, #FFB8B8)'
-            : pomo.phase === 'work'
-              ? 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 60%, #fff), var(--pl))'
-              : 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pink) 30%, #fff))',
+          background: pomo.phase === 'work'
+            ? 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 60%, #fff), var(--pl))'
+            : 'linear-gradient(135deg, var(--pl), color-mix(in srgb, var(--pink) 30%, #fff))',
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
           color: 'var(--pd)', userSelect: 'none', transition: 'background .3s',
           overflow: 'hidden',
@@ -373,11 +344,6 @@ export function PomoFab() {
             @keyframes pomo-shake { 0%, 100% { transform: translateX(0) } 25% { transform: translateX(-8px) } 75% { transform: translateX(8px) } }
           `}</style>
 
-          {exitedFlash && (
-            <div style={{ position: 'absolute', top: 40, padding: '10px 22px', borderRadius: 99, background: '#E24B4A', color: '#fff', fontSize: 13, fontWeight: 800, letterSpacing: 1, boxShadow: '0 6px 20px rgba(226,75,74,.4)', animation: 'pomo-shake .3s ease-in-out 3' }}>
-              ❌ 이탈 감지 · XP -10
-            </div>
-          )}
 
           {/* Phase chip + session counter */}
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px', borderRadius: 99, background: 'rgba(255,255,255,.6)', backdropFilter: 'blur(4px)', fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
@@ -412,8 +378,7 @@ export function PomoFab() {
 
           {/* Cute hint */}
           <div style={{ marginTop: 18, fontSize: 12, color: '#666', padding: '0 28px', textAlign: 'center', lineHeight: 1.7 }}>
-            🍅 토마토 익을 때까지 옆에 있어줘<br />
-            <span style={{ fontSize: 10, color: '#aaa' }}>다른 앱 / 탭으로 가면 XP -10</span>
+            🍅 토마토 익을 때까지 옆에 있어줘
           </div>
 
           {/* Unlock pad */}
@@ -601,7 +566,7 @@ export function PomoFab() {
               </span>
             </div>
             <div style={{ fontSize: 10, opacity: .7, fontWeight: 500 }}>
-              {lockMode ? '시작하면 풀스크린 + 이탈 감지' : '시작 전에 켜야 작동해'}
+              {lockMode ? '시작하면 풀스크린으로 집중 모드' : '시작 전에 켜야 작동해'}
             </div>
           </button>
 
