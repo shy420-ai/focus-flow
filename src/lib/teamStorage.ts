@@ -33,6 +33,7 @@ export async function compressImage(
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('no 2d context')
     ctx.drawImage(img, 0, 0, w, h)
+    if (caption || watermark) await ensureCafe24Font()
     if (caption) drawCaption(ctx, w, h, caption)
     if (watermark) drawWatermark(ctx, w, h, watermark)
     return await new Promise<Blob>((resolve, reject) => {
@@ -43,7 +44,26 @@ export async function compressImage(
   }
 }
 
-const KOREAN_FONT = '-apple-system, "Apple SD Gothic Neo", system-ui, "Noto Sans KR", sans-serif'
+const KOREAN_FONT = '"Cafe24Ohsquare", -apple-system, "Apple SD Gothic Neo", system-ui, "Noto Sans KR", sans-serif'
+
+// Lazy-load the custom Cafe24 Ohsquare display font, registered via FontFace
+// API so canvas text rendering can use it. One-shot promise — subsequent
+// calls re-use the same load. Falls back silently to system fonts on error.
+let _cafe24Promise: Promise<void> | null = null
+function ensureCafe24Font(): Promise<void> {
+  if (_cafe24Promise) return _cafe24Promise
+  _cafe24Promise = (async () => {
+    try {
+      const url = (import.meta.env.BASE_URL || '/') + 'fonts/Cafe24Ohsquare.woff2'
+      const font = new FontFace('Cafe24Ohsquare', `url(${url}) format('woff2')`)
+      await font.load()
+      ;(document as Document & { fonts: { add: (f: FontFace) => void } }).fonts.add(font)
+    } catch (e) {
+      console.warn('Cafe24 font load failed, using fallback', e)
+    }
+  })()
+  return _cafe24Promise
+}
 
 function roundedRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   ctx.beginPath()
@@ -62,6 +82,7 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, text
   const padY = Math.round(fontSize * 0.45)
   const margin = Math.round(fontSize * 0.7)
   const stamp = '🌸 ' + text
+  // Cafe24 Ohsquare는 단일 굵기 디스플레이 서체 — 시스템 폴백을 위해 weight 700 명시.
   ctx.font = `700 ${fontSize}px ${KOREAN_FONT}`
   const tw = Math.ceil(ctx.measureText(stamp).width)
   const boxW = tw + padX * 2
