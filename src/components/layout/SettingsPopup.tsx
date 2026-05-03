@@ -15,7 +15,6 @@ import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
 import { getFontPref, setFontPref, listPresets, saveCustomFont, loadCustomFont, clearCustomFont, preloadAllFonts, type FontPref } from '../../lib/font'
-import { getDailyWidgetPref, setDailyWidgetPref, type DailyWidgetPref } from '../../lib/dailyTip'
 import { TipStatsPanel } from '../dev/TipStatsPanel'
 
 function relativeTime(ts: number): string {
@@ -40,9 +39,6 @@ interface Props {
   onFriendsOpen: () => void
 }
 
-const TL_START_KEY = 'ff_tl_start'
-const TL_HOURS_KEY = 'ff_tl_hours'
-const PX_KEY = 'ff_px'
 
 const ALL_TABS: Array<{ id: CurView; label: string }> = [
   { id: 'tl', label: '일간' },
@@ -89,11 +85,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
   const setSkipLogin = useAppStore((s) => s.setSkipLogin)
   const [devOn, setDevOn] = useState<boolean>(isDevMode())
   const [tipStatsOpen, setTipStatsOpen] = useState(false)
-  const [dailyWidget, setDailyWidget] = useState<DailyWidgetPref>(getDailyWidgetPref())
-  function pickDailyWidget(p: DailyWidgetPref) {
-    setDailyWidget(p)
-    setDailyWidgetPref(p)
-  }
   const [lbOn, setLbOn] = useState<boolean>(isLeaderboardOn())
   const backdropDownRef = useRef(false)
   // Arm the backdrop close handler 200ms after mount so the gear-tap that
@@ -157,9 +148,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     }
   }
   const [nickname, setNickname] = useState(localStorage.getItem('ff_nickname') || displayName || '')
-  const [tlStart, setTlStart] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6'))
-  const [tlEnd, setTlEnd] = useState(parseInt(localStorage.getItem(TL_START_KEY) || '6') + parseInt(localStorage.getItem(TL_HOURS_KEY) || '18'))
-  const [px, setPx] = useState(parseInt(localStorage.getItem(PX_KEY) || '140'))
   const [hiddenTabs, setHiddenTabs] = useState<CurView[]>(loadHiddenTabs)
   const [orderedTabs, setOrderedTabs] = useState(loadOrderedTabs)
   // Pointer-events drag — works on touch and desktop. Captured on the
@@ -232,21 +220,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
     } catch (err) {
       console.error('[saveNickname] sync failed', err)
     }
-  }
-
-  function setTlRange(start: number, end: number) {
-    const hours = Math.max(1, end - start)
-    localStorage.setItem(TL_START_KEY, String(start))
-    localStorage.setItem(TL_HOURS_KEY, String(hours))
-    setTlStart(start)
-    setTlEnd(end)
-    window.dispatchEvent(new CustomEvent('ff-tl-range', { detail: { start, hours } }))
-  }
-
-  function setPxVal(val: number) {
-    localStorage.setItem(PX_KEY, String(val))
-    setPx(val)
-    window.dispatchEvent(new CustomEvent('ff-tl-px', { detail: val }))
   }
 
   function toggleTab(id: CurView) {
@@ -582,77 +555,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         </div>
       </div>
 
-      {/* 일간 위젯 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📌 일간 탭 위 카드</div>
-      <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-        {([
-          { id: 'tip' as const, label: '💡 오늘의 팁' },
-          { id: 'saju' as const, label: '🔮 사주' },
-          { id: 'off' as const, label: '🚫 없음' },
-        ]).map((opt) => {
-          const on = dailyWidget === opt.id
-          return (
-            <button
-              key={opt.id}
-              onClick={() => pickDailyWidget(opt.id)}
-              style={{
-                flex: 1,
-                padding: '8px 6px',
-                borderRadius: 10,
-                border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
-                background: on ? 'color-mix(in srgb, var(--pink) 12%, #fff)' : '#fff',
-                color: on ? 'var(--pink)' : '#888',
-                fontSize: 11,
-                fontWeight: on ? 800 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-              }}
-            >
-              {opt.label}
-            </button>
-          )
-        })}
-      </div>
-
-      {/* 타임라인 범위 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>⏰ 타임라인 범위</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 8 }}>
-        <select value={tlStart} onChange={(e) => setTlRange(parseInt(e.target.value), tlEnd)} style={{ padding: '4px 8px', borderRadius: 8, border: '1px solid var(--pl)', fontSize: 12, fontFamily: 'inherit' }}>
-          {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i}:00</option>)}
-        </select>
-        <span style={{ fontSize: 12, color: '#aaa' }}>~</span>
-        <select value={tlEnd} onChange={(e) => setTlRange(tlStart, parseInt(e.target.value))} style={{ padding: '4px 8px', borderRadius: 8, border: '1px solid var(--pl)', fontSize: 12, fontFamily: 'inherit' }}>
-          {Array.from({ length: 24 }, (_, i) => i + 1).map((i) => <option key={i} value={i}>{i}:00</option>)}
-        </select>
-      </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, color: '#888' }}>간격</span>
-        <input type="range" min={80} max={200} step={20} value={px} onChange={(e) => setPxVal(parseInt(e.target.value))} style={{ flex: 1, accentColor: 'var(--pink)' }} />
-        <span style={{ fontSize: 11, color: '#888', minWidth: 36 }}>{px}px</span>
-      </div>
-
-      {/* 빈 곳 더블탭 시 기본 블록 길이 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, color: '#888' }}>더블탭 블록</span>
-        {([0.25, 0.5, 1, 1.5, 2] as const).map((h) => {
-          const cur = parseFloat(localStorage.getItem('ff_default_block_dur') || '1')
-          const on = Math.abs(cur - h) < 0.01
-          return (
-            <button key={h}
-              onClick={() => {
-                localStorage.setItem('ff_default_block_dur', String(h))
-                window.dispatchEvent(new CustomEvent('ff-default-dur-changed'))
-              }}
-              style={{
-                padding: '4px 8px', borderRadius: 8,
-                border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
-                background: on ? 'var(--pink)' : '#fff',
-                color: on ? '#fff' : 'var(--pd)',
-                fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-              }}>{h < 1 ? `${Math.round(h * 60)}분` : `${h}h`}</button>
-          )
-        })}
-      </div>
+      {/* 📅 일간탭 위 카드 / ⏰ 타임라인 범위 / 👆 더블탭 블록은
+          일간 탭의 ⚙ 아이콘 안으로 이동했어 (TimelineSettings.tsx). */}
 
       {/* 뽀모도로 FAB 아이콘 표시 */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
