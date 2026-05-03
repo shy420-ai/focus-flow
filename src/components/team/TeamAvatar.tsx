@@ -60,14 +60,14 @@ function iconFor(teamId: TeamId, c: string) {
       )
 
     case 'college':
-      // 대학생: 졸업 모자 + 술
+      // 대학생: 졸업 모자 + 술 (viewBox 더 채워서 키움)
       return (
         <g>
-          <polygon points="16,6 28,11 16,16 4,11" fill={c} />
-          <path d="M8 13 L8 19 Q16 22 24 19 L24 13"
-                stroke={c} strokeWidth="1.8" fill="none" strokeLinejoin="round" />
-          <line x1="27" y1="12" x2="27" y2="20" stroke={c} strokeWidth="1.6" strokeLinecap="round" />
-          <circle cx="27" cy="22" r="1.6" fill={c} />
+          <polygon points="16,3 30,9 16,15 2,9" fill={c} />
+          <path d="M5 11 L5 20 Q16 25 27 20 L27 11"
+                stroke={c} strokeWidth="2.2" fill="none" strokeLinejoin="round" />
+          <line x1="29" y1="10" x2="29" y2="25" stroke={c} strokeWidth="2" strokeLinecap="round" />
+          <circle cx="29" cy="27" r="2.2" fill={c} />
         </g>
       )
 
@@ -90,18 +90,20 @@ function iconFor(teamId: TeamId, c: string) {
       )
 
     case 'athlete':
-      // 운동인: 케틀벨 + 덤벨
+      // 운동인: 케틀벨 + 덤벨 (viewBox 더 채워서 키움)
       return (
         <g>
-          {/* kettlebell */}
-          <path d="M11 7 Q11 5 13 5 L15 5 Q17 5 17 7 Q21 9 21 14 Q21 19 14 19 Q7 19 7 14 Q7 9 11 7 Z"
+          {/* handle bar (top) */}
+          <rect x="11" y="3" width="10" height="2.5" rx="1" fill={c} fillOpacity="0.7" />
+          {/* kettlebell body */}
+          <path d="M10 5 Q10 3 12 3 L20 3 Q22 3 22 5 L22 6 Q27 8 27 14 Q27 22 16 22 Q5 22 5 14 Q5 8 10 6 Z"
                 fill={c} />
-          <rect x="11" y="7" width="6" height="2" fill={c} fillOpacity="0.55" />
-          {/* dumbbell */}
-          <g transform="translate(14 22)">
-            <rect x="0" y="2" width="12" height="3" rx="1" fill={c} />
-            <rect x="-2" y="0.5" width="3" height="6" rx="1" fill={c} />
-            <rect x="11" y="0.5" width="3" height="6" rx="1" fill={c} />
+          <ellipse cx="16" cy="12" rx="6" ry="2" fill="#fff" fillOpacity="0.16" />
+          {/* dumbbell tilt across bottom */}
+          <g transform="translate(4 26) rotate(-10)">
+            <rect x="0" y="1.5" width="20" height="3" rx="1" fill={c} />
+            <rect x="-2" y="0" width="3" height="6" rx="1" fill={c} />
+            <rect x="19" y="0" width="3" height="6" rx="1" fill={c} />
           </g>
         </g>
       )
