@@ -10,6 +10,7 @@ import {
 import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTimeout } from '../../lib/teamStorage'
 import { CameraCaptureModal } from './CameraCaptureModal'
 import { isAdminCached, banUser } from '../../lib/banList'
+import { showConfirm } from '../../lib/showConfirm'
 
 const ACTIVE_KEY = 'ff_team_active'
 const MAX_LEN = 80
@@ -166,7 +167,8 @@ export function TeamView() {
 
   async function handleDeleteMine(postId: string) {
     if (!uid) return
-    if (!window.confirm('이 인증을 삭제할까?')) return
+    const ok = await showConfirm('이 인증을 삭제할까?\n\n남이 남긴 리액션도 함께 사라져.')
+    if (!ok) return
     try {
       await deletePost(active, postId, uid)
     } catch (e) {
@@ -176,7 +178,8 @@ export function TeamView() {
   }
 
   async function handleDeleteAsAdmin(postId: string, nick: string) {
-    if (!window.confirm(`운영자 권한: ${nick}의 인증을 삭제할까?`)) return
+    const ok = await showConfirm(`운영자 권한으로 삭제할까?\n\n${nick}의 인증이 모든 사용자에게서 사라져.`)
+    if (!ok) return
     try {
       await adminDeletePost(active, postId)
     } catch (e) {
@@ -300,24 +303,22 @@ export function TeamView() {
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', maxWidth: '74%' }}>
-                  {/* Author + streak — only on first of group, only for others */}
-                  {newGroup && !mine && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3, padding: '0 4px' }}>
-                      <span style={{ fontSize: 11, color: '#555', fontWeight: 700 }}>{p.nickname}</span>
+                  {/* Author + streak — first of group, both mine and others */}
+                  {newGroup && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3,
+                      padding: '0 4px',
+                      flexDirection: mine ? 'row-reverse' : 'row',
+                    }}>
+                      <span style={{ fontSize: 11, color: mine ? 'var(--pink)' : '#555', fontWeight: 700 }}>
+                        {p.nickname}{mine ? ' (나)' : ''}
+                      </span>
                       {badge && (
                         <span style={{
                           fontSize: 9, fontWeight: 800, color: '#fff', background: badge.color,
                           padding: '1px 6px', borderRadius: 99, lineHeight: 1.4,
                         }}>{badge.emoji} {badge.label}</span>
                       )}
-                    </div>
-                  )}
-                  {newGroup && mine && badge && (
-                    <div style={{ marginBottom: 3, padding: '0 4px' }}>
-                      <span style={{
-                        fontSize: 9, fontWeight: 800, color: '#fff', background: badge.color,
-                        padding: '1px 6px', borderRadius: 99, lineHeight: 1.4,
-                      }}>{badge.emoji} {badge.label}</span>
                     </div>
                   )}
 
