@@ -322,6 +322,13 @@ function TimelineHealthView() {
   const nowH = now.getHours() + now.getMinutes() / 60
 
   // 이벤트 시간순 빌드
+  type MedRow = {
+    name: string
+    dose: string
+    cat: string
+    color: string
+    info: string
+  }
   type Ev = {
     time: number
     emoji: string
@@ -332,10 +339,12 @@ function TimelineHealthView() {
     onTake?: () => void
     onUntake?: () => void
     taken?: boolean
+    // 그룹 카드 — 같은 timing 의 약들 묶어서 보여줌
+    medRows?: MedRow[]
   }
   const events: Ev[] = []
 
-  // 1) 기상 — 실제 (wake/take) 또는 목표
+  // 1) 기상
   events.push({
     time: wakeH,
     emoji: '🌅',
@@ -344,60 +353,81 @@ function TimelineHealthView() {
     color: '#F5BD3C',
   })
 
-  // 2) 약 복용 (각 약마다)
-  for (const m of meds) {
-    const db = MED_DB.find((d) => d.name === m.name)
-    if (!db) continue
-    const cc = CAT_COLORS[db.cat] || 'var(--pink)'
-    const take = logs.find((l) => l.date === today && l.type === 'take' && l.timing === m.timing)
+  // 2) 약 복용 — 같은 timing 끼리 그룹핑 (아침약·점심약·저녁약 카드 1개씩)
+  const TIMING_LIST: Array<'아침' | '점심' | '저녁' | '수시'> = ['아침', '점심', '저녁', '수시']
+  const TIMING_EMOJI: Record<string, string> = { 아침: '☀️', 점심: '🥪', 저녁: '🌙', 수시: '⏱' }
+  for (const timing of TIMING_LIST) {
+    const groupMeds = meds.filter((m) => m.timing === timing)
+    if (groupMeds.length === 0) continue
+    const take = (timing === '수시')
+      ? undefined
+      : logs.find((l) => l.date === today && l.type === 'take' && l.timing === timing)
 
     let plannedH: number
-    if (m.timing === '아침') plannedH = wakeH + 0.5  // 실제 기상 + 30분
-    else if (m.timing === '점심') plannedH = 12
-    else if (m.timing === '저녁') {
-      plannedH = (db.cat === '수면' || db.cat === '항정신병') ? bedGoal - 1 : bedGoal - 3
+    if (timing === '아침') plannedH = wakeH + 0.5
+    else if (timing === '점심') plannedH = 12
+    else if (timing === '저녁') {
+      const hasSleepy = groupMeds.some((m) => {
+        const db = MED_DB.find((d) => d.name === m.name)
+        return db && (db.cat === '수면' || db.cat === '항정신병')
+      })
+      plannedH = hasSleepy ? bedGoal - 1 : bedGoal - 3
     }
     else plannedH = nowH
 
     const actualH = take?.time ?? plannedH
-    // 약 정보 한 줄 — duration·peak·사이드 핵심만
-    const infoLine = `${db.cat} · 지속 ${db.duration}h · 피크 ${db.peak}`
+    const medRows: MedRow[] = groupMeds.map((m) => {
+      const db = MED_DB.find((d) => d.name === m.name)
+      if (!db) return { name: m.name, dose: m.dose, cat: '?', color: '#aaa', info: '' }
+      return {
+        name: m.name,
+        dose: m.dose,
+        cat: db.cat,
+        color: CAT_COLORS[db.cat] || 'var(--pink)',
+        info: `${db.duration}h · 피크 ${db.peak}`,
+      }
+    })
     events.push({
       time: actualH,
-      emoji: '💊',
-      title: `${m.name} ${m.dose}`,
-      sub: (take ? '✅ 복용 ' + fmtHM(actualH) : '⏳ 복용 예정') + ' — ' + infoLine,
-      color: cc,
-      actionable: !take,
+      emoji: TIMING_EMOJI[timing],
+      title: `${timing} 약 (${groupMeds.length}개)`,
+      sub: take ? '✅ 복용 ' + fmtHM(actualH) : '⏳ 복용 예정 ' + fmtHM(plannedH),
+      color: 'var(--pink)',
+      actionable: !take && timing !== '수시',
       onTake: () => {
-        if (m.timing === '아침' || m.timing === '점심' || m.timing === '저녁') {
-          logTake(m.timing)
-          showMiniToast(`💊 ${m.name} 복용 기록됨`)
+        if (timing === '아침' || timing === '점심' || timing === '저녁') {
+          logTake(timing)
+          showMiniToast(`💊 ${timing}약 복용 기록됨`)
         }
       },
-      onUntake: take && (m.timing === '아침' || m.timing === '점심' || m.timing === '저녁') ? () => {
-        clearTake(m.timing as '아침' | '점심' | '저녁')
-        showMiniToast(`🗑 ${m.name} 기록 취소`)
+      onUntake: take && (timing === '아침' || timing === '점심' || timing === '저녁') ? () => {
+        clearTake(timing)
+        showMiniToast(`🗑 ${timing}약 기록 취소`)
       } : undefined,
       taken: !!take,
+      medRows,
     })
 
-    // 효과 종료 마커 (단기 자극제만 — 누적형은 의미 X)
-    if (take && db.duration < 24) {
-      events.push({
-        time: actualH + db.duration * 0.7,
-        emoji: '🟡',
-        title: `${m.name} 효과 약해짐`,
-        sub: `복용 ${db.duration * 0.7}h 후`,
-        color: '#EF9F27',
-      })
-      events.push({
-        time: actualH + db.duration,
-        emoji: '🔴',
-        title: `${m.name} 효과 종료`,
-        sub: `복용 ${db.duration}h 후`,
-        color: '#E24B4A',
-      })
+    // 효과 종료 마커 — 약별 (단기 자극제만)
+    if (take) {
+      for (const gm of groupMeds) {
+        const db = MED_DB.find((d) => d.name === gm.name)
+        if (!db || db.duration >= 24) continue
+        events.push({
+          time: actualH + db.duration * 0.7,
+          emoji: '🟡',
+          title: `${gm.name} 약해짐`,
+          sub: `복용 ${(db.duration * 0.7).toFixed(1)}h 후`,
+          color: '#EF9F27',
+        })
+        events.push({
+          time: actualH + db.duration,
+          emoji: '🔴',
+          title: `${gm.name} 종료`,
+          sub: `복용 ${db.duration}h 후`,
+          color: '#E24B4A',
+        })
+      }
     }
   }
 
@@ -515,6 +545,19 @@ function TimelineHealthView() {
                   )}
                 </div>
                 {ev.sub && <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{ev.sub}</div>}
+                {/* 그룹 카드 — 같은 timing 약들 함께 노출 */}
+                {ev.medRows && ev.medRows.length > 0 && (
+                  <div style={{ marginTop: 6, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {ev.medRows.map((mr, mi) => (
+                      <div key={mi} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 6px', background: 'var(--pl)', borderRadius: 6 }}>
+                        <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: mr.color, color: '#fff' }}>{mr.cat}</span>
+                        <span style={{ fontSize: 11, color: 'var(--pd)', fontWeight: 700 }}>{mr.name}</span>
+                        <span style={{ fontSize: 10, color: '#888' }}>{mr.dose}</span>
+                        {mr.info && <span style={{ fontSize: 9, color: '#aaa', marginLeft: 'auto' }}>{mr.info}</span>}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           )
