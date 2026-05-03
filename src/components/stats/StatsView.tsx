@@ -306,6 +306,7 @@ function TimelineHealthView() {
   const config = useMedStore((s) => s.config)
   const logs = useMedStore((s) => s.logs)
   const logTake = useMedStore((s) => s.logTake)
+  const clearTake = useMedStore((s) => s.clearTake)
 
   const today = todayStr()
   const meds = config?.meds || []
@@ -329,6 +330,7 @@ function TimelineHealthView() {
     color?: string
     actionable?: boolean
     onTake?: () => void
+    onUntake?: () => void
     taken?: boolean
   }
   const events: Ev[] = []
@@ -373,6 +375,10 @@ function TimelineHealthView() {
           showMiniToast(`💊 ${m.name} 복용 기록됨`)
         }
       },
+      onUntake: take && (m.timing === '아침' || m.timing === '점심' || m.timing === '저녁') ? () => {
+        clearTake(m.timing as '아침' | '점심' | '저녁')
+        showMiniToast(`🗑 ${m.name} 기록 취소`)
+      } : undefined,
       taken: !!take,
     })
 
@@ -496,6 +502,16 @@ function TimelineHealthView() {
                         padding: '4px 10px', borderRadius: 99, fontSize: 10, fontWeight: 700,
                         cursor: 'pointer', fontFamily: 'inherit',
                       }}>먹었어</button>
+                  )}
+                  {ev.taken && ev.onUntake && (
+                    <button
+                      onClick={ev.onUntake}
+                      title="복용 기록 되돌리기"
+                      style={{
+                        background: 'none', border: '1px solid #eee',
+                        color: '#aaa', padding: '3px 8px', borderRadius: 99,
+                        fontSize: 9, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                      }}>↺</button>
                   )}
                 </div>
                 {ev.sub && <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>{ev.sub}</div>}
