@@ -519,7 +519,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       })()}
 
       {/* 생리주기 — 나 섹션 마지막 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>🌙 생리주기</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🌙 생리주기</div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginBottom: cycleInfo ? 4 : 12 }}>
         <button onClick={setCycleStart} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>🩸 시작일</button>
         <button onClick={setCycleEnd} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>✅ 종료일</button>
@@ -533,7 +533,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       <div style={{ display: section === 'view' ? 'block' : 'none' }}>
 
       {/* 탭 관리 — 구성·화면 첫 항목 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>📑 탭 관리</div>
       <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>
         💡 ≡ 핸들 잡고 드래그해서 순서 바꿔
       </div>
@@ -591,7 +591,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
 
       {/* 테마 */}
-      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 8 }}>🎨 테마</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🎨 테마</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
         {(Object.keys(THEMES) as ThemeName[]).map((name) => {
           const t = THEMES[name]
@@ -616,7 +616,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       </div>
 
       {/* 폰트 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>✏️ 글꼴</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>✏️ 글꼴</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
         {([
           { id: 'default' as const, label: '기본 (시스템)', sample: '집중 → 흐름 7일' },
@@ -670,8 +670,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           일간 탭의 ⚙ 아이콘 안으로 이동했어 (TimelineSettings.tsx). */}
 
       {/* 뽀모도로 FAB 아이콘 표시 */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, color: '#888' }}>🍅 뽀모 아이콘</span>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🍅 뽀모도로 아이콘</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
         {(() => {
           const hidden = localStorage.getItem('ff_pomo_fab_hidden') === '1'
           return (['표시', '숨김'] as const).map((label, i) => {
@@ -684,7 +684,7 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
                   window.dispatchEvent(new CustomEvent('ff-pomo-fab-changed'))
                 }}
                 style={{
-                  padding: '4px 10px', borderRadius: 8,
+                  padding: '6px 14px', borderRadius: 8,
                   border: '1.5px solid ' + (on ? 'var(--pink)' : 'var(--pl)'),
                   background: on ? 'var(--pink)' : '#fff',
                   color: on ? '#fff' : 'var(--pd)',
