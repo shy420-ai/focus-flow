@@ -3,6 +3,7 @@
 // shutter sound when going through the system camera, but a web canvas
 // capture stays silent everywhere).
 import { useEffect, useRef, useState } from 'react'
+import { useBackClose } from '../../hooks/useBackClose'
 
 interface Props {
   onCapture: (blob: Blob) => void
@@ -16,6 +17,8 @@ export function CameraCaptureModal({ onCapture, onCancel, onFallback }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [ready, setReady] = useState(false)
   const [flashing, setFlashing] = useState(false)
+  // 안드로이드/iOS 시스템 뒤로가기 제스처 = 카메라 닫기
+  useBackClose(true, onCancel)
 
   useEffect(() => {
     let cancelled = false
