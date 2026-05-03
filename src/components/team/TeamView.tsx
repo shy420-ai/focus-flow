@@ -733,17 +733,23 @@ export function TeamView() {
                   color: '#fff', fontSize: 11, fontWeight: 700,
                 }}>📤</div>
               )}
-              {!posting && (
-                <button
-                  onClick={clearPhoto}
-                  style={{
-                    position: 'absolute', top: -6, right: -6,
-                    width: 20, height: 20, borderRadius: '50%',
-                    background: '#000', color: '#fff', border: '2px solid #fff',
-                    cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0,
-                    lineHeight: 1, fontFamily: 'inherit',
-                  }}>×</button>
-              )}
+              <button
+                onClick={() => {
+                  if (posting) {
+                    setPosting(false)
+                    setErrorMsg('업로드 취소됨')
+                  }
+                  clearPhoto()
+                  setText('')
+                }}
+                title={posting ? '업로드 취소' : '사진 제거'}
+                style={{
+                  position: 'absolute', top: -6, right: -6,
+                  width: 20, height: 20, borderRadius: '50%',
+                  background: '#000', color: '#fff', border: '2px solid #fff',
+                  cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0,
+                  lineHeight: 1, fontFamily: 'inherit',
+                }}>×</button>
             </div>
             <div style={{
               fontSize: 10, color: accent, fontWeight: 700,
