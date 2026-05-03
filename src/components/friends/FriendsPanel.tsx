@@ -95,6 +95,13 @@ const DAY_MODE_LABEL: Record<string, { emoji: string; text: string; color: strin
 // next to the place it actually affects (the user's own friend-tab profile).
 function SelfPrivacyPanel() {
   const [visibility, setVisibilityState] = useState(() => getVisibility())
+  // Keep panel state in sync if visibility is touched elsewhere (hydrate
+  // overwrite, another tab, etc.) so the toggle UI never lies.
+  useEffect(() => {
+    function refresh() { setVisibilityState(getVisibility()) }
+    window.addEventListener('ff-friend-visibility-changed', refresh)
+    return () => window.removeEventListener('ff-friend-visibility-changed', refresh)
+  }, [])
   return (
     <div style={{ background: '#FAFAFA', borderRadius: 12, padding: 12, marginBottom: 12, border: '1px solid #eee' }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
