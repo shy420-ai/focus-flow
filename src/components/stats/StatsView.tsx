@@ -311,6 +311,7 @@ function TimelineHealthView() {
   const removeWakeup = useMedStore((s) => s.removeWakeup)
   const logBedtime = useMedStore((s) => s.logBedtime)
   const removeBedtime = useMedStore((s) => s.removeBedtime)
+  const setConfig = useMedStore((s) => s.setConfig)
 
   const today = todayStr()
   const meds = config?.meds || []
@@ -515,6 +516,35 @@ function TimelineHealthView() {
 
   return (
     <div style={{ padding: '0 0 16px' }}>
+      {/* 🎯 목표 기상·취침 인라인 변경 — 매번 설정창 안 들어가도 OK */}
+      <div style={{
+        background: '#fff', borderRadius: 12, padding: 10, marginBottom: 10,
+        border: '1px solid var(--pl)',
+        display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap',
+      }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: '#888' }}>🎯 목표</span>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
+          <span style={{ color: 'var(--pd)', fontWeight: 600 }}>기상</span>
+          <select
+            value={wakeGoal}
+            onChange={(e) => setConfig({ ...(config || { meds: [] }), wakeGoal: parseInt(e.target.value) })}
+            style={{ padding: '3px 6px', borderRadius: 6, border: '1px solid var(--pl)', fontSize: 11, fontFamily: 'inherit' }}
+          >
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i}시</option>)}
+          </select>
+        </label>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11 }}>
+          <span style={{ color: 'var(--pd)', fontWeight: 600 }}>취침</span>
+          <select
+            value={bedGoal}
+            onChange={(e) => setConfig({ ...(config || { meds: [] }), bedGoal: parseInt(e.target.value) })}
+            style={{ padding: '3px 6px', borderRadius: 6, border: '1px solid var(--pl)', fontSize: 11, fontFamily: 'inherit' }}
+          >
+            {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{i}시</option>)}
+          </select>
+        </label>
+      </div>
+
       {/* 🎯 다음 액션 — 가장 prominent */}
       {actionMsg && (
         <div style={{
