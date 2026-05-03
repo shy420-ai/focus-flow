@@ -11,6 +11,7 @@ import {
 import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTimeout } from '../../lib/teamStorage'
 import { CameraCaptureModal } from './CameraCaptureModal'
 import { TeamAvatar } from './TeamAvatar'
+import { useBackClose } from '../../hooks/useBackClose'
 import { isAdminCached, banUser } from '../../lib/banList'
 import { showConfirm } from '../../lib/showConfirm'
 
@@ -66,6 +67,8 @@ export function TeamView() {
     else localStorage.removeItem(ROOM_KEY)
     setInRoomState(id)
   }
+  // 시스템 뒤로가기 = 채팅방 나가기 → 방 리스트
+  useBackClose(inRoom !== null, () => setInRoom(null))
   // bump on color overrides changing so memoized 'meta' below recomputes.
   const [, setColorBump] = useState(0)
   useEffect(() => {
