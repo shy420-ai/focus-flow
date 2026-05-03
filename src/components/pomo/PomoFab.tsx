@@ -417,19 +417,31 @@ export function PomoFab() {
             </div>
           )}
 
-          {/* Big tomato hero with pulsing halo */}
-          <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-            <div style={{
-              position: 'absolute', inset: 0, borderRadius: '50%',
-              background: 'rgba(255,255,255,.6)',
-              animation: 'pomo-pulse 2.4s ease-in-out infinite',
-            }} />
-            <div style={{
-              fontSize: 160, lineHeight: 1, position: 'relative',
-              animation: 'pomo-bob 3.2s ease-in-out infinite',
-              filter: 'drop-shadow(0 8px 16px rgba(229,90,99,.25))',
-            }}>🍅</div>
-          </div>
+          {/* Big tomato hero with pulsing halo + ripening filter.
+              Work phase: hue rotates 120deg(green) → 0deg(red) over progress.
+              Break phase: stays fully ripe (red). transition smooths per-tick steps. */}
+          {(() => {
+            const isWork = pomo.phase === 'work'
+            const ripeness = isWork ? pct : 1
+            const hue = 120 * (1 - ripeness)
+            const sat = 0.6 + 0.4 * ripeness
+            const bright = 0.92 + 0.08 * ripeness
+            return (
+              <div style={{ position: 'relative', width: 220, height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  background: 'rgba(255,255,255,.6)',
+                  animation: 'pomo-pulse 2.4s ease-in-out infinite',
+                }} />
+                <div style={{
+                  fontSize: 160, lineHeight: 1, position: 'relative',
+                  animation: 'pomo-bob 3.2s ease-in-out infinite',
+                  filter: `hue-rotate(${hue}deg) saturate(${sat}) brightness(${bright}) drop-shadow(0 8px 16px rgba(229,90,99,.25))`,
+                  transition: 'filter 1s linear',
+                }}>🍅</div>
+              </div>
+            )
+          })()}
 
           {/* Time */}
           <div style={{ fontSize: 72, fontWeight: 800, letterSpacing: -3, lineHeight: 1, fontFeatureSettings: '"tnum"', color: 'var(--pd)' }}>
