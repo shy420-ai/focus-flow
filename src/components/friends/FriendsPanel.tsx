@@ -199,25 +199,40 @@ interface FriendAvatarTabProps {
   onDragUp?: (e: React.PointerEvent) => void
 }
 
-function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, onSelect, onRequestRemove,
+function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, onSelect,
   isDragging, isDragOver, onDragDown, onDragMove, onDragUp }: FriendAvatarTabProps) {
+  // onRequestRemove 는 더 이상 사용 X — 삭제는 친구 상세 페이지에서.
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const longPressedRef = useRef(false)
   const [pressed, setPressed] = useState(false)
+  // 3초 꾹 누르면 드래그 모드. 그 전에 release 하면 일반 탭(선택).
+  const [armedDrag, setArmedDrag] = useState(false)
 
-  function startPress() {
+  function startPress(e: React.PointerEvent) {
     longPressedRef.current = false
     setPressed(true)
+    setArmedDrag(false)
     timerRef.current = setTimeout(() => {
       longPressedRef.current = true
       setPressed(false)
-      onRequestRemove()
-    }, 600)
+      setArmedDrag(true)
+      if ('vibrate' in navigator) navigator.vibrate(60)
+      // 드래그 모드 진입 = 부모에게 알려서 dragId 세팅
+      if (onDragDown) onDragDown(e)
+    }, 3000)
   }
 
-  function endPress() {
+  function endPress(e: React.PointerEvent) {
     setPressed(false)
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+    if (armedDrag) {
+      setArmedDrag(false)
+      if (onDragUp) onDragUp(e)
+    }
+  }
+
+  function onMove(e: React.PointerEvent) {
+    if (armedDrag && onDragMove) onDragMove(e)
   }
 
   return (
@@ -225,16 +240,17 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
       data-friend-uid={friend.uid}
       style={{
         flexShrink: 0,
-        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
         opacity: isDragging ? 0.4 : 1,
-        background: isDragOver ? 'color-mix(in srgb, var(--pink) 12%, transparent)' : 'transparent',
-        borderRadius: 10, padding: '2px',
+        background: isDragOver ? 'color-mix(in srgb, var(--pink) 18%, transparent)' : 'transparent',
+        borderRadius: 12, padding: '2px',
         transition: 'opacity .15s, background .15s',
       }}
     >
       <button
         onClick={() => { if (!longPressedRef.current) onSelect() }}
         onPointerDown={startPress}
+        onPointerMove={onMove}
         onPointerUp={endPress}
         onPointerCancel={endPress}
         onPointerLeave={endPress}
@@ -243,14 +259,18 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
           background: 'none', border: 'none', cursor: 'pointer', padding: 0,
           fontFamily: 'inherit',
-          transform: pressed ? 'scale(.92)' : 'scale(1)',
+          transform: armedDrag ? 'scale(1.08)' : pressed ? 'scale(.92)' : 'scale(1)',
           transition: 'transform .15s',
           userSelect: 'none',
           WebkitUserSelect: 'none',
-          touchAction: 'manipulation',
+          touchAction: armedDrag ? 'none' : 'manipulation',
         }}
       >
-        <div style={{ position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden', background: 'var(--pl)', border: selected ? '2.5px solid var(--pink)' : '2px solid #eee' }}>
+        <div style={{
+          position: 'relative', width: 52, height: 52, borderRadius: 26, overflow: 'hidden',
+          background: 'var(--pl)',
+          border: armedDrag ? '2.5px dashed var(--pink)' : selected ? '2.5px solid var(--pink)' : '2px solid #eee',
+        }}>
           <Avatar value={avatar} size={52} />
           {live && <span style={{ position: 'absolute', bottom: 0, right: 0, width: 10, height: 10, borderRadius: 5, background: '#2BA84A', border: '2px solid #fff' }} />}
           {hasUpdate && (
@@ -262,23 +282,10 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
             }}>NEW</span>
           )}
         </div>
-        <div style={{ fontSize: 9, color: selected ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nickname}</div>
+        <div style={{ fontSize: 9, color: armedDrag ? 'var(--pink)' : selected ? 'var(--pink)' : '#888', fontWeight: 600, maxWidth: 52, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 3 }}>
+          {armedDrag ? '↔ 이동' : nickname}
+        </div>
       </button>
-      {onDragDown && (
-        <span
-          onPointerDown={onDragDown}
-          onPointerMove={onDragMove}
-          onPointerUp={onDragUp}
-          onPointerCancel={onDragUp}
-          style={{
-            fontSize: 11, color: '#bbb', cursor: 'grab',
-            padding: '2px 6px', touchAction: 'none',
-            userSelect: 'none', WebkitUserSelect: 'none',
-            lineHeight: 1, marginTop: -2,
-          }}
-          aria-label="순서 변경"
-        >☰</span>
-      )}
     </div>
   )
 }
