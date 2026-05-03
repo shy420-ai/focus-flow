@@ -412,7 +412,7 @@ body {
 
 /* ===== Pomodoro ===== */
 .pomo-fab { position: fixed; bottom: 28px; left: 22px; width: 54px; height: 54px; border-radius: 27px; background: var(--pink); border: none; color: #fff; font-size: 22px; cursor: pointer; box-shadow: 0 4px 16px color-mix(in srgb, var(--pink) 50%, transparent); display: flex; align-items: center; justify-content: center; z-index: 200; transition: background .2s; font-family: inherit; }
-.pomo-panel { position: fixed; bottom: 90px; left: 16px; width: 260px; background: #fff; border: 2px solid var(--pink); border-radius: 20px; padding: 20px; z-index: 201; box-shadow: 0 8px 32px color-mix(in srgb, var(--pink) 25%, transparent); display: none; }
+.pomo-panel { position: fixed; bottom: 90px; left: 16px; width: min(320px, calc(100vw - 32px)); background: #fff; border: 2px solid var(--pink); border-radius: 20px; padding: 18px 16px; z-index: 201; box-shadow: 0 8px 32px color-mix(in srgb, var(--pink) 25%, transparent); display: none; }
 .pomo-panel.show { display: block; }
 .pomo-title { font-size: 13px; font-weight: 700; color: var(--pd); margin-bottom: 12px; text-align: center; }
 .pomo-display { text-align: center; margin-bottom: 12px; }
