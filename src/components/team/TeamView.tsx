@@ -78,7 +78,10 @@ export function TeamView() {
   }, [photoPreview])
 
   const meta = TEAMS.find((t) => t.id === active) ?? TEAMS[0]
-  const myNick = displayName || (uid ? 'ADHD-' + uid.slice(0, 4) : '익명')
+  // 우선순위: 사용자가 설정한 닉네임 > 구글 표시 이름 > ADHD-uid 폴백.
+  // 실명 노출이 부담스러운 사용자도 SettingsPopup에서 닉네임 바꾸면 즉시 적용됨.
+  const customNick = (localStorage.getItem('ff_nickname') || '').trim()
+  const myNick = customNick || displayName || (uid ? 'ADHD-' + uid.slice(0, 4) : '익명')
   const amAdmin = isAdminCached(uid)
 
   async function handleBan(targetUid: string, targetNick: string) {
