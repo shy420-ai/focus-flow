@@ -626,10 +626,12 @@ export function PomoFab() {
             </div>
           </div>
 
-          {/* ── Section: 세트 + 자동 시작 한 줄 ─────────────── */}
-          <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🍅</span>
+          {/* ── Section: 큰 휴식 주기 + 자동 시작 ───────────── */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#888', marginBottom: 6, letterSpacing: -0.2 }}>
+              🍅 세트 — {pomo.sessionsTarget}번 작업 후 큰 휴식
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
               <div style={{ display: 'flex', gap: 3 }}>
                 {[1, 2, 3, 4, 5, 6].map((n) => {
                   const on = pomo.sessionsTarget === n
@@ -637,29 +639,29 @@ export function PomoFab() {
                     <button key={n}
                       onClick={() => setSessionsTarget(n)}
                       style={{
-                        width: 22, height: 22, borderRadius: 6,
+                        width: 26, height: 26, borderRadius: 6,
                         border: '1px solid ' + (on ? 'var(--pink)' : '#eee'),
                         cursor: 'pointer', fontFamily: 'inherit',
                         background: on ? 'var(--pink)' : '#fff',
                         color: on ? '#fff' : 'var(--pd)',
-                        fontSize: 10, fontWeight: 700, padding: 0,
+                        fontSize: 11, fontWeight: 700, padding: 0,
                       }}>{n}</button>
                   )
                 })}
               </div>
+              <button
+                onClick={toggleAutoStart}
+                title="페이즈 끝나면 자동으로 다음 시작"
+                style={{
+                  padding: '4px 10px', borderRadius: 99,
+                  border: '1px solid ' + (pomo.autoStart ? 'var(--pink)' : '#eee'),
+                  cursor: 'pointer', fontFamily: 'inherit',
+                  background: pomo.autoStart ? 'var(--pink)' : '#fff',
+                  color: pomo.autoStart ? '#fff' : '#888',
+                  fontSize: 10, fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                }}>⏯ 자동 {pomo.autoStart ? 'ON' : 'OFF'}</button>
             </div>
-            <button
-              onClick={toggleAutoStart}
-              title="페이즈 끝나면 자동으로 다음 시작"
-              style={{
-                padding: '4px 10px', borderRadius: 99,
-                border: '1px solid ' + (pomo.autoStart ? 'var(--pink)' : '#eee'),
-                cursor: 'pointer', fontFamily: 'inherit',
-                background: pomo.autoStart ? 'var(--pink)' : '#fff',
-                color: pomo.autoStart ? '#fff' : '#888',
-                fontSize: 10, fontWeight: 700,
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-              }}>⏯ 자동 {pomo.autoStart ? 'ON' : 'OFF'}</button>
           </div>
 
           {/* ── Section: 시작/리셋 ──────────────────────────── */}
