@@ -100,12 +100,12 @@ export function TipsView() {
         )
       })()}
 
-      {/* 카테고리 — 3 x 3 그리드 (북마크·archive 제외) */}
+      {/* 카테고리 — 3 x 3 그리드 (북마크 제외, 아카이브 마지막 칸) */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
         gap: 6, marginBottom: 12,
       }}>
-        {CATS.filter((c) => c !== 'bookmarks' && c !== 'archive').map((c) => {
+        {CATS.filter((c) => c !== 'bookmarks').map((c) => {
           const m = CATEGORY_META[c]
           const on = active === c
           return (
@@ -128,28 +128,6 @@ export function TipsView() {
           )
         })}
       </div>
-
-      {/* 보관함 (archive) — 별도 작은 버튼 */}
-      {(() => {
-        const ar = CATEGORY_META.archive
-        const on = active === 'archive'
-        return (
-          <button
-            onClick={() => setActive('archive')}
-            style={{
-              width: '100%', padding: '8px 12px', borderRadius: 10,
-              border: '1.5px dashed ' + (on ? ar.color : '#ddd'),
-              background: on ? `color-mix(in srgb, ${ar.color} 14%, #fff)` : '#fff',
-              cursor: 'pointer', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12,
-              fontSize: 11, fontWeight: 700, color: on ? ar.color : '#999',
-            }}
-          >
-            <span>{tipCategoryIcon('archive')}</span>
-            <span>{ar.label}</span>
-          </button>
-        )
-      })()}
 
       {/* Active category header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '0 2px' }}>
