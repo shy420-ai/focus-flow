@@ -59,6 +59,7 @@ export function TeamView() {
   const [active, setActive] = useState<TeamId>(loadActive)
   const [inRoom, setInRoomState] = useState<TeamId | null>(loadInRoom)
   const [hiddenRooms, setHiddenRooms] = useState<TeamId[]>(loadHiddenRooms)
+  const [roomSettingsOpen, setRoomSettingsOpen] = useState(false)
   const setInRoom = (id: TeamId | null) => {
     if (id) localStorage.setItem(ROOM_KEY, id)
     else localStorage.removeItem(ROOM_KEY)
@@ -228,19 +229,44 @@ export function TeamView() {
   // Room-list view (KakaoTalk-style). Tapping a card enters chat mode.
   if (inRoom === null) {
     const visibleTeams = TEAMS.filter((t) => !hiddenRooms.includes(t.id))
+    function toggleHidden(id: TeamId) {
+      const next = hiddenRooms.includes(id)
+        ? hiddenRooms.filter((x) => x !== id)
+        : [...hiddenRooms, id]
+      localStorage.setItem(HIDDEN_KEY, JSON.stringify(next))
+      setHiddenRooms(next)
+    }
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', padding: '8px 4px 16px' }}>
-        <div style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 70%, #fff) 0%, #fff 100%)', borderRadius: 18, padding: '14px 18px', marginBottom: 12 }}>
+        <div style={{ background: 'linear-gradient(135deg, color-mix(in srgb, var(--pl) 70%, #fff) 0%, #fff 100%)', borderRadius: 18, padding: '14px 18px', marginBottom: 12, position: 'relative' }}>
           <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800, marginBottom: 2 }}>
             👥 그룹 인증 <span style={{ fontSize: 10, color: '#888', fontWeight: 600 }}>(베타)</span>
           </div>
           <div style={{ fontSize: 11, color: '#888' }}>⏰ 24시간 후 자동 사라짐 · 📷 오직 사진 인증만</div>
+          <button
+            onClick={() => setRoomSettingsOpen(true)}
+            aria-label="그룹 설정"
+            title="그룹 표시 설정"
+            style={{
+              position: 'absolute', top: 12, right: 12,
+              width: 32, height: 32, borderRadius: '50%',
+              background: 'rgba(255,255,255,.7)', border: 'none',
+              cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              color: '#888', fontFamily: 'inherit', padding: 0,
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h0a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h0a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v0a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+          </button>
         </div>
 
         {visibleTeams.length === 0 ? (
           <div style={{ background: 'color-mix(in srgb, var(--pl) 25%, #fff)', borderRadius: 14, padding: '24px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
             모든 그룹 숨김 상태야<br />
-            <span style={{ fontSize: 10, color: '#bbb' }}>설정 → 그룹 표시에서 다시 켤 수 있어</span>
+            <span style={{ fontSize: 10, color: '#bbb' }}>우측 상단 ⚙ 눌러서 다시 켤 수 있어</span>
           </div>
         ) : (
           visibleTeams.map((t) => (
@@ -280,6 +306,68 @@ export function TeamView() {
               <span style={{ fontSize: 18, color: '#ccc', fontWeight: 700, flexShrink: 0 }}>›</span>
             </button>
           ))
+        )}
+
+        {/* Group visibility settings — opened from gear icon */}
+        {roomSettingsOpen && (
+          <div
+            onClick={() => setRoomSettingsOpen(false)}
+            style={{ position: 'fixed', inset: 0, zIndex: 700, background: 'rgba(0,0,0,.32)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                width: '100%', maxWidth: 480,
+                background: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+                padding: '20px 18px calc(20px + env(safe-area-inset-bottom, 0px))',
+                boxShadow: '0 -4px 16px rgba(0,0,0,.15)',
+              }}
+            >
+              <div style={{ width: 36, height: 4, background: '#ddd', borderRadius: 2, margin: '0 auto 14px' }} />
+              <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', textAlign: 'center', marginBottom: 4 }}>👥 그룹 표시 설정</div>
+              <div style={{ fontSize: 11, color: '#888', textAlign: 'center', marginBottom: 14 }}>
+                탭하면 켜짐/꺼짐 — 꺼진 그룹은 목록에서 안 보여
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {TEAMS.map((t) => {
+                  const on = !hiddenRooms.includes(t.id)
+                  return (
+                    <button key={t.id}
+                      onClick={() => toggleHidden(t.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 12px', borderRadius: 12,
+                        border: '1.5px solid ' + (on ? t.color : '#eee'),
+                        background: on ? `color-mix(in srgb, ${t.color} 10%, #fff)` : '#fafafa',
+                        cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left',
+                      }}
+                    >
+                      <TeamAvatar teamId={t.id} size={36} />
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>팀 {t.label}</span>
+                      <span style={{
+                        width: 32, height: 18, borderRadius: 99,
+                        background: on ? t.color : '#ddd',
+                        position: 'relative', transition: 'background .2s', flexShrink: 0,
+                      }}>
+                        <span style={{
+                          position: 'absolute', top: 2, ...(on ? { right: 2 } : { left: 2 }),
+                          width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                          transition: 'all .2s',
+                        }} />
+                      </span>
+                    </button>
+                  )
+                })}
+              </div>
+              <button
+                onClick={() => setRoomSettingsOpen(false)}
+                style={{
+                  width: '100%', marginTop: 14, padding: '10px 12px',
+                  borderRadius: 10, border: 'none', background: 'var(--pink)', color: '#fff',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                }}>완료</button>
+            </div>
+          </div>
         )}
       </div>
     )
