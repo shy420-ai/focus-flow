@@ -170,21 +170,32 @@ export function TeamView() {
     }, 15000)
     try {
       let photoUrl: string | undefined
-      // When a photo is attached, the text caption is burned INTO the photo
-      // as a styled overlay — not stored as a separate text bubble. The
-      // post's text field becomes a sentinel ('📷') so feed knows it's a
-      // pure-photo bubble.
       const captionForPhoto = photoFile ? text.trim().slice(0, 80) : ''
       if (photoFile) {
         const stamp = watermarkStamp()
-        try {
+        // Cache the upload mode after first attempt so subsequent uploads
+        // skip the slow Storage round-trip when it's known to fail.
+        const mode = localStorage.getItem('ff_team_upload_mode') // 'storage' | 'base64' | null
+        if (mode === 'base64') {
+          const small = await compressImage(photoFile, 600, 0.65, stamp, captionForPhoto)
+          photoUrl = await blobToDataUrl(small)
+        } else if (mode === 'storage') {
           const compressed = await compressImage(photoFile, 800, 0.7, stamp, captionForPhoto)
           const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
-          photoUrl = await withTimeout(uploadTeamPhoto(active, tempId, compressed), 5000, 'storage timeout')
-        } catch (storageErr) {
-          console.warn('Storage upload failed, falling back to base64:', storageErr)
-          const small = await compressImage(photoFile, 480, 0.55, stamp, captionForPhoto)
-          photoUrl = await blobToDataUrl(small)
+          photoUrl = await uploadTeamPhoto(active, tempId, compressed)
+        } else {
+          // First-ever upload: try Storage with 3s timeout, fall back fast.
+          try {
+            const compressed = await compressImage(photoFile, 800, 0.7, stamp, captionForPhoto)
+            const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
+            photoUrl = await withTimeout(uploadTeamPhoto(active, tempId, compressed), 3000, 'storage timeout')
+            localStorage.setItem('ff_team_upload_mode', 'storage')
+          } catch (storageErr) {
+            console.warn('Storage failed, switching to base64 mode:', storageErr)
+            localStorage.setItem('ff_team_upload_mode', 'base64')
+            const small = await compressImage(photoFile, 600, 0.65, stamp, captionForPhoto)
+            photoUrl = await blobToDataUrl(small)
+          }
         }
       }
       const postText = photoUrl ? '📷' : text
