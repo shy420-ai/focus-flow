@@ -402,8 +402,60 @@ function TimelineHealthView() {
   // 시간순 정렬
   events.sort((a, b) => a.time - b.time)
 
+  // 🎯 지금 다음 액션 — 가장 가까운 미복용 약 또는 가장 최근 복용 결과 기반 친근한 안내
+  const upcomingMed = meds
+    .filter((m) => !logs.some((l) => l.date === today && l.type === 'take' && l.timing === m.timing))
+    .map((m) => {
+      const db = MED_DB.find((d) => d.name === m.name)
+      if (!db) return null
+      let target: number
+      if (m.timing === '아침') target = wakeH + 0.5
+      else if (m.timing === '점심') target = 12
+      else if (m.timing === '저녁') {
+        target = (db.cat === '수면' || db.cat === '항정신병') ? bedGoal - 1 : bedGoal - 3
+      }
+      else target = nowH
+      return { med: m, db, target }
+    })
+    .filter((x): x is { med: MedItem; db: typeof MED_DB[0]; target: number } => x !== null)
+    .sort((a, b) => a.target - b.target)[0]
+
+  const lastTake = logs.filter((l) => l.date === today && l.type === 'take' && l.time != null).sort((a, b) => (b.time ?? 0) - (a.time ?? 0))[0]
+  const lastMedDb = lastTake ? MED_DB.find((d) => d.name === meds.find((m) => m.timing === lastTake.timing)?.name) : null
+
+  let actionMsg = ''
+  if (lastTake && lastMedDb && lastMedDb.duration < 24) {
+    const endH = lastTake.time! + lastMedDb.duration
+    const remaining = endH - nowH
+    if (remaining > 0) {
+      actionMsg = `${lastMedDb.name} 효과 ${fmtHM(endH)}까지 (남은 ${remaining.toFixed(1)}h). `
+    }
+  }
+  if (upcomingMed) {
+    const diffH = upcomingMed.target - nowH
+    if (diffH > 0 && diffH < 4) {
+      actionMsg += `다음: ${upcomingMed.med.name} ${fmtHM(upcomingMed.target)} (${diffH.toFixed(1)}h 후) 권장`
+    } else if (diffH <= 0) {
+      actionMsg += `🚨 ${upcomingMed.med.name} 지금 복용 권장 (${(-diffH).toFixed(1)}h 지났어)`
+    } else {
+      actionMsg += `다음: ${upcomingMed.med.name} ${fmtHM(upcomingMed.target)} 권장`
+    }
+  } else if (lastTake) {
+    actionMsg += `오늘 등록 약 다 먹었어 ✅`
+  }
+
   return (
     <div style={{ padding: '0 0 16px' }}>
+      {/* 🎯 다음 액션 — 가장 prominent */}
+      {actionMsg && (
+        <div style={{
+          background: 'linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink) 80%, #fff))',
+          color: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 12,
+          fontSize: 12, fontWeight: 700, lineHeight: 1.6,
+        }}>
+          🎯 {actionMsg}
+        </div>
+      )}
       <div style={{ position: 'relative', paddingLeft: 14 }}>
         {/* vertical guide line */}
         <div style={{ position: 'absolute', left: 7, top: 8, bottom: 8, width: 2, background: 'var(--pl)' }} />
