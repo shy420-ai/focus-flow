@@ -48,7 +48,7 @@ export const TEAMS: TeamMeta[] = [
 ]
 
 // Reaction palette — anonymous, only counts visible. Order matters (display).
-export const REACTIONS = ['❤️', '🤩', '💪', '👍'] as const
+export const REACTIONS = ['❤️', '🤩', '💪', '👍', '😎', '🥳', '😲', '🥹'] as const
 export type ReactionEmoji = typeof REACTIONS[number]
 
 export interface TeamPost {
