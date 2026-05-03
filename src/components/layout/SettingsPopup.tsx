@@ -366,6 +366,14 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         </div>
       )}
 
+      {/* ════════════ 🙋 나 ════════════ */}
+      <div style={{
+        fontSize: 13, fontWeight: 800, color: 'var(--pd)',
+        marginTop: 6, marginBottom: 12, paddingTop: 12, paddingBottom: 4,
+        borderTop: '2px solid var(--pl)',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>🙋 나</div>
+
       {/* 프로필 사진 + 닉네임 */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 8, gap: 6 }}>
         <div style={{ position: 'relative' }}>
@@ -478,6 +486,23 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           </div>
         )
       })()}
+
+      {/* 생리주기 — 나 섹션 마지막 */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>🌙 생리주기</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginBottom: cycleInfo ? 4 : 12 }}>
+        <button onClick={setCycleStart} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>🩸 시작일</button>
+        <button onClick={setCycleEnd} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>✅ 종료일</button>
+        <button onClick={clearCycle} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #eee', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: '#aaa' }}>초기화</button>
+      </div>
+      {cycleInfo && <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>{cycleInfo}</div>}
+
+      {/* ════════════ 🎨 구성·화면 ════════════ */}
+      <div style={{
+        fontSize: 13, fontWeight: 800, color: 'var(--pd)',
+        marginTop: 6, marginBottom: 12, paddingTop: 12, paddingBottom: 4,
+        borderTop: '2px solid var(--pl)',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>🎨 구성·화면</div>
 
       {/* 테마 */}
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 8 }}>🎨 테마</div>
@@ -642,17 +667,16 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })}
       </div>
 
-      {/* 생리주기 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>🌙 생리주기</div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center', flexWrap: 'wrap', marginBottom: cycleInfo ? 4 : 12 }}>
-        <button onClick={setCycleStart} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>🩸 시작일</button>
-        <button onClick={setCycleEnd} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid var(--pl)', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: 'var(--pd)' }}>✅ 종료일</button>
-        <button onClick={clearCycle} style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #eee', background: '#fff', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit', color: '#aaa' }}>초기화</button>
-      </div>
-      {cycleInfo && <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', marginBottom: 12 }}>{cycleInfo}</div>}
+      {/* ════════════ ⚙ 앱 설정 ════════════ */}
+      <div style={{
+        fontSize: 13, fontWeight: 800, color: 'var(--pd)',
+        marginTop: 6, marginBottom: 12, paddingTop: 12, paddingBottom: 4,
+        borderTop: '2px solid var(--pl)',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>⚙ 앱 설정</div>
 
       {/* 로그인 / 로그아웃 */}
-      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
+      <div style={{ paddingTop: 4, marginTop: 0 }}>
         {!uid ? (
           <button
             onClick={() => { setSkipLogin(false); onClose() }}
