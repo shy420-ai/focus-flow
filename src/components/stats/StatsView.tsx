@@ -297,72 +297,8 @@ function DrugCard({ med, todayTake, curH }: { med: MedItem; todayTake: ReturnTyp
   )
 }
 
-// 약 가이드 카드 — 시간대별로 같은 모양 재사용. 동적(액션) + 정적(약 정보 접힘).
-interface GuideCardProps {
-  med: { name: string; dose: string; duration: number; timing: string }
-  take?: { time?: number } | undefined
-  fmt: (h: number) => string
-}
-function MedGuideCard({ med, take, fmt }: GuideCardProps) {
-  const db = MED_DB.find((d) => d.name === med.name)
-  if (!db) {
-    return (
-      <div style={{ padding: '8px 10px', background: 'var(--pl)', borderRadius: 8, marginBottom: 8 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)' }}>{med.name} {med.dose}</div>
-        <div style={{ fontSize: 10, color: '#aaa', marginTop: 2 }}>등록된 정보가 없는 약</div>
-      </div>
-    )
-  }
-  const isLongActing = db.duration >= 24
-  const cc = CAT_COLORS[db.cat] || 'var(--pink)'
-  return (
-    <div style={{ padding: '10px 12px', background: 'var(--pl)', borderRadius: 10, marginBottom: 8 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: cc, color: '#fff' }}>{db.cat}</span>
-        <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>{med.name}</span>
-        <span style={{ fontSize: 11, color: '#888' }}>{med.dose}</span>
-      </div>
-
-      {/* 🕐 오늘 액션 — 동적 */}
-      {!isLongActing && take && (
-        <div style={{ background: '#fff', borderRadius: 8, padding: '6px 10px', marginBottom: 6 }}>
-          <div style={{ fontSize: 9, color: '#888', fontWeight: 700, marginBottom: 2 }}>🕐 오늘 액션</div>
-          <div style={{ fontSize: 11, color: '#56C6A0' }}>🟢 복용 {fmt(take.time!)}</div>
-          <div style={{ fontSize: 11, color: '#EF9F27' }}>🟡 효과 약해짐 {fmt(take.time! + db.duration * 0.7)}</div>
-          <div style={{ fontSize: 11, color: '#E24B4A' }}>🔴 효과 종료 {fmt(take.time! + db.duration)}</div>
-        </div>
-      )}
-      {!isLongActing && !take && (
-        <div style={{ background: '#fff', borderRadius: 8, padding: '6px 10px', marginBottom: 6, fontSize: 11, color: '#888' }}>
-          💡 복용하면 약발 떨어지는 시간 알려줄게
-        </div>
-      )}
-      {isLongActing && (
-        <div style={{ background: '#fff', borderRadius: 8, padding: '6px 10px', marginBottom: 6, fontSize: 11, color: '#888' }}>
-          🌀 누적형 약 — 매일 일정 시간에 복용 (시간별 효과 계산 X)
-        </div>
-      )}
-
-      {/* 📋 약 정보 — 정적 (접힘) */}
-      <details style={{ fontSize: 10, color: '#666' }}>
-        <summary style={{ cursor: 'pointer', fontSize: 10, color: '#888', fontWeight: 600, padding: '2px 0' }}>📋 약 정보</summary>
-        <div style={{ marginTop: 6, padding: '6px 10px', background: '#fff', borderRadius: 8, display: 'flex', flexDirection: 'column', gap: 3, lineHeight: 1.5 }}>
-          <div><b>일반명</b> · {db.generic}</div>
-          <div>⏱ 지속 {db.duration}h · 📈 피크 {db.peak}</div>
-          {db.note && <div>📌 {db.note}</div>}
-          <div>💚 효과 · {db.effects.join(', ')}</div>
-          <div style={{ color: '#B23939' }}>⚠️ 부작용 · {db.sides.join(', ')}</div>
-        </div>
-      </details>
-    </div>
-  )
-}
-
-function fmtHourMin(h: number): string {
-  const hh = Math.floor(h)
-  const mm = Math.round((h % 1) * 60)
-  return hh + ':' + String(mm).padStart(2, '0')
-}
+// MedGuideCard / fmtHourMin 은 DrugCard 와 중복이라 제거됨 — DrugCard 가
+// 단일 카드로 약 상태(progress bar) + 약 정보 접힘 모두 처리.
 
 // ── Sleep Tab ─────────────────────────────────────────────────────────────────
 // 약과 분리된 독립 영역 — 어젯밤 수면 컨디션 / 잠드는 시간 / 취침 기록 +
@@ -569,16 +505,6 @@ function MorningTab() {
         </div>
       )}
 
-      {/* 아침약 가이드 */}
-      {morningMeds.length > 0 && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>☀️ 아침약 가이드</div>
-          {morningMeds.map((m) => (
-            <MedGuideCard key={m.name} med={m} take={todayMorningTake} fmt={fmtHourMin} />
-          ))}
-        </div>
-      )}
-
       {/* Status check */}
       <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>지금 상태 어때?</div>
@@ -665,16 +591,6 @@ function EveningTab({ onSetup }: { onSetup: () => void }) {
         )}
       </div>
 
-      {/* 저녁약 가이드 — 일반 약 (모든 night meds 노트·지속 표시) */}
-      {nightMeds.length > 0 && (
-        <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🌙 저녁약 가이드</div>
-          {nightMeds.map((m) => (
-            <MedGuideCard key={m.name} med={m} take={todayNightTake} fmt={fmtHourMin} />
-          ))}
-        </div>
-      )}
-
       {/* 취침약 가이드 — 수면·항정신병 약만 별도 권장 시각 계산 */}
       {sleepMeds.length > 0 && (
         <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
@@ -759,14 +675,6 @@ function LunchTab({ onSetup }: { onSetup: () => void }) {
             <button onClick={() => { clearTake('점심'); showMiniToast('🗑 기록 삭제됨') }} style={{ padding: '6px 10px', borderRadius: 6, border: '1px dashed #eee', background: '#fff', color: '#ccc', fontSize: 10, cursor: 'pointer', fontFamily: 'inherit' }}>🗑 기록 삭제</button>
           </div>
         )}
-      </div>
-
-      {/* 점심약 가이드 */}
-      <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>🥪 점심약 가이드</div>
-        {lunchMeds.map((m) => (
-          <MedGuideCard key={m.name} med={m} take={todayLunchTake} fmt={fmtHourMin} />
-        ))}
       </div>
 
       {/* Status check */}
