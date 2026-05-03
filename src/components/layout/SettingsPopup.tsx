@@ -10,7 +10,7 @@ import { showConfirm } from '../../lib/showConfirm'
 import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
 import { flushSync } from '../../lib/syncManager'
-import { getUserCount } from '../../lib/firestore'
+import { getUserCount, userCountBucket } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
@@ -812,7 +812,13 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
       <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8, marginBottom: 8 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>📊 통계</div>
         <div style={{ fontSize: 11, color: '#666', marginBottom: 8 }}>
-          전체 사용자: {userCount == null ? '...' : userCount.toLocaleString() + '명'}
+          {(() => {
+            if (userCount == null) return '...'
+            // 개발자 모드 = 정확한 숫자, 일반 모드 = 버킷 (또는 < 100이면 숨김)
+            if (devOn) return '전체 사용자: ' + userCount.toLocaleString() + '명'
+            const bucket = userCountBucket(userCount)
+            return bucket ? '👥 ' + bucket : '전체 사용자: 집계 중'
+          })()}
           {' · '}내 레벨: Lv.{getLevel(getXp())} ({getXp()} XP)
         </div>
         <button

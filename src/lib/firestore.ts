@@ -210,3 +210,16 @@ export async function getUserCount(): Promise<number> {
   const snap = await getCountFromServer(collection(db, 'users'))
   return snap.data().count
 }
+
+// 정확한 숫자 노출 X — 바닥 기준 버킷 라벨로 변환.
+// 100명 미만은 빈 문자열 반환 → 호출 측에서 숨김 처리.
+export function userCountBucket(n: number): string {
+  if (n < 100) return ''
+  if (n < 300)   return '100+명 함께 사용 중'
+  if (n < 500)   return '300+명 함께 사용 중'
+  if (n < 1000)  return '500+명 함께 사용 중'
+  if (n < 3000)  return '1,000+명 함께 사용 중'
+  if (n < 5000)  return '3,000+명 함께 사용 중'
+  if (n < 10000) return '5,000+명 함께 사용 중'
+  return '10,000+명 함께 사용 중'
+}

@@ -12,6 +12,7 @@ import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTime
 import { CameraCaptureModal } from './CameraCaptureModal'
 import { TeamAvatar } from './TeamAvatar'
 import { useBackClose } from '../../hooks/useBackClose'
+import { getUserCount, userCountBucket } from '../../lib/firestore'
 import { isAdminCached, banUser } from '../../lib/banList'
 import { showConfirm } from '../../lib/showConfirm'
 
@@ -62,6 +63,12 @@ export function TeamView() {
   const [inRoom, setInRoomState] = useState<TeamId | null>(loadInRoom)
   const [hiddenRooms, setHiddenRooms] = useState<TeamId[]>(loadHiddenRooms)
   const [roomSettingsOpen, setRoomSettingsOpen] = useState(false)
+  const [userCountLabel, setUserCountLabel] = useState<string>('')
+  useEffect(() => {
+    let cancelled = false
+    getUserCount().then((n) => { if (!cancelled) setUserCountLabel(userCountBucket(n)) }).catch(() => { /* ignore */ })
+    return () => { cancelled = true }
+  }, [])
   const setInRoom = (id: TeamId | null) => {
     if (id) localStorage.setItem(ROOM_KEY, id)
     else localStorage.removeItem(ROOM_KEY)
@@ -265,6 +272,11 @@ export function TeamView() {
             👥 그룹 인증 <span style={{ fontSize: 10, color: '#888', fontWeight: 600 }}>(베타)</span>
           </div>
           <div style={{ fontSize: 11, color: '#888' }}>⏰ 24시간 후 자동 사라짐 · 📷 오직 사진 인증만</div>
+          {userCountLabel && (
+            <div style={{ fontSize: 10, color: 'var(--pink)', fontWeight: 700, marginTop: 4, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              👥 {userCountLabel}
+            </div>
+          )}
           <button
             onClick={() => setRoomSettingsOpen(true)}
             aria-label="그룹 설정"
