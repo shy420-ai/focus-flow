@@ -11,7 +11,7 @@ import { showConfirm } from '../../lib/showConfirm'
 import { showMiniToast } from '../../lib/miniToast'
 import { isLeaderboardOn, setLeaderboardOn } from '../../lib/leaderboardPref'
 import { flushSync } from '../../lib/syncManager'
-import { getUserCount, userCountBucket } from '../../lib/firestore'
+import { getUserCount } from '../../lib/firestore'
 import { showPrompt } from '../../lib/showPrompt'
 import { tabIcon } from '../../lib/tabIcons'
 import { useUnreadGuestbook, markGuestbookRead } from '../../lib/guestbookUnread'
@@ -514,6 +514,64 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         display: 'flex', alignItems: 'center', gap: 6,
       }}>🎨 구성·화면</div>
 
+      {/* 탭 관리 — 구성·화면 첫 항목 */}
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
+      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>
+        💡 ≡ 핸들 잡고 드래그해서 순서 바꿔
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 12 }}>
+        {orderedTabs.map((t) => {
+          const on = !hiddenTabs.includes(t.id)
+          const isDragging = dragId === t.id
+          const isOver = dragOverId === t.id && dragId && dragId !== t.id
+          return (
+            <div
+              key={t.id}
+              data-tab-id={t.id}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '6px 8px',
+                borderRadius: 8,
+                background: isOver ? 'var(--pl)' : 'transparent',
+                opacity: isDragging ? .4 : 1,
+                transition: 'background .15s, opacity .15s',
+              }}
+            >
+              <span
+                onPointerDown={(e) => onHandleDown(e, t.id)}
+                onPointerMove={onHandleMove}
+                onPointerUp={onHandleUp}
+                onPointerCancel={onHandleUp}
+                style={{
+                  cursor: 'grab',
+                  color: '#bbb',
+                  fontSize: 14,
+                  padding: '4px 6px',
+                  touchAction: 'none',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  lineHeight: 1,
+                  flexShrink: 0,
+                }}
+                aria-label="순서 변경"
+              >☰</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: on ? 'var(--pd)' : '#999', flex: 1 }}>
+                <span style={{ display: 'inline-flex', color: on ? 'var(--pink)' : '#bbb' }}>{tabIcon(t.id)}</span>
+                {t.label}
+              </span>
+              <button
+                onClick={() => toggleTab(t.id)}
+                style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: on ? 'var(--pink)' : '#ddd', position: 'relative', transition: 'background .2s', padding: 0, flexShrink: 0 }}
+              >
+                <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, ...(on ? { right: 2 } : { left: 2 }), transition: 'all .2s' }} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+
       {/* 테마 */}
       <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 8 }}>🎨 테마</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
@@ -619,64 +677,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         })()}
       </div>
 
-      {/* 탭 관리 */}
-      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 4, textAlign: 'center', borderTop: '1px solid var(--pl)', paddingTop: 10 }}>📑 탭 관리</div>
-      <div style={{ fontSize: 10, color: '#aaa', marginBottom: 8, textAlign: 'center' }}>
-        💡 ≡ 핸들 잡고 드래그해서 순서 바꿔
-      </div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 12 }}>
-        {orderedTabs.map((t) => {
-          const on = !hiddenTabs.includes(t.id)
-          const isDragging = dragId === t.id
-          const isOver = dragOverId === t.id && dragId && dragId !== t.id
-          return (
-            <div
-              key={t.id}
-              data-tab-id={t.id}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '6px 8px',
-                borderRadius: 8,
-                background: isOver ? 'var(--pl)' : 'transparent',
-                opacity: isDragging ? .4 : 1,
-                transition: 'background .15s, opacity .15s',
-              }}
-            >
-              <span
-                onPointerDown={(e) => onHandleDown(e, t.id)}
-                onPointerMove={onHandleMove}
-                onPointerUp={onHandleUp}
-                onPointerCancel={onHandleUp}
-                style={{
-                  cursor: 'grab',
-                  color: '#bbb',
-                  fontSize: 14,
-                  padding: '4px 6px',
-                  touchAction: 'none',
-                  userSelect: 'none',
-                  WebkitUserSelect: 'none',
-                  lineHeight: 1,
-                  flexShrink: 0,
-                }}
-                aria-label="순서 변경"
-              >☰</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, color: on ? 'var(--pd)' : '#999', flex: 1 }}>
-                <span style={{ display: 'inline-flex', color: on ? 'var(--pink)' : '#bbb' }}>{tabIcon(t.id)}</span>
-                {t.label}
-              </span>
-              <button
-                onClick={() => toggleTab(t.id)}
-                style={{ width: 36, height: 20, borderRadius: 10, border: 'none', cursor: 'pointer', background: on ? 'var(--pink)' : '#ddd', position: 'relative', transition: 'background .2s', padding: 0, flexShrink: 0 }}
-              >
-                <div style={{ width: 16, height: 16, borderRadius: '50%', background: '#fff', position: 'absolute', top: 2, ...(on ? { right: 2 } : { left: 2 }), transition: 'all .2s' }} />
-              </button>
-            </div>
-          )
-        })}
-      </div>
-
       {/* ════════════ ⚙ 앱 설정 ════════════ */}
       <div style={{
         fontSize: 13, fontWeight: 800, color: 'var(--pd)',
@@ -685,8 +685,8 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         display: 'flex', alignItems: 'center', gap: 6,
       }}>⚙ 앱 설정</div>
 
-      {/* 로그인 / 로그아웃 */}
-      <div style={{ paddingTop: 4, marginTop: 0 }}>
+      {/* 1) 로그인 / 로그아웃 */}
+      <div style={{ marginBottom: 8 }}>
         {!uid ? (
           <button
             onClick={() => { setSkipLogin(false); onClose() }}
@@ -704,69 +704,59 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         )}
       </div>
 
-      {/* 옵션 */}
-      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
-        <button
-          onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
-          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-        >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
-        {/* 개발자 모드 버튼 — /admins/list 에 등록된 운영자 uid 한정 노출 */}
-        {amAdmin && (
-          <>
-            <button
-              onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
-              style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-            >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
-            {devOn && (
+      {/* 2) 시작 가이드 다시 보기 */}
+      <button
+        onClick={() => {
+          onClose()
+          setTimeout(() => { window.__ffShowOnboarding?.() }, 100)
+        }}
+        style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+      >📖 시작 가이드 다시 보기</button>
+
+      {/* 3) 개발자에게 커피 사주기 */}
+      <a
+        href="https://qr.kakaopay.com/FH24plHDs"
+        target="_blank"
+        rel="noreferrer"
+        style={{ display: 'inline-block', width: '100%', padding: 10, borderRadius: 10, background: 'linear-gradient(135deg,#FFE156,#FFDAC1)', color: '#333', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', boxSizing: 'border-box', textAlign: 'center', marginBottom: 8 }}
+      >☕ 개발자에게 커피 한 잔 사주기</a>
+
+      {/* 4) 운영자 전용 — 개발자 모드 + 통계 (admin uid 만 노출) */}
+      {amAdmin && (
+        <div style={{ borderTop: '1px dashed var(--pl)', paddingTop: 10, marginTop: 4 }}>
+          <button
+            onClick={() => { const next = !devOn; setDevMode(next); setDevOn(next) }}
+            style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (devOn ? 'var(--pink)' : '#ddd'), background: devOn ? 'var(--pl)' : '#fff', color: devOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+          >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
+          {devOn && (
+            <>
+              <button
+                onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
+                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
+              >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
               <button
                 onClick={() => setTipStatsOpen(true)}
                 style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pink)', background: 'var(--pl)', color: 'var(--pd)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
               >📊 정보탭 통계 보기</button>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* 사용자 통계 */}
-      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8, marginBottom: 8 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>📊 통계</div>
-        <div style={{ fontSize: 11, color: '#666', marginBottom: 8 }}>
-          {(() => {
-            if (userCount == null) return '...'
-            // 개발자 모드 = 정확한 숫자, 일반 모드 = 버킷 (또는 < 100이면 숨김)
-            if (devOn) return '전체 사용자: ' + userCount.toLocaleString() + '명'
-            const bucket = userCountBucket(userCount)
-            return bucket ? '👥 ' + bucket : '전체 사용자: 집계 중'
-          })()}
-          {' · '}내 레벨: Lv.{getLevel(getXp())} ({getXp()} XP)
+              <div style={{ background: '#fafafa', borderRadius: 10, padding: '8px 10px', marginBottom: 8 }}>
+                <div style={{ fontSize: 11, color: '#666', marginBottom: 6, lineHeight: 1.5 }}>
+                  전체 사용자: {userCount == null ? '...' : userCount.toLocaleString() + '명'}
+                  {' · '}내 레벨: Lv.{getLevel(getXp())} ({getXp()} XP)
+                </div>
+                <button
+                  onClick={async () => {
+                    if (await showConfirm('레벨/XP를 0으로 초기화할까? (다시 쌓아야 해)')) {
+                      resetXp()
+                      showMiniToast('🔄 레벨 초기화 완료')
+                    }
+                  }}
+                  style={{ width: '100%', padding: 6, borderRadius: 8, border: '1.5px dashed #ddd', background: '#fff', color: '#999', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
+                >🔄 레벨 초기화</button>
+              </div>
+            </>
+          )}
         </div>
-        <button
-          onClick={async () => {
-            if (await showConfirm('레벨/XP를 0으로 초기화할까? (다시 쌓아야 해)')) {
-              resetXp()
-              showMiniToast('🔄 레벨 초기화 완료')
-            }
-          }}
-          style={{ width: '100%', padding: 8, borderRadius: 8, border: '1.5px dashed #ddd', background: '#fff', color: '#999', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}
-        >🔄 레벨 초기화</button>
-      </div>
-
-      {/* 가이드 / 온보딩 */}
-      <div style={{ borderTop: '1px solid var(--pl)', paddingTop: 10, marginTop: 8 }}>
-        <button
-          onClick={() => {
-            onClose()
-            setTimeout(() => { window.__ffShowOnboarding?.() }, 100)
-          }}
-          style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-        >📖 온보딩 가이드 다시 보기</button>
-        <a
-          href="https://qr.kakaopay.com/FH24plHDs"
-          target="_blank"
-          rel="noreferrer"
-          style={{ display: 'inline-block', width: '100%', padding: 10, borderRadius: 10, background: 'linear-gradient(135deg,#FFE156,#FFDAC1)', color: '#333', fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', textDecoration: 'none', boxSizing: 'border-box', textAlign: 'center' }}
-        >☕ 개발자에게 커피 한 잔 사주기</a>
-      </div>
+      )}
     </div>
     {cropFile && (
       <AvatarCropModal
