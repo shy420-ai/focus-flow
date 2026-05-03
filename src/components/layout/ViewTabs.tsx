@@ -87,6 +87,15 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z" fill="currentColor" fillOpacity=".2" />
     </svg>
   ) },
+  { id: 'team', label: '팀', icon: (
+    // group / community
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <circle cx="12" cy="8" r="3" fill="currentColor" fillOpacity=".25" />
+      <circle cx="6" cy="10" r="2.2" fill="currentColor" fillOpacity=".2" />
+      <circle cx="18" cy="10" r="2.2" fill="currentColor" fillOpacity=".2" />
+      <path d="M3 19c.5-3 3-4.5 5.5-4.5M21 19c-.5-3-3-4.5-5.5-4.5M8 20c.6-2.5 2.2-4 4-4s3.4 1.5 4 4" />
+    </svg>
+  ) },
 ]
 
 const ORDER_KEY = 'ff_tab_order'
@@ -103,7 +112,7 @@ function loadHidden(): CurView[] {
 
 // Tabs that only appear when dev mode is enabled. Keeps unfinished
 // experiments out of regular users' navigation.
-const DEV_ONLY: CurView[] = []
+const DEV_ONLY: CurView[] = ['team']
 
 function getOrderedTabs(order: CurView[], hidden: CurView[]) {
   const dev = isDevMode()

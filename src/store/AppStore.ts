@@ -10,7 +10,7 @@ import { nid } from '../lib/id'
 import { queue, registerCollect, registerHydrate } from '../lib/syncManager'
 import type { UserDoc } from '../lib/firestore'
 
-export type CurView = 'tl' | 'week' | 'habit' | 'goal' | 'drop' | 'cal' | 'stats' | 'friends' | 'mood' | 'tips'
+export type CurView = 'tl' | 'week' | 'habit' | 'goal' | 'drop' | 'cal' | 'stats' | 'friends' | 'mood' | 'tips' | 'team'
 
 interface AppState {
   blocks: Block[]
@@ -70,7 +70,7 @@ export const useAppStore = create<AppStore>()(
     displayName: null,
     skipLogin: !!localStorage.getItem('ff_skip_login'),
     curDate: logicalTodayStr(),
-    curView: (['tl','week','habit','goal','drop','cal','stats','friends','mood','tips'].includes(localStorage.getItem('ff_cur_view') || '') ? localStorage.getItem('ff_cur_view') as CurView : 'tl'),
+    curView: (['tl','week','habit','goal','drop','cal','stats','friends','mood','tips','team'].includes(localStorage.getItem('ff_cur_view') || '') ? localStorage.getItem('ff_cur_view') as CurView : 'tl'),
     recurring: loadInitialRecurring(),
     calY: now.getFullYear(),
     calM: now.getMonth(),
