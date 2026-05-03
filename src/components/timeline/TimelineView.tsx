@@ -259,6 +259,10 @@ export function TimelineView() {
       {/* 일간 설정 시트 — DateNav 의 ⚙ 버튼이 ff-tl-settings-open 이벤트로 트리거 */}
       {tlSettingsOpen && <TimelineSettings onClose={() => setTlSettingsOpen(false)} />}
 
+      {/* 위 카드 = 'off' 면 DateNav 와 그리드 사이 간격이 너무 좁아 답답해서
+          최소 14px 의 숨 쉴 공간을 항상 확보. */}
+      {widgetPref === 'off' && <div style={{ height: 14 }} />}
+
       {/* 일간 위젯 — 설정에서 사주 / 오늘의 팁 / 없음 토글 */}
       {widgetPref === 'tip' ? (
         <DailyTipCard />
