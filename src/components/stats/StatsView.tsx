@@ -103,33 +103,67 @@ function MedSetup({ onClose }: { onClose: () => void }) {
       <div style={{ background: '#fff', borderRadius: '20px 20px 0 0', padding: 20, width: '100%', maxWidth: 480, maxHeight: '85vh', overflowY: 'auto' }}>
         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--pd)', marginBottom: 14, textAlign: 'center' }}>💊 약 설정</div>
 
-        {/* Existing meds */}
+        {/* Existing meds — 아침/점심/저녁/수시 별로 분리해서 표시 */}
         {meds.length > 0 && (
           <div style={{ marginBottom: 14 }}>
-            {meds.map((m) => {
-              const db = MED_DB.find((d) => d.name === m.name)
-              const cc = CAT_COLORS[db?.cat || ''] || 'var(--pink)'
+            {(['아침', '점심', '저녁', '수시'] as const).map((slot) => {
+              const slotMeds = meds.filter((m) => m.timing === slot)
+              if (slotMeds.length === 0) return null
+              const slotEmoji = slot === '아침' ? '☀️' : slot === '점심' ? '🍱' : slot === '저녁' ? '🌙' : '⏱'
               return (
-                <div key={m.name + m.timing} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--pl)', borderRadius: 10, marginBottom: 6 }}>
-                  {db && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: cc, color: '#fff' }}>{db.cat}</span>}
-                  <span style={{ flex: 1, fontSize: 13, color: 'var(--pd)', fontWeight: 600 }}>{m.name} {m.dose} ({m.timing} · {m.duration}h)</span>
-                  <button onClick={() => removeMed(m.name, m.timing)} style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 24, height: 24, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                <div key={slot} style={{ marginBottom: 8 }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: '#888', marginBottom: 4, letterSpacing: -0.2 }}>
+                    {slotEmoji} {slot}
+                  </div>
+                  {slotMeds.map((m) => {
+                    const db = MED_DB.find((d) => d.name === m.name)
+                    const cc = CAT_COLORS[db?.cat || ''] || 'var(--pink)'
+                    return (
+                      <div key={m.name + m.timing} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', background: 'var(--pl)', borderRadius: 10, marginBottom: 4 }}>
+                        {db && <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: cc, color: '#fff' }}>{db.cat}</span>}
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--pd)', fontWeight: 600 }}>{m.name} {m.dose} <span style={{ fontSize: 10, color: '#999', fontWeight: 500 }}>· {m.duration}h</span></span>
+                        <button onClick={() => removeMed(m.name, m.timing)} style={{ background: '#FFF0F0', border: 'none', color: '#E24B4A', borderRadius: 6, width: 24, height: 24, cursor: 'pointer', fontSize: 12 }}>✕</button>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             })}
           </div>
         )}
 
-        {/* DB Quick select */}
+        {/* DB Quick select — 색상 의미 범례 + 카테고리별 그룹화 */}
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💊 약 빠른 선택</div>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
-          {MED_DB.map((m) => (
-            <button key={m.name + m.timing} onClick={() => handleSelectDb(m)}
-              style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid ' + CAT_COLORS[m.cat], background: selectedDb?.name === m.name && selectedDb?.timing === m.timing ? CAT_COLORS[m.cat] : '#fff', color: selectedDb?.name === m.name && selectedDb?.timing === m.timing ? '#fff' : CAT_COLORS[m.cat], fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
-              {m.name}
-            </button>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+          {(Object.keys(CAT_COLORS) as (keyof typeof CAT_COLORS)[]).map((cat) => (
+            <span key={cat} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 3,
+              fontSize: 9, fontWeight: 700, color: CAT_COLORS[cat],
+              padding: '2px 6px', borderRadius: 4,
+              border: '1px solid ' + CAT_COLORS[cat],
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: CAT_COLORS[cat] }} />
+              {cat}
+            </span>
           ))}
         </div>
+        {(['ADHD', '항우울', '기분조절', '항정신병', '항불안', '수면'] as const).map((cat) => {
+          const inCat = MED_DB.filter((m) => m.cat === cat)
+          if (inCat.length === 0) return null
+          return (
+            <div key={cat} style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: CAT_COLORS[cat], marginBottom: 4 }}>{cat}</div>
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                {inCat.map((m) => (
+                  <button key={m.name + m.timing} onClick={() => handleSelectDb(m)}
+                    style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid ' + CAT_COLORS[m.cat], background: selectedDb?.name === m.name && selectedDb?.timing === m.timing ? CAT_COLORS[m.cat] : '#fff', color: selectedDb?.name === m.name && selectedDb?.timing === m.timing ? '#fff' : CAT_COLORS[m.cat], fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>
+                    {m.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
+        })}
         {selectedDb && (
           <div style={{ background: 'var(--pl)', borderRadius: 10, padding: 10, marginBottom: 10, fontSize: 11, color: '#555', lineHeight: 1.7 }}>
             <div><b>{selectedDb.name}</b> — {selectedDb.generic}</div>
