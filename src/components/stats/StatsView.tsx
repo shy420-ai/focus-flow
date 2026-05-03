@@ -321,34 +321,78 @@ function InsightsCard() {
   const bmiLabel = bmi == null ? null
     : bmi < 18.5 ? '저체중' : bmi < 23 ? '정상' : bmi < 25 ? '과체중' : '비만'
 
-  // 약별 권장 시각 계산
+  // 약별 권장 시각 — 각 약의 duration·peak·timing·note·name 을 모두 고려.
   const recs = meds.map((m) => {
     const db = MED_DB.find((d) => d.name === m.name)
     if (!db) return null
     let when: string
     let reason: string
-    if (db.cat === 'ADHD' && db.duration < 24) {
-      // 자극제: 효과 종료가 취침 6시간 전이어야 수면 방해 X
+
+    // 카테고리·timing·duration·name 조합으로 개별 약 맞춤 권장
+    const isStimShort = db.cat === 'ADHD' && db.duration < 24  // 자극제 단기형
+    const isStimLong = db.cat === 'ADHD' && db.duration >= 24  // 누적형 ADHD (스트라테라·인튜니브 등)
+    const isSleep = db.cat === '수면'
+    const isAntipsych = db.cat === '항정신병'
+    const isAntidep = db.cat === '항우울'
+    const isMood = db.cat === '기분조절'
+    const isAnxiolytic = db.cat === '항불안'
+
+    if (isStimShort) {
+      // 자극제(콘서타·메디키넷·페니드 등): 효과 종료가 취침 6h 전이어야 수면 방해 X
       const endByH = bedGoal - 6
       const latestTake = endByH - db.duration
-      const take = Math.max(wakeGoal, Math.min(latestTake, wakeGoal + 1))
-      when = fmtHM(take)
-      reason = `효과 ${fmtHM(take + db.duration)} 종료 → 취침 ${bedGoal}시까지 ${Math.max(0, bedGoal - (take + db.duration))}시간 여유`
-    } else if (db.cat === '수면' || db.cat === '항정신병') {
-      // 수면 유도: 취침 30분 전
+      const ideal = Math.min(latestTake, wakeGoal + 0.5)  // 기상 후 30분 이내가 이상적
+      const take = Math.max(wakeGoal, ideal)
+      const endTime = take + db.duration
+      const buffer = bedGoal - endTime
+      when = fmtHM(take) + ' (식후)'
+      if (db.duration <= 5) {
+        reason = `${db.peak} 빠른 효과·짧음 (${db.duration}h) — 필요 시 ${fmtHM(take + db.duration)} 추가 복용`
+      } else {
+        reason = `효과 ${fmtHM(endTime)} 종료 — 취침 ${bedGoal}시까지 ${buffer.toFixed(1)}h 여유`
+      }
+    } else if (isStimLong) {
+      // 누적형 ADHD 약 (스트라테라·아토목세틴·인튜니브)
+      const isEvening = db.timing === '저녁'
+      const take = isEvening ? bedGoal - 1 : wakeGoal + 0.5
+      when = fmtHM(take) + (isEvening ? ' (취침 1h 전)' : ' (기상 직후 식후)')
+      reason = `누적형 ${db.duration}h · ${db.peak} — 매일 같은 시각 복용 (효과는 2~4주 후)`
+    } else if (isSleep) {
+      // 졸피뎀류
       const take = bedGoal - 0.5
       when = fmtHM(take)
-      reason = `취침 ${bedGoal}시 30분 전 — 수면 유도`
-    } else if (db.cat === '항우울' || db.cat === '기분조절') {
-      // SSRI/SNRI/기분조절: 아침 식후
-      when = `${wakeGoal}~${wakeGoal + 1}시 (식후)`
-      reason = '대부분 24시간 누적형 — 아침 일정 시간에 매일'
-    } else if (db.cat === '항불안') {
-      when = '필요할 때'
-      reason = '의존성 위험 — 매일 X, 증상 있을 때만'
+      reason = `취침 ${bedGoal}시 30분 전 — 7~8h 수면 확보 후 다음 날 영향 X`
+    } else if (isAntipsych) {
+      // 세로켈/아빌리파이
+      if (db.timing === '저녁') {
+        const take = bedGoal - 1
+        when = fmtHM(take)
+        reason = `취침 1h 전 — 졸림 효과로 수면 보조`
+      } else {
+        when = fmtHM(wakeGoal + 0.5) + ' (식후)'
+        reason = `누적 ${db.duration}h — 매일 같은 시각 (반감기 길어 안정적)`
+      }
+    } else if (isAntidep) {
+      // SSRI/SNRI / 부프로피온 / 미르타자핀 등
+      const isEvening = db.timing === '저녁'
+      const take = isEvening ? bedGoal - 0.5 : wakeGoal + 0.5
+      when = fmtHM(take) + (isEvening ? ' (취침 30분 전)' : ' (식후)')
+      const isInsomniaRisk = /(부프로피온|sertraline|에스시탈로프람)/i.test(db.generic) || db.sides.some((s) => s.includes('불면'))
+      reason = isEvening
+        ? '졸림 부작용 → 저녁 복용 (취침 보조)'
+        : isInsomniaRisk ? '아침 복용 권장 — 저녁 X (불면 부작용)' : '대부분 누적형 — 아침에 매일 같은 시각'
+    } else if (isMood) {
+      // 라믹탈·리튬·데파코트
+      const isEvening = db.timing === '저녁'
+      const take = isEvening ? bedGoal - 1 : wakeGoal + 0.5
+      when = fmtHM(take) + (isEvening ? '' : ' (식후)')
+      reason = `누적 ${db.duration}h · ${db.peak} — 매일 같은 시각 (혈중농도 안정 중요)`
+    } else if (isAnxiolytic) {
+      when = '필요할 때만'
+      reason = `의존성 위험 — 매일 X. 증상(불안·공황) 있을 때 ${db.peak}로 빠른 효과`
     } else {
       when = m.timing || '?'
-      reason = ''
+      reason = `${db.duration}h 지속 · ${db.peak}`
     }
     return { name: m.name, dose: m.dose, when, reason, cat: db.cat }
   }).filter(Boolean) as Array<{ name: string; dose: string; when: string; reason: string; cat: string }>
