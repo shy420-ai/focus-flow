@@ -582,7 +582,8 @@ export function TimelineView() {
                 pointerEvents: 'none',
                 zIndex: 50,
                 fontSize: 11, color: 'var(--pd)', fontWeight: 700,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 2,
               }}
             >
               {(() => {
@@ -593,7 +594,12 @@ export function TimelineView() {
                 const eMM = Math.round((eh - eHH) * 60)
                 const fmt = (h: number, m: number) => `${h}:${String(m).padStart(2, '0')}`
                 const totalMin = Math.round(dragPreview.durHour * 60)
-                return `${fmt(hh, mm)} – ${fmt(eHH, eMM)} (${totalMin}m)`
+                return (
+                  <>
+                    <span>{fmt(hh, mm)} – {fmt(eHH, eMM)} ({totalMin}m)</span>
+                    <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75 }}>↕ 끌어서 길이 · 손 떼면 만들기</span>
+                  </>
+                )
               })()}
             </div>
           )}

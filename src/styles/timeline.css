@@ -132,25 +132,21 @@
 .b-time { font-size: 10px; margin-top: 1px; opacity: 0.75; }
 .b-memo { font-size: 9px; margin-top: 1px; opacity: 0.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-/* Resize handle — bigger, more visible, double-bar pattern. */
+/* Resize handle — single visible bar. */
 .rh {
   position: absolute;
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
   width: 56px;
-  height: 18px;
+  height: 14px;
   cursor: ns-resize;
   z-index: 5;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  /* Make sure the touch target stays generous on mobile */
   touch-action: none;
 }
-.rh::before,
 .rh::after {
   content: '';
   display: block;
@@ -161,13 +157,16 @@
   box-shadow: 0 0 0 1px rgba(0,0,0,.08);
 }
 
-/* Block menu */
+/* Block menu — auto-grows downward when block is too short to fit */
 .block-menu {
   position: absolute;
   top: 0;
   left: 0;
   right: 40px;
-  bottom: 0;
+  /* drop bottom: 0 so the menu can extend past short blocks */
+  min-height: 100%;
+  padding: 8px 6px;
+  box-sizing: border-box;
   display: flex;
   gap: 6px;
   z-index: 200;
@@ -177,8 +176,9 @@
   flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  background: rgba(255,255,255,.92);
+  background: rgba(255,255,255,.95);
   border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
   backdrop-filter: blur(4px);
 }
 .block.menu-open .block-menu { opacity: 1; pointer-events: all; }
