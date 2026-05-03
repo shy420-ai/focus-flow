@@ -39,6 +39,15 @@ export function tipCategoryIcon(cat: TipCategory): ReactNode {
           <path d="M22 5h-7a3 3 0 0 0-3 3v13a2.2 2.2 0 0 1 2-2h8z" fill="currentColor" fillOpacity=".22" />
         </svg>
       )
+    case 'work':
+      // briefcase
+      return (
+        <svg {...baseProps}>
+          <rect x="3" y="7" width="18" height="13" rx="2" fill="currentColor" fillOpacity=".18" />
+          <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+          <path d="M3 13h18" opacity=".5" />
+        </svg>
+      )
     case 'mood':
       // brain (organic curves)
       return (

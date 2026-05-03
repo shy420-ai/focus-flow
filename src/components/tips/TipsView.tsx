@@ -12,7 +12,7 @@ import { showConfirm } from '../../lib/showConfirm'
 import { tipCategoryIcon } from './tipCategoryIcons'
 import type { AdhdTip, TipCategory } from '../../types/adhdTip'
 
-const CATS: TipCategory[] = ['bookmarks', 'start', 'study', 'mood', 'record', 'social', 'body', 'sleep', 'archive']
+const CATS: TipCategory[] = ['bookmarks', 'start', 'study', 'work', 'mood', 'record', 'social', 'body', 'sleep', 'archive']
 const ACTIVE_KEY = 'ff_tips_active_cat'
 
 function loadActive(): TipCategory {

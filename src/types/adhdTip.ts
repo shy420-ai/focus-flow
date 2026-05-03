@@ -2,6 +2,7 @@ export type TipCategory =
   | 'bookmarks' // ⭐ 북마크 (user-saved subset of curated tips)
   | 'start'     // 🎯 시작·집중
   | 'study'     // 🌀 학습
+  | 'work'      // 💼 업무
   | 'mood'      // 🧠 감정
   | 'record'    // 📝 기록
   | 'social'    // 👥 관계
