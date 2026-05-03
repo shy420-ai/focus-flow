@@ -84,14 +84,15 @@ function drawWatermark(ctx: CanvasRenderingContext2D, w: number, h: number, text
   ctx.fillText(stamp, x + padX, y + boxH / 2)
 }
 
-// Bottom caption — gradient overlay + white text, wraps to ≤2 lines.
+// Center caption — sticker-style white text dead-center on the photo.
+// Uses a heavy stroke + soft shadow so it stays readable on bright/dark
+// backgrounds without needing a gradient overlay.
 function drawCaption(ctx: CanvasRenderingContext2D, w: number, h: number, text: string): void {
   if (!text.trim()) return
-  const fontSize = Math.max(14, Math.round(Math.min(w, h) * 0.046))
-  const lineHeight = Math.round(fontSize * 1.35)
-  const margin = Math.round(fontSize * 0.9)
-  ctx.font = `700 ${fontSize}px ${KOREAN_FONT}`
-  // Wrap to lines (greedy by char to handle Korean correctly).
+  const fontSize = Math.max(18, Math.round(Math.min(w, h) * 0.062))
+  const lineHeight = Math.round(fontSize * 1.3)
+  const margin = Math.round(fontSize * 1.0)
+  ctx.font = `800 ${fontSize}px ${KOREAN_FONT}`
   const maxW = w - margin * 2
   const lines: string[] = []
   let cur = ''
@@ -107,30 +108,30 @@ function drawCaption(ctx: CanvasRenderingContext2D, w: number, h: number, text: 
   }
   if (lines.length < 2 && cur) lines.push(cur)
   if (lines.length === 2 && cur && cur !== lines[1]) {
-    // truncate trailing if more text remained
     let last = lines[1]
     while (ctx.measureText(last + '…').width > maxW && last.length > 1) last = last.slice(0, -1)
     lines[1] = last + '…'
   }
 
-  const totalH = lineHeight * lines.length
-  const gradH = totalH + margin * 2
-  const grad = ctx.createLinearGradient(0, h - gradH, 0, h)
-  grad.addColorStop(0, 'rgba(0,0,0,0)')
-  grad.addColorStop(1, 'rgba(0,0,0,.7)')
-  ctx.fillStyle = grad
-  ctx.fillRect(0, h - gradH, w, gradH)
-
-  ctx.fillStyle = '#fff'
   ctx.textAlign = 'center'
-  ctx.textBaseline = 'alphabetic'
-  ctx.shadowColor = 'rgba(0,0,0,.5)'
-  ctx.shadowBlur = 4
+  ctx.textBaseline = 'middle'
+  // Dark stroke + drop shadow → readable on any backdrop, no gradient needed.
+  ctx.lineJoin = 'round'
+  ctx.miterLimit = 2
+  ctx.lineWidth = Math.max(3, Math.round(fontSize * 0.18))
+  ctx.strokeStyle = 'rgba(0,0,0,.6)'
+  ctx.shadowColor = 'rgba(0,0,0,.45)'
+  ctx.shadowBlur = 6
+  ctx.fillStyle = '#fff'
+  const cy = h / 2
+  const startY = cy - ((lines.length - 1) * lineHeight) / 2
   lines.forEach((line, i) => {
-    const y = h - margin - (lines.length - 1 - i) * lineHeight
+    const y = startY + i * lineHeight
+    ctx.strokeText(line, w / 2, y)
     ctx.fillText(line, w / 2, y)
   })
   ctx.shadowBlur = 0
+  ctx.lineWidth = 1
 }
 
 // Format current time for the watermark stamp: "5/4 (월) 02:13"
