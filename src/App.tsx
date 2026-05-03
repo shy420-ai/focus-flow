@@ -23,6 +23,7 @@ import { MoodAnnouncement } from './components/ui/MoodAnnouncement'
 import { TipsAnnouncement } from './components/ui/TipsAnnouncement'
 import { Confetti } from './components/ui/Confetti'
 import { useAppStore } from './store/AppStore'
+import { todayStr, addDays } from './lib/date'
 import { useAuthState } from './hooks/useAuthState'
 import { useFirestoreSync } from './hooks/useFirestoreSync'
 import { installFriendCodeDebug } from './lib/debugFriendCodes'
@@ -69,6 +70,30 @@ function AppContent() {
     window.__ffShowOnboarding = () => setShowOnboarding(true)
     installFriendCodeDebug()
   }, [setShowOnboarding])
+
+  // Roll curDate over at midnight so a user with the app open across
+  // 23:59 → 00:00 lands on the new day automatically. Only auto-rolls
+  // when the user is parked on the previous "today" — if they were
+  // navigating a past or future date, leave them alone.
+  useEffect(() => {
+    function check() {
+      const now = todayStr()
+      const state = useAppStore.getState()
+      // If curDate equals "yesterday" (relative to wall clock), it
+      // means the user was on what was today and crossed midnight.
+      const cur = state.curDate
+      if (cur !== now) {
+        const yesterday = addDays(now, -1)
+        if (cur === yesterday) state.setCurDate(now)
+      }
+    }
+    // Tick every minute — cheap, and catches the rollover quickly.
+    const id = setInterval(check, 60_000)
+    // Also run once on tab refocus (sleep/wake gap).
+    function onVis() { if (!document.hidden) check() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis) }
+  }, [])
 
   useEffect(() => {
     function onBlockDone(e: Event) {
