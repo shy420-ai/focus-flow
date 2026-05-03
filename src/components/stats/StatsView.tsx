@@ -379,9 +379,11 @@ function TimelineHealthView() {
       : logs.find((l) => l.date === today && l.type === 'take' && l.timing === timing)
 
     let plannedH: number
-    if (timing === '아침') plannedH = wakeH + 0.5
-    else if (timing === '점심') plannedH = 12
-    else if (timing === '저녁') {
+    if (timing === '아침') plannedH = wakeH + 0.5  // 실제 기상 +30분
+    else if (timing === '점심') {
+      // 깨어있는 시간 중간 — 너무 일찍 일어났으면 12시 기본, 늦게 일어났으면 그 이후
+      plannedH = Math.max(12, wakeH + 4)
+    } else if (timing === '저녁') {
       const hasSleepy = groupMeds.some((m) => {
         const db = MED_DB.find((d) => d.name === m.name)
         return db && (db.cat === '수면' || db.cat === '항정신병')
@@ -517,12 +519,25 @@ function TimelineHealthView() {
       {actionMsg && (
         <div style={{
           background: 'linear-gradient(135deg, var(--pink), color-mix(in srgb, var(--pink) 80%, #fff))',
-          color: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 12,
+          color: '#fff', borderRadius: 14, padding: '14px 16px', marginBottom: 8,
           fontSize: 12, fontWeight: 700, lineHeight: 1.6,
         }}>
           🎯 {actionMsg}
         </div>
       )}
+
+      {/* 오늘 깨어있는 시간 안내 — 기상이 기록되면 명시적으로 보여줌 */}
+      {wakeActualH != null && (() => {
+        const awakeH = bedGoal > wakeH ? bedGoal - wakeH : (24 - wakeH) + bedGoal
+        return (
+          <div style={{
+            background: 'var(--pl)', borderRadius: 10, padding: '8px 12px',
+            marginBottom: 12, fontSize: 11, color: 'var(--pd)', fontWeight: 600, lineHeight: 1.5,
+          }}>
+            ☀️ 기상 {fmtHM(wakeH)} → 🌙 목표 취침 {fmtHM(bedGoal)} = <b>{awakeH.toFixed(1)}시간 활동</b>
+          </div>
+        )
+      })()}
       <div style={{ position: 'relative', paddingLeft: 14 }}>
         {/* vertical guide line */}
         <div style={{ position: 'absolute', left: 7, top: 8, bottom: 8, width: 2, background: 'var(--pl)' }} />
