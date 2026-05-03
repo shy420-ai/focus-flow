@@ -3,7 +3,7 @@
 // whole point is "low pressure body doubling for ADHD".
 import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/AppStore'
-import { TEAMS, listenTeam, postCheckin, toggleHeart, type TeamId, type TeamPost } from '../../lib/teamCheckin'
+import { TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, type TeamId, type TeamPost, type ReactionEmoji } from '../../lib/teamCheckin'
 
 const ACTIVE_KEY = 'ff_team_active'
 const MAX_LEN = 80
@@ -54,12 +54,12 @@ export function TeamView() {
     }
   }
 
-  async function heart(postId: string) {
+  async function react(postId: string, emoji: ReactionEmoji) {
     if (!uid) return
     try {
-      await toggleHeart(active, postId, uid)
+      await toggleReaction(active, postId, uid, emoji)
     } catch (e) {
-      console.error('toggleHeart failed', e)
+      console.error('toggleReaction failed', e)
     }
   }
 
@@ -147,7 +147,6 @@ export function TeamView() {
       ) : (
         posts.map((p) => {
           const mine = p.uid === uid
-          const liked = !!uid && p.hearts.includes(uid)
           return (
             <div key={p.id} style={{
               background: '#fff', borderRadius: 12, padding: '10px 12px', marginBottom: 6,
@@ -160,21 +159,35 @@ export function TeamView() {
                 </span>
                 <span style={{ fontSize: 10, color: '#aaa', fontWeight: 600 }}>{relTs(p.ts)}</span>
               </div>
-              <div style={{ fontSize: 13, color: 'var(--pd)', lineHeight: 1.5, marginBottom: 6 }}>{p.text}</div>
-              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button
-                  onClick={() => heart(p.id)}
-                  disabled={!uid}
-                  style={{
-                    background: 'none', border: 'none', cursor: uid ? 'pointer' : 'default',
-                    fontSize: 12, padding: '2px 6px', color: liked ? 'var(--pink)' : '#bbb',
-                    fontFamily: 'inherit', fontWeight: 700,
-                    display: 'inline-flex', alignItems: 'center', gap: 3,
-                  }}
-                >
-                  <span style={{ fontSize: 14 }}>{liked ? '♥' : '♡'}</span>
-                  {p.hearts.length > 0 && <span>{p.hearts.length}</span>}
-                </button>
+              <div style={{ fontSize: 13, color: 'var(--pd)', lineHeight: 1.5, marginBottom: 8 }}>{p.text}</div>
+              {/* Anonymous reactions — only counts shown, never uids */}
+              <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                {REACTIONS.map((emoji) => {
+                  const uids = p.reactions[emoji] ?? []
+                  const count = uids.length
+                  const mineReacted = !!uid && uids.includes(uid)
+                  return (
+                    <button
+                      key={emoji}
+                      onClick={() => react(p.id, emoji)}
+                      disabled={!uid}
+                      style={{
+                        background: mineReacted ? 'color-mix(in srgb, var(--pink) 18%, #fff)' : '#fafafa',
+                        border: '1.5px solid ' + (mineReacted ? 'var(--pink)' : 'transparent'),
+                        cursor: uid ? 'pointer' : 'default',
+                        padding: '3px 8px', borderRadius: 99,
+                        fontSize: 12, fontFamily: 'inherit', fontWeight: 700,
+                        color: mineReacted ? 'var(--pd)' : '#888',
+                        display: 'inline-flex', alignItems: 'center', gap: 3,
+                        lineHeight: 1,
+                        transition: 'background .15s, border-color .15s',
+                      }}
+                    >
+                      <span style={{ fontSize: 13 }}>{emoji}</span>
+                      {count > 0 && <span style={{ fontSize: 11 }}>{count}</span>}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )
