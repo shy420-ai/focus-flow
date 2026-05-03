@@ -8,6 +8,7 @@ import {
   type TeamId, type TeamPost, type ReactionEmoji,
 } from '../../lib/teamCheckin'
 import { compressImage, uploadTeamPhoto, watermarkStamp } from '../../lib/teamStorage'
+import { CameraCaptureModal } from './CameraCaptureModal'
 
 const ACTIVE_KEY = 'ff_team_active'
 const MAX_LEN = 80
@@ -46,6 +47,7 @@ export function TeamView() {
   const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
   const [lightbox, setLightbox] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
+  const [cameraOpen, setCameraOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const feedRef = useRef<HTMLDivElement>(null)
   const photoPreview = useMemo(
@@ -74,7 +76,11 @@ export function TeamView() {
   const meta = TEAMS.find((t) => t.id === active) ?? TEAMS[0]
   const myNick = displayName || (uid ? 'ADHD-' + uid.slice(0, 4) : '익명')
 
-  function pickPhoto() { fileInputRef.current?.click() }
+  function openCamera() { setCameraOpen(true) }
+  function pickFromGallery() {
+    setCameraOpen(false)
+    fileInputRef.current?.click()
+  }
   function clearPhoto() {
     setPhotoFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -394,9 +400,9 @@ export function TeamView() {
         )}
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
           <button
-            onClick={pickPhoto}
+            onClick={openCamera}
             disabled={posting}
-            title="카메라"
+            title="무음 카메라"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
               padding: 8, lineHeight: 0, color: accent, fontFamily: 'inherit', flexShrink: 0,
@@ -441,7 +447,6 @@ export function TeamView() {
           ref={fileInputRef}
           type="file"
           accept="image/*"
-          capture="environment"
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]
@@ -449,6 +454,19 @@ export function TeamView() {
           }}
         />
       </div>
+
+      {/* Silent camera modal */}
+      {cameraOpen && (
+        <CameraCaptureModal
+          onCapture={(blob) => {
+            const file = new File([blob], 'capture.jpg', { type: 'image/jpeg' })
+            setPhotoFile(file)
+            setCameraOpen(false)
+          }}
+          onCancel={() => setCameraOpen(false)}
+          onFallback={pickFromGallery}
+        />
+      )}
 
       {/* Lightbox — fullscreen photo viewer */}
       {lightbox && (
