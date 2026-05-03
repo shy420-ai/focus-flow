@@ -10,7 +10,7 @@ import {
 import { addDays } from '../../lib/date'
 
 const WEEK_LABELS = ['월', '화', '수', '목', '금', '토', '일']
-const FLOWERS = ['🌱', '🌿', '☘️', '🌷', '🌸', '🌺', '💐']
+const FLOWERS = ['🌱', '☘️', '🌿', '🌷', '🌸', '🌺', '💐']
 const FLOWER_NAMES = ['씨앗', '새싹', '줄기', '봉오리', '개화', '만개', '완성!']
 const FLOWER_MSGS = [
   '시작이 반이야!',
