@@ -319,6 +319,14 @@ export function PomoFab() {
       return next
     })
   }
+  function setBreakMin(m: number) {
+    setPomo((prev) => {
+      const isBreak = prev.phase === 'break'
+      const next: PomoState = { ...prev, breakMin: m, seconds: isBreak ? m * 60 : prev.seconds }
+      saveState(next)
+      return next
+    })
+  }
   function toggleAutoStart() {
     setPomo((prev) => {
       const next: PomoState = { ...prev, autoStart: !prev.autoStart }
@@ -603,19 +611,49 @@ export function PomoFab() {
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>☕ 짧은 휴식</span>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                <input
+                  type="number"
+                  min={1}
+                  max={60}
+                  value={pomo.breakMin}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value)
+                    if (v > 0 && v <= 60) setBreakMin(v)
+                  }}
+                  style={{ width: 38, padding: '3px 4px', borderRadius: 6, border: '1.5px solid #fff', fontSize: 11, textAlign: 'center', fontFamily: 'inherit', outline: 'none', fontWeight: 700, color: 'var(--pd)' }}
+                />
+                <span style={{ fontSize: 10, color: 'var(--pd)', fontWeight: 700 }}>분</span>
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 6, flexWrap: 'wrap' }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🌿 큰 휴식</span>
-              <div style={{ display: 'flex', gap: 4 }}>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                 {[15, 20, 30].map((m) => (
                   <button key={m}
                     onClick={() => setLongBreakMin(m)}
                     style={{
-                      padding: '3px 8px', borderRadius: 6,
+                      padding: '3px 7px', borderRadius: 6,
                       border: 'none', cursor: 'pointer', fontFamily: 'inherit',
                       background: pomo.longBreakMin === m ? 'var(--pink)' : '#fff',
                       color: pomo.longBreakMin === m ? '#fff' : 'var(--pd)',
                       fontSize: 10, fontWeight: 700,
                     }}>{m}m</button>
                 ))}
+                <input
+                  type="number"
+                  min={1}
+                  max={120}
+                  value={[15, 20, 30].includes(pomo.longBreakMin) ? '' : pomo.longBreakMin}
+                  placeholder="기타"
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value)
+                    if (v > 0 && v <= 120) setLongBreakMin(v)
+                  }}
+                  style={{ width: 42, padding: '3px 4px', borderRadius: 6, border: '1.5px solid #fff', fontSize: 11, textAlign: 'center', fontFamily: 'inherit', outline: 'none', fontWeight: 700, color: 'var(--pd)' }}
+                />
+                <span style={{ fontSize: 10, color: 'var(--pd)', fontWeight: 700 }}>분</span>
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
