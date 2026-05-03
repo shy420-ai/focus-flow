@@ -473,14 +473,15 @@ function MorningTab() {
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>☀️ 아침약 가이드</div>
           {morningMeds.map((m) => {
             const db = MED_DB.find((d) => d.name === m.name)
-            if (!db || db.duration >= 24) return null
+            if (!db) return null
             const take = todayMorningTake
+            const isLongActing = db.duration >= 24
             return (
               <div key={m.name} style={{ marginBottom: 8, padding: '6px 10px', background: 'var(--pl)', borderRadius: 8 }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--pd)', marginBottom: 4 }}>{m.name}</div>
                 {db.note && <div style={{ fontSize: 11, color: '#555', marginBottom: 4 }}>📌 {db.note}</div>}
-                <div style={{ fontSize: 11, color: '#888' }}>⏱ 효과 지속 약 {db.duration}시간</div>
-                {take ? (
+                <div style={{ fontSize: 11, color: '#888' }}>⏱ 효과 지속 약 {db.duration}시간{isLongActing && ' · 누적형(장기)'}</div>
+                {!isLongActing && take && (
                   <>
                     <div style={{ fontSize: 11, color: '#EF9F27' }}>
                       🟡 {Math.floor(take.time! + db.duration * 0.7)}:{String(Math.round(((take.time! + db.duration * 0.7) % 1) * 60)).padStart(2, '0')}쯤 효과 줄어들기 시작
@@ -489,7 +490,8 @@ function MorningTab() {
                       🔴 {Math.floor(take.time! + db.duration)}:{String(Math.round(((take.time! + db.duration) % 1) * 60)).padStart(2, '0')}쯤 효과 종료
                     </div>
                   </>
-                ) : (
+                )}
+                {!isLongActing && !take && (
                   <div style={{ fontSize: 11, color: '#aaa' }}>💡 복용하면 약발 떨어지는 시간 알려줄게</div>
                 )}
               </div>
