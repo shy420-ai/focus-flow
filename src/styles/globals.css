@@ -1,4 +1,20 @@
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  /* Suppress the OS text-selection magnifier / "복사 / 공유" toolbar
+   * when long-pressing on the app. Inputs, textareas, and the
+   * .selectable opt-in below restore normal selection. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+input, textarea, [contenteditable="true"], .selectable {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
 html { overflow-x: hidden; width: 100%; background: var(--pl); }
 :root {
   --app-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
