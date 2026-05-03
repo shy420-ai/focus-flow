@@ -1,26 +1,38 @@
-// Team check-in feed (dev mode preview). Chat-room style — each team has
-// its own color theme, bubbles are oldest-on-top / newest-on-bottom with
-// auto-scroll, real-time via onSnapshot, photo attach optional.
+// Team check-in chatroom (dev preview). Each team is its own colored
+// 단톡방 — KakaoTalk-style bubbles, avatars, anonymous reactions, photo
+// capture with timestamp watermark, daily streak badges.
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAppStore } from '../../store/AppStore'
-import { TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, type TeamId, type TeamPost, type ReactionEmoji } from '../../lib/teamCheckin'
+import {
+  TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, streakBadge,
+  type TeamId, type TeamPost, type ReactionEmoji,
+} from '../../lib/teamCheckin'
 import { compressImage, uploadTeamPhoto, watermarkStamp } from '../../lib/teamStorage'
 
 const ACTIVE_KEY = 'ff_team_active'
 const MAX_LEN = 80
+const GROUP_GAP_MS = 2 * 60 * 1000  // sender breaks if last msg > 2 min ago
 
 function loadActive(): TeamId {
   const v = localStorage.getItem(ACTIVE_KEY)
   return TEAMS.find((t) => t.id === v) ? (v as TeamId) : 'job'
 }
 
-function relTs(ts: number): string {
-  const diff = Date.now() - ts
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return '방금'
-  if (m < 60) return m + '분 전'
-  const h = Math.floor(m / 60)
-  return h + '시간 전'
+function clockTime(ts: number): string {
+  const d = new Date(ts)
+  const h = d.getHours()
+  const m = String(d.getMinutes()).padStart(2, '0')
+  const ampm = h < 12 ? '오전' : '오후'
+  const h12 = h % 12 || 12
+  return `${ampm} ${h12}:${m}`
+}
+
+// Hash nickname to pick one of a few muted avatar tints. Stable per user.
+function avatarColor(nick: string): string {
+  const palette = ['#7AB7E8', '#9DC79E', '#E0A87B', '#C49AD9', '#E8A0B8', '#9BC7C4']
+  let h = 0
+  for (let i = 0; i < nick.length; i++) h = (h * 31 + nick.charCodeAt(i)) | 0
+  return palette[Math.abs(h) % palette.length]
 }
 
 export function TeamView() {
@@ -31,10 +43,10 @@ export function TeamView() {
   const [text, setText] = useState('')
   const [posting, setPosting] = useState(false)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [reactionPickerFor, setReactionPickerFor] = useState<string | null>(null)
+  const [lightbox, setLightbox] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const feedEndRef = useRef<HTMLDivElement>(null)
-  // Derive preview URL via memo (not state) so we don't write state in an
-  // effect — the eslint react-hooks/set-state-in-effect rule forbids that.
+  const feedRef = useRef<HTMLDivElement>(null)
   const photoPreview = useMemo(
     () => (photoFile ? URL.createObjectURL(photoFile) : null),
     [photoFile],
@@ -43,18 +55,16 @@ export function TeamView() {
   useEffect(() => {
     localStorage.setItem(ACTIVE_KEY, active)
     const unsub = listenTeam(active, (d) => {
-      // Oldest on top, newest at bottom — chat-room order.
       setPosts([...d.posts].sort((a, b) => a.ts - b.ts))
     })
     return () => unsub()
   }, [active])
 
-  // Auto-scroll to bottom when new messages arrive (chat behavior).
   useEffect(() => {
-    feedEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+    // Auto-scroll feed to bottom on new message / team switch.
+    feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: 'smooth' })
   }, [posts.length, active])
 
-  // Clean up the preview blob URL when the file changes / unmounts.
   useEffect(() => {
     if (!photoPreview) return
     return () => URL.revokeObjectURL(photoPreview)
@@ -63,9 +73,7 @@ export function TeamView() {
   const meta = TEAMS.find((t) => t.id === active) ?? TEAMS[0]
   const myNick = displayName || (uid ? 'ADHD-' + uid.slice(0, 4) : '익명')
 
-  function pickPhoto() {
-    fileInputRef.current?.click()
-  }
+  function pickPhoto() { fileInputRef.current?.click() }
   function clearPhoto() {
     setPhotoFile(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
@@ -78,7 +86,6 @@ export function TeamView() {
     try {
       let photoUrl: string | undefined
       if (photoFile) {
-        // Burn current time into the photo so screenshots can't be reused.
         const compressed = await compressImage(photoFile, 800, 0.7, watermarkStamp())
         const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
         photoUrl = await uploadTeamPhoto(active, tempId, compressed)
@@ -96,6 +103,7 @@ export function TeamView() {
 
   async function react(postId: string, emoji: ReactionEmoji) {
     if (!uid) return
+    setReactionPickerFor(null)
     try {
       await toggleReaction(active, postId, uid, emoji)
     } catch (e) {
@@ -103,31 +111,13 @@ export function TeamView() {
     }
   }
 
-  // Per-team color theme — banner / bubble accents / send button.
   const accent = meta.color
   const bgSoft = meta.bgSoft
 
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px' }}>
-      {/* Team header — banner color matches team */}
-      <div style={{
-        background: `linear-gradient(135deg, ${bgSoft} 0%, #fff 100%)`,
-        borderRadius: 18, padding: '14px 18px', marginBottom: 10,
-        borderLeft: `4px solid ${accent}`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 20 }}>{meta.emoji}</span>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, color: 'var(--pd)', fontWeight: 800 }}>
-              팀 {meta.label} 단톡방 <span style={{ fontSize: 10, color: '#888', fontWeight: 600 }}>(베타)</span>
-            </div>
-            <div style={{ fontSize: 10, color: '#888', marginTop: 1 }}>익명 인증 · 24h 후 사라짐</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Team chips */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 10, paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
+    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)' }}>
+      {/* Team chips — segment-style */}
+      <div style={{ display: 'flex', gap: 4, padding: '8px 0 6px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', flexShrink: 0 }}>
         {TEAMS.map((t) => {
           const on = active === t.id
           return (
@@ -136,135 +126,218 @@ export function TeamView() {
               onClick={() => setActive(t.id)}
               style={{
                 flexShrink: 0,
-                padding: '7px 14px', borderRadius: 99,
-                border: '1.5px solid ' + (on ? t.color : '#eee'),
-                background: on ? `color-mix(in srgb, ${t.color} 14%, #fff)` : '#fff',
-                color: on ? t.color : '#888',
-                fontSize: 12, fontWeight: on ? 700 : 600, cursor: 'pointer',
+                padding: '6px 12px', borderRadius: 99,
+                border: 'none',
+                background: on ? t.color : '#f3f3f3',
+                color: on ? '#fff' : '#777',
+                fontSize: 12, fontWeight: 700, cursor: 'pointer',
                 fontFamily: 'inherit', whiteSpace: 'nowrap',
-                display: 'inline-flex', alignItems: 'center', gap: 6,
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                transition: 'background .15s',
               }}
             >
-              <span>{t.emoji}</span>
-              <span style={{ color: on ? 'var(--pd)' : '#666' }}>{t.label}</span>
+              <span style={{ fontSize: 13 }}>{t.emoji}</span>
+              <span>{t.label}</span>
             </button>
           )
         })}
       </div>
 
-      {/* Chat feed — oldest on top, newest at bottom. Fixed-ish height
-          with internal scroll so the composer stays anchored. */}
-      <div style={{
-        background: bgSoft,
-        borderRadius: 14, padding: 10, marginBottom: 8,
-        minHeight: 220, maxHeight: 'calc(100vh - 360px)', overflowY: 'auto',
-        WebkitOverflowScrolling: 'touch',
-        border: '1px solid color-mix(in srgb, ' + accent + ' 25%, #fff)',
-      }}>
+      {/* Sub header — minimal info line */}
+      <div style={{ fontSize: 10, color: '#aaa', textAlign: 'center', padding: '4px 0 8px', flexShrink: 0 }}>
+        익명 · 24h 후 사라짐 · 큰 대화 X
+      </div>
+
+      {/* Chat feed */}
+      <div
+        ref={feedRef}
+        style={{
+          background: bgSoft,
+          borderRadius: 16,
+          padding: '12px 10px',
+          flex: 1,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
+          display: 'flex', flexDirection: 'column', gap: 2,
+        }}
+      >
         {posts.length === 0 ? (
-          <div style={{ padding: '40px 16px', textAlign: 'center', color: '#999', fontSize: 12, lineHeight: 1.7 }}>
-            아직 오늘 인증한 사람이 없어<br />
-            <span style={{ fontSize: 10, color: '#bbb' }}>네가 첫 번째 인증자가 되어볼래?</span>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#999', fontSize: 12, lineHeight: 1.7, textAlign: 'center', padding: 24 }}>
+            <div style={{ fontSize: 36, marginBottom: 12, opacity: 0.5 }}>{meta.emoji}</div>
+            <div style={{ fontWeight: 600, color: '#666', marginBottom: 4 }}>아직 인증한 사람이 없어</div>
+            <div style={{ fontSize: 11, color: '#aaa' }}>첫 인증 한 줄 남겨봐</div>
           </div>
         ) : (
           posts.map((p, i) => {
             const mine = p.uid === uid
             const prev = i > 0 ? posts[i - 1] : null
-            // Show author label only when sender changes (chat threading style).
-            const showAuthor = !prev || prev.uid !== p.uid
-            const align = mine ? 'flex-end' : 'flex-start'
-            const bubbleBg = mine ? accent : '#fff'
-            const textColor = mine ? '#fff' : 'var(--pd)'
+            const next = i < posts.length - 1 ? posts[i + 1] : null
+            const newGroup = !prev || prev.uid !== p.uid || (p.ts - prev.ts) > GROUP_GAP_MS
+            const groupEnd = !next || next.uid !== p.uid || (next.ts - p.ts) > GROUP_GAP_MS
+            const reactionEntries = Object.entries(p.reactions).filter(([, uids]) => uids.length > 0)
+            const badge = streakBadge(p.streak ?? 0)
+            const isOpen = reactionPickerFor === p.id
+
             return (
-              <div key={p.id} style={{ display: 'flex', flexDirection: 'column', alignItems: align, marginBottom: 6 }}>
-                {showAuthor && !mine && (
-                  <div style={{ fontSize: 10, color: '#777', fontWeight: 700, marginBottom: 2, marginLeft: 8 }}>{p.nickname}</div>
+              <div key={p.id} style={{
+                display: 'flex',
+                flexDirection: mine ? 'row-reverse' : 'row',
+                alignItems: 'flex-end',
+                gap: 6,
+                marginTop: newGroup ? 10 : 1,
+              }}>
+                {/* Avatar — only for first message of a group, only for others */}
+                {!mine && (
+                  newGroup ? (
+                    <div style={{
+                      width: 32, height: 32, borderRadius: '50%',
+                      background: avatarColor(p.nickname),
+                      color: '#fff', fontSize: 12, fontWeight: 700,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                    }}>{p.nickname.slice(0, 1).toUpperCase()}</div>
+                  ) : (
+                    <div style={{ width: 32, flexShrink: 0 }} />
+                  )
                 )}
-                <div style={{
-                  maxWidth: '78%',
-                  background: bubbleBg, color: textColor,
-                  padding: p.photoUrl && !p.text ? 4 : '8px 12px',
-                  borderRadius: 14,
-                  borderTopRightRadius: mine ? 4 : 14,
-                  borderTopLeftRadius: mine ? 14 : 4,
-                  fontSize: 13, lineHeight: 1.5,
-                  boxShadow: mine ? 'none' : '0 1px 2px rgba(0,0,0,.04)',
-                  wordBreak: 'break-word',
-                  overflow: 'hidden',
-                }}>
-                  {p.photoUrl && (
-                    <img
-                      src={p.photoUrl}
-                      alt="인증 사진"
-                      style={{
-                        display: 'block', width: '100%', maxWidth: 240,
-                        borderRadius: 10, marginBottom: p.text ? 6 : 0,
-                      }}
-                      loading="lazy"
-                    />
+
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', maxWidth: '74%' }}>
+                  {/* Author + streak — only on first of group, only for others */}
+                  {newGroup && !mine && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 3, padding: '0 4px' }}>
+                      <span style={{ fontSize: 11, color: '#555', fontWeight: 700 }}>{p.nickname}</span>
+                      {badge && (
+                        <span style={{
+                          fontSize: 9, fontWeight: 800, color: '#fff', background: badge.color,
+                          padding: '1px 6px', borderRadius: 99, lineHeight: 1.4,
+                        }}>{badge.emoji} {badge.label}</span>
+                      )}
+                    </div>
                   )}
-                  {p.text && p.text !== '📷' && <div>{p.text}</div>}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2, padding: mine ? '0 4px 0 0' : '0 0 0 8px', flexDirection: mine ? 'row-reverse' : 'row' }}>
-                  <span style={{ fontSize: 9, color: '#aaa', fontWeight: 600 }}>{relTs(p.ts)}</span>
-                  {/* Reactions inline */}
-                  {REACTIONS.map((emoji) => {
-                    const uids = p.reactions[emoji] ?? []
-                    const count = uids.length
-                    const mineReacted = !!uid && uids.includes(uid)
-                    if (count === 0 && !mineReacted) {
-                      // Show empty button only on hover would be nice; for now keep all visible
-                      // but smaller until first reaction.
-                      return (
-                        <button
-                          key={emoji}
-                          onClick={() => react(p.id, emoji)}
-                          disabled={!uid}
+                  {newGroup && mine && badge && (
+                    <div style={{ marginBottom: 3, padding: '0 4px' }}>
+                      <span style={{
+                        fontSize: 9, fontWeight: 800, color: '#fff', background: badge.color,
+                        padding: '1px 6px', borderRadius: 99, lineHeight: 1.4,
+                      }}>{badge.emoji} {badge.label}</span>
+                    </div>
+                  )}
+
+                  {/* Bubble row — bubble + reactions */}
+                  <div style={{ display: 'flex', flexDirection: mine ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 4 }}>
+                    {/* Bubble */}
+                    <div
+                      onClick={() => setReactionPickerFor(isOpen ? null : p.id)}
+                      style={{
+                        background: mine ? accent : '#fff',
+                        color: mine ? '#fff' : 'var(--pd)',
+                        padding: p.photoUrl && (!p.text || p.text === '📷') ? 3 : '8px 12px',
+                        borderRadius: 16,
+                        borderTopRightRadius: mine && newGroup ? 4 : 16,
+                        borderTopLeftRadius: !mine && newGroup ? 4 : 16,
+                        fontSize: 13, lineHeight: 1.5,
+                        boxShadow: mine ? 'none' : '0 1px 2px rgba(0,0,0,.05)',
+                        wordBreak: 'break-word',
+                        overflow: 'hidden',
+                        cursor: 'pointer',
+                        userSelect: 'none',
+                      }}
+                    >
+                      {p.photoUrl && (
+                        <img
+                          src={p.photoUrl}
+                          alt="인증"
+                          onClick={(e) => { e.stopPropagation(); setLightbox(p.photoUrl!) }}
                           style={{
-                            background: 'none', border: 'none', cursor: uid ? 'pointer' : 'default',
-                            padding: '2px 3px', fontSize: 11, opacity: 0.4, lineHeight: 1,
-                            fontFamily: 'inherit',
+                            display: 'block', width: '100%', maxWidth: 240,
+                            borderRadius: 13, marginBottom: p.text && p.text !== '📷' ? 6 : 0,
+                            cursor: 'zoom-in',
                           }}
-                        >{emoji}</button>
-                      )
-                    }
-                    return (
-                      <button
-                        key={emoji}
-                        onClick={() => react(p.id, emoji)}
-                        disabled={!uid}
-                        style={{
-                          background: mineReacted ? `color-mix(in srgb, ${accent} 18%, #fff)` : '#fff',
-                          border: '1px solid ' + (mineReacted ? accent : '#eee'),
-                          cursor: uid ? 'pointer' : 'default',
-                          padding: '1px 6px', borderRadius: 99,
-                          fontSize: 10, fontFamily: 'inherit', fontWeight: 700,
-                          color: mineReacted ? 'var(--pd)' : '#888',
-                          display: 'inline-flex', alignItems: 'center', gap: 2,
-                          lineHeight: 1.4,
-                        }}
-                      >
-                        <span style={{ fontSize: 11 }}>{emoji}</span>
-                        {count > 0 && <span>{count}</span>}
-                      </button>
-                    )
-                  })}
+                          loading="lazy"
+                        />
+                      )}
+                      {p.text && p.text !== '📷' && <div>{p.text}</div>}
+                    </div>
+
+                    {/* Reactions + time stack on bubble side */}
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: mine ? 'flex-end' : 'flex-start', gap: 2 }}>
+                      {/* Time only on last msg of group */}
+                      {groupEnd && (
+                        <span style={{ fontSize: 9, color: '#999', fontWeight: 600, padding: '0 2px' }}>{clockTime(p.ts)}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Reaction chips — only used ones; tap to toggle */}
+                  {reactionEntries.length > 0 && (
+                    <div style={{ display: 'flex', gap: 3, marginTop: 4, flexWrap: 'wrap', justifyContent: mine ? 'flex-end' : 'flex-start', padding: '0 4px' }}>
+                      {reactionEntries.map(([emoji, uids]) => {
+                        const mineReacted = !!uid && uids.includes(uid)
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={() => react(p.id, emoji as ReactionEmoji)}
+                            disabled={!uid}
+                            style={{
+                              background: mineReacted ? `color-mix(in srgb, ${accent} 18%, #fff)` : '#fff',
+                              border: '1px solid ' + (mineReacted ? accent : '#eee'),
+                              cursor: uid ? 'pointer' : 'default',
+                              padding: '1px 7px', borderRadius: 99,
+                              fontSize: 11, fontFamily: 'inherit', fontWeight: 700,
+                              color: mineReacted ? 'var(--pd)' : '#888',
+                              display: 'inline-flex', alignItems: 'center', gap: 3,
+                              lineHeight: 1.5,
+                            }}
+                          >
+                            <span>{emoji}</span>
+                            <span style={{ fontSize: 10 }}>{uids.length}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  {/* Reaction picker — shows when bubble tapped */}
+                  {isOpen && (
+                    <div style={{
+                      display: 'flex', gap: 2, marginTop: 4, padding: '4px 6px',
+                      background: '#fff', borderRadius: 99,
+                      boxShadow: '0 4px 12px rgba(0,0,0,.12)',
+                    }}>
+                      {REACTIONS.map((emoji) => {
+                        const mineReacted = !!uid && (p.reactions[emoji] ?? []).includes(uid)
+                        return (
+                          <button
+                            key={emoji}
+                            onClick={(e) => { e.stopPropagation(); react(p.id, emoji) }}
+                            disabled={!uid}
+                            style={{
+                              background: mineReacted ? `color-mix(in srgb, ${accent} 18%, #fff)` : 'transparent',
+                              border: 'none', cursor: uid ? 'pointer' : 'default',
+                              padding: '4px 6px', borderRadius: 99, fontSize: 18,
+                              fontFamily: 'inherit', lineHeight: 1,
+                            }}
+                          >{emoji}</button>
+                        )
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             )
           })
         )}
-        <div ref={feedEndRef} />
       </div>
 
-      {/* Composer — sticky-ish at bottom of feed area */}
+      {/* Composer */}
       <div style={{
-        background: '#fff', border: `1.5px solid ${accent}`, borderRadius: 14,
-        padding: 8,
+        background: '#fff', borderRadius: 24, marginTop: 8, padding: 6,
+        boxShadow: '0 1px 4px rgba(0,0,0,.06)',
+        display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0,
       }}>
         {photoPreview && (
-          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 6 }}>
-            <img src={photoPreview} alt="미리보기" style={{ maxWidth: 120, maxHeight: 80, borderRadius: 8, display: 'block' }} />
+          <div style={{ position: 'relative', display: 'inline-block', alignSelf: 'flex-start', margin: '4px 0 0 8px' }}>
+            <img src={photoPreview} alt="미리보기" style={{ maxWidth: 100, maxHeight: 80, borderRadius: 10, display: 'block', border: '1px solid #eee' }} />
             <button
               onClick={clearPhoto}
               style={{
@@ -276,40 +349,41 @@ export function TeamView() {
               }}>×</button>
           </div>
         )}
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
-          placeholder={meta.hint}
-          rows={2}
-          style={{
-            width: '100%', border: 'none', outline: 'none', resize: 'none',
-            fontSize: 13, fontFamily: 'inherit', color: 'var(--pd)',
-            background: 'transparent', padding: '4px 2px', boxSizing: 'border-box',
-          }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 4 }}>
-          <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-            <button
-              onClick={pickPhoto}
-              disabled={posting}
-              title="사진 추가"
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-                fontSize: 18, lineHeight: 1, color: accent, fontFamily: 'inherit',
-              }}>📷</button>
-            <span style={{ fontSize: 10, color: '#bbb', fontWeight: 600 }}>{text.length}/{MAX_LEN}</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4 }}>
+          <button
+            onClick={pickPhoto}
+            disabled={posting}
+            title="카메라"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer', padding: 8,
+              fontSize: 20, lineHeight: 1, color: accent, fontFamily: 'inherit', flexShrink: 0,
+            }}>📷</button>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value.slice(0, MAX_LEN))}
+            placeholder={meta.hint}
+            rows={1}
+            style={{
+              flex: 1, border: 'none', outline: 'none', resize: 'none',
+              fontSize: 14, fontFamily: 'inherit', color: 'var(--pd)',
+              background: 'transparent', padding: '10px 4px',
+              boxSizing: 'border-box', lineHeight: 1.4,
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit() }
+            }}
+          />
           <button
             onClick={submit}
             disabled={(!text.trim() && !photoFile) || posting || !uid}
             style={{
-              padding: '6px 14px', borderRadius: 99, border: 'none',
+              padding: '8px 14px', borderRadius: 99, border: 'none',
               background: (text.trim() || photoFile) && uid ? accent : '#ddd',
               color: '#fff', fontSize: 12, fontWeight: 700,
               cursor: (text.trim() || photoFile) && uid ? 'pointer' : 'default',
-              fontFamily: 'inherit',
+              fontFamily: 'inherit', flexShrink: 0,
             }}
-          >{posting ? '올리는 중…' : '인증'}</button>
+          >{posting ? '…' : '전송'}</button>
         </div>
         <input
           ref={fileInputRef}
@@ -323,6 +397,21 @@ export function TeamView() {
           }}
         />
       </div>
+
+      {/* Lightbox — fullscreen photo viewer */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16, cursor: 'zoom-out',
+          }}
+        >
+          <img src={lightbox} alt="인증 사진" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 8 }} />
+        </div>
+      )}
     </div>
   )
 }

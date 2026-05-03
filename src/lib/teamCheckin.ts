@@ -39,6 +39,52 @@ export interface TeamPost {
   // never displayed in UI)
   reactions: Record<string, string[]>
   photoUrl?: string  // optional — Firebase Storage download URL
+  streak?: number    // consecutive days the author has posted in this team
+}
+
+// Streak tracking — stored in localStorage per (team, uid). Counts unique
+// calendar days. Yesterday → streak+1, today → unchanged, gap → reset to 1.
+function streakKey(teamId: TeamId): string {
+  return `ff_team_streak_${teamId}`
+}
+function todayDateStr(): string {
+  const d = new Date()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+function yesterdayOf(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00')
+  d.setDate(d.getDate() + 1)
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${d.getFullYear()}-${m}-${day}`
+}
+export function getStreak(teamId: TeamId): number {
+  try {
+    const raw = localStorage.getItem(streakKey(teamId))
+    if (!raw) return 0
+    const { count, lastDate } = JSON.parse(raw) as { count: number; lastDate: string }
+    const today = todayDateStr()
+    // Streak is still valid only if last post was today or yesterday.
+    if (lastDate === today || yesterdayOf(lastDate) === today) return count
+    return 0
+  } catch { return 0 }
+}
+function bumpStreak(teamId: TeamId): number {
+  const today = todayDateStr()
+  let next = 1
+  try {
+    const raw = localStorage.getItem(streakKey(teamId))
+    if (raw) {
+      const { count, lastDate } = JSON.parse(raw) as { count: number; lastDate: string }
+      if (lastDate === today) next = count                    // already counted today
+      else if (yesterdayOf(lastDate) === today) next = count + 1  // consecutive
+      // else gap → reset to 1
+    }
+  } catch { /* ignore */ }
+  localStorage.setItem(streakKey(teamId), JSON.stringify({ count: next, lastDate: today }))
+  return next
 }
 
 export interface TeamDoc {
@@ -61,7 +107,17 @@ function normalizePost(p: Partial<TeamPost> & { hearts?: string[] }): TeamPost {
     ts: p.ts ?? 0,
     reactions,
     photoUrl: p.photoUrl,
+    streak: p.streak,
   }
+}
+
+// Streak chip helper — emoji + text per tier.
+export function streakBadge(n: number): { emoji: string; label: string; color: string } | null {
+  if (!n || n < 2) return null
+  if (n >= 100) return { emoji: '👑', label: `${n}일째`, color: '#9B7EE0' }
+  if (n >= 30)  return { emoji: '🔥', label: `${n}일째`, color: '#E24B4A' }
+  if (n >= 7)   return { emoji: '✨', label: `${n}일째`, color: '#F5A52A' }
+  return { emoji: '🌱', label: `${n}일째`, color: '#56C6A0' }
 }
 
 export function listenTeam(teamId: TeamId, cb: (data: TeamDoc) => void): Unsubscribe {
@@ -82,6 +138,7 @@ export async function postCheckin(teamId: TeamId, uid: string, nickname: string,
   const db = getDb()
   const ref = doc(db, 'teams', teamId)
   const cutoff = Date.now() - TTL_MS
+  const streak = bumpStreak(teamId)
   const newPost: TeamPost = {
     id: Math.random().toString(36).slice(2, 10) + Date.now().toString(36),
     uid,
@@ -89,6 +146,7 @@ export async function postCheckin(teamId: TeamId, uid: string, nickname: string,
     text: text.trim().slice(0, 80),
     ts: Date.now(),
     reactions: {},
+    streak,
     ...(photoUrl ? { photoUrl } : {}),
   }
   const snap = await getDoc(ref)

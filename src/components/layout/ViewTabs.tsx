@@ -87,7 +87,7 @@ const ALL_TABS: Array<{ id: CurView; label: string; icon?: React.ReactNode }> = 
       <path d="M22 4h-7a3 3 0 0 0-3 3v14a2 2 0 0 1 2-2h8z" fill="currentColor" fillOpacity=".2" />
     </svg>
   ) },
-  { id: 'team', label: '팀', icon: (
+  { id: 'team', label: '그룹', icon: (
     // group / community
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
       <circle cx="12" cy="8" r="3" fill="currentColor" fillOpacity=".25" />
