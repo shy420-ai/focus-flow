@@ -911,9 +911,18 @@ export function FriendsPanel({ onClose, embedded = false }: Props) {
   }
   function onFriendDragMove(e: React.PointerEvent) {
     if (!dragId) return
-    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest('[data-friend-uid]') as HTMLElement | null
-    const uid = el?.dataset.friendUid
-    if (uid && uid !== dragOverId) setDragOverId(uid)
+    // X 좌표만으로 매칭 — 손가락이 위/아래로 빠져도 같은 친구 가로 범위면 타겟 유지.
+    // (친구 바 위/아래로 움직여도 드래그가 끊기지 않게)
+    const friendEls = document.querySelectorAll<HTMLElement>('[data-friend-uid]')
+    let foundUid: string | null = null
+    for (const el of friendEls) {
+      const r = el.getBoundingClientRect()
+      if (e.clientX >= r.left && e.clientX <= r.right) {
+        foundUid = el.dataset.friendUid || null
+        break
+      }
+    }
+    if (foundUid && foundUid !== dragOverId) setDragOverId(foundUid)
   }
   function onFriendDragUp(e: React.PointerEvent) {
     try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
