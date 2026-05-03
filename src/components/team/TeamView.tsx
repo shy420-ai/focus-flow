@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useAppStore } from '../../store/AppStore'
 import { TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, type TeamId, type TeamPost, type ReactionEmoji } from '../../lib/teamCheckin'
-import { compressImage, uploadTeamPhoto } from '../../lib/teamStorage'
+import { compressImage, uploadTeamPhoto, watermarkStamp } from '../../lib/teamStorage'
 
 const ACTIVE_KEY = 'ff_team_active'
 const MAX_LEN = 80
@@ -78,7 +78,8 @@ export function TeamView() {
     try {
       let photoUrl: string | undefined
       if (photoFile) {
-        const compressed = await compressImage(photoFile, 800, 0.7)
+        // Burn current time into the photo so screenshots can't be reused.
+        const compressed = await compressImage(photoFile, 800, 0.7, watermarkStamp())
         const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
         photoUrl = await uploadTeamPhoto(active, tempId, compressed)
       }
@@ -314,6 +315,7 @@ export function TeamView() {
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          capture="environment"
           style={{ display: 'none' }}
           onChange={(e) => {
             const f = e.target.files?.[0]
