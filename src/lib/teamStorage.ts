@@ -86,3 +86,21 @@ export async function uploadTeamPhoto(teamId: string, postId: string, blob: Blob
   await uploadBytes(r, blob, { contentType: 'image/jpeg' })
   return await getDownloadURL(r)
 }
+
+export function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(r.result as string)
+    r.onerror = () => reject(r.error || new Error('FileReader failed'))
+    r.readAsDataURL(blob)
+  })
+}
+
+// Race a promise against a timeout. Used to fail Storage uploads fast
+// when bucket isn't configured yet, so we can fall back to base64.
+export function withTimeout<T>(p: Promise<T>, ms: number, label = 'timeout'): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, rej) => setTimeout(() => rej(new Error(label)), ms)),
+  ])
+}

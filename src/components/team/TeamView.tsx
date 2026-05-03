@@ -7,7 +7,7 @@ import {
   TEAMS, REACTIONS, listenTeam, postCheckin, toggleReaction, streakBadge,
   type TeamId, type TeamPost, type ReactionEmoji,
 } from '../../lib/teamCheckin'
-import { compressImage, uploadTeamPhoto, watermarkStamp } from '../../lib/teamStorage'
+import { compressImage, uploadTeamPhoto, watermarkStamp, blobToDataUrl, withTimeout } from '../../lib/teamStorage'
 import { CameraCaptureModal } from './CameraCaptureModal'
 import { isAdminCached, banUser } from '../../lib/banList'
 
@@ -124,9 +124,19 @@ export function TeamView() {
     try {
       let photoUrl: string | undefined
       if (photoFile) {
-        const compressed = await compressImage(photoFile, 800, 0.7, watermarkStamp())
-        const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
-        photoUrl = await uploadTeamPhoto(active, tempId, compressed)
+        // Try Firebase Storage first (5s timeout — fail fast). On failure
+        // (Storage not enabled / rules block / network), fall back to a
+        // smaller base64 data URL embedded directly in the Firestore post.
+        const stamp = watermarkStamp()
+        try {
+          const compressed = await compressImage(photoFile, 800, 0.7, stamp)
+          const tempId = Math.random().toString(36).slice(2, 10) + Date.now().toString(36)
+          photoUrl = await withTimeout(uploadTeamPhoto(active, tempId, compressed), 5000, 'storage timeout')
+        } catch (storageErr) {
+          console.warn('Storage upload failed, falling back to base64:', storageErr)
+          const small = await compressImage(photoFile, 480, 0.55, stamp)
+          photoUrl = await blobToDataUrl(small)
+        }
       }
       await postCheckin(active, uid, myNick, text || (photoUrl ? '📷' : ''), photoUrl)
       setText('')
