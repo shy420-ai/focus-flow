@@ -28,7 +28,7 @@ export function ConfirmModal() {
         style={{ background: '#fff', borderRadius: 16, padding: 24, width: '80%', maxWidth: 280, textAlign: 'center' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div style={{ fontSize: 14, color: '#333', marginBottom: 20, lineHeight: 1.5 }}>{msg}</div>
+        <div style={{ fontSize: 14, color: '#333', marginBottom: 20, lineHeight: 1.5, whiteSpace: 'pre-line' }}>{msg}</div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={() => respond(false)}
