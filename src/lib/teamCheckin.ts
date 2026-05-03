@@ -20,18 +20,20 @@ export interface TeamMeta {
   examples: string[]
 }
 
-// Available swatch palette for per-room color customization. First column is
-// each team's default; rest are alternative options. Users pick from this
-// curated list (no raw color picker — keeps the look cohesive).
+// 36색 큐레이트 팔레트 (6x6). 사용자가 방마다 좋아하는 색을 고를 수 있게.
 export const COLOR_SWATCHES: string[] = [
-  '#5B9DF9', // sky blue
-  '#4FBD8F', // sage
-  '#F5BD3C', // sun yellow
-  '#9B7EE0', // lavender
-  '#F58E5C', // peach
-  '#E8A0B8', // pink
-  '#E8557A', // coral
-  '#4DC4D9', // teal
+  // 빨강 · 코랄 · 피치
+  '#C2433A', '#E07574', '#F4C5C0', '#ED5F36', '#F8DCC2', '#DAA286',
+  // 앰버 · 옐로 · 그린
+  '#E5A627', '#E8C835', '#F2EBC0', '#1F9D5C', '#4FB479', '#C9E9D2',
+  // 민트 · 블루
+  '#A6DEC7', '#97B8A2', '#C5DDDF', '#2E61D9', '#6EA2D8', '#B6D2EA',
+  // 블루 · 그레이 · 퍼플
+  '#4A6BD5', '#758FA9', '#B7BFC7', '#8B6FA0', '#B4A2DA', '#D2BAE5',
+  // 퍼플 · 핑크
+  '#B6A2D6', '#C29BC2', '#E2C3DC', '#D8456D', '#E68A8A', '#F7CCD7',
+  // 뉴트럴
+  '#EDE0C6', '#C9C09D', '#B07B49', '#8C5E48', '#6F7E8C', '#1B202C',
 ]
 
 const COLORS_KEY = 'ff_team_colors'
