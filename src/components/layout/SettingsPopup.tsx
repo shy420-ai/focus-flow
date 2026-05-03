@@ -727,6 +727,12 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
         style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1.5px solid var(--pl)', background: '#fff', color: 'var(--pd)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'block', textAlign: 'center', boxSizing: 'border-box' }}
       >📖 시작 가이드 다시 보기</button>
 
+      {/* 3) 🏆 순위 보기 (1주 챌린지 / 목표 탭에서 사용) */}
+      <button
+        onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
+        style={{ width: '100%', padding: '12px', borderRadius: 12, border: '1.5px solid var(--pl)', background: lbOn ? 'var(--pink)' : '#fff', color: lbOn ? '#fff' : 'var(--pd)', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8, display: 'block', textAlign: 'center', boxSizing: 'border-box' }}
+      >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
+
       {/* 3) 개발자에게 커피 사주기 */}
       <a
         href="https://qr.kakaopay.com/FH24plHDs"
@@ -744,10 +750,6 @@ export function SettingsPopup({ onClose, onFriendsOpen }: Props) {
           >🧪 개발자 모드 {devOn ? 'ON' : 'OFF'}</button>
           {devOn && (
             <>
-              <button
-                onClick={() => { const next = !lbOn; setLeaderboardOn(next); setLbOn(next) }}
-                style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px dashed ' + (lbOn ? 'var(--pink)' : '#ddd'), background: lbOn ? 'var(--pl)' : '#fff', color: lbOn ? 'var(--pd)' : '#aaa', fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
-              >🏆 순위 보기 {lbOn ? 'ON' : 'OFF'}</button>
               <button
                 onClick={() => setTipStatsOpen(true)}
                 style={{ width: '100%', padding: 10, borderRadius: 10, border: '1.5px solid var(--pink)', background: 'var(--pl)', color: 'var(--pd)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', marginBottom: 8 }}
