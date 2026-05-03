@@ -162,6 +162,23 @@ export function TeamView() {
           display: 'flex', flexDirection: 'column', gap: 2,
         }}
       >
+        {/* Pinned notice — what to post in this team */}
+        {meta.examples.length > 0 && (
+          <div style={{
+            background: '#fff', borderRadius: 12, padding: '10px 12px',
+            marginBottom: 10, borderLeft: `3px solid ${accent}`,
+            boxShadow: '0 1px 2px rgba(0,0,0,.04)',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+              <span style={{ fontSize: 11 }}>📌</span>
+              <span style={{ fontSize: 11, fontWeight: 800, color: accent }}>이 그룹에선 이런 거 인증해</span>
+            </div>
+            <ul style={{ margin: 0, padding: '0 0 0 18px', fontSize: 12, color: '#555', lineHeight: 1.7 }}>
+              {meta.examples.map((ex, i) => <li key={i}>{ex}</li>)}
+            </ul>
+          </div>
+        )}
+
         {posts.length === 0 ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', color: '#999', fontSize: 12, lineHeight: 1.7, textAlign: 'center', padding: 24 }}>
             <div style={{ fontSize: 36, marginBottom: 12, opacity: 0.5 }}>{meta.emoji}</div>

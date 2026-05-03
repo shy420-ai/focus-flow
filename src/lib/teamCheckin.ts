@@ -15,14 +15,41 @@ export interface TeamMeta {
   hint: string  // placeholder for the input
   color: string // primary accent — banner/border/button per team
   bgSoft: string // softened background tint for header gradient
+  // Pinned notice — bullet list of what kind of check-ins fit this team.
+  // Helps new members know what to post.
+  examples: string[]
 }
 
 export const TEAMS: TeamMeta[] = [
-  { id: 'job',     emoji: '📝', label: '취준생', hint: '예: 오늘 자소서 1개 제출',     color: '#5B9DF9', bgSoft: '#E8F1FE' },
-  { id: 'worker',  emoji: '💼', label: '직장인', hint: '예: 9시 출근 완료',            color: '#4FBD8F', bgSoft: '#E5F5EE' },
-  { id: 'college', emoji: '🎓', label: '대학생', hint: '예: 1교시 출석 / 과제 제출',  color: '#F5BD3C', bgSoft: '#FCF3D9' },
-  { id: 'student', emoji: '📚', label: '수험생', hint: '예: 새벽 5시 기상 공부 시작', color: '#9B7EE0', bgSoft: '#EFEAFA' },
-  { id: 'athlete', emoji: '🏃', label: '운동인', hint: '예: 5km 러닝 완주',            color: '#F58E5C', bgSoft: '#FCE8DC' },
+  { id: 'job',     emoji: '📝', label: '취준생', hint: '예: 오늘 자소서 1개 제출',     color: '#5B9DF9', bgSoft: '#E8F1FE',
+    examples: [
+      '자소서 한 개 제출',
+      '자격증 공부 및 취득 인증',
+    ] },
+  { id: 'worker',  emoji: '💼', label: '직장인', hint: '예: 9시 출근 완료',            color: '#4FBD8F', bgSoft: '#E5F5EE',
+    examples: [
+      '정시 출근 인증',
+      '업무 중 작은 마감 1개 완료',
+      '점심 후 산책 / 회복 인증',
+    ] },
+  { id: 'college', emoji: '🎓', label: '대학생', hint: '예: 1교시 출석 / 과제 제출',  color: '#F5BD3C', bgSoft: '#FCF3D9',
+    examples: [
+      '1교시 출석 인증',
+      '과제 / 팀플 한 단계 진행',
+      '도서관·열람실 도착 인증',
+    ] },
+  { id: 'student', emoji: '📚', label: '수험생', hint: '예: 새벽 5시 기상 공부 시작', color: '#9B7EE0', bgSoft: '#EFEAFA',
+    examples: [
+      '기상 시간 인증',
+      '오늘 푼 문제 / 인강 진도',
+      '하루 마감 정리 인증',
+    ] },
+  { id: 'athlete', emoji: '🏃', label: '운동인', hint: '예: 5km 러닝 완주',            color: '#F58E5C', bgSoft: '#FCE8DC',
+    examples: [
+      '러닝 / 걷기 거리 인증',
+      '헬스·홈트 세션 완료',
+      '운동 후 식단 인증',
+    ] },
 ]
 
 // Reaction palette — anonymous, only counts visible. Order matters (display).
