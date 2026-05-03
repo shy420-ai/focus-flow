@@ -142,7 +142,31 @@ export function PomoFab() {
   const unlockHoldRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [unlockProgress, setUnlockProgress] = useState(0)
 
-  // Detect tab/app exit while running in lock mode → penalty + alert
+  // Keep the screen awake during pomo lock so auto-dim doesn't fire
+  // visibilitychange and look like an "exit". Best-effort — Wake Lock
+  // API is supported in most modern mobile browsers but may be denied.
+  useEffect(() => {
+    if (!pomo.running || !lockMode) return
+    type WakeLockSentinel = { release: () => Promise<void> }
+    type WakeLock = { request: (type: 'screen') => Promise<WakeLockSentinel> }
+    const nav = navigator as Navigator & { wakeLock?: WakeLock }
+    if (!nav.wakeLock) return
+    let sentinel: WakeLockSentinel | null = null
+    let cancelled = false
+    nav.wakeLock.request('screen').then((s) => {
+      if (cancelled) { s.release().catch(() => { /* ignore */ }); return }
+      sentinel = s
+    }).catch(() => { /* not granted, fall back to grace period */ })
+    return () => {
+      cancelled = true
+      if (sentinel) sentinel.release().catch(() => { /* ignore */ })
+    }
+  }, [pomo.running, lockMode])
+
+  // Detect tab/app exit while running in lock mode → penalty + alert.
+  // Grace period (60s) covers the common "screen auto-locked then back"
+  // case so a passive screen-off doesn't get punished. Real app
+  // switching is almost always > 60s for an actual distraction.
   useEffect(() => {
     if (!pomo.running || !lockMode) return
     function onVisibility() {
@@ -154,7 +178,7 @@ export function PomoFab() {
         if (w.__pomoLeftAt) {
           const gone = Date.now() - w.__pomoLeftAt
           w.__pomoLeftAt = undefined
-          if (gone > 2000) {
+          if (gone > 60_000) {
             // Punish: -10 XP, flash red banner
             addXp(-10)
             setExitedFlash(true)
