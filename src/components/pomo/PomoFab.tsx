@@ -722,7 +722,7 @@ export function PomoFab() {
           <div className="pomo-count" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 8 }}>
             <span>오늘 {pomo.todayCount}회 🍅</span>
             <span style={{ fontSize: 10, color: '#888' }}>
-              누적 {pomo.totalCount}회 · {(pomo.totalMinutes / 60).toFixed(1)}h
+              누적 {pomo.totalCount}회 · {pomo.totalMinutes}m
             </span>
           </div>
         </div>

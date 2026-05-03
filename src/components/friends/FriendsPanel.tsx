@@ -539,7 +539,7 @@ function FriendDetail({ uid, name, myUid, onBack }: FriendDetailProps) {
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--pd)', lineHeight: 1.2 }}>
               <span style={{ color: 'var(--pink)' }}>{pomoCount}</span> 뽀모도로 완료
             </div>
-            <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>누적 {(pomoMinutes / 60).toFixed(1)}시간 집중</div>
+            <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>누적 {pomoMinutes}m 집중</div>
           </div>
         </div>
       )}
