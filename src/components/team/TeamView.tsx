@@ -105,16 +105,22 @@ export function TeamView() {
   }
 
   async function submit() {
-    if (!uid || posting) return
+    if (!uid) return
+    // Tap-while-posting = escape hatch. Reset state and let user retry.
+    if (posting) {
+      setPosting(false)
+      setErrorMsg('전송 강제 취소됨. 다시 시도해줘.')
+      return
+    }
     if (!text.trim() && !photoFile) return
     setPosting(true)
     setErrorMsg(null)
-    // Hard-stop after 30s so the button can never get permanently stuck
+    // Hard-stop after 15s so the button can never get permanently stuck
     // when Storage / Firestore hangs (e.g. Storage not enabled).
     const safety = setTimeout(() => {
       setPosting(false)
-      setErrorMsg('업로드 시간 초과 (30초). 네트워크나 Storage 설정 확인.')
-    }, 30000)
+      setErrorMsg('업로드 시간 초과 (15초). 네트워크 또는 Firebase Storage 설정을 확인해줘. 사진 없이는 텍스트만 올라감.')
+    }, 15000)
     try {
       let photoUrl: string | undefined
       if (photoFile) {
@@ -470,15 +476,16 @@ export function TeamView() {
           />
           <button
             onClick={submit}
-            disabled={(!text.trim() && !photoFile) || posting || !uid}
+            disabled={(!text.trim() && !photoFile && !posting) || !uid}
+            title={posting ? '탭하면 강제 취소' : '전송'}
             style={{
               padding: '8px 14px', borderRadius: 99, border: 'none',
-              background: (text.trim() || photoFile) && uid ? accent : '#ddd',
+              background: posting ? '#888' : ((text.trim() || photoFile) && uid ? accent : '#ddd'),
               color: '#fff', fontSize: 12, fontWeight: 700,
-              cursor: (text.trim() || photoFile) && uid ? 'pointer' : 'default',
+              cursor: ((text.trim() || photoFile || posting) && uid) ? 'pointer' : 'default',
               fontFamily: 'inherit', flexShrink: 0,
             }}
-          >{posting ? '…' : '전송'}</button>
+          >{posting ? '취소' : '전송'}</button>
         </div>
         <input
           ref={fileInputRef}
