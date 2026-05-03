@@ -95,7 +95,8 @@ export function TeamView() {
       clearPhoto()
     } catch (e) {
       console.error('postCheckin failed', e)
-      alert('업로드 실패 — Storage 권한 또는 네트워크 확인')
+      const msg = e instanceof Error ? e.message : String(e)
+      alert('업로드 실패\n\n' + msg + '\n\nFirebase Storage 보안 규칙을 확인해줘.')
     } finally {
       setPosting(false)
     }
