@@ -341,6 +341,7 @@ function TimelineHealthView() {
     sub?: string
     color?: string
     actionable?: boolean
+    actionLabel?: string  // 버튼 라벨 (기본 "먹었어")
     onTake?: () => void
     onUntake?: () => void
     taken?: boolean
@@ -361,6 +362,7 @@ function TimelineHealthView() {
         : `목표 ${fmtHM(wakeH)} (예정)`,
     color: '#F5BD3C',
     actionable: !todayWakeup,
+    actionLabel: '🌅 지금 기상',
     onTake: () => { logWakeup(); showMiniToast('🌅 기상 시각 기록됨') },
     onUntake: todayWakeup ? () => { removeWakeup(todayWakeup.id); showMiniToast('🗑 기상 기록 취소') } : undefined,
     taken: !!todayWakeup,
@@ -453,6 +455,7 @@ function TimelineHealthView() {
     sub: todayBedLog ? `✅ 취침 ${fmtHM(bedH)}` : `목표 ${fmtHM(bedH)} (예정)`,
     color: '#9B7BB5',
     actionable: !todayBedLog,
+    actionLabel: '🌙 지금 취침',
     onTake: () => {
       const now = new Date()
       const h = now.getHours() + now.getMinutes() / 60
@@ -559,7 +562,8 @@ function TimelineHealthView() {
                         background: 'var(--pink)', color: '#fff', border: 'none',
                         padding: '4px 10px', borderRadius: 99, fontSize: 10, fontWeight: 700,
                         cursor: 'pointer', fontFamily: 'inherit',
-                      }}>먹었어</button>
+                        whiteSpace: 'nowrap',
+                      }}>{ev.actionLabel || '먹었어'}</button>
                   )}
                   {ev.taken && ev.onUntake && (
                     <button
