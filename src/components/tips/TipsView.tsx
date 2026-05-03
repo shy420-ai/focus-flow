@@ -76,9 +76,36 @@ export function TipsView() {
       </div>
 
 
-      {/* Category chips — horizontal scroll */}
-      <div style={{ display: 'flex', gap: 6, overflowX: 'auto', marginBottom: 14, paddingBottom: 4, WebkitOverflowScrolling: 'touch' }}>
-        {CATS.map((c) => {
+      {/* 북마크 — 가로 풀너비 강조 바 */}
+      {(() => {
+        const bm = CATEGORY_META.bookmarks
+        const on = active === 'bookmarks'
+        return (
+          <button
+            onClick={() => setActive('bookmarks')}
+            style={{
+              width: '100%', padding: '10px 14px', borderRadius: 12,
+              border: '1.5px solid ' + (on ? bm.color : '#eee'),
+              background: on ? `color-mix(in srgb, ${bm.color} 16%, #fff)` : '#fff',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
+            }}
+          >
+            <span style={{ display: 'inline-flex', color: on ? bm.color : '#bbb' }}>
+              {tipCategoryIcon('bookmarks')}
+            </span>
+            <span style={{ fontSize: 13, fontWeight: on ? 800 : 700, color: on ? 'var(--pd)' : '#666' }}>{bm.label}</span>
+            <span style={{ marginLeft: 'auto', fontSize: 18, color: on ? bm.color : '#ccc', fontWeight: 700 }}>›</span>
+          </button>
+        )
+      })()}
+
+      {/* 카테고리 — 3 x 3 그리드 (북마크·archive 제외) */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        gap: 6, marginBottom: 12,
+      }}>
+        {CATS.filter((c) => c !== 'bookmarks' && c !== 'archive').map((c) => {
           const m = CATEGORY_META[c]
           const on = active === c
           return (
@@ -86,30 +113,43 @@ export function TipsView() {
               key={c}
               onClick={() => setActive(c)}
               style={{
-                flexShrink: 0,
-                padding: '7px 14px',
-                borderRadius: 99,
+                padding: '10px 6px', borderRadius: 12,
                 border: '1.5px solid ' + (on ? m.color : '#eee'),
                 background: on ? `color-mix(in srgb, ${m.color} 18%, #fff)` : '#fff',
-                color: on ? m.color : '#888',
-                fontSize: 12,
-                fontWeight: on ? 700 : 600,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                whiteSpace: 'nowrap',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
+                cursor: 'pointer', fontFamily: 'inherit',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
               }}
             >
               <span style={{ display: 'inline-flex', color: on ? m.color : '#bbb' }}>
                 {tipCategoryIcon(c)}
               </span>
-              <span style={{ color: on ? 'var(--pd)' : '#666' }}>{m.label}</span>
+              <span style={{ fontSize: 11, fontWeight: on ? 800 : 600, color: on ? 'var(--pd)' : '#666' }}>{m.label}</span>
             </button>
           )
         })}
       </div>
+
+      {/* 보관함 (archive) — 별도 작은 버튼 */}
+      {(() => {
+        const ar = CATEGORY_META.archive
+        const on = active === 'archive'
+        return (
+          <button
+            onClick={() => setActive('archive')}
+            style={{
+              width: '100%', padding: '8px 12px', borderRadius: 10,
+              border: '1.5px dashed ' + (on ? ar.color : '#ddd'),
+              background: on ? `color-mix(in srgb, ${ar.color} 14%, #fff)` : '#fff',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12,
+              fontSize: 11, fontWeight: 700, color: on ? ar.color : '#999',
+            }}
+          >
+            <span>{tipCategoryIcon('archive')}</span>
+            <span>{ar.label}</span>
+          </button>
+        )
+      })()}
 
       {/* Active category header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8, padding: '0 2px' }}>
