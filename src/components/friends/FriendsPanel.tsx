@@ -211,6 +211,16 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
   // 간주해서 long-press 취소 (친구 많을 때 스크롤 방해 X).
   const [armedDrag, setArmedDrag] = useState(false)
 
+  // 스크롤(가로/세로 모두) 시 long-press 즉시 취소 — 모바일에서 page-level
+  // 스크롤은 pointermove 가 충분히 안 나올 때가 있어 scroll 이벤트가 더 신뢰됨.
+  function cancelTimerOnScroll() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+      setPressed(false)
+    }
+  }
+
   function startPress(e: React.PointerEvent) {
     longPressedRef.current = false
     setPressed(true)
@@ -222,14 +232,17 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
       setPressed(false)
       setArmedDrag(true)
       if ('vibrate' in navigator) navigator.vibrate(60)
-      // 드래그 모드 진입 = 부모에게 알려서 dragId 세팅
       if (onDragDown && downEventRef.current) onDragDown(downEventRef.current)
+      // 드래그 모드 들어가면 더 이상 스크롤 캔슬 필요 X
+      window.removeEventListener('scroll', cancelTimerOnScroll, true)
     }, 1000)
+    window.addEventListener('scroll', cancelTimerOnScroll, { capture: true, passive: true })
   }
 
   function endPress(e: React.PointerEvent) {
     setPressed(false)
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null }
+    window.removeEventListener('scroll', cancelTimerOnScroll, true)
     startPosRef.current = null
     downEventRef.current = null
     if (armedDrag) {
@@ -240,18 +253,18 @@ function FriendAvatarTab({ friend, avatar, nickname, live, selected, hasUpdate, 
 
   function onMove(e: React.PointerEvent) {
     if (armedDrag) {
-      // 이미 드래그 모드 → 부모로 위치 전달
       if (onDragMove) onDragMove(e)
       return
     }
-    // 아직 long-press 대기 중인데 손가락 움직임 = 스크롤 의도, long-press 취소
+    // 4px 만 움직여도 = 스크롤 의도로 간주 (가로·세로 둘 다)
     if (timerRef.current && startPosRef.current) {
       const dx = e.clientX - startPosRef.current.x
       const dy = e.clientY - startPosRef.current.y
-      if (Math.hypot(dx, dy) > 8) {
+      if (Math.hypot(dx, dy) > 4) {
         clearTimeout(timerRef.current)
         timerRef.current = null
         setPressed(false)
+        window.removeEventListener('scroll', cancelTimerOnScroll, true)
       }
     }
   }
