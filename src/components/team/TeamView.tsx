@@ -684,6 +684,21 @@ export function TeamView() {
         )}
       </div>
 
+      {/* Upload progress banner — shows while posting */}
+      {posting && (
+        <div style={{
+          background: `color-mix(in srgb, ${accent} 15%, #fff)`, color: accent,
+          borderRadius: 10, padding: '8px 12px', marginTop: 6,
+          fontSize: 12, fontWeight: 700, lineHeight: 1.4,
+          display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+          border: `1px solid ${accent}`,
+        }}>
+          <style>{`@keyframes ff-up-spin { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }`}</style>
+          <span style={{ display: 'inline-block', animation: 'ff-up-spin 1s ease-in-out infinite' }}>📤</span>
+          <span>인증샷 업로드 중...</span>
+        </div>
+      )}
+
       {/* Inline error banner — shows when an upload/post fails */}
       {errorMsg && (
         <div style={{
@@ -709,16 +724,26 @@ export function TeamView() {
         {photoPreview && (
           <>
             <div style={{ position: 'relative', display: 'inline-block', alignSelf: 'flex-start', margin: '4px 0 0 8px' }}>
-              <img src={photoPreview} alt="미리보기" style={{ maxWidth: 100, maxHeight: 80, borderRadius: 10, display: 'block', border: '1px solid #eee' }} />
-              <button
-                onClick={clearPhoto}
-                style={{
-                  position: 'absolute', top: -6, right: -6,
-                  width: 20, height: 20, borderRadius: '50%',
-                  background: '#000', color: '#fff', border: '2px solid #fff',
-                  cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0,
-                  lineHeight: 1, fontFamily: 'inherit',
-                }}>×</button>
+              <img src={photoPreview} alt="미리보기" style={{ maxWidth: 100, maxHeight: 80, borderRadius: 10, display: 'block', border: '1px solid #eee', opacity: posting ? 0.5 : 1 }} />
+              {posting && (
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: 10,
+                  background: 'rgba(0,0,0,.45)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: 11, fontWeight: 700,
+                }}>📤</div>
+              )}
+              {!posting && (
+                <button
+                  onClick={clearPhoto}
+                  style={{
+                    position: 'absolute', top: -6, right: -6,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: '#000', color: '#fff', border: '2px solid #fff',
+                    cursor: 'pointer', fontSize: 11, fontWeight: 700, padding: 0,
+                    lineHeight: 1, fontFamily: 'inherit',
+                  }}>×</button>
+              )}
             </div>
             <div style={{
               fontSize: 10, color: accent, fontWeight: 700,
