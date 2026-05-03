@@ -360,23 +360,41 @@ function SleepTab() {
         </div>
       )}
 
-      {/* 취침 기록 */}
-      <div style={{ background: '#fff', borderRadius: 14, padding: 12, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
-        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 8 }}>
-          😴 취침 기록 {todayBedLog ? <span style={{ fontSize: 11, color: '#56C6A0', marginLeft: 6 }}>✅ {Math.floor(todayBedLog.time!)}:{String(Math.round((todayBedLog.time! % 1) * 60)).padStart(2, '0')} 기록됨</span> : null}
+      {/* 취침 기록 — 슬라이더 (30분 단위) */}
+      <div style={{ background: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, border: '1.5px solid var(--pl)' }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--pd)', marginBottom: 10 }}>
+          😴 취침 기록 {todayBedLog ? <span style={{ fontSize: 11, color: '#56C6A0', marginLeft: 6 }}>✅ 기록됨</span> : null}
         </div>
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {Array.from({ length: 8 }, (_, i) => {
-            const h = bedGoal - 2 + i
-            const display = h >= 24 ? (h - 24) + ':00(익일)' : h + ':00'
-            return (
-              <button key={h} onClick={() => logBedtime(h)}
-                style={{ padding: '5px 10px', borderRadius: 8, border: '1.5px solid ' + (todayBedLog?.time === h ? 'var(--pink)' : 'var(--pl)'), background: todayBedLog?.time === h ? 'var(--pink)' : '#fff', color: todayBedLog?.time === h ? '#fff' : '#555', fontSize: 11, cursor: 'pointer', fontFamily: 'inherit' }}>
-                {display}
-              </button>
-            )
-          })}
-        </div>
+        {(() => {
+          const min = bedGoal - 2
+          const max = bedGoal + 6
+          const cur = todayBedLog?.time ?? bedGoal
+          const fmt = (h: number) => {
+            const hh = Math.floor(h)
+            const mm = Math.round((h % 1) * 60)
+            const day = hh >= 24 ? hh - 24 : hh
+            return day + ':' + String(mm).padStart(2, '0') + (hh >= 24 ? ' (익일)' : '')
+          }
+          return (
+            <>
+              <div style={{ textAlign: 'center', fontSize: 28, fontWeight: 800, color: 'var(--pink)', marginBottom: 8, letterSpacing: -1, fontFeatureSettings: '"tnum"' }}>
+                {fmt(cur)}
+              </div>
+              <input
+                type="range"
+                min={min} max={max} step={0.5}
+                value={cur}
+                onChange={(e) => logBedtime(parseFloat(e.target.value))}
+                style={{ width: '100%', accentColor: 'var(--pink)' }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#aaa', marginTop: 2, fontWeight: 600 }}>
+                <span>{fmt(min)}</span>
+                <span style={{ color: 'var(--pink)' }}>목표 {bedGoal}:00</span>
+                <span>{fmt(max)}</span>
+              </div>
+            </>
+          )
+        })()}
       </div>
 
       {/* 7일 평균 분석 */}
