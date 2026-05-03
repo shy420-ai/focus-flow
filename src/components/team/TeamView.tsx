@@ -64,6 +64,7 @@ export function TeamView() {
   const [inRoom, setInRoomState] = useState<TeamId | null>(loadInRoom)
   const [hiddenRooms, setHiddenRooms] = useState<TeamId[]>(loadHiddenRooms)
   const [roomSettingsOpen, setRoomSettingsOpen] = useState(false)
+  const [colorPickerFor, setColorPickerFor] = useState<TeamId | null>(null)
   const [userCountLabel, setUserCountLabel] = useState<string>('')
   useEffect(() => {
     let cancelled = false
@@ -373,6 +374,18 @@ export function TeamView() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <TeamAvatar teamId={t.id} size={36} />
                         <span style={{ flex: 1, fontSize: 13, fontWeight: 700, color: 'var(--pd)' }}>팀 {t.label}</span>
+                        {/* 현재 색 미리보기 + 변경 버튼 */}
+                        <button
+                          onClick={() => setColorPickerFor(colorPickerFor === t.id ? null : t.id)}
+                          title="테마색 변경"
+                          aria-label="테마색 변경"
+                          style={{
+                            width: 26, height: 26, borderRadius: '50%',
+                            background: t.color, border: '2px solid #fff',
+                            boxShadow: '0 0 0 1px #ddd', cursor: 'pointer', padding: 0,
+                            fontFamily: 'inherit', flexShrink: 0,
+                          }}
+                        />
                         <button
                           onClick={() => toggleHidden(t.id)}
                           aria-label="표시/숨김"
@@ -390,41 +403,43 @@ export function TeamView() {
                           }} />
                         </button>
                       </div>
-                      {/* 36색 그리드 + 기본 리셋 */}
-                      <div style={{ marginTop: 10 }}>
-                        <div style={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(9, 1fr)',
-                          gap: 6, justifyItems: 'center',
-                        }}>
-                          {COLOR_SWATCHES.map((sw) => {
-                            const picked = t.color.toLowerCase() === sw.toLowerCase()
-                            return (
-                              <button key={sw}
-                                onClick={() => setTeamColor(t.id, sw)}
-                                aria-label={`색상 ${sw}`}
-                                style={{
-                                  width: 22, height: 22, borderRadius: '50%',
-                                  background: sw,
-                                  border: picked ? '2px solid #fff' : 'none',
-                                  boxShadow: picked
-                                    ? `0 0 0 2px ${sw}, 0 0 0 3px #fff, 0 0 0 4px #444`
-                                    : '0 1px 2px rgba(0,0,0,.08)',
-                                  cursor: 'pointer', padding: 0, fontFamily: 'inherit',
-                                }}
-                              />
-                            )
-                          })}
+                      {/* 36색 그리드 — 컬러 미리보기 누르면 펼침 */}
+                      {colorPickerFor === t.id && (
+                        <div style={{ marginTop: 10 }}>
+                          <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(9, 1fr)',
+                            gap: 6, justifyItems: 'center',
+                          }}>
+                            {COLOR_SWATCHES.map((sw) => {
+                              const picked = t.color.toLowerCase() === sw.toLowerCase()
+                              return (
+                                <button key={sw}
+                                  onClick={() => { setTeamColor(t.id, sw); setColorPickerFor(null) }}
+                                  aria-label={`색상 ${sw}`}
+                                  style={{
+                                    width: 22, height: 22, borderRadius: '50%',
+                                    background: sw,
+                                    border: picked ? '2px solid #fff' : 'none',
+                                    boxShadow: picked
+                                      ? `0 0 0 2px ${sw}, 0 0 0 3px #fff, 0 0 0 4px #444`
+                                      : '0 1px 2px rgba(0,0,0,.08)',
+                                    cursor: 'pointer', padding: 0, fontFamily: 'inherit',
+                                  }}
+                                />
+                              )
+                            })}
+                          </div>
+                          <button
+                            onClick={() => { setTeamColor(t.id, null); setColorPickerFor(null) }}
+                            title="기본 색으로 되돌리기"
+                            style={{
+                              background: 'none', border: 'none', color: '#888',
+                              fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                              padding: '6px 0 0', marginLeft: 'auto', display: 'block',
+                            }}>↺ 기본 색으로</button>
                         </div>
-                        <button
-                          onClick={() => setTeamColor(t.id, null)}
-                          title="기본 색으로 되돌리기"
-                          style={{
-                            background: 'none', border: 'none', color: '#888',
-                            fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                            padding: '6px 0 0', marginLeft: 'auto', display: 'block',
-                          }}>↺ 기본 색으로</button>
-                      </div>
+                      )}
                     </div>
                   )
                 })}
