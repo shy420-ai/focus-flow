@@ -300,6 +300,128 @@ function DrugCard({ med, todayTake, curH }: { med: MedItem; todayTake: ReturnTyp
 // MedGuideCard / fmtHourMin 은 DrugCard 와 중복이라 제거됨 — DrugCard 가
 // 단일 카드로 약 상태(progress bar) + 약 정보 접힘 모두 처리.
 
+// ── 🧠 인사이트 카드 — 신체 정보·수면 목표 기반으로 약 복용 권장 시각 + 수면 분석 ────
+function InsightsCard() {
+  const config = useMedStore((s) => s.config)
+  const meds = config?.meds || []
+  const bedGoal = config?.bedGoal ?? 23   // 0-23 (저녁 11시)
+  const wakeGoal = config?.wakeGoal ?? 7  // 0-23 (아침 7시)
+  const height = config?.height
+  const weight = config?.weight
+
+  // 취침 → 기상 사이 시간 (자정 넘어가면 +24)
+  const sleepHours = wakeGoal > bedGoal ? wakeGoal - bedGoal : (24 - bedGoal) + wakeGoal
+  // ADHD 권장 8-9시간
+  const sleepStatus = sleepHours >= 8 ? 'ok' : 'short'
+
+  // BMI
+  const bmi = (height && weight && Number(height) > 0)
+    ? (Number(weight) / Math.pow(Number(height) / 100, 2))
+    : null
+  const bmiLabel = bmi == null ? null
+    : bmi < 18.5 ? '저체중' : bmi < 23 ? '정상' : bmi < 25 ? '과체중' : '비만'
+
+  // 약별 권장 시각 계산
+  const recs = meds.map((m) => {
+    const db = MED_DB.find((d) => d.name === m.name)
+    if (!db) return null
+    let when: string
+    let reason: string
+    if (db.cat === 'ADHD' && db.duration < 24) {
+      // 자극제: 효과 종료가 취침 6시간 전이어야 수면 방해 X
+      const endByH = bedGoal - 6
+      const latestTake = endByH - db.duration
+      const take = Math.max(wakeGoal, Math.min(latestTake, wakeGoal + 1))
+      when = fmtHM(take)
+      reason = `효과 ${fmtHM(take + db.duration)} 종료 → 취침 ${bedGoal}시까지 ${Math.max(0, bedGoal - (take + db.duration))}시간 여유`
+    } else if (db.cat === '수면' || db.cat === '항정신병') {
+      // 수면 유도: 취침 30분 전
+      const take = bedGoal - 0.5
+      when = fmtHM(take)
+      reason = `취침 ${bedGoal}시 30분 전 — 수면 유도`
+    } else if (db.cat === '항우울' || db.cat === '기분조절') {
+      // SSRI/SNRI/기분조절: 아침 식후
+      when = `${wakeGoal}~${wakeGoal + 1}시 (식후)`
+      reason = '대부분 24시간 누적형 — 아침 일정 시간에 매일'
+    } else if (db.cat === '항불안') {
+      when = '필요할 때'
+      reason = '의존성 위험 — 매일 X, 증상 있을 때만'
+    } else {
+      when = m.timing || '?'
+      reason = ''
+    }
+    return { name: m.name, dose: m.dose, when, reason, cat: db.cat }
+  }).filter(Boolean) as Array<{ name: string; dose: string; when: string; reason: string; cat: string }>
+
+  return (
+    <div style={{ background: 'linear-gradient(135deg, #FFF6F8 0%, #fff 100%)', border: '1.5px solid var(--pink)', borderRadius: 14, padding: 14, marginBottom: 12 }}>
+      <div style={{ fontSize: 13, fontWeight: 800, color: 'var(--pd)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+        🧠 너의 인사이트
+        <span style={{ fontSize: 10, color: '#888', fontWeight: 500 }}>· 목표·신체 기반</span>
+      </div>
+
+      {/* 수면 분석 */}
+      <div style={{ background: '#fff', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>🛏 수면</div>
+        <div style={{ fontSize: 11, color: '#555', lineHeight: 1.6 }}>
+          취침 {bedGoal}시 → 기상 {wakeGoal}시 = <b>{sleepHours}시간</b>
+        </div>
+        {sleepStatus === 'short' ? (
+          <div style={{ fontSize: 10, color: '#E24B4A', marginTop: 4 }}>
+            ⚠️ ADHD 권장 8-9시간 미달 — 취침 {(bedGoal - (8 - sleepHours) + 24) % 24}시 권장 (-{8 - sleepHours}h)
+          </div>
+        ) : (
+          <div style={{ fontSize: 10, color: '#56C6A0', marginTop: 4 }}>✅ ADHD 권장 8-9시간 만족</div>
+        )}
+      </div>
+
+      {/* BMI */}
+      {bmi != null && (
+        <div style={{ background: '#fff', borderRadius: 10, padding: '8px 12px', marginBottom: 8 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 4 }}>📐 BMI</div>
+          <div style={{ fontSize: 11, color: '#555' }}>
+            {bmi.toFixed(1)} <span style={{ color: '#888' }}>· {bmiLabel}</span>
+          </div>
+          <div style={{ fontSize: 9, color: '#aaa', marginTop: 2 }}>
+            의사가 약 용량 결정할 때 참고할 수 있는 정보 (자가 판단 X)
+          </div>
+        </div>
+      )}
+
+      {/* 약별 권장 시각 */}
+      {recs.length > 0 && (
+        <div style={{ background: '#fff', borderRadius: 10, padding: '8px 12px' }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)', marginBottom: 6 }}>💊 약별 권장 시각</div>
+          {recs.map((r, i) => {
+            const cc = CAT_COLORS[r.cat] || 'var(--pink)'
+            return (
+              <div key={i} style={{ marginBottom: i === recs.length - 1 ? 0 : 6, paddingBottom: i === recs.length - 1 ? 0 : 6, borderBottom: i === recs.length - 1 ? 'none' : '1px dashed #f0f0f0' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: '1px 5px', borderRadius: 3, background: cc, color: '#fff' }}>{r.cat}</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>{r.name} {r.dose}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 800, color: 'var(--pink)' }}>{r.when}</span>
+                </div>
+                {r.reason && <div style={{ fontSize: 10, color: '#888', lineHeight: 1.5 }}>{r.reason}</div>}
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div style={{ fontSize: 9, color: '#aaa', textAlign: 'center', marginTop: 8, lineHeight: 1.6 }}>
+        💡 권장 시각은 일반적 가이드 — 실제 복용은 의사 처방 따르세요
+      </div>
+    </div>
+  )
+}
+
+function fmtHM(h: number): string {
+  const adj = ((h % 24) + 24) % 24
+  const hh = Math.floor(adj)
+  const mm = Math.round((adj % 1) * 60)
+  return hh + ':' + String(mm).padStart(2, '0')
+}
+
 // ── Sleep Tab ─────────────────────────────────────────────────────────────────
 // 약과 분리된 독립 영역 — 어젯밤 수면 컨디션 / 잠드는 시간 / 취침 기록 +
 // (앞으로) 수면-약 상관 분석.
@@ -766,6 +888,8 @@ export function StatsView() {
         </div>
       ) : (
         <>
+          {/* 인사이트 — 신체·수면 목표 + 등록된 약 기반으로 권장 시각 계산 */}
+          <InsightsCard />
           {effectiveTab === 'morning' && <MorningTab />}
           {effectiveTab === 'lunch' && <LunchTab onSetup={() => setShowSetup(true)} />}
           {effectiveTab === 'night' && <EveningTab onSetup={() => setShowSetup(true)} />}
