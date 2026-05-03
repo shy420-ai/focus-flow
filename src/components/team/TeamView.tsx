@@ -460,34 +460,43 @@ export function TeamView() {
 
   // Chat view — for the selected room.
   return (
-    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 4px', display: 'flex', flexDirection: 'column', height: 'calc(100vh - 110px)' }}>
-      {/* Header — back + team name (replaces old chip row) */}
+    <div style={{
+      // 화면 가장자리까지 팀색이 차도록 외곽 div 가 bgSoft 채움
+      background: bgSoft,
+      // 위쪽 탭(ViewTabs) 아래까지 배경 끌어올림 — 부모 sticky 고려해서 음수 marginTop 사용
+      margin: '-110px -16px 0',
+      paddingTop: 110,
+      minHeight: 'calc(100vh)',
+      display: 'flex', flexDirection: 'column',
+    }}>
+      <div style={{
+        maxWidth: 480, margin: '0 auto', width: '100%',
+        padding: '0 12px', display: 'flex', flexDirection: 'column',
+        height: 'calc(100vh - 110px)', boxSizing: 'border-box',
+      }}>
+      {/* Header — back + team name */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0 4px', flexShrink: 0 }}>
         <button
           onClick={() => setInRoom(null)}
           aria-label="뒤로"
           style={{
             width: 32, height: 32, borderRadius: '50%',
-            background: '#f3f3f3', border: 'none', cursor: 'pointer',
+            background: 'rgba(255,255,255,.85)', border: 'none', cursor: 'pointer',
             fontSize: 14, fontWeight: 800, color: 'var(--pd)', fontFamily: 'inherit',
-            flexShrink: 0,
+            flexShrink: 0, backdropFilter: 'blur(4px)',
           }}
         >‹</button>
         <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--pd)', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <TeamAvatar teamId={meta.id} size={28} />
           팀 {meta.label}
         </span>
-        <span style={{ flex: 1 }} />
-        <span style={{ fontSize: 9, color: '#aaa', fontWeight: 600 }}>⏰ 24h · 📷 사진만</span>
       </div>
 
-      {/* Chat feed */}
+      {/* Chat feed — bg 는 외곽 div 가 처리, 내부는 transparent */}
       <div
         ref={feedRef}
         style={{
-          background: bgSoft,
-          borderRadius: 16,
-          padding: '12px 10px',
+          padding: '8px 0',
           flex: 1,
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
@@ -892,6 +901,7 @@ export function TeamView() {
           <img src={lightbox} alt="인증 사진" style={{ maxWidth: '100%', maxHeight: '100%', borderRadius: 8 }} />
         </div>
       )}
+      </div> {/* / inner padded wrapper */}
     </div>
   )
 }
