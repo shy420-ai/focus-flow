@@ -42,20 +42,20 @@ export function TeamAvatar({ teamId, size = 56 }: Props) {
 function iconFor(teamId: TeamId, c: string) {
   switch (teamId) {
     case 'job':
-      // 자소서: 종이 + 연필
+      // 자소서/이력서 — 사진 + 인적사항 + 자기소개 단락
       return (
         <g>
-          <rect x="6" y="5" width="14" height="20" rx="2"
+          <rect x="5" y="4" width="22" height="24" rx="2.5"
                 fill={c} fillOpacity="0.22" stroke={c} strokeWidth="1.6" />
-          <line x1="9" y1="11" x2="17" y2="11" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-          <line x1="9" y1="15" x2="17" y2="15" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-          <line x1="9" y1="19" x2="14" y2="19" stroke={c} strokeWidth="1.4" strokeLinecap="round" />
-          {/* pencil tilted */}
-          <g transform="rotate(40 23 18)">
-            <rect x="20.5" y="11" width="3" height="11" fill={c} />
-            <polygon points="20.5,22 23.5,22 22,25" fill={c} />
-            <rect x="20.5" y="9" width="3" height="2" fill={c} fillOpacity="0.6" />
-          </g>
+          {/* profile photo placeholder, top-left */}
+          <rect x="8" y="7" width="6" height="7" rx="1" fill={c} />
+          {/* header lines next to photo */}
+          <line x1="16" y1="9" x2="24" y2="9"  stroke={c} strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="16" y1="12" x2="22" y2="12" stroke={c} strokeWidth="1.3" strokeLinecap="round" strokeOpacity="0.65" />
+          {/* body paragraph lines */}
+          <line x1="8" y1="18" x2="24" y2="18" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
+          <line x1="8" y1="21" x2="24" y2="21" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
+          <line x1="8" y1="24" x2="20" y2="24" stroke={c} strokeWidth="1.3" strokeLinecap="round" />
         </g>
       )
 
