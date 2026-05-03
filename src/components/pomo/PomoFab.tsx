@@ -18,6 +18,30 @@ interface PomoTechnique {
   breakMin: number
   tipId: string
 }
+// Compact 분 input used in the timer settings row.
+function DurationField({ label, value, onChange, max }: { label: string; value: number; onChange: (v: number) => void; max: number }) {
+  return (
+    <div style={{ flex: 1, background: '#fafafa', borderRadius: 10, padding: '6px 8px', border: '1px solid #f0f0f0' }}>
+      <div style={{ fontSize: 9, color: '#888', fontWeight: 700, marginBottom: 2 }}>{label}</div>
+      <input
+        type="number"
+        min={1}
+        max={max}
+        value={value}
+        onChange={(e) => {
+          const v = parseInt(e.target.value)
+          if (v > 0 && v <= max) onChange(v)
+        }}
+        style={{
+          width: '100%', border: 'none', outline: 'none', background: 'transparent',
+          textAlign: 'left', fontSize: 16, fontWeight: 800, color: 'var(--pd)',
+          fontFamily: 'inherit', padding: 0, fontFeatureSettings: '"tnum"',
+        }}
+      />
+    </div>
+  )
+}
+
 const TECHNIQUES: PomoTechnique[] = [
   { id: 'micro-5-1', label: '5/1',   desc: '응급',     workMin: 5,  breakMin: 1,  tipId: 'pomo-micro-5-1' },
   { id: 'animedoro', label: '22/22', desc: '시동',     workMin: 22, breakMin: 22, tipId: 'pomo-animedoro' },
@@ -144,7 +168,6 @@ function playChime() {
 export function PomoFab() {
   const [open, setOpen] = useState(false)
   const [pomo, setPomo] = useState<PomoState>(loadState)
-  const [customMin, setCustomMin] = useState('')
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   // Lock mode: fullscreen overlay + leave-detection penalty.
   const [lockMode, setLockMode] = useState<boolean>(() => localStorage.getItem('ff_pomo_lock') === '1')
@@ -557,16 +580,16 @@ export function PomoFab() {
             <div className="pomo-progress-bar" style={{ width: Math.round(pct * 100) + '%' }} />
           </div>
 
-          {/* 📚 Technique guide — discoverable presets pulling from info-tab tips */}
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4, padding: '0 2px' }}>
-              <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--pd)' }}>📚 뽀모 기법</span>
+          {/* ── Section: 뽀모 기법 ─────────────────────────────── */}
+          <div style={{ marginTop: 4 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 10, fontWeight: 700, color: '#888', letterSpacing: -0.2 }}>📚 뽀모 기법</span>
               <button
                 onClick={() => openTip('pomo-choose')}
                 style={{ background: 'none', border: 'none', color: 'var(--pink)', fontSize: 10, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', padding: 0 }}
               >전체 가이드 ›</button>
             </div>
-            <div style={{ display: 'flex', gap: 5, overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: 4, scrollbarWidth: 'none' }}>
+            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', paddingBottom: 2 }}>
               {TECHNIQUES.map((t) => {
                 const on = activeTechId === t.id
                 return (
@@ -575,172 +598,106 @@ export function PomoFab() {
                     onClick={() => applyTechnique(t)}
                     style={{
                       flexShrink: 0,
-                      minWidth: 56,
-                      padding: '5px 8px',
+                      padding: '6px 10px',
                       borderRadius: 8,
-                      border: 'none',
+                      border: '1px solid ' + (on ? 'var(--pink)' : '#eee'),
                       background: on ? 'var(--pink)' : '#fff',
                       color: on ? '#fff' : 'var(--pd)',
                       cursor: 'pointer',
                       fontFamily: 'inherit',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 1,
-                      boxShadow: on ? 'none' : '0 0 0 1px #eee inset',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
                     }}
                   >
                     <span style={{ fontSize: 12, fontWeight: 800, lineHeight: 1.1 }}>{t.label}</span>
-                    <span style={{ fontSize: 9, fontWeight: 600, opacity: on ? 0.9 : 0.6 }}>{t.desc}</span>
+                    <span style={{ fontSize: 9, fontWeight: 600, opacity: on ? 0.9 : 0.55 }}>{t.desc}</span>
                   </button>
                 )
               })}
             </div>
           </div>
 
-          {/* Bare-minute presets (fine-tune) */}
-          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 4, flexWrap: 'wrap' }}>
-            {[5, 10, 15, 25, 30, 60].map((m) => (
-              <button key={m} className="pomo-btn" style={{ padding: '3px 7px', fontSize: 10 }} onClick={() => setWorkMin(m)}>{m}</button>
-            ))}
+          {/* ── Section: 시간 설정 — 3-input row ───────────────── */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: '#888', marginBottom: 6, letterSpacing: -0.2 }}>⏱ 시간 (분)</div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <DurationField label="작업"   value={pomo.workMin}      onChange={setWorkMin}      max={180} />
+              <DurationField label="휴식"   value={pomo.breakMin}     onChange={setBreakMin}     max={60} />
+              <DurationField label="큰 휴식" value={pomo.longBreakMin} onChange={setLongBreakMin} max={120} />
+            </div>
           </div>
 
-          {/* Custom input */}
-          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 10, alignItems: 'center' }}>
-            <input
-              type="number"
-              min={1}
-              max={180}
-              placeholder="분"
-              value={customMin}
-              onChange={(e) => setCustomMin(e.target.value)}
-              style={{ width: 55, padding: '3px 6px', borderRadius: 8, border: '1.5px solid var(--pl)', fontSize: 11, textAlign: 'center', fontFamily: 'inherit', outline: 'none' }}
-            />
+          {/* ── Section: 세트 + 자동 시작 한 줄 ─────────────── */}
+          <div style={{ marginTop: 14, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🍅</span>
+              <div style={{ display: 'flex', gap: 3 }}>
+                {[1, 2, 3, 4, 5, 6].map((n) => {
+                  const on = pomo.sessionsTarget === n
+                  return (
+                    <button key={n}
+                      onClick={() => setSessionsTarget(n)}
+                      style={{
+                        width: 22, height: 22, borderRadius: 6,
+                        border: '1px solid ' + (on ? 'var(--pink)' : '#eee'),
+                        cursor: 'pointer', fontFamily: 'inherit',
+                        background: on ? 'var(--pink)' : '#fff',
+                        color: on ? '#fff' : 'var(--pd)',
+                        fontSize: 10, fontWeight: 700, padding: 0,
+                      }}>{n}</button>
+                  )
+                })}
+              </div>
+            </div>
             <button
-              className="pomo-btn"
-              style={{ padding: '3px 8px', fontSize: 10 }}
-              onClick={() => {
-                const v = parseInt(customMin)
-                if (v > 0) { setWorkMin(v); setCustomMin('') }
-              }}
-            >설정</button>
+              onClick={toggleAutoStart}
+              title="페이즈 끝나면 자동으로 다음 시작"
+              style={{
+                padding: '4px 10px', borderRadius: 99,
+                border: '1px solid ' + (pomo.autoStart ? 'var(--pink)' : '#eee'),
+                cursor: 'pointer', fontFamily: 'inherit',
+                background: pomo.autoStart ? 'var(--pink)' : '#fff',
+                color: pomo.autoStart ? '#fff' : '#888',
+                fontSize: 10, fontWeight: 700,
+                display: 'inline-flex', alignItems: 'center', gap: 4,
+              }}>⏯ 자동 {pomo.autoStart ? 'ON' : 'OFF'}</button>
           </div>
 
-          {/* Session series controls */}
-          <div style={{ background: 'var(--pl)', borderRadius: 10, padding: '8px 10px', marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🍅 세트</span>
-              <div style={{ display: 'flex', gap: 4 }}>
-                {[1, 2, 3, 4, 5, 6].map((n) => (
-                  <button key={n}
-                    onClick={() => setSessionsTarget(n)}
-                    style={{
-                      width: 22, height: 22, borderRadius: 6,
-                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                      background: pomo.sessionsTarget === n ? 'var(--pink)' : '#fff',
-                      color: pomo.sessionsTarget === n ? '#fff' : 'var(--pd)',
-                      fontSize: 10, fontWeight: 700,
-                    }}>{n}</button>
-                ))}
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>☕ 짧은 휴식</span>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                <input
-                  type="number"
-                  min={1}
-                  max={60}
-                  value={pomo.breakMin}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value)
-                    if (v > 0 && v <= 60) setBreakMin(v)
-                  }}
-                  style={{ width: 38, padding: '3px 4px', borderRadius: 6, border: '1.5px solid #fff', fontSize: 11, textAlign: 'center', fontFamily: 'inherit', outline: 'none', fontWeight: 700, color: 'var(--pd)' }}
-                />
-                <span style={{ fontSize: 10, color: 'var(--pd)', fontWeight: 700 }}>분</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6, gap: 6, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>🌿 큰 휴식</span>
-              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                {[15, 20, 30].map((m) => (
-                  <button key={m}
-                    onClick={() => setLongBreakMin(m)}
-                    style={{
-                      padding: '3px 7px', borderRadius: 6,
-                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                      background: pomo.longBreakMin === m ? 'var(--pink)' : '#fff',
-                      color: pomo.longBreakMin === m ? '#fff' : 'var(--pd)',
-                      fontSize: 10, fontWeight: 700,
-                    }}>{m}m</button>
-                ))}
-                <input
-                  type="number"
-                  min={1}
-                  max={120}
-                  value={[15, 20, 30].includes(pomo.longBreakMin) ? '' : pomo.longBreakMin}
-                  placeholder="기타"
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value)
-                    if (v > 0 && v <= 120) setLongBreakMin(v)
-                  }}
-                  style={{ width: 42, padding: '3px 4px', borderRadius: 6, border: '1.5px solid #fff', fontSize: 11, textAlign: 'center', fontFamily: 'inherit', outline: 'none', fontWeight: 700, color: 'var(--pd)' }}
-                />
-                <span style={{ fontSize: 10, color: 'var(--pd)', fontWeight: 700 }}>분</span>
-              </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pd)' }}>⏯ 자동 시작</span>
-              <button onClick={toggleAutoStart}
-                style={{
-                  padding: '3px 12px', borderRadius: 99,
-                  border: 'none', cursor: 'pointer', fontFamily: 'inherit',
-                  background: pomo.autoStart ? 'var(--pink)' : '#fff',
-                  color: pomo.autoStart ? '#fff' : 'var(--pd)',
-                  fontSize: 10, fontWeight: 700,
-                }}>{pomo.autoStart ? 'ON' : 'OFF'}</button>
-            </div>
-          </div>
-
-          {/* Control buttons */}
-          <div className="pomo-btns">
+          {/* ── Section: 시작/리셋 ──────────────────────────── */}
+          <div className="pomo-btns" style={{ marginTop: 14 }}>
             <button className="pomo-btn primary" id="pomo-start-btn" onClick={startPause}>
               {pomo.running ? '일시정지' : '시작'}
             </button>
             <button className="pomo-btn" onClick={reset}>리셋</button>
           </div>
 
-          {/* Lock mode toggle */}
+          {/* ── Lock mode — minimal toggle row ───────────────── */}
           <button
             onClick={toggleLockMode}
             style={{
-              width: '100%', padding: '10px 12px', marginTop: 8, borderRadius: 10,
-              border: '1.5px dashed ' + (lockMode ? 'var(--pink)' : '#ddd'),
-              background: lockMode ? 'var(--pl)' : '#fff',
-              color: lockMode ? 'var(--pd)' : '#888',
-              fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
-              display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 4,
-              textAlign: 'left',
+              width: '100%', padding: '8px 12px', marginTop: 10, borderRadius: 10,
+              border: '1px solid ' + (lockMode ? 'var(--pink)' : '#eee'),
+              background: lockMode ? 'color-mix(in srgb, var(--pl) 60%, #fff)' : '#fff',
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>🔒 집중 잠금 모드</span>
-              <span style={{
-                width: 32, height: 16, borderRadius: 8,
-                background: lockMode ? 'var(--pink)' : '#ddd',
-                position: 'relative', transition: 'background .2s', flexShrink: 0,
-              }}>
-                <span style={{
-                  position: 'absolute', top: 2, ...(lockMode ? { right: 2 } : { left: 2 }),
-                  width: 12, height: 12, borderRadius: 6, background: '#fff',
-                  transition: 'all .2s',
-                }} />
+            <span style={{ fontSize: 11, color: 'var(--pd)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              🔒 집중 잠금 모드
+              <span style={{ fontSize: 9, color: '#999', fontWeight: 500 }}>
+                {lockMode ? '시작 시 풀스크린' : '꺼짐'}
               </span>
-            </div>
-            <div style={{ fontSize: 10, opacity: .7, fontWeight: 500 }}>
-              {lockMode ? '시작하면 풀스크린으로 집중 모드' : '시작 전에 켜야 작동해'}
-            </div>
+            </span>
+            <span style={{
+              width: 32, height: 18, borderRadius: 99,
+              background: lockMode ? 'var(--pink)' : '#ddd',
+              position: 'relative', transition: 'background .2s', flexShrink: 0,
+            }}>
+              <span style={{
+                position: 'absolute', top: 2, ...(lockMode ? { right: 2 } : { left: 2 }),
+                width: 14, height: 14, borderRadius: '50%', background: '#fff',
+                transition: 'all .2s',
+              }} />
+            </span>
           </button>
 
           {/* Today count + lifetime total */}
