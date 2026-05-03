@@ -129,22 +129,6 @@ export function TimelineView() {
 
   const { start: START, hours: HOURS, px: PX } = tlSettings
   const timelineRef = useRef<HTMLDivElement>(null)
-  // Drag-to-create: long-press (350ms) on empty area arms create mode,
-  // then vertical drag draws the preview. Long-press requirement is
-  // what separates this from a normal scroll touch.
-  const dragCreateRef = useRef<{
-    startHour: number
-    startY: number
-    pointerId: number
-    armed: boolean
-    armTimer: ReturnType<typeof setTimeout> | null
-  } | null>(null)
-  const [dragPreview, setDragPreview] = useState<{ startHour: number; durHour: number } | null>(null)
-  const [dragArmed, setDragArmed] = useState(false)
-  // Auto-scroll velocity while finger sits near a viewport edge during
-  // an armed drag. -px/frame for upward, +px/frame for downward.
-  const autoScrollVelRef = useRef<number>(0)
-  const autoScrollRafRef = useRef<number | null>(null)
   // Past-hours collapse — only applies to today. Default collapsed so the
   // user lands at "current hour" without a wall of finished slots above.
   const [pastCollapsed, setPastCollapsed] = useState<boolean>(true)
@@ -431,117 +415,8 @@ export function TimelineView() {
         {/* Blocks column */}
         <div
           className="blocks-col"
-          style={{
-            position: 'relative',
-            height: `${displayHours * PX}px`,
-            // While dragging to create, disable native scroll on this
-            // element so finger drag doesn't compete with scroll.
-            touchAction: dragArmed ? 'none' : undefined,
-          }}
+          style={{ position: 'relative', height: `${displayHours * PX}px` }}
           onClick={() => setActiveMenu(null)}
-          onPointerDown={(e) => {
-            if (e.target !== e.currentTarget) return
-            if (e.button !== 0) return
-            const rect = e.currentTarget.getBoundingClientRect()
-            const startY = e.clientY - rect.top
-            const startHour = displayStart + Math.max(0, startY) / PX
-            // 350ms timer flips armed flag + shows preview.
-            // setPointerCapture is deferred to the next live pointermove
-            // (more reliable than calling from a timeout).
-            const timer = setTimeout(() => {
-              const d = dragCreateRef.current
-              if (!d) return
-              d.armed = true
-              setDragArmed(true)
-              setDragPreview({ startHour: d.startHour, durHour: 10/60 })
-              if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-                try { navigator.vibrate(10) } catch { /* ignore */ }
-              }
-            }, 350)
-            dragCreateRef.current = { startHour, startY, pointerId: e.pointerId, armed: false, armTimer: timer }
-          }}
-          onPointerMove={(e) => {
-            const d = dragCreateRef.current
-            if (!d || d.pointerId !== e.pointerId) return
-            const rect = e.currentTarget.getBoundingClientRect()
-            const relY = e.clientY - rect.top
-            // Pre-arm: vertical movement > 12px = it's a scroll → cancel.
-            if (!d.armed) {
-              if (Math.abs(relY - d.startY) > 12) {
-                if (d.armTimer) clearTimeout(d.armTimer)
-                dragCreateRef.current = null
-                setDragArmed(false)
-              }
-              return
-            }
-            // Armed: capture pointer on first live move (reliable here).
-            try { (e.currentTarget as Element).setPointerCapture(e.pointerId) } catch { /* ignore */ }
-            const cur = displayStart + Math.max(0, relY) / PX
-            const a = Math.min(d.startHour, cur)
-            const b = Math.max(d.startHour, cur)
-            const snap = (h: number) => Math.round(h * 6) / 6
-            setDragPreview({ startHour: snap(a), durHour: Math.max(snap(b - a), 10/60) })
-
-            // Auto-scroll the page when finger is near the viewport edge
-            // so the user can extend the block past the visible area.
-            const edge = 80
-            const vh = window.innerHeight
-            const clientY = e.clientY
-            if (clientY < edge) {
-              autoScrollVelRef.current = -Math.ceil((edge - clientY) / 6)
-            } else if (clientY > vh - edge) {
-              autoScrollVelRef.current = Math.ceil((clientY - (vh - edge)) / 6)
-            } else {
-              autoScrollVelRef.current = 0
-            }
-            if (autoScrollVelRef.current !== 0 && autoScrollRafRef.current == null) {
-              const tick = () => {
-                if (!dragCreateRef.current?.armed || autoScrollVelRef.current === 0) {
-                  autoScrollRafRef.current = null
-                  return
-                }
-                window.scrollBy(0, autoScrollVelRef.current)
-                autoScrollRafRef.current = requestAnimationFrame(tick)
-              }
-              autoScrollRafRef.current = requestAnimationFrame(tick)
-            }
-          }}
-          onPointerUp={(e) => {
-            try { (e.currentTarget as Element).releasePointerCapture(e.pointerId) } catch { /* ignore */ }
-            autoScrollVelRef.current = 0
-            if (autoScrollRafRef.current != null) { cancelAnimationFrame(autoScrollRafRef.current); autoScrollRafRef.current = null }
-            const d = dragCreateRef.current
-            if (d?.armTimer) clearTimeout(d.armTimer)
-            dragCreateRef.current = null
-            const preview = dragPreview
-            setDragPreview(null)
-            setDragArmed(false)
-            if (!d?.armed || !preview) return
-            const newId = String(Date.now())
-            useAppStore.getState().addBlock({
-              id: newId, type: 'timeline', name: '',
-              date: curDate, startHour: preview.startHour, durHour: preview.durHour,
-              color: 'pink', done: false, memo: '', category: '',
-              deadline: null, priority: null,
-            })
-            setEditId(newId)
-            setNewBlockId(newId)
-            if (typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function') {
-              try { navigator.vibrate([10, 30, 10]) } catch { /* ignore */ }
-            }
-          }}
-          onPointerCancel={() => {
-            // Only reset if we never armed — if we already armed, the
-            // browser shouldn't normally cancel mid-capture, and if it
-            // does we'd rather not silently drop the user's preview.
-            const d = dragCreateRef.current
-            if (d && !d.armed) {
-              if (d.armTimer) clearTimeout(d.armTimer)
-              dragCreateRef.current = null
-              setDragPreview(null)
-              setDragArmed(false)
-            }
-          }}
           onDoubleClick={(e) => {
             const rect = e.currentTarget.getBoundingClientRect()
             const relY = e.clientY - rect.top
@@ -568,41 +443,6 @@ export function TimelineView() {
             />
           ))}
 
-          {/* Drag-to-create preview */}
-          {dragPreview && (
-            <div
-              style={{
-                position: 'absolute',
-                left: 4, right: 4,
-                top: (dragPreview.startHour - displayStart) * PX,
-                height: dragPreview.durHour * PX,
-                background: 'color-mix(in srgb, var(--pink) 25%, #fff)',
-                border: '2px dashed var(--pink)',
-                borderRadius: 8,
-                pointerEvents: 'none',
-                zIndex: 50,
-                fontSize: 11, color: 'var(--pd)', fontWeight: 700,
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-                gap: 2,
-              }}
-            >
-              {(() => {
-                const hh = Math.floor(dragPreview.startHour)
-                const mm = Math.round((dragPreview.startHour - hh) * 60)
-                const eh = dragPreview.startHour + dragPreview.durHour
-                const eHH = Math.floor(eh)
-                const eMM = Math.round((eh - eHH) * 60)
-                const fmt = (h: number, m: number) => `${h}:${String(m).padStart(2, '0')}`
-                const totalMin = Math.round(dragPreview.durHour * 60)
-                return (
-                  <>
-                    <span>{fmt(hh, mm)} – {fmt(eHH, eMM)} ({totalMin}m)</span>
-                    <span style={{ fontSize: 10, fontWeight: 500, opacity: 0.75 }}>↕ 끌어서 길이 · 손 떼면 만들기</span>
-                  </>
-                )
-              })()}
-            </div>
-          )}
 
           {/* 10-minute sub-lines */}
           {Array.from({ length: displayHours }, (_, i) =>
